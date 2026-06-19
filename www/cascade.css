@@ -1,0 +1,77 @@
+/* =========================================================================
+   cascade.css — NEON Driver Cascade additions on top of the shared styles.css.
+   ========================================================================= */
+.brand-mark { font-size: 24px; }
+
+/* ---- hero band -------------------------------------------------------- */
+.hero-band { margin: 4px 0 14px; }
+.hero-title { font-weight: 700; color: var(--pine); font-size: 17px; display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.hero-title .hero-sub { color: var(--muted); font-weight: 500; }
+.hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.hero-stat { display: flex; gap: 12px; align-items: center; background: var(--paper); border: 1px solid var(--line);
+  border-radius: 12px; padding: 12px 16px; box-shadow: 0 4px 14px var(--shadow); border-top: 3px solid var(--pine); }
+.hero-stat.hero-navy  { border-top-color: var(--pine); }
+.hero-stat.hero-pine  { border-top-color: var(--green); }
+.hero-stat.hero-terra { border-top-color: var(--terra); }
+.hero-stat.hero-gold  { border-top-color: var(--gold); }
+.hs-icon { font-size: 24px; color: var(--pine); opacity: .85; }
+.hero-pine  .hs-icon { color: var(--green); }
+.hero-terra .hs-icon { color: var(--terra); }
+.hero-gold  .hs-icon { color: var(--gold-ink); }
+.hs-v { font-size: 26px; font-weight: 800; color: var(--ink); line-height: 1; }
+.hs-l { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; }
+
+/* ---- sidebar signal chips --------------------------------------------- */
+.sig-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 2px; }
+.sig-chips-empty { font-size: 12.5px; color: var(--muted); font-style: italic; }
+.sig-chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; color: #fff; }
+.sig-chip.sig-climate, .sig-dot.sig-climate     { background: #2f7fb5; }
+.sig-chip.sig-phenology, .sig-dot.sig-phenology { background: #5fae3a; }
+.sig-chip.sig-producer, .sig-dot.sig-producer   { background: #1a7f37; }
+.sig-chip.sig-consumer, .sig-dot.sig-consumer   { background: #AB0520; }
+.sig-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; }
+
+/* ---- overview cascade schematic --------------------------------------- */
+.cascade-strip { margin-top: 8px; }
+.casc-flow { display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap; }
+.casc-node { flex: 1 1 0; min-width: 150px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.casc-node.casc-empty { opacity: .5; }
+.casc-node-h { font-weight: 800; font-size: 13px; letter-spacing: .04em; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+.casc-sigs { display: flex; flex-direction: column; gap: 5px; }
+.casc-sig { font-size: 12.5px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 7px; padding: 4px 9px; }
+.casc-sigs em { font-size: 12px; color: var(--muted); }
+.casc-arrow { display: flex; align-items: center; color: var(--muted); font-size: 20px; }
+@media (max-width: 800px){ .casc-arrow { transform: rotate(90deg); align-self: center; } }
+
+/* ---- link agreement chips (beside ladder) ----------------------------- */
+.link-chips { display: flex; flex-direction: column; gap: 9px; }
+.link-chip { border: 1px solid var(--line); border-left-width: 4px; border-radius: 10px; padding: 9px 11px; background: var(--paper); }
+.link-chip.lc-consistent  { border-left-color: #1a7f37; }
+.link-chip.lc-apparent    { border-left-color: #c9a300; }
+.link-chip.lc-counter     { border-left-color: #AB0520; }
+.link-chip.lc-exploratory { border-left-color: #6b7a89; }
+.link-chip.lc-insufficient{ border-left-color: #9aa6b2; }
+.lc-top { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 12.5px; }
+.lc-from, .lc-to { font-weight: 700; color: var(--ink); }
+.lc-lag { margin-left: auto; font-size: 10.5px; color: var(--muted); background: var(--bg); border-radius: 12px; padding: 1px 7px; }
+.lc-mid { display: flex; gap: 9px; align-items: baseline; margin: 5px 0 3px; font-size: 12px; }
+.lc-prior { color: var(--muted); }
+.lc-r { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.lc-n { color: var(--muted); font-size: 11px; }
+.lc-verdict { font-size: 11.5px; line-height: 1.35; }
+
+/* ---- signal + driver tables ------------------------------------------- */
+.sig-tbl td, .driver-tbl td { vertical-align: middle; }
+.st-unit, .st-yr, .dt-prior { color: var(--muted); font-size: 12px; }
+.dt-r, .dt-n { font-variant-numeric: tabular-nums; text-align: center; }
+.dt-chip { display: inline-block; color: #fff; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+.pr-note { font-size: 11.5px; color: var(--muted); max-width: 360px; }
+
+/* ---- driver-lab scatter note ------------------------------------------ */
+.scatter-note { margin-top: 8px; font-size: 13px; color: var(--ink); }
+.scatter-note .sn-lag { color: var(--muted); font-size: 12px; }
+
+[data-bs-theme="dark"] .hero-stat,
+[data-bs-theme="dark"] .link-chip,
+[data-bs-theme="dark"] .casc-sig { background: var(--paper); }
+[data-bs-theme="dark"] .casc-node { background: rgba(255,255,255,0.03); }
