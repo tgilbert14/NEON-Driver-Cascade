@@ -122,15 +122,19 @@ signals <- tibble::tribble(
   "bird_index",    "Bird detection index",         "consumer",   "birds/point","more birds",
   "bird_richness", "Bird richness",                "consumer",   "species",    "more species")
 
-# ---- literature priors (Sarah's grounded table): expected sign + lag (years) ----
+# ---- literature priors: expected sign + lag (years). The `note` is PLAIN-ENGLISH
+# for non-technical users AND carries the honest scope caveat (the science review:
+# several mechanisms are spatial/seasonal but we test them within-site year-to-year,
+# the weakest regime; #1 is richness not productivity; #6 is the shakiest). Citations
+# live in the About panel. `conf` = how strong the prior is (strong/moderate/weak).
 priors <- tibble::tribble(
-  ~from,         ~to,            ~sign, ~lag, ~note,
-  "precip",      "plant_richness", +1L, 0L,  "ANPP rises with precipitation, strongest in drylands (dryland ANPP~precip review).",
-  "precip",      "fruiting_pct",   +1L, 0L,  "Wet years drive flowering/fruiting pulses.",
-  "temp",        "greenup_doy",    -1L, 0L,  "Warmer springs advance green-up (earlier DOY) (Cole et al. 2015).",
-  "precip",      "mammal_cpue",    +1L, 1L,  "Rain->seed pulse->granivore rodents, lagged & nonlinear (Brown&Ernest; Thibault 2010).",
-  "fruiting_pct","mammal_cpue",    +1L, 1L,  "Prior-year seed/fruit production feeds granivores (Owen 2006).",
-  "plant_richness","mammal_cpue",  +1L, 1L,  "Producer diversity/productivity -> consumers, lagged.")
+  ~from,         ~to,            ~sign, ~lag, ~conf,      ~note,
+  "precip",      "plant_richness", +1L, 0L, "moderate", "More rain usually means more plant growth — so more species can persist. (Clearer across regions than year-to-year at one site, and rain can carry into the next year; here 'richness' is a rough stand-in for plant productivity.)",
+  "precip",      "fruiting_pct",   +1L, 0L, "moderate", "Wet years push plants to flower and fruit more that same year — strongest in deserts and annual plants.",
+  "temp",        "greenup_doy",    -1L, 0L, "strong",   "Warmer springs make plants leaf out earlier — one of the most reliable patterns in ecology. (We use the year's average temperature as a stand-in for spring warmth.)",
+  "precip",      "mammal_cpue",    +1L, 1L, "moderate", "A wet year grows a big seed crop, and a year later the seed-eating mice and kangaroo rats boom — clearest in deserts. (Annual-total rain is a coarse stand-in; the timing of rain matters too, and the real response is non-linear.)",
+  "fruiting_pct","mammal_cpue",    +1L, 1L, "strong",   "A good seed-and-fruit year feeds the seed-eaters into the following year, so populations rise the year after.",
+  "plant_richness","mammal_cpue",  +1L, 1L, "weak",     "More varied plant communities MAY support more animals the next year — but this is the least certain link: plant variety is only a rough stand-in for plant food, so even the direction is uncertain.")
 # NOTE: no green-up -> bird prior. The trophic-mismatch literature (Both; Visser;
 # Mayor 2017; Youngflesh 2021) is about SYNCHRONY between bird breeding and the food
 # peak — not "later green-up DOY -> more birds", and the direction reverses by region.

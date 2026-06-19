@@ -90,15 +90,27 @@ server <- function(input, output, session) {
     dl <- lapply(layers, function(L) ladder_layer(a, SIGNALS, L))
     names(dl) <- layers; present <- layers[vapply(dl, function(x) !is.null(x) && nrow(x)>0, logical(1))]
     if (!length(present)) return(note_plot("No multi-year signals to align at this site"))
-    pal <- c("#2f7fb5","#5fae3a","#1a7f37","#AB0520","#c9a300","#9c6644","#16386e","#d6336c")
-    ci <- 0
+    # Per-LAYER hue ramp (honest encoding): every line in a strip shares its layer's
+    # colour family (climate=blue, green-up=lime, producers=forest, consumers=cardinal),
+    # the SHADE distinguishes signals within the strip. Index resets per strip, so no
+    # global counter ever bleeds one layer's hue into another or wraps into a clash.
+    LADDER_PAL <- list(
+      climate   = c("#2f7fb5","#16386e","#6db3e0","#0a4a8f"),
+      phenology = c("#3f9e3a","#7cc46a","#2f7d2f","#9acd6b"),
+      producer  = c("#1a7f37","#12612a","#5fae3a","#0c4a20"),
+      consumer  = c("#AB0520","#d6336c","#e0607a","#7a0418"))
+    dark_hex <- function(hex) if (!is_dark()) hex else {
+      rgb <- grDevices::col2rgb(hex)/255; hsv <- grDevices::rgb2hsv(rgb)
+      grDevices::hsv(hsv[1], max(0, hsv[2]*0.8), min(1, hsv[3]*1.35)) }   # lift value, ease saturation for navy bg
     plist <- lapply(present, function(L){ dd <- dl[[L]]; lm <- LAYER_META[[L]]
+      ramp <- LADDER_PAL[[L]] %||% c("#2f7fb5","#16386e","#6db3e0"); j <- 0L
       p <- plotly::plot_ly()
-      for (k in unique(dd$key)) { sub <- dd[dd$key==k,]; sub <- sub[order(sub$year),]; ci <<- ci+1
+      for (k in unique(dd$key)) { sub <- dd[dd$key==k,]; sub <- sub[order(sub$year),]; j <- j + 1L
+        col <- dark_hex(ramp[(j-1) %% length(ramp) + 1])
         p <- p %>% plotly::add_trace(data=sub, x=~year, y=~z, type="scatter", mode="lines+markers",
-          name=sub$label[1], legendgroup=L, line=list(width=2.6, color=pal[(ci-1)%%length(pal)+1]),
-          marker=list(size=6, color=pal[(ci-1)%%length(pal)+1]),
-          hovertemplate=paste0("<b>",sub$label[1],"</b><br>%{x}: z=%{y:.2f}<extra></extra>")) }
+          name=sub$label[1], legendgroup=L, line=list(width=2.6, color=col),
+          marker=list(size=6, color=col),
+          hovertemplate=paste0("<b>",sub$label[1],"</b><br>%{x}: z=%{y:.2f} (",lm$title,")<extra></extra>")) }
       p %>% plotly::layout(yaxis=list(title=list(text=lm$title, font=list(size=11, color=lm$col)),
         zeroline=TRUE, zerolinecolor=if(is_dark())"rgba(220,230,240,0.25)" else "rgba(31,42,48,0.18)",
         gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)", tickfont=list(size=9)))
@@ -190,27 +202,54 @@ server <- function(input, output, session) {
   # ---- About ----
   output$aboutPanel <- renderUI({
     pr <- PRIORS
-    prow <- function(i){ r <- pr[i,]; arrow <- if (r$sign>0) "↑ positive" else "↓ negative"
+    conf_badge <- function(c) { col <- switch(c %||% "", strong="#1a7f37", moderate="#c9a300", weak="#AB0520", "#6b7a89")
+      tags$span(class="dt-chip", style=sprintf("background:%s", col), c %||% "—") }
+    prow <- function(i){ r <- pr[i,]; arrow <- if (r$sign>0) "↑ more → more" else "↓ more → earlier/less"
       tags$tr(tags$td(sig_label(r$from)), tags$td(sig_label(r$to)), tags$td(arrow),
-        tags$td(if (r$lag>0) sprintf("%d yr", r$lag) else "same yr"), tags$td(class="pr-note", r$note)) }
+        tags$td(if (r$lag>0) sprintf("%d yr later", r$lag) else "same yr"),
+        tags$td(conf_badge(r$conf)), tags$td(class="pr-note", r$note)) }
+    gloss <- function(term, def) div(class="gloss-item", tags$b(term), tags$span(HTML(def)))
     div(class="about-wrap",
       div(class="about-card", h4("\U0001F517 What this is"),
-        p("The capstone of a family of NEON explorers. Each sibling app dives into one product — ",
-          tags$a(href="#","small mammals"), ", birds, plant diversity, vegetation structure, plant phenology. This one ", tags$b("lines them up"),
+        p("The capstone of a family of NEON explorers. Each sibling app dives into one product — small mammals, birds, plant diversity, vegetation structure, plant phenology. This one ", tags$b("lines them up"),
           " at shared sites into a single ", tags$b("bottom-up cascade"), ": climate → green-up timing → producers → consumers.")),
+
+      div(class="about-card about-plain", h4(bs_icon("chat-square-text"), " How to read this — in plain English"),
+        p("New to this? Start here. Everything below is jargon-free."),
+        gloss("The big idea", "Weather sets off a chain reaction through the food web. A wet or warm year first changes the <b>plants</b>, then the <b>animals</b> that eat the plants — like dominoes, from the ground up. This app checks whether each domino actually falls the way ecology says it should."),
+        gloss("Green-up", "The moment in spring when plants leaf out and the landscape turns green. We measure it as the <b>day of the year the first leaves appear</b> — a smaller number means an earlier spring."),
+        gloss("The “hinge”", "Green-up is the hinge between weather and wildlife: the climate decides <em>when</em> plants wake up, and that sets the table for everything that eats them."),
+        gloss("A “lag”", "A delay. A <b>1-year lag</b> means this year's rain shows up in <em>next</em> year's animals — because it takes a season for rain to grow the seeds the animals depend on."),
+        gloss("Catch rate (per 100 trap-nights)", "How many small mammals were caught for every 100 trap-nights of effort. It accounts for how hard we trapped, so years compare fairly — but it's a <b>relative index, not a true headcount</b>."),
+        gloss("The stacked “ladder”", "Each strip is one rung of the food web, drawn on a <b>standardised</b> scale so they're comparable: <b>0 = that signal's own average year</b>, up = above average, down = below. Watch whether a good year ripples <em>down</em> the rungs — compare the <b>timing</b> of the bumps across strips, not their heights."),
+        gloss("Why deserts are the clearest case", "In deserts, water is the one thing everything waits for. When rain comes, the whole food web responds at once and in step — so the chain reaction is easier to see than in wetter places, where many other things also matter.")),
+
+      div(class="about-card about-plain", h4(bs_icon("calculator"), " The statistics, in plain English"),
+        gloss("“Could this be luck?” (the permutation test)", "For each link we <b>shuffle the years 2,000 times</b> and re-measure the match each time. If the real match beats almost all the shuffles, it's unlikely to be a coincidence. (We checked: these yearly numbers aren't badly auto-correlated, so the shuffle is a fair test.)"),
+        gloss("The uncertainty band (95% CI)", "A range we're fairly sure the true relationship falls in. With only ~6 years it's <b>very wide</b> — that honesty is the point: few years = lots of uncertainty."),
+        gloss("“Too few years to judge”", "Below <b>6 overlapping years</b> we show the lined-up data but give <b>no verdict</b> — there simply isn't enough to tell signal from noise."),
+        gloss("The three verdicts", "<b>Consistent with prior</b> = matches the expected direction <em>and</em> clears the luck test. <b>Apparent</b> = points the expected way but could be noise. <b>Counter</b> = runs the opposite way."),
+        gloss("Sign-match score", "Of the testable links (≥6 years), how many point the direction ecology predicts. Even when no single link is rock-solid, several all pointing the right way is itself meaningful — and we report the odds it's chance."),
+        p(class="qc-cap-note", bs_icon("info-circle"), " We never say a driver “causes” anything — a handful of yearly points can't prove cause. These are <em>consistencies with</em> the textbook mechanism, not proof.")),
+
       div(class="about-card", h4(bs_icon("shield-check"), " Why it's careful (and what it refuses to do)"),
         tags$ul(
-          tags$li(HTML("<b>States priors, doesn't dredge.</b> Each link's expected direction and lag come from the literature <em>before</em> looking at the data. We never report whichever lag happens to fit best.")),
-          tags$li(HTML("<b>n-gated.</b> Each site has only 3–13 years. Below 6 overlapping years, no verdict is given — just the aligned series. A permutation null + bootstrap CI gate the rest.")),
-          tags$li(HTML("<b>Direction over magnitude.</b> The headline is a <b>sign-match tally</b> (a binomial test of how many links point the predicted way) — honest about multiple comparisons in a way a single correlation isn't.")),
-          tags$li(HTML("<b>Never 'drives' or 'causes.'</b> A handful of annual points cannot establish causation; these are <em>consistencies with</em>, not proof of, the mechanism.")))),
+          tags$li(HTML("<b>States priors, doesn't dredge.</b> Each link's expected direction and lag come from the literature <em>before</em> looking at the data — we never report whichever lag happens to fit best.")),
+          tags$li(HTML("<b>n-gated.</b> Below 6 overlapping years, no verdict — just the aligned series. A permutation null + bootstrap CI gate the rest.")),
+          tags$li(HTML("<b>Honest about scope.</b> Several of these mechanisms are clearest <em>across regions</em> or in <em>deserts</em>; testing them within one site, year-to-year, is the hardest case — the notes say so.")),
+          tags$li(HTML("<b>Direction over magnitude</b>, and <b>never “drives”/“causes.”</b>")))),
+
       div(class="about-card", h4(bs_icon("diagram-3"), " The predicted cascade (the priors)"),
         tags$table(class="inspect-tbl",
-          tags$thead(tags$tr(tags$th("Driver"), tags$th("Response"), tags$th("Expected"), tags$th("Lag"), tags$th("Why"))),
+          tags$thead(tags$tr(tags$th("Driver"), tags$th("Response"), tags$th("Expected"), tags$th("Lag"), tags$th("Confidence"), tags$th("In plain English"))),
           tags$tbody(lapply(seq_len(nrow(pr)), prow))),
-        p(class="qc-cap-note", style="margin-top:8px", "Sources: Brown & Ernest (rain & rodents); Thibault et al. 2010; Owen 2006; Cole et al. 2015; Both et al. & Visser (phenological mismatch); dryland ANPP–precipitation reviews.")),
-      div(class="about-card", h4(bs_icon("database"), " Data"),
-        p("Per-site annual signals assembled from the five sibling apps' bundles plus NEON/Daymet climate overlays. Small-mammal catch rate is a relative annual index (captures per 100 plot-nights), not effort-standardised across sites."),
+        p(class="qc-cap-note", style="margin-top:8px", HTML("Sources: warmer-springs→earlier green-up — <b>Fu et al. 2015</b> (Nat. Comms.), Richardson et al. 2013; rain→desert rodents (lagged, non-linear) — <b>Brown &amp; Ernest 2002</b>, Thibault et al. 2010; rain-timing — Zhang et al. 2021; dryland productivity~precipitation — Sala et al. 1988, Huxman et al. 2004, Knapp et al. 2017; the “green wave” — Merkle et al. 2016. A green-up→bird link is <b>deliberately omitted</b>: the mismatch literature is about timing-synchrony, not “later green-up → more birds.”"))),
+
+      div(class="about-card", h4(bs_icon("database"), " Data & honest limits"),
+        p("Per-site annual signals assembled from the five sibling apps' bundles plus NEON/Daymet climate overlays. ",
+          tags$b("Small-mammal catch rate"), " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites — read within-site trends only. ",
+          tags$b("Temperature"), " is the year's average, a stand-in for the spring warmth that actually drives green-up. ",
+          tags$b("Plant richness"), " (species count) is a rough proxy for plant productivity."),
         p(bs_icon("envelope"), " ", tags$a(href="mailto:desertdatalabs@gmail.com","desertdatalabs@gmail.com"))))
   })
   observeEvent(input$help, showModal(modalDialog(easyClose=TRUE, title=tagList(bs_icon("question-circle"), " How to read the cascade"),

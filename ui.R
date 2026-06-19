@@ -57,6 +57,8 @@ ui <- bslib::page_sidebar(
           p("Standardised annual signals, stacked by trophic layer. The eye does the judging; the chips keep it honest."))),
         layout_columns(col_widths = c(8, 4),
           card(full_screen = TRUE, card_head("bar-chart-steps", "Alignment ladder"),
+            div(class = "ladder-note", bs_icon("info-circle"),
+              tags$span(HTML("Each line is <b>standardised</b>: <b>0 = that signal's own average year</b>, up = above average, down = below. Compare the <b>timing</b> of the bumps across strips, not their heights. Each strip's lines share its layer's colour."))),
             spin(plotlyOutput("ladderPlot", height = "560px"))),
           card(card_head("link-45deg", "Do the links match the prior?",
             info_pop("Link chips", p("Each arrow is a predicted driver→response link with its expected sign and lag. The colour says whether the data agrees, and is honest about how few years stand behind it."))),

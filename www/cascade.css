@@ -75,3 +75,13 @@
 [data-bs-theme="dark"] .link-chip,
 [data-bs-theme="dark"] .casc-sig { background: var(--paper); }
 [data-bs-theme="dark"] .casc-node { background: rgba(255,255,255,0.03); }
+
+/* ---- plain-English glossary in the About panel ---- */
+.about-plain { border-left: 4px solid var(--green, #1a7f37); }
+.gloss-item { margin: 9px 0; font-size: 13.5px; line-height: 1.5; }
+.gloss-item b { color: var(--ink); display: inline; }
+.gloss-item > b:first-child { display: block; color: var(--pine, #0C234B); font-size: 13px; margin-bottom: 1px; }
+.gloss-item span { color: #3b4f63; }
+[data-bs-theme="dark"] .gloss-item span { color: #b9c6d6; }
+[data-bs-theme="dark"] .gloss-item > b:first-child { color: #9fc6ff; }
+.ladder-note { font-size: 12px; color: var(--muted, #6b7a89); margin: 2px 0 8px; display:flex; gap:6px; align-items:baseline; }
