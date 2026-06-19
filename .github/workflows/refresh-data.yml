@@ -1,0 +1,94 @@
+name: Refresh NEON Driver Cascade bundle
+
+# The Driver Cascade is a DERIVED app: its data/cascade.rds is assembled FROM the
+# five sibling apps' committed .rds bundles (no direct NEON pull). So this workflow
+# CLONES each sibling repo, rebuilds cascade.rds, and pushes it — which makes
+# Posit Connect Cloud auto-redeploy (git-backed deploy; see docs/neonize-playbook.md §6).
+#
+# CADENCE: the SECOND Saturday night of each month (Arizona), one week AFTER the
+# siblings refresh on the FIRST Saturday — so we always rebuild from their freshly
+# refreshed bundles. Same off-peak slot ("0 6 * * 0" weekly, gated below).
+#
+# ACTIVATION (one-time, manual — until then this is staged-but-idle):
+#   1. Make this repo a Connect Cloud app pointed at branch `master` (then a push = deploy).
+#   2. (optional) make the repo public for the GitHub Pages showcase.
+# Run on demand any time from the Actions tab (workflow_dispatch).
+
+on:
+  schedule:
+    - cron: "0 6 * * 0"   # Sunday 06:00 UTC == Saturday 23:00 America/Phoenix
+  workflow_dispatch:
+
+permissions:
+  contents: write          # push the rebuilt cascade.rds to master (= the deploy)
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run — proceeding."; echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          dow=$(TZ='America/Phoenix' date +%u)    # 6 = Saturday
+          day=$(TZ='America/Phoenix' date +%-d)
+          if [ "$dow" = "6" ] && [ "$day" -ge 8 ] && [ "$day" -le 14 ]; then
+            echo "Second Saturday in Arizona (day $day) — proceeding (siblings refreshed last week)."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not the second Saturday in Arizona (dow=$dow day=$day) — skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  rebuild:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the Cascade repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Clone the sibling repos into a workspace, using the dir NAMES build_cascade.R
+      # expects (slug -> dir). Shallow + public, so no auth needed.
+      - name: Clone sibling bundles
+        run: |
+          ws="$RUNNER_TEMP/siblings"; mkdir -p "$ws"
+          gh() { git clone --depth 1 "https://github.com/tgilbert14/$1.git" "$ws/$2"; }
+          gh NEON-Small-Mammal-Tracker-App        App-NEON-Small-Mammal-Tracker
+          gh NEON-Plant-Diversity                 NEON-Plant-Diversity
+          gh NEON-Breeding-Birds                  NEON-Breeding-Birds
+          gh NEON-Plant-Phenology-Explorer        NEON-Plant-Phenology
+          gh NEON-Vegetation-Structure-Explorer   NEON-Veg-Structure
+          echo "CASCADE_ROOT=$ws" >> "$GITHUB_ENV"
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install R packages
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: dplyr, tidyr, stringr, tibble
+
+      - name: Rebuild data/cascade.rds from the sibling bundles
+        run: Rscript scripts/build_cascade.R
+
+      # Commit + push the rebuilt bundle to master. THIS is the deploy: Connect
+      # Cloud auto-redeploys on the push. No-ops cleanly when nothing changed.
+      - name: Commit & push rebuilt cascade.rds
+        run: |
+          git config user.name  "neon-data-bot"
+          git config user.email "neon-data-bot@users.noreply.github.com"
+          git add data/cascade.rds
+          if git diff --cached --quiet; then
+            echo "No change in cascade.rds — nothing to deploy."
+          else
+            git commit -m "data: monthly cross-product cascade rebuild [bot]"
+            git push origin HEAD:master
+            echo "Pushed rebuilt cascade.rds — Connect Cloud will redeploy."
+          fi

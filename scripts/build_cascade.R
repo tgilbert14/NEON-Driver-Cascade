@@ -6,7 +6,10 @@
 # priors, sites, meta). Run from the NEON-Driver-Cascade dir.
 # ===========================================================================
 suppressPackageStartupMessages({ library(dplyr) })
-ROOT <- "C:/Users/tsgil/OneDrive/Documents/VGS - R"
+# Where the sibling repos live. Locally that's the VGS-R folder; in CI the refresh
+# workflow clones each sibling into a workspace and sets CASCADE_ROOT to it. The
+# dir names below must match the clone target dirs the workflow uses.
+ROOT <- Sys.getenv("CASCADE_ROOT", unset = "C:/Users/tsgil/OneDrive/Documents/VGS - R")
 APP  <- list(
   mammal = file.path(ROOT, "App-NEON-Small-Mammal-Tracker"),
   plant  = file.path(ROOT, "NEON-Plant-Diversity"),
