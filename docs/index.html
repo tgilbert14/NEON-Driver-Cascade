@@ -126,7 +126,7 @@
           Cascade lines up every explorer in the suite into one honest, bottom-up view of what really
           moves populations — across shared NEON field sites.</p>
         <div class="cta-row">
-          <a id="launch" class="btn btn-primary" href="#">Launch the Driver Cascade&nbsp;→</a>
+          <a id="launch" class="btn btn-primary" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">Driver Cascade — launching soon&nbsp;→</a>
           <a class="btn btn-ghost" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">View on GitHub</a>
         </div>
         <div class="warm" id="warm"></div>
@@ -151,7 +151,56 @@
       <p class="suite-sub">Each app is a deep, honest explorer for one NEON data product — pick one and
         dive in. They share a design, a statistics-show-their-work ethic, and the same field sites, so
         the Driver Cascade can tie them together.</p>
-      <div class="app-grid" id="appGrid"><!-- cards injected below for one source of truth --></div>
+      <div class="app-grid">
+        <a class="app-card" href="https://019ec337-7100-317e-5052-c3bf32ffcb79.share.connect.posit.cloud/" target="_blank" rel="noopener">
+          <span class="app-emoji">🐀</span><span class="app-name">Small Mammal Tracker</span>
+          <span class="app-dp">DP1.10072.001</span>
+          <span class="app-tag">Who lives where — home ranges, diversity, detection-corrected abundance, and every tagged animal's life story.</span>
+          <span class="app-go">Open the app →</span>
+        </a>
+        <a class="app-card" href="https://019ee116-75d9-5940-8ccd-9b8c7afabce4.share.connect.posit.cloud/" target="_blank" rel="noopener">
+          <span class="app-emoji">🐦</span><span class="app-name">Breeding Birds</span>
+          <span class="app-dp">DP1.10003.001</span>
+          <span class="app-tag">Every species' detection index &amp; ubiquity, area-corrected detectability by distance, with clickable data-quality flags.</span>
+          <span class="app-go">Open the app →</span>
+        </a>
+        <a class="app-card" href="https://019ee109-30ae-006e-cb3b-143afeac57e3.share.connect.posit.cloud/" target="_blank" rel="noopener">
+          <span class="app-emoji">🌿</span><span class="app-name">Plant Diversity</span>
+          <span class="app-dp">DP1.10058.001</span>
+          <span class="app-tag">Plant presence &amp; % cover, native vs. introduced, across all 46 NEON terrestrial sites.</span>
+          <span class="app-go">Open the app →</span>
+        </a>
+        <a class="app-card" href="https://019ee118-bf17-1622-bd5d-e59cab3b36a7.share.connect.posit.cloud/" target="_blank" rel="noopener">
+          <span class="app-emoji">🍃</span><span class="app-name">Plant Phenology</span>
+          <span class="app-dp">DP1.10055.001</span>
+          <span class="app-tag">Green-up, flowering &amp; leaf-off timing for thousands of tagged plants — the calendar of the canopy.</span>
+          <span class="app-go">Open the app →</span>
+        </a>
+        <a class="app-card" href="https://019ee110-8fd3-abae-aee3-02ea8e4274c8.share.connect.posit.cloud/" target="_blank" rel="noopener">
+          <span class="app-emoji">🌳</span><span class="app-name">Vegetation Structure</span>
+          <span class="app-dp">DP1.10098.001</span>
+          <span class="app-tag">Every tagged tree &amp; desert shrub — diameter, height &amp; growth across 42 sites, every biome.</span>
+          <span class="app-go">Open the app →</span>
+        </a>
+        <a class="app-card" href="https://019ec8ff-2a4b-e0e9-871d-07a047a571d3.share.connect.posit.cloud/" target="_blank" rel="noopener">
+          <span class="app-emoji">🪲</span><span class="app-name">Ground Beetle Tracker</span>
+          <span class="app-dp">DP1.10022.001</span>
+          <span class="app-tag">Carabid (ground-beetle) pitfall sampling — community turnover across NEON sites.</span>
+          <span class="app-go">Open the app →</span>
+        </a>
+        <a class="app-card" href="https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/" target="_blank" rel="noopener">
+          <span class="app-emoji">💧</span><span class="app-name">Water Chemistry</span>
+          <span class="app-dp">DP1.20093.001</span>
+          <span class="app-tag">Surface-water chemistry analytes across NEON's aquatic sites.</span>
+          <span class="app-go">Open the app →</span>
+        </a>
+        <a class="app-card soon" id="driversCard" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">
+          <span class="app-emoji">🔗</span><span class="app-name">Driver Cascade</span>
+          <span class="app-dp">the capstone synthesis</span>
+          <span class="app-tag">Climate → green-up → producers → consumers: what drives populations, across every product above.</span>
+          <span class="app-go">Launching soon →</span>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -179,70 +228,29 @@
   </footer>
 
   <script>
-    // ── ONE registry of the suite (drives the grid). Each app's live Connect Cloud URL. ──
-    // Driver Cascade isn't deployed yet → set DRIVERS_URL once its Connect Cloud app exists.
+    // The suite grid is STATIC HTML above (crawlable, works without JS). This only
+    // upgrades the Driver Cascade hero + its grid card once its live app exists:
+    // paste the Connect Cloud share URL below and re-publish Pages.
     const DRIVERS_URL = "REPLACE-WITH-DRIVERS-CONNECT-CLOUD-URL";
-    const APPS = [
-      { e:"🐀", name:"Small Mammal Tracker", dp:"DP1.10072.001",
-        tag:"Who lives where — home ranges, diversity, detection-corrected abundance, and every tagged animal's life story.",
-        url:"https://019ec337-7100-317e-5052-c3bf32ffcb79.share.connect.posit.cloud/" },
-      { e:"🐦", name:"Breeding Birds", dp:"DP1.10003.001",
-        tag:"Every species' detection index & ubiquity, area-corrected detectability by distance, with clickable data-quality flags.",
-        url:"https://019ee116-75d9-5940-8ccd-9b8c7afabce4.share.connect.posit.cloud/" },
-      { e:"🌿", name:"Plant Diversity", dp:"DP1.10058.001",
-        tag:"Plant presence & % cover, native vs. introduced, across all 46 NEON terrestrial sites.",
-        url:"https://019ee109-30ae-006e-cb3b-143afeac57e3.share.connect.posit.cloud/" },
-      { e:"🍃", name:"Plant Phenology", dp:"DP1.10055.001",
-        tag:"Green-up, flowering & leaf-off timing for thousands of tagged plants — the calendar of the canopy.",
-        url:"https://019ee118-bf17-1622-bd5d-e59cab3b36a7.share.connect.posit.cloud/" },
-      { e:"🌳", name:"Vegetation Structure", dp:"DP1.10098.001",
-        tag:"Every tagged tree & desert shrub — diameter, height & growth across 42 sites, every biome.",
-        url:"https://019ee110-8fd3-abae-aee3-02ea8e4274c8.share.connect.posit.cloud/" },
-      { e:"🪲", name:"Ground Beetle Tracker", dp:"DP1.10022.001",
-        tag:"Carabid (ground-beetle) pitfall sampling — community turnover across NEON sites.",
-        url:"https://019ec8ff-2a4b-e0e9-871d-07a047a571d3.share.connect.posit.cloud/" },
-      { e:"💧", name:"Water Chemistry", dp:"DP1.20093.001",
-        tag:"Surface-water chemistry analytes across NEON's aquatic sites.",
-        url:"https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/" },
-      { e:"🔗", name:"Driver Cascade", dp:"the capstone synthesis",
-        tag:"Climate → green-up → producers → consumers: what drives populations, across every product above.",
-        url:DRIVERS_URL, hero:true }
-    ];
     (function () {
-      var grid = document.getElementById("appGrid");
-      APPS.forEach(function (a) {
-        var soon = !a.url || a.url.indexOf("REPLACE-WITH") !== -1;
-        var c = document.createElement("a");
-        c.className = "app-card" + (a.hero ? " soon" : "") + (soon ? " soon" : "");
-        c.href = soon ? "https://github.com/tgilbert14/NEON-Driver-Cascade" : a.url;
-        if (!soon) { c.target = "_blank"; c.rel = "noopener"; }
-        c.innerHTML =
-          '<span class="app-emoji">' + a.e + '</span>' +
-          '<span class="app-name">' + a.name + '</span>' +
-          '<span class="app-dp">' + a.dp + '</span>' +
-          '<span class="app-tag">' + a.tag + '</span>' +
-          '<span class="app-go">' + (soon ? "Coming soon →" : "Open the app →") + '</span>';
-        grid.appendChild(c);
-      });
-
-      // Hero launch button + pre-warm (placeholder-aware)
-      var launch = document.getElementById("launch"), warm = document.getElementById("warm");
-      var placeholder = DRIVERS_URL.indexOf("REPLACE-WITH") !== -1;
-      if (placeholder) {
-        launch.textContent = "Driver Cascade — launching soon";
-        launch.href = "https://github.com/tgilbert14/NEON-Driver-Cascade";
-        launch.target = "_blank"; launch.rel = "noopener";
-        warm.textContent = "The live app goes up once its Connect Cloud deploy is wired — explore the seven below in the meantime.";
+      if (DRIVERS_URL.indexOf("REPLACE-WITH") !== -1) {
+        var w = document.getElementById("warm");
+        if (w) w.textContent = "The live app goes up once its Connect Cloud deploy is wired — explore the live explorers below in the meantime.";
         return;
       }
-      launch.href = DRIVERS_URL;
+      var launch = document.getElementById("launch");
+      if (launch) { launch.href = DRIVERS_URL; launch.firstChild && (launch.textContent = "Launch the Driver Cascade →"); }
+      var card = document.getElementById("driversCard");
+      if (card) { card.href = DRIVERS_URL; card.classList.remove("soon");
+        var go = card.querySelector(".app-go"); if (go) go.textContent = "Open the app →"; }
+      // pre-warm the (possibly sleeping) app while the visitor reads
       try {
-        warm.textContent = "Warming up the app…";
+        var warm = document.getElementById("warm"); if (warm) warm.textContent = "Warming up the app…";
         var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
         var killer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
         fetch(DRIVERS_URL, { mode: "no-cors", cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
-          .then(function () { warm.textContent = "Ready when you are."; })
-          .catch(function () { warm.textContent = ""; })
+          .then(function () { if (warm) warm.textContent = "Ready when you are."; })
+          .catch(function () { if (warm) warm.textContent = ""; })
           .finally(function () { if (killer) clearTimeout(killer); });
       } catch (e) { /* ignore */ }
     })();
