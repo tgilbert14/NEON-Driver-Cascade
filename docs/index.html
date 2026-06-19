@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEON Explorer Suite — by Desert Data Labs</title>
+  <meta name="description"
+    content="A family of interactive explorers for real NEON ecological data — small mammals, breeding birds, plants, phenology, trees, ground beetles, water chemistry — tied together by the Driver Cascade: how climate drives green-up, producers, and the animals on top. Honest statistics, instant loads." />
+  <meta name="theme-color" content="#0C234B" />
+
+  <!-- Open Graph / social card (text only; add og-image.png later) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/" />
+  <meta property="og:title" content="NEON Explorer Suite — Desert Data Labs" />
+  <meta property="og:description"
+    content="Eight interactive explorers for real NEON data, tied together by the Driver Cascade: climate → green-up → producers → consumers. Honest stats, instant loads." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NEON Explorer Suite — Desert Data Labs" />
+  <meta name="twitter:description" content="Eight interactive explorers for real NEON data, tied together by the Driver Cascade." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0C234B; --navy2: #16386e; --cardinal: #AB0520;
+      --gold: #FFD200; --gold-ink: #9a7a00; --sky: #2f7fb5;
+      --green: #1a7f37; --ink: #1c2733; --slate: #5a6675;
+      --bg: #f3f6fb; --card: #ffffff;
+      /* cascade layer hues */
+      --clim: #2f7fb5; --phen: #5fae3a; --prod: #1a7f37; --cons: #AB0520;
+    }
+    * { box-sizing: border-box }
+    body { margin: 0; font-family: Rubik, system-ui, sans-serif; color: var(--ink); background: var(--bg);
+      -webkit-font-smoothing: antialiased; line-height: 1.55 }
+    h1, h2, h3 { font-family: Rubik, sans-serif; line-height: 1.15; margin: 0; font-weight: 800 }
+    a { color: var(--sky) }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 22px }
+
+    /* ── Hero: the Driver Cascade (main front) ── */
+    .hero { position: relative; overflow: hidden; color: #fff;
+      background: radial-gradient(120% 140% at 18% 0%, var(--navy2) 0%, var(--navy) 46%, #08183a 100%) }
+    .hero::after { content: ""; position: absolute; inset: 0; opacity: .5; pointer-events: none;
+      background:
+        radial-gradient(46px 46px at 12% 30%, rgba(255,210,0,.10), transparent 70%),
+        radial-gradient(60px 60px at 84% 22%, rgba(255,255,255,.07), transparent 70%),
+        radial-gradient(54px 54px at 66% 80%, rgba(255,255,255,.06), transparent 70%) }
+    .hero .wrap { position: relative; padding: 64px 22px 58px; display: grid; grid-template-columns: 1.25fr .9fr;
+      gap: 34px; align-items: center }
+    .badge { display: inline-flex; align-items: center; gap: 8px; font-size: .76rem; font-weight: 700;
+      letter-spacing: .05em; text-transform: uppercase; color: var(--gold);
+      background: rgba(255,255,255,.10); padding: 6px 13px; border-radius: 999px }
+    .hero h1 { font-size: clamp(2.1rem, 5vw, 3.25rem); margin: 18px 0 10px; letter-spacing: -.02em }
+    .hero h1 .tag { font-size: .4em; font-weight: 700; vertical-align: middle; margin-left: 12px;
+      text-transform: uppercase; letter-spacing: .12em; color: rgba(255,255,255,.62);
+      border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 3px 10px }
+    .hero p.lead { font-size: clamp(1.05rem, 2.2vw, 1.24rem); max-width: 56ch; margin: 0 0 26px; color: rgba(255,255,255,.92) }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center }
+    .btn { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.02rem;
+      padding: 13px 24px; border-radius: 12px; text-decoration: none; transition: transform .12s ease, box-shadow .12s ease }
+    .btn-primary { background: var(--gold); color: var(--navy); box-shadow: 0 8px 24px rgba(0,0,0,.22) }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.3) }
+    .btn-ghost { color: #fff; border: 1.5px solid rgba(255,255,255,.6) }
+    .btn-ghost:hover { background: rgba(255,255,255,.12) }
+    .warm { font-size: .82rem; color: rgba(255,255,255,.82); margin-top: 14px; min-height: 1.2em }
+
+    /* cascade diagram (pure CSS) */
+    .cascade { display: flex; flex-direction: column; gap: 10px }
+    .crung { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14); border-left: 4px solid; border-radius: 12px; padding: 11px 14px }
+    .crung .ce { font-size: 1.4rem; line-height: 1 }
+    .crung .ct { font-weight: 700; font-size: .98rem }
+    .crung .cs { color: #bcccdf; font-size: .8rem }
+    .crung.l1 { border-left-color: var(--clim) } .crung.l2 { border-left-color: var(--phen); margin-left: 14px }
+    .crung.l3 { border-left-color: var(--prod); margin-left: 28px } .crung.l4 { border-left-color: var(--cons); margin-left: 42px }
+    .carrow { text-align: center; color: rgba(255,255,255,.5); font-size: 1.1rem; margin: -4px 0 -4px 14px }
+
+    /* ── Suite grid (near the top) ── */
+    section.suite { padding: 46px 0 8px }
+    .kick { color: var(--slate); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .78rem }
+    .suite h2 { font-size: 1.7rem; margin: 6px 0 4px; color: var(--navy) }
+    .suite .suite-sub { color: var(--slate); margin: 0 0 24px; max-width: 70ch }
+    .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px }
+    .app-card { display: flex; flex-direction: column; gap: 7px; padding: 20px; border-radius: 16px; background: var(--card);
+      border: 1px solid #e7eef6; border-top: 3px solid #d3e0ee; color: var(--ink); text-decoration: none;
+      box-shadow: 0 6px 22px rgba(12,35,75,.06); transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease }
+    .app-card:hover { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(12,35,75,.14); border-top-color: var(--gold) }
+    .app-emoji { font-size: 2rem; line-height: 1 }
+    .app-name { font-weight: 800; font-size: 1.08rem; color: var(--navy) }
+    .app-dp { font-size: .72rem; font-weight: 700; letter-spacing: .03em; color: var(--slate); text-transform: uppercase }
+    .app-tag { color: #42566e; font-size: .92rem; flex: 1 1 auto }
+    .app-go { color: var(--cardinal); font-weight: 700; font-size: .92rem; margin-top: 4px }
+    .app-card.soon { opacity: .9; border-top-color: var(--gold);
+      background: linear-gradient(180deg, rgba(255,210,0,.07), #fff 44%) }
+    .app-card.soon .app-go { color: var(--gold-ink) }
+
+    /* ── About strip ── */
+    .about { margin: 44px 0 8px; background: rgba(12,35,75,.05); border-left: 4px solid var(--gold);
+      border-radius: 10px; padding: 22px 24px }
+    .about h2 { font-size: 1.2rem; margin-bottom: 8px; color: var(--navy) }
+    .about p { margin: 8px 0 0; color: #3b4f63 }
+
+    footer { border-top: 1px solid #e2eaf2; padding: 26px 0 50px; color: var(--slate); font-size: .9rem; margin-top: 30px }
+    footer a { font-weight: 600; text-decoration: none }
+    .cta-foot { display: inline-block; margin-bottom: 10px; font-weight: 700; color: var(--cardinal) }
+
+    @media (max-width: 880px) {
+      .hero .wrap { grid-template-columns: 1fr; gap: 26px }
+      .app-grid { grid-template-columns: repeat(2, 1fr) }
+    }
+    @media (max-width: 560px) { .app-grid { grid-template-columns: 1fr } .crung { margin-left: 0 !important } }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+  </style>
+</head>
+
+<body>
+  <!-- ── HERO: Driver Cascade (main front) ── -->
+  <header class="hero">
+    <div class="wrap">
+      <div>
+        <span class="badge"><span aria-hidden="true">🔗</span> The NEON Explorer Suite · Capstone</span>
+        <h1>NEON Driver Cascade <span class="tag">unofficial</span></h1>
+        <p class="lead">One story under all the others: how <b>climate</b> drives <b>green-up</b>,
+          green-up drives the <b>plants</b>, and the plants drive the <b>animals</b> on top. The Driver
+          Cascade lines up every explorer in the suite into one honest, bottom-up view of what really
+          moves populations — across shared NEON field sites.</p>
+        <div class="cta-row">
+          <a id="launch" class="btn btn-primary" href="#">Launch the Driver Cascade&nbsp;→</a>
+          <a class="btn btn-ghost" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">View on GitHub</a>
+        </div>
+        <div class="warm" id="warm"></div>
+      </div>
+      <div class="cascade" aria-hidden="true">
+        <div class="crung l1"><span class="ce">🌧️</span><div><div class="ct">Climate</div><div class="cs">precipitation · temperature</div></div></div>
+        <div class="carrow">↓</div>
+        <div class="crung l2"><span class="ce">🌱</span><div><div class="ct">Green-up</div><div class="cs">the timing hinge</div></div></div>
+        <div class="carrow">↓</div>
+        <div class="crung l3"><span class="ce">🌳</span><div><div class="ct">Producers</div><div class="cs">plants · trees · cover</div></div></div>
+        <div class="carrow">↓</div>
+        <div class="crung l4"><span class="ce">🐀</span><div><div class="ct">Consumers</div><div class="cs">mammals · birds · beetles</div></div></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── SUITE GRID: all the apps, near the top ── -->
+  <section class="suite">
+    <div class="wrap">
+      <span class="kick">Eight explorers · 46 NEON sites · real data, instant loads</span>
+      <h2>Explore the whole suite</h2>
+      <p class="suite-sub">Each app is a deep, honest explorer for one NEON data product — pick one and
+        dive in. They share a design, a statistics-show-their-work ethic, and the same field sites, so
+        the Driver Cascade can tie them together.</p>
+      <div class="app-grid" id="appGrid"><!-- cards injected below for one source of truth --></div>
+    </div>
+  </section>
+
+  <section class="suite" style="padding-top:8px">
+    <div class="wrap">
+      <div class="about">
+        <h2>About the suite</h2>
+        <p>Built by <b>Desert Data Labs</b> on real data from the National Ecological Observatory
+          Network (NEON, operated by Battelle, funded by NSF). Every app loads pre-bundled snapshots so
+          there are no live-API waits, refreshes itself on a monthly off-peak schedule, and leads with
+          transparent, well-sourced methods — detection-corrected abundance, honest diversity
+          estimators, area-corrected detectability, interval-censored phenology, and data-quality
+          flags you can click and download. Educational data-exploration tools, not affiliated with
+          NEON, Battelle, or the NSF.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <a class="cta-foot" href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite"><span aria-hidden="true">👋</span> Want a custom data app like these for your project?</a><br>
+      Built by <b>Desert Data Labs</b> · Tucson, AZ. Data: National Ecological Observatory Network
+      (operated by Battelle, funded by NSF). Educational tools, not affiliated with NEON, Battelle, or the NSF.
+    </div>
+  </footer>
+
+  <script>
+    // ── ONE registry of the suite (drives the grid). Each app's live Connect Cloud URL. ──
+    // Driver Cascade isn't deployed yet → set DRIVERS_URL once its Connect Cloud app exists.
+    const DRIVERS_URL = "REPLACE-WITH-DRIVERS-CONNECT-CLOUD-URL";
+    const APPS = [
+      { e:"🐀", name:"Small Mammal Tracker", dp:"DP1.10072.001",
+        tag:"Who lives where — home ranges, diversity, detection-corrected abundance, and every tagged animal's life story.",
+        url:"https://019ec337-7100-317e-5052-c3bf32ffcb79.share.connect.posit.cloud/" },
+      { e:"🐦", name:"Breeding Birds", dp:"DP1.10003.001",
+        tag:"Every species' detection index & ubiquity, area-corrected detectability by distance, with clickable data-quality flags.",
+        url:"https://019ee116-75d9-5940-8ccd-9b8c7afabce4.share.connect.posit.cloud/" },
+      { e:"🌿", name:"Plant Diversity", dp:"DP1.10058.001",
+        tag:"Plant presence & % cover, native vs. introduced, across all 46 NEON terrestrial sites.",
+        url:"https://019ee109-30ae-006e-cb3b-143afeac57e3.share.connect.posit.cloud/" },
+      { e:"🍃", name:"Plant Phenology", dp:"DP1.10055.001",
+        tag:"Green-up, flowering & leaf-off timing for thousands of tagged plants — the calendar of the canopy.",
+        url:"https://019ee118-bf17-1622-bd5d-e59cab3b36a7.share.connect.posit.cloud/" },
+      { e:"🌳", name:"Vegetation Structure", dp:"DP1.10098.001",
+        tag:"Every tagged tree & desert shrub — diameter, height & growth across 42 sites, every biome.",
+        url:"https://019ee110-8fd3-abae-aee3-02ea8e4274c8.share.connect.posit.cloud/" },
+      { e:"🪲", name:"Ground Beetle Tracker", dp:"DP1.10022.001",
+        tag:"Carabid (ground-beetle) pitfall sampling — community turnover across NEON sites.",
+        url:"https://019ec8ff-2a4b-e0e9-871d-07a047a571d3.share.connect.posit.cloud/" },
+      { e:"💧", name:"Water Chemistry", dp:"DP1.20093.001",
+        tag:"Surface-water chemistry analytes across NEON's aquatic sites.",
+        url:"https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/" },
+      { e:"🔗", name:"Driver Cascade", dp:"the capstone synthesis",
+        tag:"Climate → green-up → producers → consumers: what drives populations, across every product above.",
+        url:DRIVERS_URL, hero:true }
+    ];
+    (function () {
+      var grid = document.getElementById("appGrid");
+      APPS.forEach(function (a) {
+        var soon = !a.url || a.url.indexOf("REPLACE-WITH") !== -1;
+        var c = document.createElement("a");
+        c.className = "app-card" + (a.hero ? " soon" : "") + (soon ? " soon" : "");
+        c.href = soon ? "https://github.com/tgilbert14/NEON-Driver-Cascade" : a.url;
+        if (!soon) { c.target = "_blank"; c.rel = "noopener"; }
+        c.innerHTML =
+          '<span class="app-emoji">' + a.e + '</span>' +
+          '<span class="app-name">' + a.name + '</span>' +
+          '<span class="app-dp">' + a.dp + '</span>' +
+          '<span class="app-tag">' + a.tag + '</span>' +
+          '<span class="app-go">' + (soon ? "Coming soon →" : "Open the app →") + '</span>';
+        grid.appendChild(c);
+      });
+
+      // Hero launch button + pre-warm (placeholder-aware)
+      var launch = document.getElementById("launch"), warm = document.getElementById("warm");
+      var placeholder = DRIVERS_URL.indexOf("REPLACE-WITH") !== -1;
+      if (placeholder) {
+        launch.textContent = "Driver Cascade — launching soon";
+        launch.href = "https://github.com/tgilbert14/NEON-Driver-Cascade";
+        launch.target = "_blank"; launch.rel = "noopener";
+        warm.textContent = "The live app goes up once its Connect Cloud deploy is wired — explore the seven below in the meantime.";
+        return;
+      }
+      launch.href = DRIVERS_URL;
+      try {
+        warm.textContent = "Warming up the app…";
+        var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+        var killer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
+        fetch(DRIVERS_URL, { mode: "no-cors", cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+          .then(function () { warm.textContent = "Ready when you are."; })
+          .catch(function () { warm.textContent = ""; })
+          .finally(function () { if (killer) clearTimeout(killer); });
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+</body>
+
+</html>
