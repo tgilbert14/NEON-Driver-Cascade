@@ -26,11 +26,23 @@ yr_of <- function(x) suppressWarnings(as.integer(format(as.Date(x), "%Y")))
 ann_env <- function(site) {                       # climate + coarse NEON phenology %
   e <- rd(file.path(APP$mammal, "data/env", paste0(site, ".rds"))); if (is.null(e)) return(NULL)
   e$year <- yr_of(e$date %||% paste0(e$ym, "-01"))
-  e %>% filter(!is.na(.data$year)) %>% group_by(year) %>% summarise(
-    precip = if (all(is.na(.data$precip_mm))) NA_real_ else sum(.data$precip_mm, na.rm=TRUE),
-    temp   = if (all(is.na(.data$temp_c)))    NA_real_ else round(mean(.data$temp_c, na.rm=TRUE),2),
+  # QC: keep only plausible monthly values, and require enough months so a PARTIAL
+  # year doesn't masquerade as an annual temp/precip total.
+  agg <- e %>% filter(!is.na(.data$year)) %>% group_by(year) %>% summarise(
+    temp = { v <- .data$temp_c[is.finite(.data$temp_c) & .data$temp_c > -40 & .data$temp_c < 50]
+             if (length(v) >= 8) round(mean(v), 2) else NA_real_ },                 # >=8 valid months
+    precip = { p <- .data$precip_mm[is.finite(.data$precip_mm) & .data$precip_mm >= 0 & .data$precip_mm < 2000]
+               if (length(p) >= 10) round(sum(p), 1) else NA_real_ },               # annual total needs ~full year
     fruiting_pct = if (all(is.na(.data$fruiting_pct))) NA_real_ else round(max(.data$fruiting_pct, na.rm=TRUE),1),
-    .groups="drop") %>% mutate(site = site, .before = 1)
+    .groups="drop")
+  # Within-site temp outlier: NA any year whose annual mean is implausibly far from
+  # this SITE's own median — catches a corrupted-sensor year (e.g. SCBI 2018, whose
+  # summer months read deeply negative) that a fixed window/median can't, since ~40%
+  # of its months are bad. Needs >=4 finite years to anchor a robust median.
+  tv <- agg$temp[is.finite(agg$temp)]
+  if (length(tv) >= 4) { med <- stats::median(tv); thr <- max(6, 3 * stats::mad(tv))
+    agg$temp[is.finite(agg$temp) & abs(agg$temp - med) > thr] <- NA_real_ }
+  agg %>% mutate(site = site, .before = 1)
 }
 ann_phe <- function(site) {                       # green-up onset DOY (the hinge)
   b <- rd(file.path(APP$phe, "data/sites", paste0(site, ".rds"))); if (is.null(b)) return(NULL)
@@ -52,15 +64,21 @@ ann_mammal <- function(site) {                    # consumer: CPUE + minimum kno
   d <- rd(file.path(APP$mammal, "data/sites", paste0(site, ".rds"))); if (is.null(d)) return(NULL)
   if (!is.data.frame(d)) d <- d[[1]]
   d$year <- yr_of(d$collectDate); d <- d[!is.na(d$year), , drop=FALSE]; if (!nrow(d)) return(NULL)
+  # Each row is a TRAP-NIGHT. Effort = DEPLOYED trap-nights (exclude "1 - trap not
+  # set"); a capture = trapStatus 5 (capture) or 4 (>1 in one trap). The old code
+  # divided by n_distinct(nightuid) = BOUTS, inflating CPUE ~90x into an impossible
+  # "35 animals per trap" — this is the captures-per-100-trap-nights index (≈4-16).
   has_status <- "trapStatus" %in% names(d)
-  d$is_cap <- if (has_status) grepl("capture", d$trapStatus, ignore.case=TRUE) else TRUE
-  eff_col <- if ("nightuid" %in% names(d)) "nightuid" else NULL
+  if (has_status) {
+    d$is_cap   <- grepl("capture", d$trapStatus, ignore.case = TRUE)
+    d$deployed <- !is.na(d$trapStatus) & !grepl("not set", d$trapStatus, ignore.case = TRUE)
+  } else { d$is_cap <- TRUE; d$deployed <- TRUE }
   d %>% group_by(year) %>% summarise(
-    effort = if (!is.null(eff_col)) dplyr::n_distinct(.data[[eff_col]]) else dplyr::n_distinct(paste(.data$collectDate, .data$plotID)),
-    captures = sum(.data$is_cap, na.rm=TRUE),
+    traps    = sum(.data$deployed),                                    # deployed trap-nights = effort
+    captures = sum(.data$is_cap, na.rm = TRUE),
     mammal_mnka = dplyr::n_distinct(.data$tagID[!is.na(.data$tagID) & nzchar(.data$tagID) & .data$is_cap]),
     .groups="drop") %>%
-    mutate(mammal_cpue = ifelse(.data$effort > 0, round(100 * .data$captures / .data$effort, 2), NA_real_),
+    mutate(mammal_cpue = ifelse(.data$traps > 0, round(100 * .data$captures / .data$traps, 2), NA_real_),
            site = site) %>% select(site, year, mammal_cpue, mammal_mnka)
 }
 ann_bird <- function(site) {                      # consumer: detection index + richness
@@ -112,8 +130,13 @@ priors <- tibble::tribble(
   "temp",        "greenup_doy",    -1L, 0L,  "Warmer springs advance green-up (earlier DOY) (Cole et al. 2015).",
   "precip",      "mammal_cpue",    +1L, 1L,  "Rain->seed pulse->granivore rodents, lagged & nonlinear (Brown&Ernest; Thibault 2010).",
   "fruiting_pct","mammal_cpue",    +1L, 1L,  "Prior-year seed/fruit production feeds granivores (Owen 2006).",
-  "plant_richness","mammal_cpue",  +1L, 1L,  "Producer diversity/productivity -> consumers, lagged.",
-  "greenup_doy", "bird_index",     +1L, 0L,  "Green-up timing sets the food peak birds track; mismatch if they don't (Both; Visser).")
+  "plant_richness","mammal_cpue",  +1L, 1L,  "Producer diversity/productivity -> consumers, lagged.")
+# NOTE: no green-up -> bird prior. The trophic-mismatch literature (Both; Visser;
+# Mayor 2017; Youngflesh 2021) is about SYNCHRONY between bird breeding and the food
+# peak — not "later green-up DOY -> more birds", and the direction reverses by region.
+# We can't compute a defensible mismatch from a detection index, so we post no prior
+# rather than one the cited literature doesn't support. bird_index still shows on the
+# ladder as a descriptive consumer signal.
 
 meta <- list(built = "annual signals from sibling bundles + mammal env overlays",
              n_sites = length(unique(annual$site)))

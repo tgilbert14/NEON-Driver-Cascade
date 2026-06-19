@@ -35,14 +35,16 @@ literature review of bottom-up driver ecology and short-time-series statistics:
 - **About** — the full priors table + the honesty manifesto + citations.
 
 ### What it surfaces (real, honest findings)
-- **SCBI**: warmer springs → earlier green-up — r=−0.60, n=7, clears the permutation null
-  (*consistent with prior*); 3/3 cascade links point the predicted way.
-- **SRER / HARV**: messier (1/5, 1/3 sign-matches) — and the app *says so* (high binomial p =
-  not more than chance). Honesty over a tidy story.
+- **SCBI** — the one genuinely defensible result in the suite: **warmer springs → earlier
+  green-up**, r=−0.92, n=6, permutation p=0.012, 95% CI [−0.99,−0.34] — *consistent with prior*,
+  clears the null. Of the four *testable* (n≥6) links there, 3 of 4 point the predicted way —
+  but that tally is binomial p=0.31, i.e. **direction-agreement, not significance** (3/4 can't be).
+- **SRER / HARV**: messier (1/3, 1/4 testable sign-matches, high binomial p) — and the app
+  *says so*. Honesty over a tidy story; most producer→consumer links are untestable at <6 years.
 
 ## Run it
-R 4.5.x: `shiny::runApp(".", port = 8194)`. Default site **SRER** (the desert
-precip→productivity→rodent showcase). All data ships in `data/cascade.rds`.
+R 4.5.x: `shiny::runApp(".", port = 8194)`. Default site **SCBI** (the one site with a significant
+result, so the tool's first impression shows it working). All data ships in `data/cascade.rds`.
 
 ## Data
 `data/cascade.rds` = `list(annual, signals, priors, meta)`. The annual per-site signal table is

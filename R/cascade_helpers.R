@@ -60,14 +60,16 @@ site_links <- function(ann_site, priors, nperm = 2000) {
   do.call(rbind, rows)
 }
 
-# sign-match tally across links with >=3 overlapping years (binomial vs 0.5)
+# sign-match tally across TESTABLE links only (n>=6 — the same n-floor the verdicts
+# use; folding in n=3-5 exploratory links would contradict the "no verdict below 6
+# years" rule the chips enforce). Binomial vs 0.5.
 signmatch_score <- function(links) {
-  ok <- links[links$n >= 3 & !is.na(links$sign_match), , drop = FALSE]
+  ok <- links[links$n >= 6 & !is.na(links$sign_match), , drop = FALSE]
   k <- sum(ok$sign_match); tot <- nrow(ok)
-  if (tot == 0) return(list(k=0, n=0, p=NA_real_, txt="no links have enough overlapping years yet"))
+  if (tot == 0) return(list(k=0, n=0, p=NA_real_, txt="no links have enough years (n&ge;6) to test here yet"))
   bt <- stats::binom.test(k, tot, 0.5, alternative = "greater")
   list(k = k, n = tot, p = round(bt$p.value, 3),
-       txt = sprintf("%d of %d cascade links match their predicted direction (binomial p = %.3f%s)",
+       txt = sprintf("%d of %d testable links (n&ge;6) match their predicted direction (binomial p = %.3f%s)",
                      k, tot, bt$p.value, if (bt$p.value < 0.05) ", more than chance" else ""))
 }
 
@@ -82,7 +84,9 @@ layers_present <- function(ann_site, signals) {
 ladder_layer <- function(ann_site, signals, layer) {
   ks <- signals$key[signals$layer == layer]
   out <- lapply(ks, function(k) {
-    v <- ann_site[[k]]; if (sum(is.finite(v)) < 2) return(NULL)
+    # need >=3 finite years: a z-score of exactly 2 points is always {-0.71,+0.71}
+    # regardless of the values — a meaningless straight line on the ladder.
+    v <- ann_site[[k]]; if (sum(is.finite(v)) < 3) return(NULL)
     data.frame(year = ann_site$year, key = k,
                label = signals$label[signals$key == k],
                raw = v, z = zscore(v), stringsAsFactors = FALSE)
