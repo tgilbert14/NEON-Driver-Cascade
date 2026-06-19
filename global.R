@@ -31,11 +31,12 @@ RICH_SITES <- ALL_SITES[SITE_LAYERS >= 3]
 DEFAULT_SITE <- {
   full <- ALL_SITES[vapply(ALL_SITES, .has_phen, logical(1)) & SITE_LAYERS >= 4]
   cand <- if (length(full)) full else if (length(RICH_SITES)) RICH_SITES else ALL_SITES
-  # Prefer SCBI: it carries the one genuinely significant n>=6 link in the suite
-  # (temp -> green-up), so the first impression demonstrates the tool WORKING. Fall
-  # back to the richest-signal full-cascade site otherwise (SRER greeted users with a
-  # null 1/5 result — a deflating capstone first impression).
-  if ("SCBI" %in% cand) "SCBI" else {
+  # Default to SRER — the desert is the Desert Data Labs home turf and the thematic
+  # centre of the cascade (the precip→productivity→rodent story is the headline). The
+  # Overview leads with the strongest available link + honest framing so the weaker
+  # SRER stats don't read as a null. (SCBI carries the one significant link; it's one
+  # tap away and called out in the copy.)
+  if ("SRER" %in% cand) "SRER" else if ("SCBI" %in% cand) "SCBI" else {
     sc <- vapply(cand, function(s) sum(vapply(SIGNALS$key, function(k) sum(is.finite(site_annual(s)[[k]])), integer(1))), integer(1))
     cand[which.max(sc)] } }
 
