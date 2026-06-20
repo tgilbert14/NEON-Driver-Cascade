@@ -43,6 +43,21 @@ ui <- bslib::page_sidebar(
             p(tags$b("climate"), " sets the water and warmth → ", tags$b("green-up timing"), " (the hinge) → ", tags$b("producers"), " (plants) → ", tags$b("consumers"), " (small mammals, birds)."),
             p(class = "caveat", bs_icon("exclamation-triangle"), " Each site has only a handful of years. This tool ", tags$b("states what the literature predicts"), " and checks whether the data agrees — it does ", tags$b("not"), " hunt for whichever correlation looks biggest."))),
           uiOutput("overviewInsight"),
+          local({
+            ord <- neon_sites[order(neon_sites$name), ]
+            lay <- SITE_LAYERS[ord$site]; lay[is.na(lay)] <- 0L
+            tags$details(class = "picker-list",
+              tags$summary(class = "picker-list-summary",
+                tags$span(class = "pls-label", bs_icon("list-ul"),
+                          tagList(" Browse all ", nrow(ord), " sites")),
+                tags$span(class = "pls-chevron", bs_icon("chevron-down"))),
+              div(class = "picker-list-grid",
+                lapply(seq_len(nrow(ord)), function(i)
+                  tags$a(class = "picker-list-link", href = "#",
+                    onclick = sprintf("Shiny.setInputValue('goSite','%s',{priority:'event'});return false;", ord$site[i]),
+                    tags$b(ord$site[i]), sprintf(" — %s ", ord$name[i]),
+                    tags$span(class = "pll-meta", sprintf("%s · %d layer%s", ord$state[i], lay[i], if (lay[i] == 1) "" else "s"))))))
+          }),
           div(class = "cascade-strip", uiOutput("cascadeSchematic")),
           uiOutput("standingStock")),
         card(card_head("list-check", "What's measured here", info_pop("Signals", p("The annual signals available at this site, by trophic layer."))),
