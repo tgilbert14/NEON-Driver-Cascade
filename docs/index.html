@@ -224,9 +224,19 @@
     @media (max-width:760px){ .flybird{ width:190px; opacity:.85 } }
     @media (max-width:430px){ .flybird{ display:none } }
 
+    /* interactive: huddle tilt + clickable mascot links */
+    .flybird { pointer-events:auto }
+    .flybird .tiltwrap { transition: transform .14s ease-out; transform-style:preserve-3d; will-change:transform }
+    .flybird a.mini { cursor:pointer }
+    .flybird a.mini .mhov { transform-box:fill-box; transform-origin:center 80%; transition: transform .16s cubic-bezier(.22,1,.36,1) }
+    .flybird a.mini:hover .mhov, .flybird a.mini:focus-visible .mhov { transform: scale(1.18) }
+    .flybird a.mini.pressed .mhov { animation: cbPress .3s ease }
+    @keyframes cbPress { 0%{ transform:scale(1.18) } 42%{ transform:scale(.8) } 100%{ transform:scale(1.06) } }
+
     @media (prefers-reduced-motion: reduce){
       .sky::before, .launch, .ccore, .constel.lit .cnode-orb, .constel.lit .ctraces line, .frung.pip-on::before { animation:none !important }
       .flybird, .flybird .halo, .flybird .m, .flybird .spark { animation:none !important }
+      .flybird .tiltwrap, .flybird a.mini .mhov { transition:none !important; transform:none !important }
       .launch::after { display:none }
     }
   </style>
@@ -238,64 +248,65 @@
   <header class="hero">
     <div class="wrap">
       <div class="flybird" aria-hidden="true">
+        <div class="tiltwrap">
         <svg viewBox="0 0 300 230" role="img" aria-label="The little suite of NEON mascots">
           <defs>
             <radialGradient id="cbHalo" cx="60%" cy="42%" r="54%"><stop offset="0%" stop-color="#2dd4bf" stop-opacity=".4"/><stop offset="50%" stop-color="#fb8a7e" stop-opacity=".14"/><stop offset="100%" stop-color="#fb8a7e" stop-opacity="0"/></radialGradient>
           </defs>
           <circle class="halo" cx="196" cy="92" r="120" fill="url(#cbHalo)"/>
           <g class="mob">
-            <g transform="translate(132,74)"><g class="m m4">
+            <a class="mini" href="https://tgilbert14.github.io/NEON-Breeding-Birds/" tabindex="-1" aria-label="NEON Birds"><g transform="translate(132,74)"><g class="mhov"><g class="m m4">
               <circle r="16" fill="#ffce5a"/>
               <path d="M-15,-3 Q-25,-2 -21,6 Q-15,4 -11,2 Z" fill="#e8924a"/>
               <path d="M14,-1 L21,1 L14,3 Z" fill="#f0993a"/>
               <path d="M-2,-15 L0,-21 L3,-15 Z" fill="#f0b94a"/>
               <circle cx="-5" cy="-2" r="3.2" fill="#2a160a"/><circle cx="5" cy="-2" r="3.2" fill="#2a160a"/>
               <circle cx="-6" cy="-3" r="1.1" fill="#fff"/><circle cx="4" cy="-3" r="1.1" fill="#fff"/>
-            </g></g>
-            <g transform="translate(178,66)"><g class="m m5">
+            </g></g></g></a>
+            <a class="mini" href="https://tgilbert14.github.io/NEON-Ground-Beetle-Tracker/" tabindex="-1" aria-label="Ground Beetles"><g transform="translate(178,66)"><g class="mhov"><g class="m m5">
               <path d="M-6,-16 Q-12,-24 -16,-27" stroke="#d98a3c" stroke-width="2" fill="none" stroke-linecap="round"/>
               <path d="M6,-16 Q12,-24 16,-27" stroke="#d98a3c" stroke-width="2" fill="none" stroke-linecap="round"/>
               <ellipse rx="16" ry="18" fill="#36d98a"/>
               <path d="M0,-15 L0,16" stroke="#176b46" stroke-width="1.5" opacity=".5"/>
               <circle cx="-5" cy="-2" r="3.2" fill="#0c2a1c"/><circle cx="5" cy="-2" r="3.2" fill="#0c2a1c"/>
               <circle cx="-6" cy="-3" r="1.1" fill="#fff"/><circle cx="4" cy="-3" r="1.1" fill="#fff"/>
-            </g></g>
-            <g transform="translate(224,72)"><g class="m m6">
+            </g></g></g></a>
+            <a class="mini" href="https://tgilbert14.github.io/NEON-Plant-Diversity/" tabindex="-1" aria-label="Plant Diversity"><g transform="translate(224,72)"><g class="mhov"><g class="m m6">
               <path d="M0,-2 C-14,-12 -22,-6 -22,2 C-10,4 -2,0 0,-2 Z" fill="#5fd16a"/>
               <path d="M0,-2 C14,-12 22,-6 22,2 C10,4 2,0 0,-2 Z" fill="#5fd16a"/>
               <circle cy="6" r="15" fill="#d8cf9e"/>
               <circle cx="-5" cy="3" r="3" fill="#3a2a12"/><circle cx="5" cy="3" r="3" fill="#3a2a12"/>
               <circle cx="-6" cy="2" r="1.1" fill="#fff"/><circle cx="4" cy="2" r="1.1" fill="#fff"/>
-            </g></g>
-            <g transform="translate(266,78)"><g class="m m7">
+            </g></g></g></a>
+            <a class="mini" href="https://tgilbert14.github.io/NEON-Vegetation-Structure-Explorer/" tabindex="-1" aria-label="Veg Structure"><g transform="translate(266,78)"><g class="mhov"><g class="m m7">
               <rect x="-4" y="9" width="8" height="15" rx="2" fill="#8a5a2b"/>
               <circle r="17" fill="#4eb86a"/>
               <circle cx="9" cy="6" r="2.5" fill="#ffd24a"/>
               <circle cx="-5" cy="-2" r="3.2" fill="#11331f"/><circle cx="5" cy="-2" r="3.2" fill="#11331f"/>
               <circle cx="-6" cy="-3" r="1.1" fill="#fff"/><circle cx="4" cy="-3" r="1.1" fill="#fff"/>
-            </g></g>
-            <g transform="translate(150,110)"><g class="m m1">
+            </g></g></g></a>
+            <a class="mini" href="https://tgilbert14.github.io/NEON-Small-Mammal-Tracker-App/" tabindex="-1" aria-label="Small Mammals"><g transform="translate(150,110)"><g class="mhov"><g class="m m1">
               <circle cx="-11" cy="-13" r="8" fill="#5aa0d8"/><circle cx="11" cy="-13" r="8" fill="#5aa0d8"/>
               <circle cx="-11" cy="-12" r="4" fill="#ffd24a"/><circle cx="11" cy="-12" r="4" fill="#ffd24a"/>
               <circle r="17" fill="#5aa0d8"/>
               <path d="M-3,5 Q0,4 3,5 Q1.5,9 0,9 Q-1.5,9 -3,5 Z" fill="#fb8a7e"/>
               <circle cx="-6" cy="-1" r="3.4" fill="#0a1a2e"/><circle cx="6" cy="-1" r="3.4" fill="#0a1a2e"/>
               <circle cx="-7" cy="-2.5" r="1.2" fill="#fff"/><circle cx="5" cy="-2.5" r="1.2" fill="#fff"/>
-            </g></g>
-            <g transform="translate(198,112)"><g class="m m2">
+            </g></g></g></a>
+            <a class="mini" href="https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/" tabindex="-1" aria-label="Water Chemistry"><g transform="translate(198,112)"><g class="mhov"><g class="m m2">
               <path d="M0,-18 C-12,-2 -16,8 0,18 C16,8 12,-2 0,-18 Z" fill="#46c6da"/>
               <ellipse cx="-5" cy="2" rx="3" ry="5" fill="#fff" opacity=".4"/>
               <circle cx="-5" cy="4" r="3.2" fill="#0a2230"/><circle cx="5" cy="4" r="3.2" fill="#0a2230"/>
               <circle cx="-6" cy="3" r="1.1" fill="#fff"/><circle cx="4" cy="3" r="1.1" fill="#fff"/>
-            </g></g>
-            <g transform="translate(240,110)"><g class="m m3">
+            </g></g></g></a>
+            <a class="mini" href="https://tgilbert14.github.io/NEON-Plant-Phenology-Explorer/" tabindex="-1" aria-label="Plant Phenology"><g transform="translate(240,110)"><g class="mhov"><g class="m m3">
               <path d="M-4,-12 C-14,-18 -20,-10 -16,-2 C-8,-2 -4,-6 -4,-12 Z" fill="#e6a92e"/>
               <path d="M4,-12 C14,-18 20,-10 16,-2 C8,-2 4,-6 4,-12 Z" fill="#e6a92e"/>
               <path d="M0,-16 C-8,-16 -10,-4 -4,2 L4,2 C10,-4 8,-16 0,-16 Z" fill="#9bd24a"/>
               <circle cy="4" r="15" fill="#8cbf52"/>
               <circle cx="-5" cy="2" r="3" fill="#243a16"/><circle cx="5" cy="2" r="3" fill="#243a16"/>
               <circle cx="-6" cy="1" r="1.1" fill="#fff"/><circle cx="4" cy="1" r="1.1" fill="#fff"/>
-            </g></g>
+            </g></g></g></a>
           </g>
           <g>
             <circle class="spark s1" cx="108" cy="58" r="3" fill="#5eead4"/>
@@ -303,6 +314,7 @@
             <circle class="spark s3" cx="150" cy="152" r="2.2" fill="#fb8a7e"/>
           </g>
         </svg>
+        </div>
       </div>
       <span class="brand">
         <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -480,6 +492,51 @@
         i++;
       }, 900);
     })();
+  </script>
+  <script>
+  (function(){
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var fb = document.querySelector('.flybird');
+    if(fb){
+      var tilt = fb.querySelector('.tiltwrap');
+      if(!reduce){
+        window.addEventListener('pointermove', function(e){
+          var r = fb.getBoundingClientRect();
+          var cx = r.left + r.width/2, cy = r.top + r.height*0.42;
+          var dx = Math.max(-1,Math.min(1,(e.clientX-cx)/260));
+          var dy = Math.max(-1,Math.min(1,(e.clientY-cy)/260));
+          if(tilt) tilt.style.transform = 'perspective(680px) rotateY('+(dx*8).toFixed(1)+'deg) rotateX('+(-dy*6).toFixed(1)+'deg)';
+        }, {passive:true});
+      }
+      Array.prototype.forEach.call(fb.querySelectorAll('a.mini'), function(a){
+        a.addEventListener('click', function(ev){
+          var href = a.getAttribute('href'); if(!href || reduce) return;
+          ev.preventDefault();
+          a.classList.add('pressed');
+          setTimeout(function(){ window.location.href = href; }, 290);
+        });
+      });
+    }
+    var nums = document.querySelectorAll('.stat .n');
+    if(nums.length && 'IntersectionObserver' in window){
+      var run = function(el){
+        var raw0 = el.textContent.trim(), pre='';
+        if(raw0.charAt(0)==='~'||raw0.charAt(0)==='≈'){ pre=raw0.charAt(0); raw0=raw0.slice(1); }
+        var i=0, np='';
+        while(i<raw0.length){ var c=raw0.charAt(i); if((c>='0'&&c<='9')||c===','||c==='.'){ np+=c; i++; } else break; }
+        if(!np || reduce) return;
+        var rest = raw0.slice(i), full = el.textContent.trim();
+        var target = parseFloat(np.replace(/,/g,'')); if(!isFinite(target)) return;
+        var hasComma = np.indexOf(',')>=0, dec=(np.split('.')[1]||'').length;
+        var dur=950, t0=performance.now();
+        function fmt(v){ var s = dec? v.toFixed(dec) : (hasComma? Math.round(v).toLocaleString() : String(Math.round(v))); return pre+s+rest; }
+        function tick(now){ var t=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-t,3); el.textContent=fmt(target*e); if(t<1) requestAnimationFrame(tick); else el.textContent=full; }
+        el.textContent=fmt(0); requestAnimationFrame(tick);
+      };
+      var io = new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting){ io.unobserve(en.target); run(en.target); } }); }, {threshold:.5});
+      nums.forEach(function(n){ io.observe(n); });
+    }
+  })();
   </script>
 </body>
 
