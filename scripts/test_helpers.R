@@ -1,4 +1,8 @@
-setwd("C:/Users/tsgil/OneDrive/Documents/VGS - R/NEON-Driver-Cascade")
+# Local-dev convenience only: hop to the repo root if running from elsewhere (e.g.
+# RStudio). Skipped in CI (the path won't exist on the Linux runner), where the
+# job already runs from the repo root and the relative paths below just work.
+.root <- "C:/Users/tsgil/OneDrive/Documents/VGS - R/NEON-Driver-Cascade"
+if (dir.exists(.root)) setwd(.root)
 suppressPackageStartupMessages({ library(dplyr) })
 source("R/cascade_helpers.R")
 d <- readRDS("data/cascade.rds"); ANN <- d$annual; PR <- d$priors; SG <- d$signals
