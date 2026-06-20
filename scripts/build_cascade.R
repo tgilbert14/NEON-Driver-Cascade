@@ -248,6 +248,12 @@ suite_links <- do.call(rbind, lapply(ALL_SITES, function(s) {
   lk
 }))
 pooled <- pooled_links(suite_links)
+# Carry the pooling-floor flag in the bundle so the server's headline can split the
+# multi-site rank from the under-floor (1–2 vote) rows WITHOUT re-deriving the rule
+# (a binomial on 1–2 site votes is not a pooled test). pooled_links() already sets
+# this; we re-assert it here so a future change to that helper can't silently drop
+# the column the server prefers (it falls back to sites>=3 only if absent).
+pooled$poolable <- pooled$sites >= 3
 
 meta <- list(built = "annual + seasonal climate signals from sibling bundles + mammal env overlays; biome-aware priors; cross-site precompute",
              n_sites = length(ALL_SITES), built_when = format(Sys.Date()))

@@ -353,6 +353,65 @@ server <- function(input, output, session) {
         span(class = "sd-chip", tags$b(sig_label(k)), sprintf(" %s", f(drow[[k]][1]))))))
   })
 
+  # ---- QC-flag panel (§7 gold standard): ranked "verify, not wrong" flags for the
+  # selected site, behind its own tab (clean by default, never in the Overview). Each
+  # flag is a chip that EXPANDS to the exact offending rows on click. ----
+  qc <- reactive({ req(input$site); cascade_qc(ann(), links(), SIGNALS, input$site) })
+  qc_icon <- function(level) switch(level, high="exclamation-octagon-fill",
+    warn="exclamation-triangle-fill", info="info-circle-fill", "check-circle-fill")
+
+  output$qcFlags <- renderUI({
+    q <- qc(); qf <- q$flags
+    has_real <- length(qf) && !identical(qf[[1]]$level, "clean")
+    tagList(
+      div(class="qc-section-h", bs_icon("clipboard-check"), " Cascade data-quality review ",
+        tags$span(class="qcf-sub", "· verify, not errors"),
+        info_pop("Why these are flags, not bugs",
+          p("The cascade's QC choices are ", tags$b("correct"), " — the ≥5-individual green-up gate, the within-site MAD temperature filter, the CI-spans-zero guard on “apparent” links."),
+          p("This panel surfaces ", tags$b("where those rules bit"), " for the selected site, ranked worst-first, so a reader verifies a thin or missing value before reading too much into it. Tap any flag to list the exact rows behind it."))),
+      div(class="qc-flags", lapply(qf, function(f){
+        clickable <- !identical(f$level, "clean") && f$n > 0
+        div(class = paste0("qc-flag qc-flag-", f$level, if (clickable) " qc-flag-click" else ""),
+          role = if (clickable) "button" else NULL, tabindex = if (clickable) "0" else NULL,
+          onclick = if (clickable) sprintf("Shiny.setInputValue('qcInspect','%s',{priority:'event'})", f$key) else NULL,
+          bs_icon(qc_icon(f$level)),
+          div(class="qcf-body",
+            div(class="qcf-title", f$title, if (f$n > 0) tags$span(class="qcf-n", f$n)),
+            div(class="qcf-detail", f$detail)),
+          if (clickable) tags$span(class="qcf-go", bs_icon("chevron-right"))) })),
+      if (has_real) div(class="qcf-hint", bs_icon("hand-index-thumb"),
+        " tap a flag to list the exact rows behind it"),
+      uiOutput("qcInspect"),
+      div(class="qc-toolbar",
+        downloadButton("dlQcReport", tagList(bs_icon("filetype-csv"), " Download QC report (CSV)"),
+          class="btn-outline-dark btn-sm")))
+  })
+
+  # clickable inspector: the exact offending rows for the tapped flag
+  output$qcInspect <- renderUI({
+    key <- input$qcInspect; q <- qc(); req(!is.null(key), key %in% names(q$sets))
+    st <- q$sets[[key]]; req(!is.null(st), nrow(st))
+    f <- Filter(function(x) identical(x$key, key), q$flags)[[1]]
+    cols <- names(st); head_n <- min(nrow(st), 200L); sv <- st[seq_len(head_n), cols, drop=FALSE]
+    fmt <- function(v) if (is.numeric(v)) ifelse(is.na(v), "—", format(round(v, 2), trim=TRUE)) else format(v)
+    div(class="qc-inspector",
+      div(class="qci-head", bs_icon(qc_icon(f$level)),
+        tags$b(sprintf(" %s — %d row%s", f$title, f$n, if (f$n==1) "" else "s"))),
+      div(class="qc-cap-scroll", tags$table(class="inspect-tbl",
+        tags$thead(tags$tr(lapply(cols, tags$th))),
+        tags$tbody(lapply(seq_len(nrow(sv)), function(i)
+          tags$tr(lapply(cols, function(cc) tags$td(fmt(sv[[cc]][i])))))))),
+      if (nrow(st) > head_n) p(class="qc-cap-note", sprintf("Showing first %d of %d.", head_n, nrow(st))))
+  })
+  output$dlQcReport <- downloadHandler(
+    filename = function() sprintf("%s-cascade-qc-report.csv", input$site),
+    content = function(file){ rep <- cascade_qc_report(ann(), links(), SIGNALS, input$site)
+      if (is.null(rep)) rep <- data.frame(note="No data-quality flags at this site.")
+      hdr <- c(sprintf("# NEON Driver Cascade — %s data-quality review (verify, not wrong).", input$site),
+               "# Each flag is a value worth a second look, not an error; the cascade's QC rules are correct.", "")
+      writeLines(hdr, file)
+      suppressWarnings(utils::write.table(rep, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double")) })
+
   # ---- About ----
   output$aboutPanel <- renderUI({
     pr <- PRIORS

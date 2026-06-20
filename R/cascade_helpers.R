@@ -148,3 +148,93 @@ TIER_META <- list(
   counter     = list(lab = "Counter to prior",      col = "#fb8a7e", icon = "x-circle-fill"),
   exploratory = list(lab = "Exploratory (n<6)",     col = "#9fb0cf", icon = "hourglass-split"),
   insufficient= list(lab = "Too few years",         col = "#6b7a89", icon = "slash-circle"))
+
+# ===========================================================================
+# QC-flag panel (the suite gold standard, §7) — ranked "VERIFY, not wrong"
+# data-quality flags for ONE site's cascade slice. Returns list(flags, sets):
+#   flags = ranked list (high > warn > info) each with key/level/title/n/detail,
+#   sets  = the EXACT offending rows behind each flag (key -> data.frame), so the
+#           UI can expand a chip to the records that earned it.
+# Every flag is a thing to LOOK AT, never a thing that's "broken" — the cascade's
+# QC choices (the >=5-individual green-up gate, the within-site MAD temp NA, the
+# CI-spans-zero "apparent" guard) are CORRECT; this panel surfaces where they bit.
+# Computed entirely from the bundle (annual rows + cached links) — no recompute.
+cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
+  flags <- list(); sets <- list()
+  add <- function(key, level, title, detail, set = NULL) {
+    n <- if (is.null(set)) 0L else nrow(set)
+    flags[[length(flags) + 1L]] <<- list(key = key, level = level, title = title,
+                                         detail = detail, n = n)
+    if (!is.null(set) && nrow(set)) sets[[key]] <<- set
+  }
+  a <- if (is.null(ann_site)) data.frame() else ann_site
+  lk <- if (is.null(links_site)) data.frame() else links_site
+
+  # (1) WARN — climate years MAD-flagged / NA'd. The within-site MAD outlier filter
+  # NAs an implausible annual temp (corrupted-sensor years); we can't see WHICH years
+  # it caught from the bundle, but we CAN flag the years where the cascade has biology
+  # present but its climate driver is missing — the gaps that thin every link's n.
+  if (nrow(a) && "temp" %in% names(a)) {
+    bio_keys <- intersect(c("greenup_doy","plant_richness","mammal_cpue","bird_index"), names(a))
+    has_bio  <- if (length(bio_keys)) rowSums(!is.na(a[, bio_keys, drop = FALSE])) > 0 else rep(FALSE, nrow(a))
+    gap <- a[has_bio & is.na(a$temp), , drop = FALSE]
+    if (nrow(gap)) {
+      show <- intersect(c("year","temp","precip","greenup_doy","plant_richness","mammal_cpue","bird_index"), names(gap))
+      add("climate_na", "warn", "Climate missing where biology is present",
+          paste0("Annual temperature is NA in ", nrow(gap), " year",
+                 if (nrow(gap) == 1) "" else "s",
+                 " that DO have a biological signal — either too few valid months, or a year the within-site MAD outlier filter dropped as a corrupted-sensor read. The biology is real; the driver for those years isn't, so they can't enter a link. Verify the tower record before reading the gap as 'no climate effect'."),
+          gap[, show, drop = FALSE])
+    }
+  }
+
+  # (2) INFO — green-up onsets resting on a thin individual base. The builder already
+  # gates green-up to years with >=5 tagged individuals, so nothing UNDER the floor
+  # ships; the honest flag is a SPARSE phenology record (few green-up years total),
+  # where each onset leans on a small panel and a single mis-scored plant moves it.
+  if (nrow(a) && "greenup_doy" %in% names(a)) {
+    gu <- a[is.finite(a$greenup_doy), , drop = FALSE]
+    if (nrow(gu) && nrow(gu) < 6) {
+      show <- intersect(c("year","greenup_doy"), names(gu))
+      add("greenup_thin", "info", "Green-up rests on a short phenology record",
+          paste0("Only ", nrow(gu), " year", if (nrow(gu) == 1) "" else "s",
+                 " of green-up here (each already gated to >=5 individuals, so none rests on fewer). A short onset record is more swayed by a single late- or early-scored plant — read the timing, not a precise day-of-year. Tap to see the years."),
+          gu[, show, drop = FALSE])
+    }
+  }
+
+  # (3) HIGH — "apparent" links whose bootstrap CI spans zero. These point the way the
+  # prior predicts but the 95% interval crosses 0, so the sign isn't yet distinguishable
+  # from noise — the most over-readable cell in the app. Surface them so a reader doesn't
+  # promote an "apparent" to a result.
+  if (nrow(lk) && all(c("tier","lo","hi") %in% names(lk))) {
+    ap <- lk[lk$tier %in% "apparent" & is.finite(lk$lo) & is.finite(lk$hi) & lk$lo < 0 & lk$hi > 0, , drop = FALSE]
+    if (nrow(ap)) {
+      lab <- function(k) if (!is.null(signals) && k %in% signals$key) signals$label[signals$key == k][1] else k
+      ap$link <- vapply(seq_len(nrow(ap)), function(i) sprintf("%s -> %s", lab(ap$from[i]), lab(ap$to[i])), character(1))
+      show <- intersect(c("link","lag","n","r","lo","hi","p"), names(ap))
+      add("apparent_ci0", "high", "“Apparent” links whose CI spans zero",
+          paste0(nrow(ap), " link", if (nrow(ap) == 1) "" else "s",
+                 " point the predicted direction but the 95% bootstrap interval still crosses 0 — the sign is not yet distinguishable from noise at this site's n. Read as suggestive only; the honest test is the cross-site pooling on the Across NEON tab. Tap to see each link's r and interval."),
+          ap[, show, drop = FALSE])
+    }
+  }
+
+  # rank high > warn > info (the gold-standard order); clean path = a green reassurance
+  if (!length(flags)) {
+    return(list(flags = list(list(key = "clean", level = "clean",
+      title = "No data-quality flags at this site",
+      detail = "Climate coverage, green-up support, and every link's interval all read clean here — nothing flagged to verify.", n = 0L)),
+      sets = list()))
+  }
+  ord <- order(match(vapply(flags, `[[`, character(1), "level"), c("high","warn","info","clean")))
+  list(flags = flags[ord], sets = sets)
+}
+
+# flat one-row-per-flag QC report for CSV export (the <entity>_qc_report() analog)
+cascade_qc_report <- function(ann_site, links_site, signals = NULL, site = NULL) {
+  q <- cascade_qc(ann_site, links_site, signals, site)
+  do.call(rbind, lapply(q$flags, function(f) data.frame(
+    site = site %||% NA_character_, level = f$level, flag = f$title,
+    n_rows = f$n, detail = f$detail, stringsAsFactors = FALSE)))
+}
