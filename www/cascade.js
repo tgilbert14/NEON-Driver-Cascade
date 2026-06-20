@@ -96,3 +96,31 @@ document.addEventListener("shown.bs.tab", function () {
     pass(); if (++tries > 9 || document.querySelector(".hero-verdict[data-holo]")) clearInterval(iv);
   }, 350);
 })();
+
+// ---- first-visit suite-huddle guide: a one-time, dismissible onboarding nudge -------
+// The cascade synthesis app has no single mascot, so the sidebar link-mark stays and a
+// tiny HUDDLE of sibling creatures (mouse + bird + sprout) peeks in once, bottom-right,
+// with a one-line "where to start" tip. Shown a SINGLE time (localStorage), then auto-
+// hides after a few seconds or on click. Reduced-motion users get the fade, not the hop.
+(function () {
+  var armed = false;
+  function showGuide() {
+    if (armed) return;
+    var g = document.getElementById("cascadeGuide");
+    if (!g) return;
+    try { if (localStorage.getItem("cascadeGuideSeen") === "1") return; } catch (e) { return; }
+    armed = true;
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var hideTimer;
+    function dismiss() { g.classList.remove("show", "wave"); clearTimeout(hideTimer); }
+    setTimeout(function () {
+      g.classList.add("show"); if (!reduce) g.classList.add("wave");
+      try { localStorage.setItem("cascadeGuideSeen", "1"); } catch (e) {}
+      hideTimer = setTimeout(dismiss, 9000);
+    }, 1200);
+    g.addEventListener("click", dismiss);
+  }
+  if (window.jQuery) jQuery(document).on("shiny:connected", function () { setTimeout(showGuide, 400); });
+  document.addEventListener("shiny:connected", function () { setTimeout(showGuide, 400); });
+  document.addEventListener("DOMContentLoaded", function () { setTimeout(showGuide, 1600); });
+})();

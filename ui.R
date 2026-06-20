@@ -105,6 +105,16 @@ ui <- bslib::page_sidebar(
           downloadButton("dlSuite", tagList(bs_icon("filetype-csv"), " CSV"), class = "btn-outline-dark btn-sm ms-auto")),
           div(class = "sb-scroll", uiOutput("scoreboard")))),
 
+      nav_panel(title = tagList(bs_icon("clipboard-check"), " QC"), value = "qc",
+        div(class = "tab-head", div(class = "tab-head-text",
+          h4("Data-quality review for this site",
+             info_pop("Verify, not wrong",
+               p("The suite gold-standard QC panel: ranked ", tags$b("“verify, not wrong”"), " flags for the selected site — worst-first."),
+               p("Every flag is a value to ", tags$b("look at"), " before over-reading it, never a bug. The cascade's QC rules (the ≥5-individual green-up gate, the within-site temperature outlier filter, the CI-spans-zero guard) are correct — this just shows where they bit. Tap a flag for the exact rows; export the whole review as CSV."))),
+          p("A clean site shows a single green all-clear. Pick another site in the sidebar to review it."))),
+        card(card_head("clipboard-check", "Flags worth a second look"),
+          uiOutput("qcFlags"))),
+
       nav_panel(title = tagList(bs_icon("info-circle"), " About"), value = "about", uiOutput("aboutPanel"))
     )),
   div(class = "ddl-footer",
@@ -112,5 +122,10 @@ ui <- bslib::page_sidebar(
       span(class = "hand", "\U0001F44B"), "Want a custom data app like this for your project?")),
     p(style = "margin-top:12px", HTML("Built by <strong>Desert Data Labs</strong> · Tucson, AZ · "),
       tags$a(href = "mailto:desertdatalabs@gmail.com?subject=NEON%20Driver%20Cascade", "desertdatalabs@gmail.com")),
-    p(style = "font-size:12px;opacity:.85", "Synthesis of NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology), and NEON/Daymet climate. Not affiliated with NEON, Battelle, or the NSF. An educational data-exploration tool."))
+    p(style = "font-size:12px;opacity:.85", "Synthesis of NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology), and NEON/Daymet climate. Not affiliated with NEON, Battelle, or the NSF. An educational data-exploration tool.")),
+  div(class = "cascade-guide", id = "cascadeGuide", role = "note",
+    tags$button(class = "cg-close", type = "button", `aria-label` = "Dismiss tip", HTML("&times;")),
+    MASCOT_HUDDLE,
+    div(class = "cg-bubble", tags$b("New here?"),
+      HTML(" Start on <b>Overview</b> for the verdict, then open the <b>Driver Lab</b> to see what explains it.")))
 )
