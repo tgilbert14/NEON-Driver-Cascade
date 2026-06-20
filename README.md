@@ -51,11 +51,12 @@ test (and tally) the links *expected* for that biome:
 ### What it surfaces (real, honest findings)
 - **The suite headline (pooled):** **warmer springs → earlier green-up holds at 23 of 32 temperature-limited
   sites, binomial p = 0.010** — a real result no single short site can show. Led by **SCBI** (r=−0.92, n=6,
-  permutation p=0.007). The producer→consumer links pool to ~null (richness→rodents 21/40, p=0.44) — and the
+  permutation p=0.007). The producer→consumer links pool to ~null (richness→rodents 22/40, p=0.318) — and the
   app says so.
 - **SRER (the desert that "didn't match"):** the annual cascade looks weak (1–2/3), but that was mostly a
-  *method* artifact. Test the **right season**: the summer-monsoon seed crop drives next-year rodents at
-  **r = +0.72** (where annual rain showed +0.20), and winter rain → forb richness flips from −0.11 to +0.27.
+  *method* artifact. Test the **right season**: the summer-monsoon seed crop tracks next-year rodents at
+  **r = +0.72** (one desert, n = 7 yrs, p ≈ 0.06 — suggestive, not established; annual rain showed +0.20), and
+  winter rain → forb richness flips from −0.11 to +0.27.
   The desert cascade was there all along — the annual aggregation was hiding it.
 
 ## Run it

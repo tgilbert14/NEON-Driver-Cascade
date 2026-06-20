@@ -200,7 +200,7 @@ signals <- tibble::tribble(
 # does (desert/sagebrush). Every prior is still COMPUTED wherever data exists; the
 # class only governs which links count toward a site's sign-match tally and which
 # biome each link pools across. Grounded in re-computation on the live data:
-#   temp->green-up holds at ~74% of temperature-limited sites (binom p~0.002);
+#   temp->green-up holds at ~72% of temperature-limited sites (23/32, binom p=0.010);
 #   at SRER winter-rain->richness r=+0.27 and monsoon(t-1)->rodents r=+0.72 — the
 #   desert cascade the annual aggregation was hiding.
 priors <- tibble::tribble(

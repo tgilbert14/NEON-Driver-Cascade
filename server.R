@@ -61,7 +61,7 @@ server <- function(input, output, session) {
     body <- if (desert) {
       s <- "Here green-up is triggered by <b>water, not warmth</b>, so the standard <i>annual</i> cascade only half-fits — and that mismatch <b>is the finding</b>, not a failure."
       if (nrow(mon) && mon$r[1] > 0)
-        s <- paste0(s, sprintf(" Test the <b>right season</b> and the chain reappears: the summer-monsoon seed crop drives next year's rodents at <b>r&nbsp;=&nbsp;%+.2f</b> — where annual rainfall showed almost nothing (r&nbsp;=&nbsp;+0.20).", mon$r[1]))
+        s <- paste0(s, sprintf(" Test the <b>right season</b> and the chain reappears: the summer-monsoon seed crop <b>tracks</b> next year's rodents at <b>r&nbsp;=&nbsp;%+.2f</b> (a single desert — suggestive, not yet established) — where annual rainfall showed almost nothing (r&nbsp;=&nbsp;+0.20).", mon$r[1]))
       s
     } else if (!is.null(best) && identical(best$tier, "consistent")) {
       sprintf("The cascade behaves as ecology predicts: <b>%d of %d</b> testable links point the expected way, led by <b>%s&nbsp;→&nbsp;%s</b> (r&nbsp;=&nbsp;%+.2f, clears the noise test).",
@@ -426,16 +426,23 @@ server <- function(input, output, session) {
     if (!is_desert(input$site)) return(div(class="seasonal-note", bs_icon("info-circle"),
       HTML(" Not a bimodal-desert site — the annual rainfall total already captures its one main rain season, so the cascade is tested on annual climate.")))
     a <- ann()
-    rc <- function(from,to,lag){ if (!all(c(from,to) %in% names(a))) return(NA_real_)
-      m <- lag_pairs(a, from, to, lag); if (nrow(m) < 4) return(NA_real_); round(stats::cor(m$x, m$y), 2) }
+    # return r WITH its n — so the contrast carries its own sample size (these are
+    # single-site, short-series numbers below the app's n>=6 verdict gate; we show
+    # them as an illustrative contrast, never a result — the n and the popover say so).
+    rc <- function(from,to,lag){ if (!all(c(from,to) %in% names(a))) return(list(r=NA_real_, n=0L))
+      m <- lag_pairs(a, from, to, lag); if (nrow(m) < 4) return(list(r=NA_real_, n=nrow(m)))
+      list(r=round(stats::cor(m$x, m$y), 2), n=nrow(m)) }
     ann_mam <- rc("precip","mammal_cpue",1);  mon_mam <- rc("precip_monsoon","mammal_cpue",1)
     ann_rich <- rc("precip","plant_richness",0); win_rich <- rc("precip_winter","plant_richness",0)
+    rv <- function(x) if (is.na(x$r)) "—" else sprintf("r = %+.2f", x$r)
+    rn <- function(x) if (x$n > 0) span(class="sc-n", sprintf(" n=%d", x$n)) else NULL
     cmp <- function(lab, a1, lab1, a2, lab2) div(class="seasonal-cmp",
       div(class="sc-title", lab),
-      div(class="sc-row", span(class="sc-k", lab1), span(class="sc-v sc-weak", if (is.na(a1)) "—" else sprintf("r = %+.2f", a1))),
-      div(class="sc-row", span(class="sc-k", lab2), span(class="sc-v sc-strong", if (is.na(a2)) "—" else sprintf("r = %+.2f", a2))))
+      div(class="sc-row", span(class="sc-k", lab1), span(class="sc-v sc-weak", rv(a1), rn(a1))),
+      div(class="sc-row", span(class="sc-k", lab2), span(class="sc-v sc-strong", rv(a2), rn(a2))))
     div(
-      insight_banner("droplet-half", tone="navy", HTML("A single <b>annual</b> rainfall number blends two independent seasons. Split them, and the desert cascade reappears — the right season carries the signal the annual total buries:")),
+      insight_banner("droplet-half", tone="navy", HTML("A single <b>annual</b> rainfall number blends two independent seasons. Split them, and the desert cascade reappears — the right season carries the signal the annual total buries:"),
+        info_pop("Illustrative, not significant", HTML("This is a <b>single-site contrast</b> at the one desert site where the seasonal split is testable, on a short series <b>below the app's n&ge;6 verdict gate</b>. The seasonal r's are larger than the annual ones — but they are <b>not</b> statistically significant (e.g. monsoon&rarr;rodents reaches r=+0.72 at n=7, p=0.06) and they pool across just one site. Read it as a vivid illustration of the annual-aggregation artifact, not an established desert result. The honest, cross-site test is on the Across&nbsp;NEON tab."))),
       div(class="seasonal-cmps",
         cmp("Rain → next-year rodents", ann_mam, "annual rain", mon_mam, "monsoon seed crop"),
         cmp("Rain → plant richness", ann_rich, "annual rain", win_rich, "winter (forb) rain")))
@@ -444,8 +451,14 @@ server <- function(input, output, session) {
   # ---- ACROSS NEON: pooled headline + cross-site sign-match scoreboard ----
   output$pooledHeadline <- renderUI({
     pl <- POOLED; if (!nrow(pl)) return(NULL)
-    pl <- pl[order(pl$p), , drop=FALSE]
-    items <- lapply(seq_len(nrow(pl)), function(i){ r <- pl[i,]
+    # HARD floor: a binomial on 1–2 votes is not a pooled test (one vote always reads
+    # 1/1, p=0.500). Such links must NOT sit in the headline rank beside the 32-site
+    # result — split them out and demote them to a p-less "not poolable" footnote row.
+    MIN_SITES <- 3L
+    poolable <- if ("poolable" %in% names(pl)) pl$poolable %in% TRUE else pl$sites >= MIN_SITES
+    rank <- pl[poolable, , drop=FALSE]; under <- pl[!poolable, , drop=FALSE]
+    rank <- rank[order(rank$p), , drop=FALSE]
+    items <- lapply(seq_len(nrow(rank)), function(i){ r <- rank[i,]
       sig <- is.finite(r$p) && r$p < 0.05
       div(class=paste0("pooled-row", if (sig) " pooled-sig" else ""),
         div(class="pl-link", HTML(sprintf("%s&nbsp;→&nbsp;%s", sig_label(r$from), sig_label(r$to))),
@@ -454,9 +467,21 @@ server <- function(input, output, session) {
         div(class="pl-stat", tags$b(sprintf("%d/%d sites", r$k, r$sites)),
             span(class="pl-p", sprintf("p=%.3f", r$p)), span(class="pl-r", sprintf("median r=%+.2f", r$median_r))))
     })
+    # under-floor links: shown demoted, no p-value, with a one-click "why?" caveat.
+    under_rows <- if (nrow(under)) lapply(seq_len(nrow(under)), function(i){ r <- under[i,]
+      div(class="pooled-row pooled-underfloor",
+        div(class="pl-link", HTML(sprintf("%s&nbsp;→&nbsp;%s", sig_label(r$from), sig_label(r$to))),
+            if (r$lag>0) span(class="pl-lag", sprintf(" lag %dy", r$lag))),
+        div(class="pl-stat", span(class="pl-notpool", sprintf("%d site%s — not poolable", r$sites, if (r$sites==1) "" else "s")),
+            span(class="pl-r", sprintf("median r=%+.2f", r$median_r))))
+    }) else NULL
     div(insight_banner("trophy", tone="pine",
       HTML("Per-site series are too short for a verdict — but pooled <b>across sites</b> (one vote per site), the cascade's strongest rung is real: <b>warmer springs → earlier green-up</b> holds across most temperature-limited sites. This is the honest, suite-level answer no single site can give.")),
-      div(class="pooled-list", items))
+      div(class="pooled-list", items),
+      if (!is.null(under_rows)) div(class="pooled-under",
+        div(class="pu-head", "Below the pooling floor (<3 sites)",
+          info_pop("Not a pooled test", HTML("A pooled binomial needs at least <b>3 site votes</b> to mean anything — on 1–2 votes it is degenerate (a single vote always reads 1/1, p=0.500). These links are expected & testable at too few sites to pool, so we show them <b>without a p-value</b> rather than rank them beside the multi-site results. The desert seasonal priors live here: the cross-site sample isn't there yet."))),
+        under_rows))
   })
   output$scoreboard <- renderUI({
     sl <- SUITE_LINKS; if (!nrow(sl)) return(p(class="qc-cap-note","Scoreboard unavailable (rebuild the data bundle)."))
@@ -472,8 +497,15 @@ server <- function(input, output, session) {
         d <- sl[sl$site==s & sl$from==pr$from[j] & sl$to==pr$to[j] & sl$lag==pr$lag[j], , drop=FALSE]
         if (!nrow(d)) return(tags$td(class="sb-cell sb-na"))
         tm <- TIER_META[[d$tier[1]]]; exp <- isTRUE(d$expected[1])
-        tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else ""),
-          title=sprintf("%s — %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else ""),
+        # out-of-prior "hit": a consistent/apparent verdict FIRING OUTSIDE its biome.
+        # Already dimmed, but a colour-scanner could still miscount it as an in-prior
+        # win — so flag it with a subtle corner marker (the * in the cell) and say WHY
+        # in the hover/tap title: out-of-biome corroboration, not an in-prior result.
+        outprior_hit <- !exp && d$tier[1] %in% c("consistent","apparent")
+        ttl <- sprintf("%s — %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else "")
+        if (outprior_hit) ttl <- paste0(ttl, " — OUT OF PRIOR BIOME: corroborates the mechanism in a related biome, but doesn't count toward this site's tally.")
+        tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else "", if (outprior_hit) " sb-outprior" else ""),
+          title=ttl,
           if (is.finite(d$r[1])) sprintf("%+.2f", d$r[1]) else "·")
       })
       ba <- site_ba(s)
@@ -488,7 +520,7 @@ server <- function(input, output, session) {
         tags$thead(tags$tr(tags$th(class="sb-site","Site"), hd)),
         tags$tbody(rows)),
       p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
-        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>consistent</span> <span class='sb-key sb-apparent'>apparent</span> <span class='sb-key sb-counter'>counter</span> <span class='sb-key sb-exploratory'>&lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. Faded cells aren't the mechanism <b>expected</b> for that biome. Click a site to open it. The grey untestable majority is shown, not hidden — that honesty IS the coverage statement.")))
+        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>consistent</span> <span class='sb-key sb-apparent'>apparent</span> <span class='sb-key sb-counter'>counter</span> <span class='sb-key sb-exploratory'>&lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there — out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden — that honesty IS the coverage statement.")))
   })
 
   # ---- DOWNLOADS (the suite's signature export funnel) ----
@@ -506,13 +538,20 @@ server <- function(input, output, session) {
     filename = function() sprintf("%s-link-scorecard.csv", input$site),
     content = function(file) {
       lk <- links(); keep <- intersect(c("from","to","lag","n","r","lo","hi","p","prior_sign","sign_match","tier","expected","expected_class","conf"), names(lk))
-      utils::write.csv(lk[, keep, drop=FALSE], file, row.names=FALSE)
+      hdr <- c(sprintf("# NEON Driver Cascade — %s link scorecard. r is within-site only:", input$site),
+               "# links built on mammal_cpue/bird_index are WITHIN-SITE relative indices — pooling/comparing across sites by magnitude is invalid (only sign-match pooling is legitimate).", "")
+      writeLines(hdr, file)
+      suppressWarnings(utils::write.table(lk[, keep, drop=FALSE], file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
     })
   output$dlSuite <- downloadHandler(
     filename = function() "neon-cascade-scoreboard.csv",
     content = function(file) {
       keep <- intersect(c("site","biome","biome_class","from","to","lag","n","r","lo","hi","p","prior_sign","sign_match","tier","expected","expected_class"), names(SUITE_LINKS))
-      utils::write.csv(SUITE_LINKS[, keep, drop=FALSE], file, row.names=FALSE)
+      hdr <- c("# NEON Driver Cascade — cross-site scoreboard (every site × prior, biome-aware).",
+               "# mammal_cpue / bird_index are WITHIN-SITE relative indices: cross-site magnitude comparison is INVALID.",
+               "# The only legitimate cross-site operation is the one-vote-per-site sign-match pooling (which discards magnitude).", "")
+      writeLines(hdr, file)
+      suppressWarnings(utils::write.table(SUITE_LINKS[, keep, drop=FALSE], file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
     })
 
   # ---- CODEBOOK (the cheapest credibility win) ----

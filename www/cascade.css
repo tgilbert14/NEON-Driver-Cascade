@@ -127,6 +127,7 @@ tr.dt-dim { opacity: .55; }
 .sc-v { font-weight: 800; font-variant-numeric: tabular-nums; }
 .sc-weak { color: #9fb0cf; }
 .sc-strong { color: #5fb56a; }
+.sc-n { font-weight: 500; font-size: 11px; color: var(--muted); margin-left: 5px; opacity: 0.85; }
 
 /* ---- pooled headline -------------------------------------------------- */
 .pooled-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
@@ -142,6 +143,13 @@ tr.dt-dim { opacity: .55; }
 .pl-p { color: var(--muted); }
 .pooled-sig .pl-p { color: #2dd4bf; font-weight: 800; }
 .pl-r { color: var(--muted); }
+/* under-floor (<3 sites): demoted out of the headline rank, no p, dimmed */
+.pooled-under { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.pu-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 7px; }
+.pooled-row.pooled-underfloor { grid-template-columns: minmax(170px, 1.4fr) minmax(180px, 1.2fr);
+  opacity: .68; border-style: dashed; background: transparent; }
+.pl-notpool { color: var(--muted); font-style: italic; }
 
 /* ---- cross-site scoreboard grid -------------------------------------- */
 .sb-scroll { overflow-x: auto; }
@@ -161,6 +169,17 @@ tr.dt-dim { opacity: .55; }
 .sb-cell.sb-insufficient{ background: #1c2c48; color: #8fa3c2; }
 .sb-cell.sb-na          { background: transparent; }
 .sb-cell.sb-dim { opacity: .42; }
+/* out-of-prior "hit": a consistent/apparent verdict outside its biome. A subtle
+   top-right corner wedge marks it so a colour-scan can't miscount it as an in-prior
+   win — the cell's hover/tap title explains it's out-of-biome corroboration. */
+.sb-cell.sb-outprior { position: relative; opacity: .6; }
+.sb-cell.sb-outprior::after { content: ""; position: absolute; top: 0; right: 0;
+  border-width: 0 7px 7px 0; border-style: solid; border-color: transparent rgba(255,255,255,.85) transparent transparent; }
+/* the inline legend swatch mirroring the corner wedge */
+.sb-outprior-key { display: inline-block; width: 14px; height: 14px; border-radius: 3px;
+  background: #2dd4bf; position: relative; vertical-align: middle; opacity: .6; }
+.sb-outprior-key::after { content: ""; position: absolute; top: 0; right: 0;
+  border-width: 0 6px 6px 0; border-style: solid; border-color: transparent rgba(255,255,255,.9) transparent transparent; }
 .sb-key { display: inline-block; color: #fff; font-weight: 700; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
 .sb-key.sb-consistent { background:#2dd4bf; color:#06231f; } .sb-key.sb-apparent { background:#e0b43a; color:#2e2406; }
 .sb-key.sb-counter { background:#fb8a7e; color:#3a0e08; } .sb-key.sb-exploratory { background:#4a5d78; color:#dbe6f5; }

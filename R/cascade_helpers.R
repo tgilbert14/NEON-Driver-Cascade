@@ -73,7 +73,10 @@ site_links <- function(ann_site, priors, biome = NULL, nperm = 2000) {
 # pool each prior link ACROSS sites (one vote per site) — the statistically honest
 # answer to per-site n=6 underpower. Pools only sites where the link is EXPECTED and
 # testable (n>=6). Binomial sign test vs 0.5. Returns one row per (from,to,lag).
-pooled_links <- function(suite_links) {
+# `min_sites` is a HARD floor: a binomial on 1–2 votes is not a pooled test (a single
+# vote always reads k=1/1, p=0.500), so links below the floor get `poolable=FALSE` and
+# NO p — they must not sit in the headline rank beside a 32-site result.
+pooled_links <- function(suite_links, min_sites = 3L) {
   sl <- suite_links
   exp <- if ("expected" %in% names(sl)) sl$expected %in% TRUE else rep(TRUE, nrow(sl))
   sl <- sl[exp & sl$n >= 6 & !is.na(sl$sign_match), , drop = FALSE]
@@ -81,12 +84,15 @@ pooled_links <- function(suite_links) {
   key <- paste(sl$from, sl$to, sl$lag, sep = "|")
   out <- do.call(rbind, lapply(split(seq_len(nrow(sl)), key), function(ix) {
     d <- sl[ix, , drop = FALSE]; k <- sum(d$sign_match); tot <- nrow(d)
-    bt <- stats::binom.test(k, tot, 0.5, alternative = "greater")
+    poolable <- tot >= min_sites
+    p <- if (poolable) round(stats::binom.test(k, tot, 0.5, alternative = "greater")$p.value, 4) else NA_real_
     data.frame(from=d$from[1], to=d$to[1], lag=d$lag[1], expected_class=d$expected_class[1],
-               sites=tot, k=k, p=round(bt$p.value, 4), median_r=round(stats::median(d$r, na.rm=TRUE), 2),
+               sites=tot, k=k, p=p, poolable=poolable,
+               median_r=round(stats::median(d$r, na.rm=TRUE), 2),
                stringsAsFactors = FALSE)
   }))
-  out[order(out$p, -out$sites), , drop = FALSE]
+  # poolable rows first (ranked by p, then coverage); under-floor rows demoted to the tail
+  out[order(!out$poolable, out$p, -out$sites), , drop = FALSE]
 }
 
 # sign-match tally across TESTABLE links only (n>=6 — the same n-floor the verdicts
