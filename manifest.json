@@ -2721,13 +2721,13 @@
   },
   "files": {
     ".claude/launch.json": {
-      "checksum": "df0426cde45b5fb0d291d1ca379d15f6"
+      "checksum": "40adf8374aad07bcf041c236f26a5941"
     },
     ".github/workflows/refresh-data.yml": {
       "checksum": "7db857d197cb316d2f32a9437e21ff83"
     },
     "data/cascade.rds": {
-      "checksum": "64a7d0e8abf8d95d3adae5596ac5dc7e"
+      "checksum": "56064066b834c15ee8a0c3f65ec5bf5a"
     },
     "DEPLOY.md": {
       "checksum": "73bbe6b840cb2bfed426f342b22fa772"
@@ -2735,53 +2735,53 @@
     "docs/_phase23_plan.md": {
       "checksum": "6cae86ebdce8acbca7e9cfdc3e2c1e49"
     },
+    "docs/DATA-TAKEAWAYS.md": {
+      "checksum": "712d55367c54d49d7df735b298b7d718"
+    },
+    "docs/EXPERT-REVIEW.md": {
+      "checksum": "059aa9fd04c244653ca532ed389f2e7e"
+    },
     "docs/index.html": {
-      "checksum": "1072ae70522a25d4e3cf6afe259198ee"
+      "checksum": "5ba8a479e0a19978d8239e23dcc1c261"
     },
     "docs/neonize-playbook.md": {
       "checksum": "3612bfda930e03259fdb7ceb1a6b0566"
     },
     "global.R": {
-      "checksum": "80dda3364c15ee838716fb6f03a4ee73"
+      "checksum": "fd0e5212c0251ecfc6079ab071817c6e"
     },
     "R/cascade_helpers.R": {
-      "checksum": "0b0ce3edcb92676112fd2de0a8f40cb1"
+      "checksum": "96b247d930177447d5614fd99822d5b0"
     },
     "R/site_metadata.R": {
       "checksum": "c7c6d35af1d88f26df80b700534f84b1"
     },
     "README.md": {
-      "checksum": "80fabb3fa619855e68b436cb1d23ef9d"
-    },
-    "scripts/_diag_phe.R": {
-      "checksum": "920fb241281fe95afd569a977f1ee1ec"
+      "checksum": "b374bd52331c207b2959a69b091158d7"
     },
     "scripts/_diag_seasonal.R": {
       "checksum": "f0f6292172bd0c09a1aed8b0bbabb24f"
     },
-    "scripts/_diag_veg.R": {
-      "checksum": "3fced9f8bbc5a444feb9108e3b07d1ec"
-    },
     "scripts/build_cascade.R": {
-      "checksum": "09207731940fa672aa7d2991ce90ca94"
+      "checksum": "037491ef850d1cf88dc1b47cb1d43a38"
     },
     "scripts/test_helpers.R": {
       "checksum": "fd6c0238fb99a5b5945346991395e64f"
     },
     "server.R": {
-      "checksum": "1f791a53b0def1e28ef334674859d4dc"
+      "checksum": "3cacf37512eac01557ef8cb3d4820b0b"
     },
     "ui.R": {
-      "checksum": "b6598e85666a8af5c0d35d12bf8c3f2e"
+      "checksum": "970601295d5d27ee73ab0ca2b05d1cfd"
     },
     "www/cascade.css": {
-      "checksum": "751c03279b447451304a5306804773f4"
+      "checksum": "b428edd27f22aba61d7b4365c692e262"
     },
     "www/cascade.js": {
-      "checksum": "04809765f8e3527759e580fd456cc5f2"
+      "checksum": "c67454f6112338229ddd3029a51a5a31"
     },
     "www/styles.css": {
-      "checksum": "191d24d6c1ac69722cf33138e8b7e439"
+      "checksum": "cdb19ce68237c3145f072ff81f1fb2d6"
     }
   },
   "users": null
