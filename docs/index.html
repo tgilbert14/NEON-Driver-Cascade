@@ -3,256 +3,397 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NEON Explorer Suite — by Desert Data Labs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>NEON Driver Cascade — the Explorer Suite by Desert Data Labs</title>
   <meta name="description"
-    content="A family of interactive explorers for real NEON ecological data — small mammals, breeding birds, plants, phenology, trees, ground beetles, water chemistry — tied together by the Driver Cascade: how climate drives green-up, producers, and the animals on top. Honest statistics, instant loads." />
-  <meta name="theme-color" content="#0C234B" />
+    content="The capstone that ties the NEON Explorer Suite together: how climate drives green-up, green-up drives the plants, and the plants drive the animals on top. Eight interactive explorers for real NEON data. Honest statistics, instant loads." />
+  <meta name="theme-color" content="#070d1f" />
 
-  <!-- Open Graph / social card (text only; add og-image.png later) -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/" />
-  <meta property="og:title" content="NEON Explorer Suite — Desert Data Labs" />
+  <meta property="og:title" content="NEON Driver Cascade — Desert Data Labs" />
   <meta property="og:description"
-    content="Eight interactive explorers for real NEON data, tied together by the Driver Cascade: climate → green-up → producers → consumers. Honest stats, instant loads." />
+    content="Eight interactive explorers for real NEON data, tied together by the Driver Cascade: climate to green-up to producers to consumers. Honest stats, instant loads." />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="NEON Explorer Suite — Desert Data Labs" />
+  <meta name="twitter:title" content="NEON Driver Cascade — Desert Data Labs" />
   <meta name="twitter:description" content="Eight interactive explorers for real NEON data, tied together by the Driver Cascade." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- promote to JS layout before paint so there is no flash of the fallback list -->
+  <script>document.documentElement.className += ' js';</script>
+
   <style>
     :root {
-      --navy: #0C234B; --navy2: #16386e; --cardinal: #AB0520;
-      --gold: #FFD200; --gold-ink: #9a7a00; --sky: #2f7fb5;
-      --green: #1a7f37; --ink: #1c2733; --slate: #5a6675;
-      --bg: #f3f6fb; --card: #ffffff;
-      /* cascade layer hues */
-      --clim: #2f7fb5; --phen: #5fae3a; --prod: #1a7f37; --cons: #AB0520;
+      --bg-0:#070d1f; --bg-1:#0b1733; --bg-2:#0e1d40;
+      --teal:#2dd4bf; --teal-rgb:45,212,191; --bright:#5eead4;
+      --coral:#fb8a7e; --coral-rgb:251,138,126;
+      --gold:#ffd24a; --gold-rgb:255,210,74;
+      --ink:#eaf2ff; --dim:#9fb0cf; --line:rgba(255,255,255,.12); --card:rgba(255,255,255,.045);
+      /* trophic-cascade layer hues */
+      --clim:#43b8e8; --phen:#9bd24a; --prod:#5fb56a; --cons:#fb8a7e;
     }
     * { box-sizing: border-box }
-    body { margin: 0; font-family: Rubik, system-ui, sans-serif; color: var(--ink); background: var(--bg);
-      -webkit-font-smoothing: antialiased; line-height: 1.55 }
-    h1, h2, h3 { font-family: Rubik, sans-serif; line-height: 1.15; margin: 0; font-weight: 800 }
-    a { color: var(--sky) }
-    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 22px }
-
-    /* ── Hero: the Driver Cascade (main front) ── */
-    .hero { position: relative; overflow: hidden; color: #fff;
-      background: radial-gradient(120% 140% at 18% 0%, var(--navy2) 0%, var(--navy) 46%, #08183a 100%) }
-    .hero::after { content: ""; position: absolute; inset: 0; opacity: .5; pointer-events: none;
-      background:
-        radial-gradient(46px 46px at 12% 30%, rgba(255,210,0,.10), transparent 70%),
-        radial-gradient(60px 60px at 84% 22%, rgba(255,255,255,.07), transparent 70%),
-        radial-gradient(54px 54px at 66% 80%, rgba(255,255,255,.06), transparent 70%) }
-    .hero .wrap { position: relative; padding: 64px 22px 58px; display: grid; grid-template-columns: 1.25fr .9fr;
-      gap: 34px; align-items: center }
-    .badge { display: inline-flex; align-items: center; gap: 8px; font-size: .76rem; font-weight: 700;
-      letter-spacing: .05em; text-transform: uppercase; color: var(--gold);
-      background: rgba(255,255,255,.10); padding: 6px 13px; border-radius: 999px }
-    .hero h1 { font-size: clamp(2.1rem, 5vw, 3.25rem); margin: 18px 0 10px; letter-spacing: -.02em }
-    .hero h1 .tag { font-size: .4em; font-weight: 700; vertical-align: middle; margin-left: 12px;
-      text-transform: uppercase; letter-spacing: .12em; color: rgba(255,255,255,.62);
-      border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 3px 10px }
-    .hero p.lead { font-size: clamp(1.05rem, 2.2vw, 1.24rem); max-width: 56ch; margin: 0 0 26px; color: rgba(255,255,255,.92) }
-    .cta-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center }
-    .btn { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.02rem;
-      padding: 13px 24px; border-radius: 12px; text-decoration: none; transition: transform .12s ease, box-shadow .12s ease }
-    .btn-primary { background: var(--gold); color: var(--navy); box-shadow: 0 8px 24px rgba(0,0,0,.22) }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.3) }
-    .btn-ghost { color: #fff; border: 1.5px solid rgba(255,255,255,.6) }
-    .btn-ghost:hover { background: rgba(255,255,255,.12) }
-    .warm { font-size: .82rem; color: rgba(255,255,255,.82); margin-top: 14px; min-height: 1.2em }
-
-    /* cascade diagram (pure CSS) */
-    .cascade { display: flex; flex-direction: column; gap: 10px }
-    .crung { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.14); border-left: 4px solid; border-radius: 12px; padding: 11px 14px }
-    .crung .ce { font-size: 1.4rem; line-height: 1 }
-    .crung .ct { font-weight: 700; font-size: .98rem }
-    .crung .cs { color: #bcccdf; font-size: .8rem }
-    .crung.l1 { border-left-color: var(--clim) } .crung.l2 { border-left-color: var(--phen); margin-left: 14px }
-    .crung.l3 { border-left-color: var(--prod); margin-left: 28px } .crung.l4 { border-left-color: var(--cons); margin-left: 42px }
-    .carrow { text-align: center; color: rgba(255,255,255,.5); font-size: 1.1rem; margin: -4px 0 -4px 14px }
-
-    /* ── Suite grid (near the top) ── */
-    section.suite { padding: 46px 0 8px }
-    .kick { color: var(--slate); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .78rem }
-    .suite h2 { font-size: 1.7rem; margin: 6px 0 4px; color: var(--navy) }
-    .suite .suite-sub { color: var(--slate); margin: 0 0 24px; max-width: 70ch }
-    .app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px }
-    .app-card { display: flex; flex-direction: column; gap: 7px; padding: 20px; border-radius: 16px; background: var(--card);
-      border: 1px solid #e7eef6; border-top: 3px solid #d3e0ee; color: var(--ink); text-decoration: none;
-      box-shadow: 0 6px 22px rgba(12,35,75,.06); transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease }
-    .app-card:hover { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(12,35,75,.14); border-top-color: var(--gold) }
-    .app-emoji { font-size: 2rem; line-height: 1 }
-    .app-name { font-weight: 800; font-size: 1.08rem; color: var(--navy) }
-    .app-dp { font-size: .72rem; font-weight: 700; letter-spacing: .03em; color: var(--slate); text-transform: uppercase }
-    .app-tag { color: #42566e; font-size: .92rem; flex: 1 1 auto }
-    .app-go { color: var(--cardinal); font-weight: 700; font-size: .92rem; margin-top: 4px }
-    .app-card.soon { opacity: .9; border-top-color: var(--gold);
-      background: linear-gradient(180deg, rgba(255,210,0,.07), #fff 44%) }
-    .app-card.soon .app-go { color: var(--gold-ink) }
-
-    /* ── About strip ── */
-    .about { margin: 44px 0 8px; background: rgba(12,35,75,.05); border-left: 4px solid var(--gold);
-      border-radius: 10px; padding: 22px 24px }
-    .about h2 { font-size: 1.2rem; margin-bottom: 8px; color: var(--navy) }
-    .about p { margin: 8px 0 0; color: #3b4f63 }
-
-    footer { border-top: 1px solid #e2eaf2; padding: 26px 0 50px; color: var(--slate); font-size: .9rem; margin-top: 30px }
-    footer a { font-weight: 600; text-decoration: none }
-    .cta-foot { display: inline-block; margin-bottom: 10px; font-weight: 700; color: var(--cardinal) }
-
-    @media (max-width: 880px) {
-      .hero .wrap { grid-template-columns: 1fr; gap: 26px }
-      .app-grid { grid-template-columns: repeat(2, 1fr) }
+    html,body { margin:0 }
+    body {
+      font-family: Rubik, system-ui, sans-serif; color: var(--ink); background: var(--bg-0);
+      -webkit-font-smoothing: antialiased; line-height: 1.55; overflow-x:hidden;
     }
-    @media (max-width: 560px) { .app-grid { grid-template-columns: 1fr } .crung { margin-left: 0 !important } }
-    @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+    h1,h2,h3 { font-family: Rubik, sans-serif; line-height: 1.12; margin:0; font-weight:800 }
+    a { color: var(--bright); text-decoration:none }
+    .wrap { max-width: 1060px; margin: 0 auto; padding: 0 22px; position:relative; z-index:2 }
+
+    /* ---------- desert-night / circuit sky ---------- */
+    .sky { position: fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+      background:
+        radial-gradient(120% 90% at 50% -8%, var(--bg-2), transparent 58%),
+        radial-gradient(140% 120% at 50% 120%, #14245a 0%, var(--bg-1) 45%, var(--bg-0) 100%); }
+    .sky::before { content:""; position:absolute; inset:-50%; opacity:.45;
+      background-repeat:repeat; background-size:240px 240px;
+      background-image:
+        radial-gradient(1.4px 1.4px at 30px 40px, rgba(255,255,255,.5), transparent),
+        radial-gradient(1.2px 1.2px at 150px 90px, rgba(180,220,255,.45), transparent),
+        radial-gradient(1.5px 1.5px at 90px 170px, rgba(255,255,255,.4), transparent);
+      animation: drift 140s linear infinite; }
+    @keyframes drift { to { transform: translateY(240px) } }
+
+    /* ---------- hero ---------- */
+    .hero { position:relative; z-index:2; padding: 46px 0 6px }
+    .brand { display:inline-flex; align-items:center; gap:10px; }
+    .brand svg { width:26px; height:26px; overflow:visible }
+    .brand .stroke { stroke:var(--teal); stroke-width:7; fill:none; stroke-linecap:round }
+    .brand .pip { fill:var(--bright) }
+    .brand b { font-weight:700; font-size:.82rem; letter-spacing:.16em; text-transform:uppercase; color:var(--dim) }
+    .eyebrow { margin-top:18px; font-family: ui-monospace,Menlo,Consolas,monospace; font-size:.72rem;
+      letter-spacing:.26em; text-transform:uppercase; color:var(--teal); }
+    .hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); margin:.5rem 0 .6rem; letter-spacing:-.02em;
+      background:linear-gradient(100deg,#fff 10%, var(--bright) 45%, var(--coral) 95%);
+      -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .lead { font-size: clamp(1.05rem,2.2vw,1.24rem); max-width:60ch; margin:0 0 24px; color:var(--ink) }
+    .lead b { color:var(--bright); font-weight:600 }
+
+    /* ---------- standout launch button (the one thing to click) ---------- */
+    .cta-row { display:flex; flex-wrap:wrap; gap:14px; align-items:center }
+    .launch {
+      position:relative; display:inline-flex; align-items:center; gap:11px;
+      font-weight:800; font-size:1.06rem; padding:15px 28px; border-radius:14px;
+      color:#06121a; border:1px solid rgba(255,255,255,.5); overflow:hidden; isolation:isolate;
+      background:linear-gradient(100deg, var(--bright), var(--teal) 45%, #7fe9ff 80%, var(--bright));
+      background-size:220% 100%;
+      box-shadow:0 10px 34px rgba(var(--teal-rgb),.5), 0 0 0 6px rgba(var(--teal-rgb),.08);
+      transition: transform .16s ease, box-shadow .25s ease;
+      animation: ctaFlow 7s linear infinite;
+    }
+    @keyframes ctaFlow { to { background-position:220% 0 } }
+    .launch::after { content:""; position:absolute; inset:0; z-index:-1; mix-blend-mode:soft-light;
+      background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.75) 50%, transparent 70%);
+      transform:translateX(-120%); transition:transform .6s ease; }
+    .launch:hover { transform: translateY(-2px) scale(1.015);
+      box-shadow:0 16px 46px rgba(var(--teal-rgb),.65), 0 0 0 6px rgba(var(--teal-rgb),.12) }
+    .launch:hover::after { transform:translateX(120%) }
+    .launch .arrow { font-size:1.1em; transition:transform .2s ease }
+    .launch:hover .arrow { transform:translateX(4px) }
+    .ghost { display:inline-flex; align-items:center; gap:8px; padding:14px 22px; border-radius:14px;
+      color:#fff; border:1.5px solid var(--line); font-weight:600; transition:background .2s, border-color .2s }
+    .ghost:hover { background:rgba(255,255,255,.07); border-color:rgba(var(--teal-rgb),.5) }
+    .warm { font-size:.82rem; color:var(--dim); margin-top:14px; min-height:1.2em }
+
+    /* ---------- the constellation (suite hub + signature motion) ---------- */
+    .constel-sec { position:relative; z-index:2; padding: 26px 0 8px }
+    .constel { position:relative; width:100%; max-width:680px; margin:0 auto;
+      aspect-ratio:1/1; max-height:74vh; }
+    .ctraces { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; pointer-events:none }
+    .ctraces line { stroke:rgba(var(--teal-rgb),.5); stroke-width:1.4; stroke-linecap:round;
+      stroke-dasharray:5 9; opacity:0; transition:opacity .5s ease; }
+    .constel.lit .ctraces line { opacity:.6; animation: cascadeFlow 1.5s linear infinite; }
+    @keyframes cascadeFlow { to { stroke-dashoffset:-28 } }    /* energy flows outward from the core */
+
+    /* core = the launch */
+    .ccore {
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      z-index:4; width:var(--core,150px); height:var(--core,150px); --core:clamp(120px,21vmin,168px);
+      display:grid; place-items:center; border-radius:50%; text-align:center; color:#06121a; cursor:pointer;
+      background:radial-gradient(circle at 42% 36%, #eafff9 0%, var(--bright) 30%, var(--teal) 64%, #0a7a6c 100%);
+      border:2px solid rgba(255,255,255,.65);
+      box-shadow:0 0 0 7px rgba(var(--teal-rgb),.10), 0 0 46px 6px rgba(var(--teal-rgb),.5), inset 0 0 30px rgba(255,255,255,.4);
+      animation: corePulse 3.6s ease-in-out infinite;
+    }
+    @keyframes corePulse {
+      0%,100% { box-shadow:0 0 0 7px rgba(var(--teal-rgb),.10), 0 0 46px 6px rgba(var(--teal-rgb),.5), inset 0 0 30px rgba(255,255,255,.4) }
+      50% { box-shadow:0 0 0 12px rgba(var(--teal-rgb),.04), 0 0 66px 12px rgba(var(--teal-rgb),.62), inset 0 0 34px rgba(255,255,255,.5) }
+    }
+    .ccore:hover,.ccore:focus-visible { outline:none; transform:translate(-50%,-50%) scale(1.05) }
+    .ccore .clabel { font-weight:800; font-size:clamp(.86rem,2vw,1.02rem); line-height:1.1; padding:0 .5rem }
+    .ccore .csub { display:block; font-weight:700; font-size:.64em; letter-spacing:.14em; text-transform:uppercase;
+      color:#0a5a50; margin-top:.25rem }
+
+    /* explorer nodes */
+    .cnode { position:absolute; left:0; top:0; z-index:3;
+      transform:translate(calc(var(--x,0px) - 50%), calc(var(--y,0px) - 50%)); }
+    html.js .cnode { opacity:0 }
+    .constel.lit .cnode { opacity:1 }
+    .cnode-orb { display:grid; place-items:center; width:var(--ns,72px); height:var(--ns,72px); border-radius:50%;
+      color:var(--ink); text-align:center; padding:6px;
+      background:radial-gradient(circle at 38% 32%, rgba(255,255,255,.5), rgba(var(--h,45 212 191),.0) 60%), rgba(10,22,42,.85);
+      border:1.5px solid rgba(var(--hc,var(--teal-rgb)),.6);
+      box-shadow:0 0 16px rgba(var(--hc,var(--teal-rgb)),.35), inset 0 0 12px rgba(255,255,255,.12);
+      transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .2s ease; }
+    .constel.lit .cnode-orb { animation: bob 6s ease-in-out infinite; animation-delay: calc(var(--i,0) * -.5s) }
+    @keyframes bob { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-6px) } }
+    .cnode:hover, .cnode:focus-visible { outline:none; z-index:9 }
+    .cnode:hover .cnode-orb, .cnode:focus-visible .cnode-orb {
+      transform:scale(1.16); border-color:#fff;
+      box-shadow:0 0 28px rgba(var(--hc,var(--teal-rgb)),.7), inset 0 0 16px rgba(255,255,255,.22) }
+    .cnode-dot { width:9px; height:9px; border-radius:50%; background:rgb(var(--hc,var(--teal-rgb)));
+      box-shadow:0 0 10px rgb(var(--hc,var(--teal-rgb))) }
+    .cnode-lab { font-size:.68rem; font-weight:700; line-height:1.05; margin-top:4px }
+
+    /* ---------- the trophic cascade band (what the synthesis does) ---------- */
+    .cascade-band { position:relative; z-index:2; margin: 30px 0 6px; padding:26px 0 }
+    .kick { font-family: ui-monospace,Menlo,Consolas,monospace; font-size:.72rem; letter-spacing:.22em;
+      text-transform:uppercase; color:var(--dim) }
+    .cascade-band h2 { font-size:clamp(1.4rem,3.4vw,1.9rem); margin:.4rem 0 4px;
+      background:linear-gradient(100deg,#fff, var(--bright)); -webkit-background-clip:text; background-clip:text; color:transparent }
+    .cascade-band > .wrap > p { color:var(--dim); margin:0 0 20px; max-width:64ch }
+    .flow { display:grid; gap:0 }
+    .frung { position:relative; display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:14px;
+      background:var(--card); border:1px solid var(--line); border-left:4px solid var(--lc); overflow:hidden }
+    .frung + .frung { margin-top:10px }
+    .frung::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.0;
+      background:linear-gradient(100deg, transparent, rgba(var(--lrgb),.16), transparent); }
+    .frung.pip-on::before { animation: pip 2.4s ease-in-out; }     /* energy pulse sweeps each rung in turn */
+    @keyframes pip { 0%{opacity:0; transform:translateX(-30%)} 40%{opacity:1} 100%{opacity:0; transform:translateX(30%)} }
+    .frung .fmark { width:34px; height:34px; flex:0 0 auto; border-radius:9px; position:relative;
+      background:rgba(var(--lrgb),.16); border:1px solid rgba(var(--lrgb),.5) }
+    .frung .fmark::after { content:""; position:absolute; inset:0; margin:auto; width:12px; height:12px; border-radius:50%;
+      background:var(--lc); box-shadow:0 0 12px var(--lc) }
+    .frung .ftxt b { font-weight:800; font-size:1rem } .frung .ftxt span { color:var(--dim); font-size:.86rem }
+    .frung.r1 { --lc:var(--clim); --lrgb:67,184,232 }
+    .frung.r2 { --lc:var(--phen); --lrgb:155,210,74; margin-left:14px }
+    .frung.r3 { --lc:var(--prod); --lrgb:95,181,106; margin-left:28px }
+    .frung.r4 { --lc:var(--cons); --lrgb:251,138,126; margin-left:42px }
+    .farrow { color:rgba(255,255,255,.32); text-align:center; margin:2px 0 2px 17px; font-size:1.05rem }
+
+    /* ---------- stats + about ---------- */
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:26px 0 0; position:relative; z-index:2 }
+    .stat { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 14px; text-align:center }
+    .stat .n { font-weight:800; font-size:1.5rem; color:var(--bright) } .stat .l { font-size:.78rem; color:var(--dim) }
+    details.more { margin:30px 0 0; border:1px solid var(--line); border-radius:14px; background:var(--card); overflow:hidden }
+    details.more > summary { cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between;
+      gap:1rem; padding:1rem 1.3rem; font-weight:700; color:var(--bright) }
+    details.more > summary::-webkit-details-marker { display:none }
+    details.more > summary::after { content:"+"; color:var(--coral); font-weight:800; font-size:1.2rem }
+    details.more[open] > summary::after { content:"\2212" }
+    details.more[open] { border-color:rgba(var(--teal-rgb),.4) }
+    details.more .mbody { padding:0 1.3rem 1.2rem; color:var(--dim) }
+    details.more .mbody b { color:var(--ink) }
+
+    footer { position:relative; z-index:2; border-top:1px solid var(--line); margin-top:34px; padding:26px 0 54px;
+      color:var(--dim); font-size:.9rem }
+    .cta-foot { display:inline-block; margin-bottom:10px; font-weight:700; color:var(--coral) }
+
+    @media (max-width:560px){ .stats { grid-template-columns:repeat(2,1fr) } .frung { margin-left:0 !important } }
+
+    /* ---------- no-JS fallback: a plain reachable grid of the suite ---------- */
+    html:not(.js) .ctraces, html:not(.js) .ccore .csub { display:none }
+    html:not(.js) .constel { aspect-ratio:auto; max-width:100%; display:grid;
+      grid-template-columns:repeat(2,1fr); gap:12px; padding:8px 0 }
+    html:not(.js) .ccore { position:static; transform:none; width:auto; height:auto; border-radius:14px;
+      grid-column:1/-1; padding:18px; animation:none }
+    html:not(.js) .cnode { position:static; transform:none; opacity:1 }
+    html:not(.js) .cnode-orb { width:auto; height:auto; flex-direction:row; gap:10px; border-radius:14px;
+      padding:14px 16px; justify-content:flex-start; animation:none }
+    html:not(.js) .cnode-lab { font-size:.95rem; margin-top:0 }
+
+    @media (prefers-reduced-motion: reduce){
+      .sky::before, .launch, .ccore, .constel.lit .cnode-orb, .constel.lit .ctraces line, .frung.pip-on::before { animation:none !important }
+      .launch::after { display:none }
+    }
   </style>
 </head>
 
 <body>
-  <!-- ── HERO: Driver Cascade (main front) ── -->
+  <div class="sky" aria-hidden="true"></div>
+
   <header class="hero">
     <div class="wrap">
-      <div>
-        <span class="badge"><span aria-hidden="true">🔗</span> The NEON Explorer Suite · Capstone</span>
-        <h1>NEON Driver Cascade <span class="tag">unofficial</span></h1>
-        <p class="lead">One story under all the others: how <b>climate</b> drives <b>green-up</b>,
-          green-up drives the <b>plants</b>, and the plants drive the <b>animals</b> on top. The Driver
-          Cascade lines up every explorer in the suite into one honest, bottom-up view of what really
-          moves populations — across shared NEON field sites.</p>
-        <div class="cta-row">
-          <a id="launch" class="btn btn-primary" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">Driver Cascade — launching soon&nbsp;→</a>
-          <a class="btn btn-ghost" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">View on GitHub</a>
-        </div>
-        <div class="warm" id="warm"></div>
+      <span class="brand">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <path class="stroke" d="M50 14 L64 30 L50 46 L36 30 Z" />
+          <line class="stroke" x1="50" y1="46" x2="50" y2="86" />
+          <line class="stroke" x1="34" y1="86" x2="66" y2="86" />
+          <circle class="pip" cx="50" cy="62" r="7.5" />
+        </svg>
+        <b>Desert Data Labs</b>
+      </span>
+
+      <div class="eyebrow">The NEON Explorer Suite · Capstone</div>
+      <h1>NEON Driver Cascade</h1>
+      <p class="lead">One story under all the others: how <b>climate</b> drives <b>green-up</b>, green-up drives
+        the <b>plants</b>, and the plants drive the <b>animals</b> on top. The Driver Cascade lines up every
+        explorer in the suite into one honest, bottom-up view of what really moves populations across shared
+        NEON field sites.</p>
+
+      <div class="cta-row">
+        <a id="launch" class="launch" href="https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/">
+          Launch the Driver Cascade <span class="arrow" aria-hidden="true">&rarr;</span>
+        </a>
+        <a class="ghost" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">View on GitHub</a>
       </div>
-      <div class="cascade" aria-hidden="true">
-        <div class="crung l1"><span class="ce">🌧️</span><div><div class="ct">Climate</div><div class="cs">precipitation · temperature</div></div></div>
-        <div class="carrow">↓</div>
-        <div class="crung l2"><span class="ce">🌱</span><div><div class="ct">Green-up</div><div class="cs">the timing hinge</div></div></div>
-        <div class="carrow">↓</div>
-        <div class="crung l3"><span class="ce">🌳</span><div><div class="ct">Producers</div><div class="cs">plants · trees · cover</div></div></div>
-        <div class="carrow">↓</div>
-        <div class="crung l4"><span class="ce">🐀</span><div><div class="ct">Consumers</div><div class="cs">mammals · birds · beetles</div></div></div>
-      </div>
+      <div class="warm" id="warm"></div>
     </div>
   </header>
 
-  <!-- ── SUITE GRID: all the apps, near the top ── -->
-  <section class="suite">
+  <!-- the suite, as a living constellation. The core launches the Cascade; each node opens an explorer. -->
+  <section class="constel-sec" aria-label="The NEON Explorer Suite">
     <div class="wrap">
-      <span class="kick">Eight explorers · 46 NEON sites · real data, instant loads</span>
-      <h2>Explore the whole suite</h2>
-      <p class="suite-sub">Each app is a deep, honest explorer for one NEON data product — pick one and
-        dive in. They share a design, a statistics-show-their-work ethic, and the same field sites, so
-        the Driver Cascade can tie them together.</p>
-      <div class="app-grid">
-        <a class="app-card" href="https://019ec337-7100-317e-5052-c3bf32ffcb79.share.connect.posit.cloud/" target="_blank" rel="noopener">
-          <span class="app-emoji">🐀</span><span class="app-name">Small Mammal Tracker</span>
-          <span class="app-dp">DP1.10072.001</span>
-          <span class="app-tag">Who lives where — home ranges, diversity, detection-corrected abundance, and every tagged animal's life story.</span>
-          <span class="app-go">Open the app →</span>
+      <div class="constel is-noscript" data-constel style="--n:7;">
+        <svg class="ctraces" viewBox="-340 -340 680 680" aria-hidden="true"><g data-traces></g></svg>
+
+        <a class="ccore" data-core href="https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/"
+           aria-label="Launch the NEON Driver Cascade app">
+          <span class="clabel">Driver Cascade<span class="csub">launch &rarr;</span></span>
         </a>
-        <a class="app-card" href="https://019ee116-75d9-5940-8ccd-9b8c7afabce4.share.connect.posit.cloud/" target="_blank" rel="noopener">
-          <span class="app-emoji">🐦</span><span class="app-name">Breeding Birds</span>
-          <span class="app-dp">DP1.10003.001</span>
-          <span class="app-tag">Every species' detection index &amp; ubiquity, area-corrected detectability by distance, with clickable data-quality flags.</span>
-          <span class="app-go">Open the app →</span>
-        </a>
-        <a class="app-card" href="https://019ee109-30ae-006e-cb3b-143afeac57e3.share.connect.posit.cloud/" target="_blank" rel="noopener">
-          <span class="app-emoji">🌿</span><span class="app-name">Plant Diversity</span>
-          <span class="app-dp">DP1.10058.001</span>
-          <span class="app-tag">Plant presence &amp; % cover, native vs. introduced, across all 46 NEON terrestrial sites.</span>
-          <span class="app-go">Open the app →</span>
-        </a>
-        <a class="app-card" href="https://019ee118-bf17-1622-bd5d-e59cab3b36a7.share.connect.posit.cloud/" target="_blank" rel="noopener">
-          <span class="app-emoji">🍃</span><span class="app-name">Plant Phenology</span>
-          <span class="app-dp">DP1.10055.001</span>
-          <span class="app-tag">Green-up, flowering &amp; leaf-off timing for thousands of tagged plants — the calendar of the canopy.</span>
-          <span class="app-go">Open the app →</span>
-        </a>
-        <a class="app-card" href="https://019ee110-8fd3-abae-aee3-02ea8e4274c8.share.connect.posit.cloud/" target="_blank" rel="noopener">
-          <span class="app-emoji">🌳</span><span class="app-name">Vegetation Structure</span>
-          <span class="app-dp">DP1.10098.001</span>
-          <span class="app-tag">Every tagged tree &amp; desert shrub — diameter, height &amp; growth across 42 sites, every biome.</span>
-          <span class="app-go">Open the app →</span>
-        </a>
-        <a class="app-card" href="https://019ec8ff-2a4b-e0e9-871d-07a047a571d3.share.connect.posit.cloud/" target="_blank" rel="noopener">
-          <span class="app-emoji">🪲</span><span class="app-name">Ground Beetle Tracker</span>
-          <span class="app-dp">DP1.10022.001</span>
-          <span class="app-tag">Carabid (ground-beetle) pitfall sampling — community turnover across NEON sites.</span>
-          <span class="app-go">Open the app →</span>
-        </a>
-        <a class="app-card" href="https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/" target="_blank" rel="noopener">
-          <span class="app-emoji">💧</span><span class="app-name">Water Chemistry</span>
-          <span class="app-dp">DP1.20093.001</span>
-          <span class="app-tag">Surface-water chemistry analytes across NEON's aquatic sites.</span>
-          <span class="app-go">Open the app →</span>
-        </a>
-        <a class="app-card soon" id="driversCard" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">
-          <span class="app-emoji">🔗</span><span class="app-name">Driver Cascade</span>
-          <span class="app-dp">the capstone synthesis</span>
-          <span class="app-tag">Climate → green-up → producers → consumers: what drives populations, across every product above.</span>
-          <span class="app-go">Launching soon →</span>
-        </a>
+
+        <a class="cnode" style="--i:0; --hc:230,179,77" href="https://tgilbert14.github.io/NEON-Small-Mammal-Tracker-App/" aria-label="NEON Small Mammal Tracker"><span class="cnode-orb"><span class="cnode-dot" aria-hidden="true"></span><span class="cnode-lab">Small Mammals</span></span></a>
+        <a class="cnode" style="--i:1; --hc:129,140,248" href="https://tgilbert14.github.io/NEON-Breeding-Birds/" aria-label="NEON Breeding Birds"><span class="cnode-orb"><span class="cnode-dot" aria-hidden="true"></span><span class="cnode-lab">Breeding Birds</span></span></a>
+        <a class="cnode" style="--i:2; --hc:108,194,74" href="https://tgilbert14.github.io/NEON-Ground-Beetle-Tracker/" aria-label="NEON Ground Beetle Tracker"><span class="cnode-orb"><span class="cnode-dot" aria-hidden="true"></span><span class="cnode-lab">Ground Beetles</span></span></a>
+        <a class="cnode" style="--i:3; --hc:155,210,74" href="https://tgilbert14.github.io/NEON-Plant-Diversity/" aria-label="NEON Plant Diversity"><span class="cnode-orb"><span class="cnode-dot" aria-hidden="true"></span><span class="cnode-lab">Plant Diversity</span></span></a>
+        <a class="cnode" style="--i:4; --hc:244,114,182" href="https://tgilbert14.github.io/NEON-Plant-Phenology-Explorer/" aria-label="NEON Plant Phenology"><span class="cnode-orb"><span class="cnode-dot" aria-hidden="true"></span><span class="cnode-lab">Plant Phenology</span></span></a>
+        <a class="cnode" style="--i:5; --hc:190,150,95" href="https://tgilbert14.github.io/NEON-Vegetation-Structure-Explorer/" aria-label="NEON Vegetation Structure"><span class="cnode-orb"><span class="cnode-dot" aria-hidden="true"></span><span class="cnode-lab">Veg Structure</span></span></a>
+        <a class="cnode" style="--i:6; --hc:67,184,232" href="https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/" aria-label="NEON Water Chemistry"><span class="cnode-orb"><span class="cnode-dot" aria-hidden="true"></span><span class="cnode-lab">Water Chemistry</span></span></a>
       </div>
     </div>
   </section>
 
-  <section class="suite" style="padding-top:8px">
+  <!-- the trophic cascade itself: climate -> green-up -> producers -> consumers -->
+  <section class="cascade-band">
     <div class="wrap">
-      <div class="about">
-        <h2>About the suite</h2>
-        <p>Built by <b>Desert Data Labs</b> on real data from the National Ecological Observatory
-          Network (NEON, operated by Battelle, funded by NSF). Every app loads pre-bundled snapshots so
-          there are no live-API waits, refreshes itself on a monthly off-peak schedule, and leads with
-          transparent, well-sourced methods — detection-corrected abundance, honest diversity
-          estimators, area-corrected detectability, interval-censored phenology, and data-quality
-          flags you can click and download. Educational data-exploration tools, not affiliated with
-          NEON, Battelle, or the NSF.</p>
+      <span class="kick">How the cascade reads</span>
+      <h2>Climate sets the pace. Everything else follows.</h2>
+      <p>The same energy moves down every layer. The Driver Cascade lines the explorers up so you can watch it
+        flow, on shared sites, with the statistics shown at every step.</p>
+      <div class="flow" data-flow>
+        <div class="frung r1"><span class="fmark"></span><span class="ftxt"><b>Climate</b> &middot; <span>precipitation &amp; temperature</span></span></div>
+        <div class="farrow" aria-hidden="true">&darr;</div>
+        <div class="frung r2"><span class="fmark"></span><span class="ftxt"><b>Green-up</b> &middot; <span>the timing hinge</span></span></div>
+        <div class="farrow" aria-hidden="true">&darr;</div>
+        <div class="frung r3"><span class="fmark"></span><span class="ftxt"><b>Producers</b> &middot; <span>plants, cover &amp; trees</span></span></div>
+        <div class="farrow" aria-hidden="true">&darr;</div>
+        <div class="frung r4"><span class="fmark"></span><span class="ftxt"><b>Consumers</b> &middot; <span>mammals, birds &amp; beetles</span></span></div>
       </div>
+
+      <div class="stats">
+        <div class="stat"><div class="n">8</div><div class="l">explorers</div></div>
+        <div class="stat"><div class="n">46</div><div class="l">NEON sites</div></div>
+        <div class="stat"><div class="n">real</div><div class="l">open data</div></div>
+        <div class="stat"><div class="n">instant</div><div class="l">no API waits</div></div>
+      </div>
+
+      <details class="more">
+        <summary>How it stays honest</summary>
+        <div class="mbody">
+          Every app loads pre-bundled snapshots so there are no live-API waits, refreshes itself on a monthly
+          off-peak schedule, and leads with transparent, well-sourced methods: detection-corrected abundance,
+          honest diversity estimators, area-corrected detectability, interval-censored phenology, and
+          data-quality flags you can click and download. The Cascade only lines up what each explorer already
+          measures, on shared field sites, so the bottom-up story is built from real numbers, not a model
+          stacked on a model. <b>Educational data-exploration tools, not affiliated with NEON, Battelle, or the NSF.</b>
+        </div>
+      </details>
     </div>
   </section>
 
   <footer>
     <div class="wrap">
-      <a class="cta-foot" href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite"><span aria-hidden="true">👋</span> Want a custom data app like these for your project?</a><br>
-      Built by <b>Desert Data Labs</b> · Tucson, AZ. Data: National Ecological Observatory Network
+      <a class="cta-foot" href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite">Want a custom data app like these for your project?</a><br>
+      Built by <b>Desert Data Labs</b> &middot; Tucson, AZ. Data: National Ecological Observatory Network
       (operated by Battelle, funded by NSF). Educational tools, not affiliated with NEON, Battelle, or the NSF.
     </div>
   </footer>
 
   <script>
-    // The suite grid is STATIC HTML above (crawlable, works without JS). This only
-    // upgrades the Driver Cascade hero + its grid card once its live app exists:
-    // paste the Connect Cloud share URL below and re-publish Pages.
-    const DRIVERS_URL = "https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/";
+    // ---- the cascade app (Connect Cloud share URL); pre-warm on load ----
+    var DRIVERS_URL = "https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/";
     (function () {
-      if (DRIVERS_URL.indexOf("REPLACE-WITH") !== -1) {
-        var w = document.getElementById("warm");
-        if (w) w.textContent = "The live app goes up once its Connect Cloud deploy is wired — explore the live explorers below in the meantime.";
-        return;
-      }
       var launch = document.getElementById("launch");
-      if (launch) { launch.href = DRIVERS_URL; launch.firstChild && (launch.textContent = "Launch the Driver Cascade →"); }
-      var card = document.getElementById("driversCard");
-      if (card) { card.href = DRIVERS_URL; card.classList.remove("soon");
-        var go = card.querySelector(".app-go"); if (go) go.textContent = "Open the app →"; }
-      // pre-warm the (possibly sleeping) app while the visitor reads
+      var warm = document.getElementById("warm");
+      if (launch) launch.href = DRIVERS_URL;
       try {
-        var warm = document.getElementById("warm"); if (warm) warm.textContent = "Warming up the app…";
+        if (warm) warm.textContent = "Warming up the app…";
         var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
         var killer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
         fetch(DRIVERS_URL, { mode: "no-cors", cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
           .then(function () { if (warm) warm.textContent = "Ready when you are."; })
           .catch(function () { if (warm) warm.textContent = ""; })
           .finally(function () { if (killer) clearTimeout(killer); });
-      } catch (e) { /* ignore */ }
+      } catch (e) {}
+    })();
+
+    // ---- the constellation: lay the 7 explorers on a ring, draw energy traces ----
+    (function () {
+      var root = document.querySelector("[data-constel]");
+      if (!root) return;
+      var nodes = Array.prototype.slice.call(root.querySelectorAll(".cnode"));
+      var tracesG = root.querySelector("[data-traces]");
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      root.classList.remove("is-noscript");
+
+      var n = nodes.length, TR = 300; // trace viewBox radius
+      // build a trace from center to each node
+      if (tracesG) {
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < n; i++) {
+          var th = (i * (360 / n) - 90) * Math.PI / 180;
+          var ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          ln.setAttribute("x1", "0"); ln.setAttribute("y1", "0");
+          ln.setAttribute("x2", (Math.cos(th) * TR).toFixed(1));
+          ln.setAttribute("y2", (Math.sin(th) * TR).toFixed(1));
+          frag.appendChild(ln);
+        }
+        tracesG.appendChild(frag);
+      }
+
+      function place(landed) {
+        var r = root.getBoundingClientRect();
+        var cx = r.width / 2, cy = r.height / 2;
+        var unit = Math.min(r.width, r.height);
+        var rad = unit * 0.40, ns = Math.max(58, unit * 0.135);
+        nodes.forEach(function (nd, i) {
+          nd.style.setProperty("--ns", ns.toFixed(0) + "px");
+          var th = (i * (360 / n) - 90) * Math.PI / 180;
+          var f = landed ? 1 : 0.18;            // start near the core, fly out on land
+          nd.style.setProperty("--x", (cx + Math.cos(th) * rad * f).toFixed(1) + "px");
+          nd.style.setProperty("--y", (cy + Math.sin(th) * rad * f).toFixed(1) + "px");
+        });
+      }
+
+      place(false);
+      // light it up (fly the nodes out + start the energy flow) after a beat
+      function lite() { place(true); root.classList.add("lit"); }
+      if (reduce) { lite(); }
+      else { requestAnimationFrame(function () { requestAnimationFrame(lite); }); setTimeout(lite, 400); }
+
+      var rt;
+      window.addEventListener("resize", function () {
+        clearTimeout(rt); rt = setTimeout(function () { place(root.classList.contains("lit")); }, 120);
+      }, { passive: true });
+    })();
+
+    // ---- the trophic flow: pulse each rung in turn (energy cascading down) ----
+    (function () {
+      var rungs = Array.prototype.slice.call(document.querySelectorAll("[data-flow] .frung"));
+      if (!rungs.length || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      var i = 0;
+      setInterval(function () {
+        rungs.forEach(function (r) { r.classList.remove("pip-on"); });
+        var el = rungs[i % rungs.length];
+        // force reflow so the animation restarts each cycle
+        void el.offsetWidth; el.classList.add("pip-on");
+        i++;
+      }, 900);
     })();
   </script>
 </body>
