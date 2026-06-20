@@ -7,13 +7,14 @@
 
 /* Variable names kept for low churn; VALUES are the Girth Index house palette:
    --pine = navy (primary), --terra = cardinal (accent), --gold = gold.       */
-:root {
-  --pine: #0C234B;   --pine2: #16386e;
-  --terra: #AB0520;  --gold: #FFD200;  --gold-ink: #9a7a00;
-  --sky: #2f7fb5;    --green: #1a7f37;
-  --ink: #1c2733;    --muted: #5a6675;
-  --bg: #eef2f8;     --paper: #ffffff; --line: #d8e0ea;
-  --shadow: rgba(12, 35, 75, 0.10);
+:root {                                  /* light "desert-day" (toggle) */
+  --pine: #149086;   --pine2: #0f6f67;     /* primary -> deep teal */
+  --terra: #e0685a;  --cardinal: #e0685a;  /* accent  -> coral */
+  --gold: #d6a31c;   --gold-ink: #9a7a00;
+  --sky: #2f8fc4;    --green: #3f9a52;
+  --ink: #16243a;    --muted: #5a6675;
+  --bg: #eef3fb;     --paper: #ffffff; --line: #d8e0ea;
+  --shadow: rgba(20, 144, 134, 0.12);
 }
 
 /* =========================================================================
@@ -23,20 +24,27 @@
    --pine token is used as TEXT (unreadable on dark) or a light color was
    hard-coded. Plots adapt server-side via is_dark() in plotly_theme().
    ========================================================================= */
+/* DESERT-NIGHT dark theme (the default + showcase) — teal/coral/gold on a dark sky.
+   Remaps the semantic tokens too (--pine->teal primary, --terra->coral accent), so
+   every component that reads them re-themes to the cover's creative system. */
 [data-bs-theme="dark"] {
-  --ink: #e6edf5;  --muted: #9fb0c4;
-  --bg: #0e1726;   --paper: #16213a;  --line: #29384f;
-  --gold-ink: #e8c552;                 /* brighter gold for icons/text on dark */
-  --shadow: rgba(0, 0, 0, 0.45);
+  --pine: #2dd4bf;  --pine2: #5eead4;          /* primary -> teal */
+  --terra: #fb8a7e; --cardinal: #fb8a7e;       /* accent  -> coral */
+  --gold: #ffd24a;  --gold-ink: #ffd24a;
+  --sky: #43b8e8;   --green: #5fb56a;
+  --ink: #eaf2ff;   --muted: #9fb0cf;
+  --bg: #070d1f;    --paper: #0e1d40;  --line: rgba(255,255,255,0.12);
+  --shadow: rgba(0, 0, 0, 0.55);
 }
 [data-bs-theme="dark"] body {
   background:
-    radial-gradient(1100px 520px at 10% -8%, rgba(70,110,170,0.12), transparent 60%),
-    radial-gradient(900px 460px at 100% 0%, rgba(171,5,32,0.10), transparent 55%),
-    linear-gradient(180deg, #0e1726 0%, #0a1120 100%);
+    radial-gradient(1100px 520px at 8% -8%, rgba(45,212,191,0.12), transparent 60%),
+    radial-gradient(900px 460px at 102% 2%, rgba(251,138,126,0.10), transparent 55%),
+    radial-gradient(900px 600px at 50% 120%, rgba(255,210,74,0.06), transparent 60%),
+    linear-gradient(180deg, #0b1733 0%, #070d1f 100%);
   color: var(--ink);
 }
-[data-bs-theme="dark"] .control-deck { background: #111c30; }
+[data-bs-theme="dark"] .control-deck { background: #0b1733; border-right-color: rgba(255,255,255,0.10); }
 /* the navy --pine token used as TEXT is unreadable on dark -> light blue */
 [data-bs-theme="dark"] .brand-title,
 [data-bs-theme="dark"] .bio-links-title,

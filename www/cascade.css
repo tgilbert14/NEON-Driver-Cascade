@@ -25,10 +25,10 @@
 .sig-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 2px; }
 .sig-chips-empty { font-size: 12.5px; color: var(--muted); font-style: italic; }
 .sig-chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; color: #fff; }
-.sig-chip.sig-climate, .sig-dot.sig-climate     { background: #2f7fb5; }
-.sig-chip.sig-phenology, .sig-dot.sig-phenology { background: #5fae3a; }
-.sig-chip.sig-producer, .sig-dot.sig-producer   { background: #1a7f37; }
-.sig-chip.sig-consumer, .sig-dot.sig-consumer   { background: #AB0520; }
+.sig-chip.sig-climate, .sig-dot.sig-climate     { background: #43b8e8; color: #06121a; }
+.sig-chip.sig-phenology, .sig-dot.sig-phenology { background: #9bd24a; color: #14240a; }
+.sig-chip.sig-producer, .sig-dot.sig-producer   { background: #5fb56a; color: #06231f; }
+.sig-chip.sig-consumer, .sig-dot.sig-consumer   { background: #fb8a7e; color: #3a0e08; }
 .sig-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; }
 
 /* ---- overview cascade schematic --------------------------------------- */
@@ -46,11 +46,11 @@
 /* ---- link agreement chips (beside ladder) ----------------------------- */
 .link-chips { display: flex; flex-direction: column; gap: 9px; }
 .link-chip { border: 1px solid var(--line); border-left-width: 4px; border-radius: 10px; padding: 9px 11px; background: var(--paper); }
-.link-chip.lc-consistent  { border-left-color: #1a7f37; }
-.link-chip.lc-apparent    { border-left-color: #c9a300; }
-.link-chip.lc-counter     { border-left-color: #AB0520; }
-.link-chip.lc-exploratory { border-left-color: #6b7a89; }
-.link-chip.lc-insufficient{ border-left-color: #9aa6b2; }
+.link-chip.lc-consistent  { border-left-color: #2dd4bf; }
+.link-chip.lc-apparent    { border-left-color: #e0b43a; }
+.link-chip.lc-counter     { border-left-color: #fb8a7e; }
+.link-chip.lc-exploratory { border-left-color: #9fb0cf; }
+.link-chip.lc-insufficient{ border-left-color: #6b7a89; }
 .lc-top { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 12.5px; }
 .lc-from, .lc-to { font-weight: 700; color: var(--ink); }
 .lc-lag { margin-left: auto; font-size: 10.5px; color: var(--muted); background: var(--bg); border-radius: 12px; padding: 1px 7px; }
@@ -99,8 +99,8 @@
 .biome-tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .03em;
   text-transform: uppercase; padding: 2px 9px; border-radius: 20px; margin-right: 8px;
   vertical-align: middle; color: #fff; background: var(--pine); white-space: nowrap; }
-.biome-tag.biome-water { background: #2f7fb5; }
-.biome-tag.biome-temp  { background: #1a7f37; }
+.biome-tag.biome-water { background: #43b8e8; color: #06121a; }
+.biome-tag.biome-temp  { background: #5fb56a; color: #06231f; }
 
 /* ---- section handoff chips (parallel tabs -> guided sequence) --------- */
 .tab-handoff { display: flex; justify-content: flex-end; margin: 6px 2px 2px; }
@@ -112,7 +112,7 @@
 /* ---- expected / not-expected cues on chips + table ------------------- */
 .lc-dim { opacity: .5; }
 .lc-exp { margin-left: auto; font-size: 9.5px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
-  color: #1a7f37; background: rgba(26,127,55,.12); border-radius: 12px; padding: 1px 7px; }
+  color: #2dd4bf; background: rgba(45,212,191,.14); border-radius: 12px; padding: 1px 7px; }
 .lc-top .lc-lag + .lc-exp { margin-left: 6px; }
 tr.dt-dim { opacity: .55; }
 .dt-exp { color: #1a7f37; font-weight: 800; }
@@ -125,22 +125,22 @@ tr.dt-dim { opacity: .55; }
 .sc-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; font-size: 13px; }
 .sc-k { color: var(--muted); }
 .sc-v { font-weight: 800; font-variant-numeric: tabular-nums; }
-.sc-weak { color: #9aa6b2; }
-.sc-strong { color: #1a7f37; }
+.sc-weak { color: #9fb0cf; }
+.sc-strong { color: #5fb56a; }
 
 /* ---- pooled headline -------------------------------------------------- */
 .pooled-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .pooled-row { display: grid; grid-template-columns: minmax(170px, 1.4fr) minmax(80px, 1fr) minmax(180px, 1.2fr);
   gap: 12px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
-.pooled-row.pooled-sig { border-color: #1a7f37; box-shadow: inset 3px 0 0 #1a7f37; }
+.pooled-row.pooled-sig { border-color: #2dd4bf; box-shadow: inset 3px 0 0 #2dd4bf; }
 .pl-link { font-weight: 700; color: var(--ink); font-size: 13px; }
 .pl-lag { color: var(--muted); font-weight: 500; font-size: 11px; }
 .pl-bar-wrap { background: var(--bg); border-radius: 20px; height: 12px; overflow: hidden; }
-.pl-bar { height: 100%; background: linear-gradient(90deg, #5fae3a, #1a7f37); border-radius: 20px; }
-.pooled-row:not(.pooled-sig) .pl-bar { background: linear-gradient(90deg, #c9d3df, #9aa6b2); }
+.pl-bar { height: 100%; background: linear-gradient(90deg, #5eead4, #2dd4bf); border-radius: 20px; }
+.pooled-row:not(.pooled-sig) .pl-bar { background: linear-gradient(90deg, #44567a, #6b7d96); }
 .pl-stat { font-size: 12px; color: var(--ink); display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
 .pl-p { color: var(--muted); }
-.pooled-sig .pl-p { color: #1a7f37; font-weight: 800; }
+.pooled-sig .pl-p { color: #2dd4bf; font-weight: 800; }
 .pl-r { color: var(--muted); }
 
 /* ---- cross-site scoreboard grid -------------------------------------- */
@@ -154,17 +154,17 @@ tr.dt-dim { opacity: .55; }
 .sb-biome { font-size: 9.5px; color: var(--muted); line-height: 1.1; }
 .sb-cell { text-align: center; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums;
   border-radius: 5px; padding: 5px 3px; min-width: 52px; }
-.sb-cell.sb-consistent  { background: #1a7f37; }
-.sb-cell.sb-apparent    { background: #c9a300; }
-.sb-cell.sb-counter     { background: #AB0520; }
-.sb-cell.sb-exploratory { background: #8a97a6; }
-.sb-cell.sb-insufficient{ background: #c2cad3; color: #5a6675; }
+.sb-cell.sb-consistent  { background: #2dd4bf; color: #06231f; }
+.sb-cell.sb-apparent    { background: #e0b43a; color: #2e2406; }
+.sb-cell.sb-counter     { background: #fb8a7e; color: #3a0e08; }
+.sb-cell.sb-exploratory { background: #4a5d78; color: #dbe6f5; }
+.sb-cell.sb-insufficient{ background: #1c2c48; color: #8fa3c2; }
 .sb-cell.sb-na          { background: transparent; }
 .sb-cell.sb-dim { opacity: .42; }
 .sb-key { display: inline-block; color: #fff; font-weight: 700; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
-.sb-key.sb-consistent { background:#1a7f37; } .sb-key.sb-apparent { background:#c9a300; }
-.sb-key.sb-counter { background:#AB0520; } .sb-key.sb-exploratory { background:#8a97a6; }
-.sb-key.sb-insufficient { background:#c2cad3; color:#5a6675; }
+.sb-key.sb-consistent { background:#2dd4bf; color:#06231f; } .sb-key.sb-apparent { background:#e0b43a; color:#2e2406; }
+.sb-key.sb-counter { background:#fb8a7e; color:#3a0e08; } .sb-key.sb-exploratory { background:#4a5d78; color:#dbe6f5; }
+.sb-key.sb-insufficient { background:#1c2c48; color:#8fa3c2; }
 [data-bs-theme="dark"] .hero-verdict, [data-bs-theme="dark"] .pooled-row,
 [data-bs-theme="dark"] .seasonal-cmp { background: rgba(255,255,255,0.03); }
 [data-bs-theme="dark"] .sb-table th.sb-site, [data-bs-theme="dark"] .sb-table td.sb-site { background: #14233b; }
@@ -211,8 +211,8 @@ tr.dt-dim { opacity: .55; }
 .pulse-idle { background: var(--bg); color: var(--ink); border: 1px dashed var(--line); }
 .pulse-active { background: rgba(255,210,0,0.12); color: var(--ink); border: 1px solid var(--gold, #FFD200); }
 .pulse-key { font-weight: 700; white-space: nowrap; }
-.pulse-key.pk-match { color: #1a7f37; }
-.pulse-key.pk-miss { color: #AB0520; }
+.pulse-key.pk-match { color: #2dd4bf; }
+.pulse-key.pk-miss { color: #fb8a7e; }
 .pulse-clear { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--cardinal, #AB0520); text-decoration: none; white-space: nowrap; }
 .pulse-clear:hover { text-decoration: underline; }
 [data-bs-theme="dark"] .pulse-idle { background: rgba(255,255,255,0.04); }
@@ -244,7 +244,7 @@ tr.dt-dim { opacity: .55; }
 @keyframes ddlSheen { 0% { left: -65%; opacity: 0; } 12% { opacity: .85; } 100% { left: 135%; opacity: 0; } }
 @keyframes ddlHoloShift { from { background-position: var(--mx,50%) var(--my,50%), 0% 50%; } to { background-position: var(--mx,50%) var(--my,50%), 240% 50%; } }
 @keyframes ddlFloat { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(3deg); } }
-@keyframes ddlWinGlow { 0%,100% { box-shadow: inset 3px 0 0 #1a7f37, 0 4px 14px rgba(12,35,75,.10); } 50% { box-shadow: inset 3px 0 0 #1a7f37, 0 0 20px rgba(26,127,55,.30); } }
+@keyframes ddlWinGlow { 0%,100% { box-shadow: inset 3px 0 0 #2dd4bf, 0 4px 14px rgba(0,0,0,.25); } 50% { box-shadow: inset 3px 0 0 #2dd4bf, 0 0 22px rgba(45,212,191,.40); } }
 @keyframes ddlNodeWave { 0%,100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 6px 22px rgba(47,127,181,.22), inset 0 0 0 1px rgba(47,127,181,.25); } }
 @keyframes ddlArrowFlow { 0% { transform: translateX(-3px); opacity:.45; } 50% { transform: translateX(3px); opacity:1; } 100% { transform: translateX(-3px); opacity:.45; } }
 @keyframes ddlBadgeShine { to { background-position: 240% 0; } }
@@ -253,7 +253,7 @@ tr.dt-dim { opacity: .55; }
 /* ---- (1) living aurora backdrop — brand-tinted gradients drift behind it all ---- */
 html { background: var(--bg, #eef2f8); }
 body { background-color: transparent !important; }   /* let the fixed aurora show through */
-[data-bs-theme="dark"] html { background: #0b1320; }
+[data-bs-theme="dark"] html { background: #070d1f; }
 body::before {
   content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
@@ -267,24 +267,24 @@ body::before {
 }
 [data-bs-theme="dark"] body::before {
   background:
-    radial-gradient(820px 480px at 4% -8%, rgba(47,127,181,0.16), transparent 60%),
-    radial-gradient(760px 460px at 112% 0%, rgba(94,140,220,0.12), transparent 60%),
-    radial-gradient(720px 520px at 50% 120%, rgba(255,210,0,0.06), transparent 62%),
-    linear-gradient(180deg, #0e1726, #0b1320);
+    radial-gradient(820px 480px at 4% -8%, rgba(45,212,191,0.16), transparent 60%),
+    radial-gradient(760px 460px at 112% 0%, rgba(251,138,126,0.12), transparent 60%),
+    radial-gradient(720px 520px at 50% 120%, rgba(255,210,74,0.07), transparent 62%),
+    linear-gradient(180deg, #0b1733, #070d1f);
   background-size: 170% 170%, 170% 170%, 170% 170%, 100% 100%;
 }
 
 /* ---- (2) THE SHOWPIECE: the hero becomes a navy command band (matches the hub) -- */
 .hero-band { position: relative; overflow: hidden; border-radius: 18px;
   padding: 18px 20px 16px; margin: 4px 0 16px; color: #fff;
-  background: radial-gradient(125% 150% at 16% -12%, #1b3f78 0%, #0C234B 46%, #07142f 100%);
-  box-shadow: 0 18px 46px rgba(8,20,47,.32); }
-.hero-band::after {            /* gold/white/green nebula speckle — the hub signature */
+  background: radial-gradient(125% 150% at 16% -12%, #15425f 0%, #0b1733 46%, #070d1f 100%);
+  box-shadow: 0 18px 46px rgba(3,8,20,.45), inset 0 0 0 1px rgba(45,212,191,.18); }
+.hero-band::after {            /* teal/coral/gold nebula speckle — the desert-night signature */
   content:""; position:absolute; inset:0; opacity:.6; pointer-events:none; z-index:0;
   background:
-    radial-gradient(46px 46px at 10% 26%, rgba(255,210,0,.16), transparent 70%),
-    radial-gradient(66px 66px at 86% 16%, rgba(255,255,255,.10), transparent 70%),
-    radial-gradient(54px 54px at 64% 94%, rgba(94,174,58,.12), transparent 70%); }
+    radial-gradient(48px 48px at 10% 26%, rgba(45,212,191,.18), transparent 70%),
+    radial-gradient(66px 66px at 86% 16%, rgba(251,138,126,.14), transparent 70%),
+    radial-gradient(54px 54px at 64% 94%, rgba(255,210,74,.12), transparent 70%); }
 .hero-band::before {           /* drifting STARFIELD — bridges to the desert-night cover */
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.55;
   background-repeat: repeat; background-size: 210px 220px, 210px 220px, 210px 220px, 210px 220px;
@@ -368,7 +368,7 @@ body::before {
 /* ---- (5) celebrate the wins: significant pooled row + consistent verdicts glow -- */
 .pooled-row.pooled-sig { animation: ddlWinGlow 3.4s ease-in-out infinite; }
 .pooled-row:hover { transform: translateX(3px); box-shadow: 0 8px 20px rgba(12,35,75,.12); }
-.link-chip.lc-consistent { box-shadow: 0 0 0 1px rgba(26,127,55,.18), 0 0 14px rgba(26,127,55,.10); }
+.link-chip.lc-consistent { box-shadow: 0 0 0 1px rgba(45,212,191,.30), 0 0 16px rgba(45,212,191,.16); }
 .link-chip { transition: transform .16s ease, box-shadow .2s ease; }
 .link-chip:hover { transform: translateX(3px); box-shadow: 0 8px 18px rgba(12,35,75,.14); }
 .sb-cell.sb-consistent { position: relative; overflow: hidden; }

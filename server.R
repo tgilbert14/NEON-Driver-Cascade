@@ -7,7 +7,7 @@ server <- function(input, output, session) {
     grid <- if (dark) "rgba(220,230,240,0.10)" else "rgba(31,42,48,0.08)"
     p %>% plotly::layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
       font=list(color=ink, family="Rubik"),
-      hoverlabel=list(bgcolor="rgba(12,35,75,0.96)", bordercolor="#FFD200", font=list(color="#fff", family="Rubik", size=12))) %>%
+      hoverlabel=list(bgcolor="rgba(11,23,51,0.96)", bordercolor="#2dd4bf", font=list(color="#eaf2ff", family="Rubik", size=12))) %>%
       plotly::config(displayModeBar=FALSE, responsive=TRUE) }
   note_plot <- function(msg) plotly::plot_ly(type="scatter", mode="markers") %>%
     plotly::layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis=list(visible=FALSE), yaxis=list(visible=FALSE),
@@ -155,21 +155,21 @@ server <- function(input, output, session) {
     # colour family (climate=blue, green-up=lime, producers=forest, consumers=cardinal),
     # the SHADE distinguishes signals within the strip. Index resets per strip, so no
     # global counter ever bleeds one layer's hue into another or wraps into a clash.
-    LADDER_PAL <- list(
-      climate   = c("#2f7fb5","#16386e","#6db3e0","#0a4a8f"),
-      phenology = c("#3f9e3a","#7cc46a","#2f7d2f","#9acd6b"),
-      producer  = c("#1a7f37","#12612a","#5fae3a","#0c4a20"),
-      consumer  = c("#AB0520","#d6336c","#e0607a","#7a0418"))
-    dark_hex <- function(hex) if (!is_dark()) hex else {
-      rgb <- grDevices::col2rgb(hex)/255; hsv <- grDevices::rgb2hsv(rgb)
-      grDevices::hsv(hsv[1], max(0, hsv[2]*0.8), min(1, hsv[3]*1.35)) }   # lift value, ease saturation for navy bg
+    LADDER_PAL <- list(    # desert-night per-layer ramps: clim sky · phen lime · prod green · cons coral
+      climate   = c("#43b8e8","#2a8fc4","#7fd0f0","#1f6f9e"),
+      phenology = c("#9bd24a","#7fb533","#b8e06f","#6a9a2a"),
+      producer  = c("#5fb56a","#3f9a52","#86c98e","#2f7d44"),
+      consumer  = c("#fb8a7e","#e86a5e","#ffb0a6","#d4584c"))
+    dark_hex <- function(hex) if (!is_dark()) hex else {     # col2rgb is 0-255; rgb2hsv's default
+      hsv <- grDevices::rgb2hsv(grDevices::col2rgb(hex))      # maxColorValue is 255 — do NOT pre-divide
+      grDevices::hsv(hsv[1], max(0, hsv[2]*0.82), min(1, hsv[3]*1.1)) }   # ease saturation, gentle lift for dark bg
     # ---- Pulse Tracer highlights for the traced year (built per signal key) ----
     t0 <- traced(); paths <- if (!is.null(t0)) pulse_paths(a, t0) else NULL
     hl <- list(); add_hl <- function(key, yr, z, color, sym, lab)
       hl[[key]] <<- rbind(hl[[key]], data.frame(year=yr, z=z, color=color, sym=sym, lab=lab, stringsAsFactors=FALSE))
     if (!is.null(paths) && nrow(paths)) {
-      vcol <- c(match="#1a7f37", miss="#AB0520", nodata="#9aa6b2")
-      for (fk in unique(paths$from)) add_hl(fk, t0, paths$src_z[paths$from==fk][1], "#e6b400", "circle",
+      vcol <- c(match="#2dd4bf", miss="#fb8a7e", nodata="#9fb0cf")
+      for (fk in unique(paths$from)) add_hl(fk, t0, paths$src_z[paths$from==fk][1], "#ffd24a", "circle",
         sprintf("%s · traced year %d (z=%.2f)", sig_label(fk), t0, paths$src_z[paths$from==fk][1]))
       for (i in seq_len(nrow(paths))) { pr <- paths[i,]; if (pr$verdict=="nodata") next
         add_hl(pr$to, pr$dst_year, pr$dst_z, unname(vcol[[pr$verdict]]), if (pr$verdict=="match") "circle" else "x",
@@ -417,8 +417,8 @@ server <- function(input, output, session) {
     d <- a[is.finite(a$precip_winter) | is.finite(a$precip_monsoon), c("year","precip_winter","precip_monsoon")]
     if (!nrow(d)) return(note_plot("No seasonal precipitation reconstructed for this site yet."))
     plotly::plot_ly(d, x=~year) %>%
-      plotly::add_bars(y=~precip_winter, name="Winter rain (Oct–Mar)", marker=list(color="#2f7fb5")) %>%
-      plotly::add_bars(y=~precip_monsoon, name="Monsoon rain (Jul–Sep)", marker=list(color="#c9892f")) %>%
+      plotly::add_bars(y=~precip_winter, name="Winter rain (Oct–Mar)", marker=list(color="#43b8e8")) %>%
+      plotly::add_bars(y=~precip_monsoon, name="Monsoon rain (Jul–Sep)", marker=list(color="#ffd24a")) %>%
       theme_plotly() %>% plotly::layout(barmode="group", legend=list(orientation="h", y=-0.22),
         yaxis=list(title="precipitation (mm)"), xaxis=list(title="year", dtick=1), margin=list(l=55,r=20,t=10,b=40))
   })

@@ -127,14 +127,18 @@ ladder_layer <- function(ann_site, signals, layer) {
   do.call(rbind, Filter(Negate(is.null), out))
 }
 
+# Desert-night cascade layer hues (match the suite cover): clim sky, phen lime,
+# prod green, cons coral.
 LAYER_META <- list(
-  climate   = list(title = "CLIMATE",   icon = "cloud-rain",      col = "#2f7fb5"),
-  phenology = list(title = "GREEN-UP",  icon = "flower2",         col = "#5fae3a"),
-  producer  = list(title = "PRODUCERS", icon = "tree",            col = "#1a7f37"),
-  consumer  = list(title = "CONSUMERS", icon = "bug",             col = "#AB0520"))
+  climate   = list(title = "CLIMATE",   icon = "cloud-rain",      col = "#43b8e8"),
+  phenology = list(title = "GREEN-UP",  icon = "flower2",         col = "#9bd24a"),
+  producer  = list(title = "PRODUCERS", icon = "tree",            col = "#5fb56a"),
+  consumer  = list(title = "CONSUMERS", icon = "bug",             col = "#fb8a7e"))
+# Verdict tiers, harmonised to the teal/coral/gold system (semantics preserved):
+# consistent = teal (the brand win), apparent = gold, counter = coral, the rest dim.
 TIER_META <- list(
-  consistent  = list(lab = "Consistent with prior", col = "#1a7f37", icon = "check-circle-fill"),
-  apparent    = list(lab = "Apparent only",         col = "#c9a300", icon = "dash-circle-fill"),
-  counter     = list(lab = "Counter to prior",      col = "#AB0520", icon = "x-circle-fill"),
-  exploratory = list(lab = "Exploratory (n<6)",     col = "#6b7a89", icon = "hourglass-split"),
-  insufficient= list(lab = "Too few years",         col = "#9aa6b2", icon = "slash-circle"))
+  consistent  = list(lab = "Consistent with prior", col = "#2dd4bf", icon = "check-circle-fill"),
+  apparent    = list(lab = "Apparent only",         col = "#e0b43a", icon = "dash-circle-fill"),
+  counter     = list(lab = "Counter to prior",      col = "#fb8a7e", icon = "x-circle-fill"),
+  exploratory = list(lab = "Exploratory (n<6)",     col = "#9fb0cf", icon = "hourglass-split"),
+  insufficient= list(lab = "Too few years",         col = "#6b7a89", icon = "slash-circle"))

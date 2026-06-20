@@ -62,14 +62,20 @@ DEFAULT_SITE <- {
     sc <- vapply(cand, function(s) sum(vapply(SIGNALS$key, function(k) sum(is.finite(site_annual(s)[[k]])), integer(1))), integer(1))
     cand[which.max(sc)] } }
 
+# ---- Desert-night creative system (matches the DDL suite cover) -----------------
+# Dark sky + teal/coral/gold. Key NAMES are kept (server.R references DDL$sky etc.),
+# only the VALUES are remapped to the desert palette so the charts re-theme with one edit.
 DDL <- list(
-  navy = "#0C234B", navy2 = "#16386e", cardinal = "#AB0520", gold = "#FFD200",
-  gold2 = "#c9a300", sky = "#2f7fb5", green = "#1a7f37", green2 = "#12612a",
-  ink = "#1c2733", muted = "#6b7a89", bg = "#eef2f8", paper = "#ffffff", line = "#dbe2ec")
-app_theme <- bs_theme(version = 5, bg = "#ffffff", fg = DDL$ink,
-  primary = DDL$navy, secondary = DDL$cardinal, success = DDL$green, info = DDL$sky,
-  warning = DDL$gold, danger = DDL$cardinal,
-  base_font = font_google("Rubik"), heading_font = font_google("Rubik"), "border-radius" = "10px")
+  navy = "#0e1d40", navy2 = "#16345e", teal = "#2dd4bf", bright = "#5eead4",
+  cardinal = "#fb8a7e", coral = "#fb8a7e", gold = "#ffd24a", gold2 = "#e0b43a",
+  sky = "#43b8e8", green = "#5fb56a", green2 = "#9bd24a",
+  ink = "#eaf2ff", muted = "#9fb0cf", bg = "#070d1f", paper = "#0e1d40", line = "rgba(255,255,255,0.12)")
+# Light "desert-day" base (shown if the user toggles light). DARK is the default
+# (input_dark_mode mode="dark") and the showcase — the desert-night creative system.
+app_theme <- bs_theme(version = 5, bg = "#eef3fb", fg = "#16243a",
+  primary = "#149086", secondary = "#e0685a", success = "#3f9a52", info = "#2f8fc4",
+  warning = "#d6a31c", danger = "#e0685a",
+  base_font = font_google("Rubik"), heading_font = font_google("Rubik"), "border-radius" = "12px")
 
 asset_url <- function(path) { f <- file.path("www", path)
   v <- if (file.exists(f)) as.integer(as.numeric(file.mtime(f))) else 0L; sprintf("%s?v=%s", path, v) }
