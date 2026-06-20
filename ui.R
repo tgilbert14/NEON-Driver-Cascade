@@ -10,12 +10,7 @@ ui <- bslib::page_sidebar(
     tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap"),
     tags$link(rel = "stylesheet", href = asset_url("styles.css")),
     tags$link(rel = "stylesheet", href = asset_url("cascade.css")),
-    tags$script(src = asset_url("app.js")),
-    # send viewport width to the server (cheaply, debounced) so charts can de-clutter on phones
-    tags$script(HTML(
-      "$(function(){function sendW(){if(window.Shiny&&Shiny.setInputValue){Shiny.setInputValue('vw',window.innerWidth);}}",
-      "$(document).on('shiny:connected',sendW);",
-      "window.addEventListener('resize',function(){clearTimeout(window.__vwt);window.__vwt=setTimeout(sendW,200);});});"))
+    tags$script(src = asset_url("cascade.js"))
   ),
   useShinyjs(),
   sidebar = sidebar(
