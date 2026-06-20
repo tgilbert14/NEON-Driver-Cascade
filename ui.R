@@ -10,7 +10,12 @@ ui <- bslib::page_sidebar(
     tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap"),
     tags$link(rel = "stylesheet", href = asset_url("styles.css")),
     tags$link(rel = "stylesheet", href = asset_url("cascade.css")),
-    tags$script(src = asset_url("app.js"))
+    tags$script(src = asset_url("app.js")),
+    # send viewport width to the server (cheaply, debounced) so charts can de-clutter on phones
+    tags$script(HTML(
+      "$(function(){function sendW(){if(window.Shiny&&Shiny.setInputValue){Shiny.setInputValue('vw',window.innerWidth);}}",
+      "$(document).on('shiny:connected',sendW);",
+      "window.addEventListener('resize',function(){clearTimeout(window.__vwt);window.__vwt=setTimeout(sendW,200);});});"))
   ),
   useShinyjs(),
   sidebar = sidebar(
@@ -98,7 +103,8 @@ ui <- bslib::page_sidebar(
           p("Per-site series are short; pooled across sites, the picture is clear. Each cell is one link's verdict at one site — click any site to open it."))),
         card(card_head("trophy", "The pooled result — the cascade's one robust rung"), uiOutput("pooledHeadline")),
         card(full_screen = TRUE, card_head("grid-3x3-gap", "Site × link sign-match grid",
-          info_pop("Reading the grid", p("Rows are sites grouped by biome; columns are the predicted links. Cell colour = the verdict; faded cells aren't the mechanism expected for that biome."))),
+          info_pop("Reading the grid", p("Rows are sites grouped by biome; columns are the predicted links. Cell colour = the verdict; faded cells aren't the mechanism expected for that biome.")),
+          downloadButton("dlSuite", tagList(bs_icon("filetype-csv"), " CSV"), class = "btn-outline-dark btn-sm ms-auto")),
           div(class = "sb-scroll", uiOutput("scoreboard")))),
 
       nav_panel(title = tagList(bs_icon("info-circle"), " About"), value = "about", uiOutput("aboutPanel"))

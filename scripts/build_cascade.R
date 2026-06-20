@@ -101,15 +101,22 @@ ann_mammal <- function(site) {                    # consumer: CPUE + minimum kno
   # set"); a capture = trapStatus 5 (capture) or 4 (>1 in one trap). The old code
   # divided by n_distinct(nightuid) = BOUTS, inflating CPUE ~90x into an impossible
   # "35 animals per trap" — this is the captures-per-100-trap-nights index (≈4-16).
+  # Effort = trap-nights with the Nelson & Clark (1973) weighting the FLAGSHIP uses
+  # (App-NEON-Small-Mammal-Tracker/R/helpers.R:208-216): trapStatus "1 - not set" = 0,
+  # "2/3 - disturbed/sprung" = HALF a trap-night, "4/5/6 - capture/set-empty" = 1 full.
+  # A capture = a tagged-individual row (tagID present), the flagship's CPUE numerator —
+  # so the cascade's consumer rung is the SAME number the consumer app reports, not a
+  # divergent grepl-on-status approximation.
   has_status <- "trapStatus" %in% names(d)
   if (has_status) {
-    d$is_cap   <- grepl("capture", d$trapStatus, ignore.case = TRUE)
-    d$deployed <- !is.na(d$trapStatus) & !grepl("not set", d$trapStatus, ignore.case = TRUE)
-  } else { d$is_cap <- TRUE; d$deployed <- TRUE }
+    ts1 <- substr(as.character(d$trapStatus), 1, 1); ts1[is.na(ts1)] <- ""
+    d$trap_effort <- ifelse(ts1 == "1", 0, ifelse(ts1 %in% c("2","3"), 0.5, 1))
+  } else d$trap_effort <- 1
+  d$is_cap <- !is.na(d$tagID) & nzchar(as.character(d$tagID))
   d %>% group_by(year) %>% summarise(
-    traps    = sum(.data$deployed),                                    # deployed trap-nights = effort
+    traps    = sum(.data$trap_effort, na.rm = TRUE),                   # Nelson & Clark trap-nights
     captures = sum(.data$is_cap, na.rm = TRUE),
-    mammal_mnka = dplyr::n_distinct(.data$tagID[!is.na(.data$tagID) & nzchar(.data$tagID) & .data$is_cap]),
+    mammal_mnka = dplyr::n_distinct(.data$tagID[.data$is_cap]),
     .groups="drop") %>%
     mutate(mammal_cpue = ifelse(.data$traps > 0, round(100 * .data$captures / .data$traps, 2), NA_real_),
            site = site) %>% select(site, year, mammal_cpue, mammal_mnka)

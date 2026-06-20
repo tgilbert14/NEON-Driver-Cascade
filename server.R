@@ -146,11 +146,12 @@ server <- function(input, output, session) {
         zeroline=TRUE, zerolinecolor=if(is_dark())"rgba(220,230,240,0.25)" else "rgba(31,42,48,0.18)",
         gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)", tickfont=list(size=9)))
     })
+    narrow <- isTRUE((input$vw %||% 1200) < 760)   # on phones the h-legend crushes into the axis
     plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=TRUE, margin=0.035) %>%
       theme_plotly() %>%
-      plotly::layout(legend=list(orientation="h", y=-0.08, font=list(size=10)),
+      plotly::layout(showlegend = !narrow, legend=list(orientation="h", y=-0.08, font=list(size=10)),
         xaxis=list(title="year", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
-        margin=list(l=60,r=20,t=20,b=40))
+        margin=list(l=60,r=20,t=20,b=if (narrow) 24 else 40))
   })
 
   # ---- link agreement chips (beside the ladder) ----
@@ -213,7 +214,7 @@ server <- function(input, output, session) {
         tags$thead(tags$tr(tags$th("Driver"), tags$th("Expected"), tags$th("r"), tags$th("n"), tags$th("Verdict"))),
         tags$tbody(rows)),
       p(class="qc-cap-note", style="margin-top:8px", bs_icon("info-circle"),
-        " Expected sign/lag come from the ecology literature (see About), fixed before looking at the data. No verdict is given below 6 overlapping years."))
+        HTML(" Expected sign/lag come from the ecology literature (see About), fixed before looking at the data. No verdict below 6 overlapping years &mdash; and at 6 years only a strong relationship (|r|&nbsp;&gt;&nbsp;0.8) can clear significance, so a &lsquo;counter&rsquo; result on a short series usually means <b>underpowered</b>, not <b>refuted</b>. That is exactly why the cross-site pooling on the Across&nbsp;NEON tab is the honest test.")))
   })
 
   # the most-informative link for the scatter = most overlapping years
@@ -306,11 +307,15 @@ server <- function(input, output, session) {
         p(class="qc-cap-note", style="margin-top:8px", HTML("Sources: warmer-springs→earlier green-up — <b>Fu et al. 2015</b> (Nat. Comms.), Richardson et al. 2013; rain→desert rodents (lagged, non-linear) — <b>Brown &amp; Ernest 2002</b>, Thibault et al. 2010; rain-timing — Zhang et al. 2021; dryland productivity~precipitation — Sala et al. 1988, Huxman et al. 2004, Knapp et al. 2017; the “green wave” — Merkle et al. 2016. A green-up→bird link is <b>deliberately omitted</b>: the mismatch literature is about timing-synchrony, not “later green-up → more birds.”"))),
 
       div(class="about-card", h4(bs_icon("database"), " Data & honest limits"),
-        p("Per-site annual signals assembled from the five sibling apps' bundles plus NEON/Daymet climate overlays. ",
+        p("Per-site annual signals assembled from the five sibling apps' bundles plus the NEON-tower climate overlays. ",
           tags$b("Small-mammal catch rate"), " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites — read within-site trends only. ",
-          tags$b("Temperature"), " is the year's average, a stand-in for the spring warmth that actually drives green-up. ",
-          tags$b("Plant richness"), " (species count) is a rough proxy for plant productivity."),
-        p(bs_icon("envelope"), " ", tags$a(href="mailto:desertdatalabs@gmail.com","desertdatalabs@gmail.com"))))
+          tags$b("Temperature"), " is the year's average, a stand-in for spring warmth that works where temperature limits green-up (temperate/boreal) but not in warm deserts, where water is the trigger. ",
+          tags$b("Plant richness"), " (species count) is a COMPOSITION signal, not productivity — in drylands it can even fall in wet years, so its priors are weak and biome-scoped."),
+        p(bs_icon("envelope"), " ", tags$a(href="mailto:desertdatalabs@gmail.com","desertdatalabs@gmail.com"))),
+
+      div(class="about-card", h4(bs_icon("table"), " Codebook & data downloads"),
+        p("Every signal, its units, how it's derived, and the n-gates — plus analysis-ready CSV exports."),
+        uiOutput("codebook")))
   })
   # ---- SEASONAL CLIMATE reveal (the desert insight made visible) ----
   output$seasonalPlot <- renderPlotly({
@@ -389,6 +394,53 @@ server <- function(input, output, session) {
         tags$tbody(rows)),
       p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
         HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>consistent</span> <span class='sb-key sb-apparent'>apparent</span> <span class='sb-key sb-counter'>counter</span> <span class='sb-key sb-exploratory'>&lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. Faded cells aren't the mechanism <b>expected</b> for that biome. Click a site to open it. The grey untestable majority is shown, not hidden — that honesty IS the coverage statement.")))
+  })
+
+  # ---- DOWNLOADS (the suite's signature export funnel) ----
+  output$dlAnnual <- downloadHandler(
+    filename = function() sprintf("%s-cascade-annual.csv", input$site),
+    content = function(file) {
+      a <- ann(); cols <- c("year", intersect(c(LADDER_KEYS, "precip_winter","precip_monsoon","temp_spring"), names(a)))
+      hdr <- c(sprintf("# NEON Driver Cascade — %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
+               "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
+               "# precip_winter = Oct-Mar sum (year it ends); precip_monsoon = Jul-Sep sum. See the codebook in the About tab.", "")
+      writeLines(hdr, file)
+      suppressWarnings(utils::write.table(a[, cols, drop=FALSE], file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
+    })
+  output$dlLinks <- downloadHandler(
+    filename = function() sprintf("%s-link-scorecard.csv", input$site),
+    content = function(file) {
+      lk <- links(); keep <- intersect(c("from","to","lag","n","r","lo","hi","p","prior_sign","sign_match","tier","expected","expected_class","conf"), names(lk))
+      utils::write.csv(lk[, keep, drop=FALSE], file, row.names=FALSE)
+    })
+  output$dlSuite <- downloadHandler(
+    filename = function() "neon-cascade-scoreboard.csv",
+    content = function(file) {
+      keep <- intersect(c("site","biome","biome_class","from","to","lag","n","r","lo","hi","p","prior_sign","sign_match","tier","expected","expected_class"), names(SUITE_LINKS))
+      utils::write.csv(SUITE_LINKS[, keep, drop=FALSE], file, row.names=FALSE)
+    })
+
+  # ---- CODEBOOK (the cheapest credibility win) ----
+  output$codebook <- renderUI({
+    rows <- lapply(seq_len(nrow(SIGNALS)), function(i){ s <- SIGNALS[i,]
+      tags$tr(tags$td(tags$code(s$key)), tags$td(s$label),
+        tags$td(span(class=paste0("sig-dot sig-", s$layer))), tags$td(s$layer),
+        tags$td(class="st-unit", s$unit), tags$td(s$higher_is)) })
+    tagList(
+      tags$table(class="inspect-tbl",
+        tags$thead(tags$tr(tags$th("key"), tags$th("signal"), tags$th(""), tags$th("layer"), tags$th("unit"), tags$th("“more” ="))),
+        tags$tbody(rows)),
+      tags$ul(class="codebook-notes",
+        tags$li(HTML("<b>precip</b> = annual total mm (needs &ge;10 valid months). <b>temp</b> = annual mean &deg;C (&ge;8 months), with a within-site MAD outlier filter that NAs a corrupted-sensor year.")),
+        tags$li(HTML("<b>precip_winter</b> = Oct&ndash;Mar sum keyed to the year it ENDS (&ge;5 of 6 months). <b>precip_monsoon</b> = Jul&ndash;Sep sum (3 of 3). <b>temp_spring</b> = Mar&ndash;May mean. Reconstructed from the monthly NEON-tower overlays.")),
+        tags$li(HTML("<b>greenup_doy</b> = median first-&lsquo;yes&rsquo; onset day-of-year over the green-up phenophases, years with &ge;5 individuals.")),
+        tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID) &mdash; a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
+        tags$li(HTML("<b>plant_richness</b> = species count (a COMPOSITION signal, not productivity). <b>plant_intro_pct</b> = introduced share of cover. <b>bird_index</b> = clusterSize/point &mdash; a descriptive detection index that carries NO prior.")),
+        tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory (no p); &ge;6 &rarr; permutation p + bootstrap CI + a verdict. Each prior is tested where its biome mechanism is <b>expected</b>; the cross-site pooled binomial is one vote per site."))),
+      div(class="codebook-dl",
+        downloadButton("dlAnnual", tagList(bs_icon("filetype-csv"), " This site's annual data"), class="btn-outline-dark btn-sm"),
+        downloadButton("dlLinks",  tagList(bs_icon("filetype-csv"), " This site's link scorecard"), class="btn-outline-dark btn-sm"),
+        tags$span(class="codebook-dl-note", "(the full cross-site scoreboard CSV is on the Across NEON tab)")))
   })
 
   observeEvent(input$goSite, {

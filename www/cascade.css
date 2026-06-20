@@ -168,3 +168,22 @@ tr.dt-dim { opacity: .55; }
 [data-bs-theme="dark"] .hero-verdict, [data-bs-theme="dark"] .pooled-row,
 [data-bs-theme="dark"] .seasonal-cmp { background: rgba(255,255,255,0.03); }
 [data-bs-theme="dark"] .sb-table th.sb-site, [data-bs-theme="dark"] .sb-table td.sb-site { background: #14233b; }
+
+/* ---- codebook + downloads -------------------------------------------- */
+.codebook-notes { margin: 12px 0 4px; padding-left: 18px; }
+.codebook-notes li { font-size: 12.5px; line-height: 1.5; color: var(--ink); margin: 5px 0; }
+.codebook-dl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.codebook-dl-note { font-size: 11.5px; color: var(--muted); font-style: italic; }
+
+/* ---- mobile reflow (phones) ------------------------------------------ */
+@media (max-width: 800px) {
+  .hero-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-verdict { font-size: 14px; padding: 11px 13px; }
+  .seasonal-cmps { grid-template-columns: 1fr; }
+  .pooled-row { grid-template-columns: 1fr; gap: 4px; }
+  .pl-bar-wrap { height: 8px; }
+  .sb-table { font-size: 10px; }
+  .sb-cell { min-width: 44px; padding: 4px 2px; }
+  .tab-handoff { justify-content: stretch; }
+  .handoff-chip { width: 100%; justify-content: center; }
+}
