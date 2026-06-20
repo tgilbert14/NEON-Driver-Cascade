@@ -85,3 +85,86 @@
 [data-bs-theme="dark"] .gloss-item span { color: #b9c6d6; }
 [data-bs-theme="dark"] .gloss-item > b:first-child { color: #9fc6ff; }
 .ladder-note { font-size: 12px; color: var(--muted, #6b7a89); margin: 2px 0 8px; display:flex; gap:6px; align-items:baseline; }
+
+/* ====================================================================== *
+ *  Overhaul additions: verdict sentence, biome tag, handoffs, seasonal,   *
+ *  cross-site scoreboard.                                                 *
+ * ====================================================================== */
+
+/* ---- hero verdict sentence (lead with the answer) --------------------- */
+.hero-verdict { font-size: 15px; line-height: 1.5; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-left: 4px solid var(--pine); border-radius: 12px;
+  padding: 12px 16px; margin: 0 0 12px; box-shadow: 0 4px 14px var(--shadow); }
+.hero-verdict b { color: var(--ink); }
+.biome-tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .03em;
+  text-transform: uppercase; padding: 2px 9px; border-radius: 20px; margin-right: 8px;
+  vertical-align: middle; color: #fff; background: var(--pine); white-space: nowrap; }
+.biome-tag.biome-water { background: #2f7fb5; }
+.biome-tag.biome-temp  { background: #1a7f37; }
+
+/* ---- section handoff chips (parallel tabs -> guided sequence) --------- */
+.tab-handoff { display: flex; justify-content: flex-end; margin: 6px 2px 2px; }
+.handoff-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700;
+  color: #fff; background: var(--pine); border-radius: 22px; padding: 8px 16px; text-decoration: none;
+  box-shadow: 0 3px 10px var(--shadow); transition: transform .12s ease, background .12s ease; }
+.handoff-chip:hover { background: var(--cardinal, #AB0520); color: #fff; transform: translateX(2px); }
+
+/* ---- expected / not-expected cues on chips + table ------------------- */
+.lc-dim { opacity: .5; }
+.lc-exp { margin-left: auto; font-size: 9.5px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
+  color: #1a7f37; background: rgba(26,127,55,.12); border-radius: 12px; padding: 1px 7px; }
+.lc-top .lc-lag + .lc-exp { margin-left: 6px; }
+tr.dt-dim { opacity: .55; }
+.dt-exp { color: #1a7f37; font-weight: 800; }
+
+/* ---- seasonal climate reveal ----------------------------------------- */
+.seasonal-note { font-size: 13px; color: var(--muted); font-style: italic; display:flex; gap:6px; align-items:baseline; margin: 4px 0 8px; }
+.seasonal-cmps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 10px; }
+.seasonal-cmp { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
+.sc-title { font-weight: 800; font-size: 13px; color: var(--ink); margin-bottom: 7px; }
+.sc-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; font-size: 13px; }
+.sc-k { color: var(--muted); }
+.sc-v { font-weight: 800; font-variant-numeric: tabular-nums; }
+.sc-weak { color: #9aa6b2; }
+.sc-strong { color: #1a7f37; }
+
+/* ---- pooled headline -------------------------------------------------- */
+.pooled-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.pooled-row { display: grid; grid-template-columns: minmax(170px, 1.4fr) minmax(80px, 1fr) minmax(180px, 1.2fr);
+  gap: 12px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.pooled-row.pooled-sig { border-color: #1a7f37; box-shadow: inset 3px 0 0 #1a7f37; }
+.pl-link { font-weight: 700; color: var(--ink); font-size: 13px; }
+.pl-lag { color: var(--muted); font-weight: 500; font-size: 11px; }
+.pl-bar-wrap { background: var(--bg); border-radius: 20px; height: 12px; overflow: hidden; }
+.pl-bar { height: 100%; background: linear-gradient(90deg, #5fae3a, #1a7f37); border-radius: 20px; }
+.pooled-row:not(.pooled-sig) .pl-bar { background: linear-gradient(90deg, #c9d3df, #9aa6b2); }
+.pl-stat { font-size: 12px; color: var(--ink); display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.pl-p { color: var(--muted); }
+.pooled-sig .pl-p { color: #1a7f37; font-weight: 800; }
+.pl-r { color: var(--muted); }
+
+/* ---- cross-site scoreboard grid -------------------------------------- */
+.sb-scroll { overflow-x: auto; }
+.sb-table { border-collapse: separate; border-spacing: 2px; font-size: 11px; width: 100%; }
+.sb-table th.sb-col { font-size: 10px; font-weight: 700; color: var(--muted); text-align: center; line-height: 1.2;
+  padding: 4px 3px; vertical-align: bottom; min-width: 58px; }
+.sb-table th.sb-site, .sb-table td.sb-site { text-align: left; position: sticky; left: 0; background: var(--paper); z-index: 2; min-width: 96px; }
+.sb-sitelink { font-weight: 800; color: var(--pine); text-decoration: none; }
+.sb-sitelink:hover { color: var(--cardinal, #AB0520); text-decoration: underline; }
+.sb-biome { font-size: 9.5px; color: var(--muted); line-height: 1.1; }
+.sb-cell { text-align: center; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums;
+  border-radius: 5px; padding: 5px 3px; min-width: 52px; }
+.sb-cell.sb-consistent  { background: #1a7f37; }
+.sb-cell.sb-apparent    { background: #c9a300; }
+.sb-cell.sb-counter     { background: #AB0520; }
+.sb-cell.sb-exploratory { background: #8a97a6; }
+.sb-cell.sb-insufficient{ background: #c2cad3; color: #5a6675; }
+.sb-cell.sb-na          { background: transparent; }
+.sb-cell.sb-dim { opacity: .42; }
+.sb-key { display: inline-block; color: #fff; font-weight: 700; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+.sb-key.sb-consistent { background:#1a7f37; } .sb-key.sb-apparent { background:#c9a300; }
+.sb-key.sb-counter { background:#AB0520; } .sb-key.sb-exploratory { background:#8a97a6; }
+.sb-key.sb-insufficient { background:#c2cad3; color:#5a6675; }
+[data-bs-theme="dark"] .hero-verdict, [data-bs-theme="dark"] .pooled-row,
+[data-bs-theme="dark"] .seasonal-cmp { background: rgba(255,255,255,0.03); }
+[data-bs-theme="dark"] .sb-table th.sb-site, [data-bs-theme="dark"] .sb-table td.sb-site { background: #14233b; }

@@ -90,3 +90,47 @@ site_label <- function(code) {
   if (nrow(row) == 0) return(code)
   sprintf("%s · %s, %s · NEON %s", row$name[1], row$site[1], row$state[1], row$domain[1])
 }
+
+# ---------------------------------------------------------------------------
+# Biome / limiting-resource classification — the THROUGHLINE of the cascade app.
+# The science (verified against the data + Shen et al. 2020, Brown & Ernest 2002):
+# green-up is TEMPERATURE-triggered where temperature limits phenology (temperate &
+# boreal forest, prairie, tundra) and WATER-triggered in arid systems (warm/cold
+# desert, sagebrush). So the temp->green-up prior is "expected" in the former and
+# the seasonal-rain priors (winter rain->forbs, monsoon seed->granivores) in the
+# latter. We classify by climate, not by whether a given short series happens to
+# correlate — biome is a documented expectation, not a hard data filter.
+# ---------------------------------------------------------------------------
+# fine biome label (for the picker / bios)
+biome_of <- function(code) {
+  b <- tolower(paste(site_bio(code) %||% "", code))
+  if (!nzchar(trimws(b))) return("other")
+  if (grepl("tundra|alpine|arctic", b)) "tundra/alpine"
+  else if (grepl("desert|sagebrush|semi-desert", b)) "desert/shrub"
+  else if (grepl("prairie|grassland|savanna|rangeland|steppe", b)) "grassland"
+  else if (grepl("dry forest", b)) "subtropical dry forest"
+  else if (grepl("forest|hardwood|pine|conifer|spruce|fir|woodland|oak|timber", b)) "forest"
+  else "other"
+}
+# coarse limiting-resource class that drives which priors are EXPECTED at a site
+#   "water-limited"        -> arid: green-up & production gated by rain season
+#   "temperature-limited"  -> energy-limited: green-up gated by spring warmth
+biome_class <- function(code) {
+  b <- tolower(paste(site_bio(code) %||% "", code))
+  if (grepl("desert|sagebrush|semi-desert", b)) "water-limited" else "temperature-limited"
+}
+# short, human label for the hero band ("Sonoran desert", "temperate forest", ...)
+biome_label <- function(code) {
+  bo <- biome_of(code)
+  b  <- tolower(site_bio(code) %||% "")
+  if (grepl("sonoran", b)) "Sonoran desert"
+  else if (grepl("chihuahuan", b)) "Chihuahuan desert"
+  else if (grepl("great basin|sagebrush", b)) "Great Basin shrub-steppe"
+  else if (grepl("cold-desert|colorado plateau", b)) "cold-desert shrubland"
+  else switch(bo,
+    "forest" = "temperate/boreal forest", "grassland" = "grassland / prairie",
+    "tundra/alpine" = "tundra / alpine", "subtropical dry forest" = "subtropical dry forest",
+    "desert/shrub" = "desert / shrubland", "mixed ecosystem")
+}
+
+if (!exists("%||%")) `%||%` <- function(a, b) if (is.null(a) || length(a) == 0) b else a

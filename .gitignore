@@ -11,3 +11,6 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# local dev (machine-specific preview launch config)
+.claude/

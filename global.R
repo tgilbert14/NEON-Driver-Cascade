@@ -17,8 +17,25 @@ CASCADE <- tryCatch(readRDS("data/cascade.rds"), error = function(e) NULL)
 ANNUAL  <- if (!is.null(CASCADE)) CASCADE$annual  else data.frame()
 SIGNALS <- if (!is.null(CASCADE)) CASCADE$signals else data.frame()
 PRIORS  <- if (!is.null(CASCADE)) CASCADE$priors  else data.frame()
+# precomputed cross-site scoreboard + pooled headline + per-site biome (the throughline)
+SUITE_LINKS <- if (!is.null(CASCADE) && !is.null(CASCADE$suite_links)) CASCADE$suite_links else data.frame()
+POOLED      <- if (!is.null(CASCADE) && !is.null(CASCADE$pooled))      CASCADE$pooled      else data.frame()
+SITE_META   <- if (!is.null(CASCADE) && !is.null(CASCADE$site_meta))   CASCADE$site_meta   else data.frame()
+# signals shown on the main ladder (seasonal climate signals are ladder=FALSE)
+LADDER_KEYS <- if ("ladder" %in% names(SIGNALS)) SIGNALS$key[SIGNALS$ladder %in% TRUE] else SIGNALS$key
 
 site_annual <- function(site) ANNUAL[ANNUAL$site == site, , drop = FALSE]
+site_bclass <- function(site) if (exists("biome_class")) biome_class(site) else "temperature-limited"
+site_blabel <- function(site) if (exists("biome_label")) biome_label(site) else "mixed ecosystem"
+is_desert   <- function(site) identical(site_bclass(site), "water-limited")
+# read the precomputed biome-aware links for a site (no live recompute / permutations)
+site_links_cached <- function(site) {
+  if (nrow(SUITE_LINKS) && "site" %in% names(SUITE_LINKS)) {
+    r <- SUITE_LINKS[SUITE_LINKS$site == site, , drop = FALSE]
+    if (nrow(r)) return(r)
+  }
+  site_links(site_annual(site), PRIORS, biome = site_bclass(site))   # fallback
+}
 
 # layer count per site (for picker richness) + default to the richest
 site_layer_count <- function(site) sum(layers_present(site_annual(site), SIGNALS))
@@ -56,11 +73,21 @@ info_pop <- function(title, ..., placement = "auto")
   bslib::popover(tags$span(class = "info-dot", bsicons::bs_icon("info-circle")), ..., title = title, placement = placement)
 insight_banner <- function(icon, ..., tone = "navy")
   div(class = paste("chart-insight", paste0("ci-", tone)), bsicons::bs_icon(icon), div(class = "ci-text", ...))
+# section-to-section handoff chip (turns parallel tabs into a guided sequence)
+handoff <- function(label, tab) div(class = "tab-handoff",
+  tags$a(href = "#", class = "handoff-chip",
+    onclick = sprintf("Shiny.setInputValue('gotoTab','%s',{priority:'event'});return false;", tab),
+    label, " ", bsicons::bs_icon("arrow-right-circle-fill")))
 card_head <- function(icon, title, ...)
   bslib::card_header(class = "with-info", bsicons::bs_icon(icon), tags$span(class = "ch-title", " ", title), ...)
 fmt_int <- function(x) format(round(as.numeric(x)), big.mark = ",", trim = TRUE)
 sig_label <- function(k) { r <- SIGNALS[SIGNALS$key == k, ]; if (nrow(r)) r$label[1] else k }
 sig_unit  <- function(k) { r <- SIGNALS[SIGNALS$key == k, ]; if (nrow(r)) r$unit[1] else "" }
+# compact label for the dense cross-site scoreboard
+sig_abbr  <- function(k) { m <- c(temp="Temp", precip="Rain", precip_winter="Winter rain",
+  precip_monsoon="Monsoon", temp_spring="Spring temp", greenup_doy="Green-up", fruiting_pct="Fruiting",
+  plant_richness="Richness", plant_intro_pct="Invasion", mammal_cpue="Rodents", mammal_mnka="Rodents",
+  bird_index="Birds", bird_richness="Bird rich."); if (k %in% names(m)) unname(m[k]) else k }
 
 # site dropdown choices, richest-cascade first ("SRER — Santa Rita … (4 layers)")
 cascade_site_choices <- function() {

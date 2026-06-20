@@ -25,31 +25,52 @@ literature review of bottom-up driver ecology and short-time-series statistics:
 - **Never "drives" or "causes."** A handful of annual points cannot establish causation; these
   are *consistencies with*, not proof of, the mechanism. No SEM/path model, no naive site-pooling.
 
+## Biome-conditional priors (the throughline)
+The big lesson of the build: **cascade priors are biome-conditional.** A temperate prior fails in a
+desert not because the desert has no cascade, but because you're testing the wrong driver. So each
+prior carries the limiting-resource regime where its mechanism is established, and at each site we
+test (and tally) the links *expected* for that biome:
+- **temperature-limited** (temperate/boreal forest, prairie, tundra): warmer spring → earlier green-up.
+- **water-limited** (warm & cold desert, sagebrush): **winter** rain → spring forbs; **summer-monsoon**
+  seed crop → next-year granivores. Built from *seasonal* climate (winter Oct–Mar, monsoon Jul–Sep),
+  reconstructed from the existing monthly NEON-tower overlays — because one annual rainfall total blends
+  two ENSO-anticorrelated seasons that drive different guilds.
+
 ## Tabs
-- **Overview** — the cascade idea + a schematic of which signals exist at the site.
-- **Cascade Ladder** (flagship) — standardised (z-scored) annual signals stacked by trophic layer
-  on a shared year axis; watch a wet year ripple up into green-up, plants, then rodents. Side
-  panel: each predicted link, coloured by whether the data agrees and honest about its few years.
-- **Driver Lab** — pick a response; see every literature-predicted driver tested against it, with
-  the aligned-pairs scatter and the sign-match tally.
+- **Overview** — the cascade idea, a schematic of which signals exist, and a one-sentence **verdict**
+  (auto-written, biome-anchored) that leads with the answer.
+- **Cascade Ladder** (flagship) — standardised (z-scored) annual signals stacked by trophic layer; the
+  link chips show whether each *expected* link agrees. Plus a **Seasonal Climate** panel: at desert sites
+  it shows how splitting annual rain into winter vs. monsoon recovers the signal the annual total hides.
+- **Driver Lab** — pick a response; every literature-predicted driver tested against it, with the
+  aligned-pairs scatter (now carrying its **r / n / p / 95% CI on the figure**) and a tier-honest fit line.
+- **Across NEON** — the suite scoreboard: each link **pooled across sites** (one vote per site) + a
+  site × link grid coloured by verdict, with the grey untestable majority shown, not hidden.
 - **About** — the full priors table + the honesty manifesto + citations.
 
 ### What it surfaces (real, honest findings)
-- **SCBI** — the one genuinely defensible result in the suite: **warmer springs → earlier
-  green-up**, r=−0.92, n=6, permutation p=0.012, 95% CI [−0.99,−0.34] — *consistent with prior*,
-  clears the null. Of the four *testable* (n≥6) links there, 3 of 4 point the predicted way —
-  but that tally is binomial p=0.31, i.e. **direction-agreement, not significance** (3/4 can't be).
-- **SRER / HARV**: messier (1/3, 1/4 testable sign-matches, high binomial p) — and the app
-  *says so*. Honesty over a tidy story; most producer→consumer links are untestable at <6 years.
+- **The suite headline (pooled):** **warmer springs → earlier green-up holds at 23 of 32 temperature-limited
+  sites, binomial p = 0.010** — a real result no single short site can show. Led by **SCBI** (r=−0.92, n=6,
+  permutation p=0.007). The producer→consumer links pool to ~null (richness→rodents 21/40, p=0.44) — and the
+  app says so.
+- **SRER (the desert that "didn't match"):** the annual cascade looks weak (1–2/3), but that was mostly a
+  *method* artifact. Test the **right season**: the summer-monsoon seed crop drives next-year rodents at
+  **r = +0.72** (where annual rain showed +0.20), and winter rain → forb richness flips from −0.11 to +0.27.
+  The desert cascade was there all along — the annual aggregation was hiding it.
 
 ## Run it
-R 4.5.x: `shiny::runApp(".", port = 8194)`. Default site **SCBI** (the one site with a significant
-result, so the tool's first impression shows it working). All data ships in `data/cascade.rds`.
+R 4.5.x: `shiny::runApp(".", port = 8194)`. Default site **SRER** (Santa Rita — the Sonoran-desert home
+turf and the thematic centre; its verdict sentence leads with the monsoon-recovery story). All data
+ships in `data/cascade.rds`.
 
 ## Data
-`data/cascade.rds` = `list(annual, signals, priors, meta)`. The annual per-site signal table is
-**assembled from the five sibling apps' bundles** + the small-mammal NEON/Daymet climate overlays
-(`scripts/build_cascade.R`) — no re-fetch; plain R reads the existing `.rds`. Small-mammal catch
-rate is a relative annual index (captures per 100 plot-nights), not effort-standardised across sites.
+`data/cascade.rds` = `list(annual, signals, priors, suite_links, pooled, site_meta, meta)`. The annual
+per-site signal table — **including the seasonal climate signals** (`precip_winter`, `precip_monsoon`,
+`temp_spring`) — is **assembled from the five sibling apps' bundles** + the small-mammal NEON-tower
+climate overlays (`scripts/build_cascade.R`) — no re-fetch; plain R reads the existing `.rds`.
+`suite_links`/`pooled` are the **precomputed** cross-site scoreboard (every site × prior, biome-aware,
+2000-permutation), so the app reads them instead of recomputing on every site switch. Small-mammal catch
+rate is a relative annual index (captures per 100 trap-nights), not effort-standardised across sites.
+Rebuild + refresh the deploy manifest: `Rscript scripts/build_cascade.R && Rscript -e 'rsconnect::writeManifest()'`.
 
 Built by Desert Data Labs · desertdatalabs@gmail.com. Not affiliated with NEON/Battelle/NSF.

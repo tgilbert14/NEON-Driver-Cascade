@@ -73,22 +73,28 @@ jobs:
       - name: Install R packages
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          packages: dplyr, tidyr, stringr, tibble
+          # rsconnect: build_cascade.R's tail regenerates manifest.json so the pinned
+          # checksum matches the freshly rebuilt bundle (else Connect serves stale data).
+          packages: dplyr, tidyr, stringr, tibble, rsconnect
 
       - name: Rebuild data/cascade.rds from the sibling bundles
         run: Rscript scripts/build_cascade.R
 
-      # Commit + push the rebuilt bundle to master. THIS is the deploy: Connect
-      # Cloud auto-redeploys on the push. No-ops cleanly when nothing changed.
-      - name: Commit & push rebuilt cascade.rds
+      # Fail the job on a malformed bundle rather than deploying it.
+      - name: Test the rebuilt bundle
+        run: Rscript scripts/test_helpers.R
+
+      # Commit + push the rebuilt bundle AND the refreshed manifest to master. THIS is
+      # the deploy: Connect Cloud auto-redeploys on the push. No-ops when nothing changed.
+      - name: Commit & push rebuilt cascade.rds + manifest
         run: |
           git config user.name  "neon-data-bot"
           git config user.email "neon-data-bot@users.noreply.github.com"
-          git add data/cascade.rds
+          git add data/cascade.rds manifest.json
           if git diff --cached --quiet; then
             echo "No change in cascade.rds — nothing to deploy."
           else
             git commit -m "data: monthly cross-product cascade rebuild [bot]"
             git push origin HEAD:master
-            echo "Pushed rebuilt cascade.rds — Connect Cloud will redeploy."
+            echo "Pushed rebuilt cascade.rds + manifest — Connect Cloud will redeploy."
           fi

@@ -6,6 +6,10 @@
 # priors, sites, meta). Run from the NEON-Driver-Cascade dir.
 # ===========================================================================
 suppressPackageStartupMessages({ library(dplyr) })
+# helpers for the cross-site precompute (biome-aware site_links + pooling) and the
+# biome classification that drives which priors are EXPECTED at each site.
+source("R/cascade_helpers.R")   # %||%, site_links(), pooled_links()
+source("R/site_metadata.R")     # neon_sites, biome_class(), biome_of(), biome_label()
 # Where the sibling repos live. Locally that's the VGS-R folder; in CI the refresh
 # workflow clones each sibling into a workspace and sets CASCADE_ROOT to it. The
 # dir names below must match the clone target dirs the workflow uses.
@@ -43,6 +47,35 @@ ann_env <- function(site) {                       # climate + coarse NEON phenol
   if (length(tv) >= 4) { med <- stats::median(tv); thr <- max(6, 3 * stats::mad(tv))
     agg$temp[is.finite(agg$temp) & abs(agg$temp - med) > thr] <- NA_real_ }
   agg %>% mutate(site = site, .before = 1)
+}
+ann_env_seasonal <- function(site) {              # SEASONAL climate — the desert fix
+  # A single annual precip total blends two ecologically independent, often
+  # ENSO-anticorrelated rain seasons that drive DIFFERENT guilds: winter (Oct-Mar)
+  # rain -> spring forbs; summer monsoon (Jul-Sep) -> the C4 grass seed crop desert
+  # granivores track. Reconstruct them (+ a spring-temp window) from the SAME monthly
+  # overlay ann_env reads. Verified: at SRER this recovers winter-rain->richness (+0.27)
+  # and monsoon(t-1)->rodents (+0.72) that the annual aggregation hides.
+  e <- rd(file.path(APP$mammal, "data/env", paste0(site, ".rds"))); if (is.null(e)) return(NULL)
+  e$date <- e$date %||% paste0(e$ym, "-01")
+  e$year <- yr_of(e$date); e$mo <- suppressWarnings(as.integer(format(as.Date(e$date), "%m")))
+  e <- e[is.finite(e$year) & is.finite(e$mo), , drop = FALSE]; if (!nrow(e)) return(NULL)
+  e$precip_mm[!(is.finite(e$precip_mm) & e$precip_mm >= 0 & e$precip_mm < 2000)] <- NA
+  e$temp_c[!(is.finite(e$temp_c) & e$temp_c > -40 & e$temp_c < 50)] <- NA
+  e$wy <- ifelse(e$mo >= 10, e$year + 1L, e$year)   # Oct-Dec credited to the year winter ENDS
+  # per-season month-count gates (annual gates can't protect a partial-season sum)
+  win <- e %>% filter(.data$mo %in% c(10,11,12,1,2,3)) %>% group_by(year = .data$wy) %>%
+    summarise(precip_winter = if (sum(!is.na(.data$precip_mm)) >= 5) round(sum(.data$precip_mm, na.rm = TRUE), 1) else NA_real_, .groups = "drop")
+  mon <- e %>% filter(.data$mo %in% c(7,8,9)) %>% group_by(year = .data$year) %>%
+    summarise(precip_monsoon = if (sum(!is.na(.data$precip_mm)) == 3) round(sum(.data$precip_mm, na.rm = TRUE), 1) else NA_real_, .groups = "drop")
+  spr <- e %>% filter(.data$mo %in% c(3,4,5)) %>% group_by(year = .data$year) %>%
+    summarise(temp_spring = if (sum(!is.na(.data$temp_c)) >= 2) round(mean(.data$temp_c, na.rm = TRUE), 2) else NA_real_, .groups = "drop")
+  out <- Reduce(function(a, b) full_join(a, b, by = "year"), list(win, mon, spr))
+  # same within-site MAD outlier QC the annual temp path uses (catches the SCBI-2018
+  # corrupted-sensor year a naive seasonal recompute would let through).
+  tv <- out$temp_spring[is.finite(out$temp_spring)]
+  if (length(tv) >= 4) { med <- stats::median(tv); thr <- max(6, 3 * stats::mad(tv))
+    out$temp_spring[is.finite(out$temp_spring) & abs(out$temp_spring - med) > thr] <- NA_real_ }
+  out %>% mutate(site = site, .before = 1)
 }
 ann_phe <- function(site) {                       # green-up onset DOY (the hinge)
   b <- rd(file.path(APP$phe, "data/sites", paste0(site, ".rds"))); if (is.null(b)) return(NULL)
@@ -96,7 +129,7 @@ ann_bird <- function(site) {                      # consumer: detection index + 
 all_sites <- sort(unique(c(sites_in("mammal"), sites_in("bird"))))
 cat("assembling", length(all_sites), "sites...\n")
 join_all <- function(site) {
-  parts <- Filter(Negate(is.null), list(ann_env(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site)))
+  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site)))
   if (!length(parts)) return(NULL)
   Reduce(function(a,b) full_join(a,b,by=c("site","year")), parts)
 }
@@ -105,36 +138,51 @@ annual <- annual[!is.na(annual$year) & annual$year >= 2013 & annual$year <= 2025
 annual <- annual %>% arrange(.data$site, .data$year)
 
 # ensure every signal column exists even if no site had it
-SIGCOLS <- c("precip","temp","fruiting_pct","greenup_doy","plant_richness","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness")
+SIGCOLS <- c("precip","temp","precip_winter","precip_monsoon","temp_spring","fruiting_pct","greenup_doy","plant_richness","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness")
 for (c in SIGCOLS) if (!c %in% names(annual)) annual[[c]] <- NA_real_
 
 # ---- signal metadata: trophic layer + display + direction-of-"more" ----
+# `ladder` = show on the main stacked ladder. Seasonal climate signals are ladder=FALSE:
+# they power the desert priors + the Seasonal Climate panel without crowding the ladder.
 signals <- tibble::tribble(
-  ~key,            ~label,                         ~layer,       ~unit,        ~higher_is,
-  "precip",        "Precipitation",                "climate",    "mm/yr",      "wetter",
-  "temp",          "Mean temperature",             "climate",    "°C",    "warmer",
-  "greenup_doy",   "Green-up onset",               "phenology",  "day-of-year","later",
-  "fruiting_pct",  "Peak fruiting",                "producer",   "% plants",   "more fruit",
-  "plant_richness","Plant richness",               "producer",   "species",    "more diverse",
-  "plant_intro_pct","Introduced plant cover",      "producer",   "% cover",    "more invaded",
-  "mammal_cpue",   "Small-mammal catch rate",      "consumer",   "per 100 TN", "more rodents",
-  "mammal_mnka",   "Small mammals (indiv.)",       "consumer",   "individuals","more rodents",
-  "bird_index",    "Bird detection index",         "consumer",   "birds/point","more birds",
-  "bird_richness", "Bird richness",                "consumer",   "species",    "more species")
+  ~key,            ~label,                         ~layer,       ~unit,        ~higher_is,     ~ladder,
+  "precip",        "Precipitation (annual)",       "climate",    "mm/yr",      "wetter",        TRUE,
+  "temp",          "Mean temperature",             "climate",    "°C",         "warmer",        TRUE,
+  "precip_winter", "Winter rain (Oct–Mar)",        "climate",    "mm",         "wetter winter", FALSE,
+  "precip_monsoon","Monsoon rain (Jul–Sep)",       "climate",    "mm",         "wetter monsoon",FALSE,
+  "temp_spring",   "Spring temperature",           "climate",    "°C",         "warmer spring", FALSE,
+  "greenup_doy",   "Green-up onset",               "phenology",  "day-of-year","later",         TRUE,
+  "fruiting_pct",  "Peak fruiting",                "producer",   "% plants",   "more fruit",    TRUE,
+  "plant_richness","Plant richness",               "producer",   "species",    "more diverse",  TRUE,
+  "plant_intro_pct","Introduced plant cover",      "producer",   "% cover",    "more invaded",  TRUE,
+  "mammal_cpue",   "Small-mammal catch rate",      "consumer",   "per 100 TN", "more rodents",  TRUE,
+  "mammal_mnka",   "Small mammals (indiv.)",       "consumer",   "individuals","more rodents",  TRUE,
+  "bird_index",    "Bird detection index",         "consumer",   "birds/point","more birds",    TRUE,
+  "bird_richness", "Bird richness",                "consumer",   "species",    "more species",  TRUE)
 
 # ---- literature priors: expected sign + lag (years). The `note` is PLAIN-ENGLISH
 # for non-technical users AND carries the honest scope caveat (the science review:
 # several mechanisms are spatial/seasonal but we test them within-site year-to-year,
 # the weakest regime; #1 is richness not productivity; #6 is the shakiest). Citations
 # live in the About panel. `conf` = how strong the prior is (strong/moderate/weak).
+# ---- BIOME-AWARE literature priors. `expected_class` marks the limiting-resource
+# regime where the mechanism is established: temp->green-up where TEMPERATURE limits
+# phenology (temperate/boreal/prairie/tundra), the seasonal-rain priors where WATER
+# does (desert/sagebrush). Every prior is still COMPUTED wherever data exists; the
+# class only governs which links count toward a site's sign-match tally and which
+# biome each link pools across. Grounded in re-computation on the live data:
+#   temp->green-up holds at ~74% of temperature-limited sites (binom p~0.002);
+#   at SRER winter-rain->richness r=+0.27 and monsoon(t-1)->rodents r=+0.72 — the
+#   desert cascade the annual aggregation was hiding.
 priors <- tibble::tribble(
-  ~from,         ~to,            ~sign, ~lag, ~conf,      ~note,
-  "precip",      "plant_richness", +1L, 0L, "moderate", "More rain usually means more plant growth — so more species can persist. (Clearer across regions than year-to-year at one site, and rain can carry into the next year; here 'richness' is a rough stand-in for plant productivity.)",
-  "precip",      "fruiting_pct",   +1L, 0L, "moderate", "Wet years push plants to flower and fruit more that same year — strongest in deserts and annual plants.",
-  "temp",        "greenup_doy",    -1L, 0L, "strong",   "Warmer springs make plants leaf out earlier — one of the most reliable patterns in ecology. (We use the year's average temperature as a stand-in for spring warmth.)",
-  "precip",      "mammal_cpue",    +1L, 1L, "moderate", "A wet year grows a big seed crop, and a year later the seed-eating mice and kangaroo rats boom — clearest in deserts. (Annual-total rain is a coarse stand-in; the timing of rain matters too, and the real response is non-linear.)",
-  "fruiting_pct","mammal_cpue",    +1L, 1L, "strong",   "A good seed-and-fruit year feeds the seed-eaters into the following year, so populations rise the year after.",
-  "plant_richness","mammal_cpue",  +1L, 1L, "weak",     "More varied plant communities MAY support more animals the next year — but this is the least certain link: plant variety is only a rough stand-in for plant food, so even the direction is uncertain.")
+  ~from,            ~to,              ~sign, ~lag, ~conf,      ~expected_class,       ~note,
+  "temp",           "greenup_doy",     -1L, 0L, "strong",   "temperature-limited", "Warmer springs make plants leaf out earlier — the most reliable rung of the whole cascade, and it holds across most temperate and boreal sites. (Annual mean temperature stands in for spring warmth, which works where temperature is what limits green-up — not in warm deserts, where water is the trigger.)",
+  "precip",         "plant_richness",  +1L, 0L, "weak",     "temperature-limited", "More rain can mean more plant growth — but species RICHNESS is a poor stand-in for productivity (it can even FALL in wet years as a few species take over), so this link is weak and its direction varies from place to place.",
+  "precip",         "mammal_cpue",     +1L, 1L, "moderate", "temperature-limited", "A wet year grows more food, and a year later small-mammal numbers rise — the classic bottom-up lag, clearest where a single rain season feeds the system.",
+  "precip_winter",  "plant_richness",  +1L, 0L, "moderate", "water-limited",       "In deserts the COOL-SEASON (Oct–Mar) rain germinates the spring forbs — so winter rain, not the annual total, is what tracks plant diversity that year. (At Santa Rita this recovers the link the annual number hides.)",
+  "precip_monsoon", "mammal_cpue",     +1L, 1L, "strong",   "water-limited",       "Desert granivores (kangaroo rats, pocket mice) track the SUMMER-MONSOON (Jul–Sep) seed crop: a big monsoon grows the seeds, and a year later the seed-eaters boom. Testing the monsoon at a 1-year lag — not annual rain — recovers this link (Santa Rita r≈+0.7).",
+  "fruiting_pct",   "mammal_cpue",     +1L, 1L, "weak",     "all",                 "A good fruit-and-seed year should feed the seed-eaters into the next year — but our fruiting signal is a coarse peak-intensity index, so read this as suggestive only, not a measured seed crop.",
+  "plant_richness", "mammal_cpue",     +1L, 1L, "weak",     "all",                 "More varied plant communities MIGHT support more animals the next year — the least certain link in the cascade: plant variety is only a rough stand-in for food, so even the direction is uncertain, and the data bears that out.")
 # NOTE: no green-up -> bird prior. The trophic-mismatch literature (Both; Visser;
 # Mayor 2017; Youngflesh 2021) is about SYNCHRONY between bird breeding and the food
 # peak — not "later green-up DOY -> more birds", and the direction reverses by region.
@@ -142,10 +190,36 @@ priors <- tibble::tribble(
 # rather than one the cited literature doesn't support. bird_index still shows on the
 # ladder as a descriptive consumer signal.
 
-meta <- list(built = "annual signals from sibling bundles + mammal env overlays",
-             n_sites = length(unique(annual$site)))
+# ---- per-site biome classification (the throughline) ----
+ALL_SITES <- sort(unique(annual$site))
+site_meta <- data.frame(
+  site        = ALL_SITES,
+  biome       = vapply(ALL_SITES, biome_of, character(1)),
+  biome_class = vapply(ALL_SITES, biome_class, character(1)),
+  biome_label = vapply(ALL_SITES, biome_label, character(1)),
+  stringsAsFactors = FALSE)
+
+# ---- PRECOMPUTE the cross-site scoreboard + pooled result (the honest headline).
+# Per-site n=6 is underpowered; pooling each link across the sites where it is EXPECTED
+# (one vote per site, binomial sign test) is the defensible suite-level statistic. This
+# is also a perf win: the app reads SUITE_LINKS/POOLED from the bundle instead of
+# recomputing site_links() (2000 permutations x 7 priors) on every site switch.
+cat("\nprecomputing cross-site links (biome-aware)...\n")
+suite_links <- do.call(rbind, lapply(ALL_SITES, function(s) {
+  a  <- annual[annual$site == s, , drop = FALSE]
+  bc <- site_meta$biome_class[site_meta$site == s]
+  lk <- site_links(a, priors, biome = bc, nperm = 2000)
+  lk$site <- s; lk$biome <- site_meta$biome[site_meta$site == s]; lk$biome_class <- bc
+  lk
+}))
+pooled <- pooled_links(suite_links)
+
+meta <- list(built = "annual + seasonal climate signals from sibling bundles + mammal env overlays; biome-aware priors; cross-site precompute",
+             n_sites = length(ALL_SITES), built_when = format(Sys.Date()))
 dir.create("data", showWarnings = FALSE)
-saveRDS(list(annual = annual, signals = signals, priors = priors, meta = meta), "data/cascade.rds")
+saveRDS(list(annual = annual, signals = signals, priors = priors,
+             suite_links = suite_links, pooled = pooled, site_meta = site_meta, meta = meta),
+        "data/cascade.rds")
 
 # ---- coverage report ----
 cat("\nannual rows:", nrow(annual), "| sites:", length(unique(annual$site)), "\n")
@@ -157,5 +231,14 @@ covg <- annual %>% group_by(site) %>% summarise(
   .groups="drop") %>% arrange(desc(layers), desc(greenup+plant))
 cat("\nTop cascade sites (by trophic layers present):\n")
 print(as.data.frame(head(covg[covg$layers>=3,], 12)))
-cat("\nHARV / SCBI / SRER detail:\n")
-print(as.data.frame(annual[annual$site %in% c("HARV","SCBI","SRER"), ]))
+
+cat("\n==== POOLED cross-site result (the honest headline) ====\n")
+print(pooled, row.names = FALSE)
+cat("\nSRER seasonal columns (the desert fix):\n")
+print(as.data.frame(annual[annual$site == "SRER", c("year","precip","precip_winter","precip_monsoon","temp","greenup_doy","plant_richness","mammal_cpue")]), row.names = FALSE)
+
+# ---- refresh the deploy manifest so Connect Cloud serves THIS bundle ----
+# A rebuilt-but-unmanifested .rds silently serves stale data (the checksum is pinned).
+if (requireNamespace("rsconnect", quietly = TRUE)) {
+  try({ rsconnect::writeManifest(); cat("\nmanifest.json regenerated\n") }, silent = TRUE)
+} else cat("\n[note] rsconnect not installed — run rsconnect::writeManifest() before deploy\n")

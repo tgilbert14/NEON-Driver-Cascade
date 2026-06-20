@@ -2456,41 +2456,59 @@
     }
   },
   "files": {
+    ".claude/launch.json": {
+      "checksum": "df0426cde45b5fb0d291d1ca379d15f6"
+    },
+    ".github/workflows/refresh-data.yml": {
+      "checksum": "1b46124deda3b5659d498558b01b1c8e"
+    },
     "data/cascade.rds": {
-      "checksum": "967b9193b688beee51c6aee070b08c98"
+      "checksum": "d851e50d631cb58805eba34810b5ac9c"
+    },
+    "DEPLOY.md": {
+      "checksum": "73bbe6b840cb2bfed426f342b22fa772"
+    },
+    "docs/_phase23_plan.md": {
+      "checksum": "6cae86ebdce8acbca7e9cfdc3e2c1e49"
+    },
+    "docs/index.html": {
+      "checksum": "1072ae70522a25d4e3cf6afe259198ee"
     },
     "docs/neonize-playbook.md": {
       "checksum": "3612bfda930e03259fdb7ceb1a6b0566"
     },
     "global.R": {
-      "checksum": "7afd03c903520f0719d8a0bc8c3f4d98"
+      "checksum": "2c2d4ea4a3888eb29793bb998d3e7b05"
     },
     "R/cascade_helpers.R": {
-      "checksum": "f679757a2ae521b8e15ad63daf04a0b7"
+      "checksum": "0b0ce3edcb92676112fd2de0a8f40cb1"
     },
     "R/site_metadata.R": {
-      "checksum": "004d5207ae02073846fa210d1698c1bf"
+      "checksum": "c7c6d35af1d88f26df80b700534f84b1"
     },
     "README.md": {
-      "checksum": "22583926042b11dec580b74d2d96e98b"
+      "checksum": "7785ca75244f739dc231a66019963a84"
+    },
+    "scripts/_diag_seasonal.R": {
+      "checksum": "f0f6292172bd0c09a1aed8b0bbabb24f"
     },
     "scripts/build_cascade.R": {
-      "checksum": "5734f9b93d36c9e2c54d4819614f310d"
+      "checksum": "5c2049262318c0ce0d673e4e79b7787e"
     },
     "scripts/test_helpers.R": {
       "checksum": "fd6c0238fb99a5b5945346991395e64f"
     },
     "server.R": {
-      "checksum": "44df362d7a31b2be8997a103b4f9f030"
+      "checksum": "7590e4c64447eb47fad8988d077d7132"
     },
     "ui.R": {
-      "checksum": "64bb961fd8e5e5e550d9d52aba119cd1"
+      "checksum": "b23c4c7539c5b083d3520b066e6c6f92"
     },
     "www/app.js": {
       "checksum": "2c6211add4ab35175b6c1eeab5d96d9a"
     },
     "www/cascade.css": {
-      "checksum": "668f1b64c4aec64bc450880e404275ea"
+      "checksum": "05687e84108f49046682f7cc986e7be8"
     },
     "www/styles.css": {
       "checksum": "191d24d6c1ac69722cf33138e8b7e439"

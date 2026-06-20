@@ -49,22 +49,52 @@ link_stat <- function(ann_site, from, to, lag, prior_sign, nperm = 2000) {
   out
 }
 
-# all prior links for a site (data.frame), with stats
-site_links <- function(ann_site, priors, nperm = 2000) {
+# all prior links for a site (data.frame), with stats.
+# `biome` = the site's limiting-resource class ("water-limited"/"temperature-limited").
+# A prior is `expected` at a site when its expected_class is "all" or matches the biome
+# (e.g. temp->green-up is expected in temperature-limited systems, the seasonal-rain
+# priors in water-limited ones). Every prior is still COMPUTED where data exists — the
+# `expected` flag only governs which links count toward the site's sign-match tally and
+# which biome each link pools over. biome=NULL => everything expected (back-compat).
+site_links <- function(ann_site, priors, biome = NULL, nperm = 2000) {
   set.seed(1L)   # deterministic permutation/bootstrap so the app shows stable numbers
+  ec <- if ("expected_class" %in% names(priors)) priors$expected_class else rep("all", nrow(priors))
+  cf <- if ("conf" %in% names(priors)) priors$conf else rep(NA_character_, nrow(priors))
   rows <- lapply(seq_len(nrow(priors)), function(i) {
     s <- link_stat(ann_site, priors$from[i], priors$to[i], priors$lag[i], priors$sign[i], nperm)
+    expected <- is.null(biome) || ec[i] == "all" || identical(ec[i], biome)
     data.frame(from=s$from, to=s$to, lag=s$lag, n=s$n, r=s$r, lo=s$lo, hi=s$hi, p=s$p,
                prior_sign=s$prior_sign, sign_match=s$sign_match, tier=s$tier, verdict=s$verdict,
+               conf=cf[i], expected_class=ec[i], expected=expected,
                note = priors$note[i], stringsAsFactors = FALSE) })
   do.call(rbind, rows)
+}
+
+# pool each prior link ACROSS sites (one vote per site) — the statistically honest
+# answer to per-site n=6 underpower. Pools only sites where the link is EXPECTED and
+# testable (n>=6). Binomial sign test vs 0.5. Returns one row per (from,to,lag).
+pooled_links <- function(suite_links) {
+  sl <- suite_links
+  exp <- if ("expected" %in% names(sl)) sl$expected %in% TRUE else rep(TRUE, nrow(sl))
+  sl <- sl[exp & sl$n >= 6 & !is.na(sl$sign_match), , drop = FALSE]
+  if (!nrow(sl)) return(data.frame())
+  key <- paste(sl$from, sl$to, sl$lag, sep = "|")
+  out <- do.call(rbind, lapply(split(seq_len(nrow(sl)), key), function(ix) {
+    d <- sl[ix, , drop = FALSE]; k <- sum(d$sign_match); tot <- nrow(d)
+    bt <- stats::binom.test(k, tot, 0.5, alternative = "greater")
+    data.frame(from=d$from[1], to=d$to[1], lag=d$lag[1], expected_class=d$expected_class[1],
+               sites=tot, k=k, p=round(bt$p.value, 4), median_r=round(stats::median(d$r, na.rm=TRUE), 2),
+               stringsAsFactors = FALSE)
+  }))
+  out[order(out$p, -out$sites), , drop = FALSE]
 }
 
 # sign-match tally across TESTABLE links only (n>=6 — the same n-floor the verdicts
 # use; folding in n=3-5 exploratory links would contradict the "no verdict below 6
 # years" rule the chips enforce). Binomial vs 0.5.
 signmatch_score <- function(links) {
-  ok <- links[links$n >= 6 & !is.na(links$sign_match), , drop = FALSE]
+  exp <- if ("expected" %in% names(links)) links$expected %in% TRUE else rep(TRUE, nrow(links))
+  ok <- links[exp & links$n >= 6 & !is.na(links$sign_match), , drop = FALSE]
   k <- sum(ok$sign_match); tot <- nrow(ok)
   if (tot == 0) return(list(k=0, n=0, p=NA_real_, txt="no links have enough years (n&ge;6) to test here yet"))
   bt <- stats::binom.test(k, tot, 0.5, alternative = "greater")
@@ -80,9 +110,12 @@ layers_present <- function(ann_site, signals) {
   }, logical(1))
 }
 
-# tidy z-scored long frame for the ladder (one layer), only signals with >=2 finite years
+# tidy z-scored long frame for the ladder (one layer), only signals with >=2 finite years.
+# Seasonal climate signals (ladder=FALSE) are kept off the main ladder to avoid clutter —
+# they drive the desert priors and the dedicated Seasonal Climate panel instead.
 ladder_layer <- function(ann_site, signals, layer) {
-  ks <- signals$key[signals$layer == layer]
+  lad <- if ("ladder" %in% names(signals)) signals$ladder %in% TRUE else rep(TRUE, nrow(signals))
+  ks <- signals$key[signals$layer == layer & lad]
   out <- lapply(ks, function(k) {
     # need >=3 finite years: a z-score of exactly 2 points is always {-0.71,+0.71}
     # regardless of the values — a meaningless straight line on the ladder.

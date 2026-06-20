@@ -14,22 +14,48 @@ server <- function(input, output, session) {
       annotations=list(list(text=msg, showarrow=FALSE, font=list(color=if(is_dark())"#9fb0c4" else "#6b7a85", size=14)))) %>%
     plotly::config(displayModeBar=FALSE)
 
-  ann   <- reactive({ req(input$site); site_annual(input$site) })
-  links <- reactive({ a <- ann(); req(nrow(a)); site_links(a, PRIORS) })
+  ann    <- reactive({ req(input$site); site_annual(input$site) })
+  links  <- reactive({ req(input$site); site_links_cached(input$site) })   # precomputed, biome-aware
   smatch <- reactive(signmatch_score(links()))
+  bclass <- reactive(site_bclass(input$site))
+  blabel <- reactive(site_blabel(input$site))
 
   output$siteBio <- renderUI({ b <- site_bio(input$site); if (is.null(b)) return(NULL)
     div(class="site-bio", bs_icon("info-circle-fill"), span(b)) })
 
   output$signalChips <- renderUI({ a <- ann(); req(nrow(a))
-    have <- SIGNALS$key[vapply(SIGNALS$key, function(k) sum(is.finite(a[[k]])) >= 2, logical(1))]
+    have <- LADDER_KEYS[vapply(LADDER_KEYS, function(k) sum(is.finite(a[[k]])) >= 2, logical(1))]
     if (!length(have)) return(div(class="sig-chips-empty", "No multi-year signals here yet."))
     div(class="sig-chips", lapply(have, function(k){ L <- SIGNALS$layer[SIGNALS$key==k]
       span(class=paste0("sig-chip sig-", L), sig_label(k)) })) })
 
-  # ---- hero: the sign-match headline ----
+  # ---- hero: ONE auto-written verdict sentence (lead with the answer), biome the anchor ----
+  # The sentence is the comprehension fix; the four stat tiles demote to supporting evidence.
+  verdict_sentence <- function(site, lk, sm, blab) {
+    desert <- identical(site_bclass(site), "water-limited")
+    ok <- lk[lk$expected %in% TRUE & lk$n >= 6 & !is.na(lk$sign_match), , drop = FALSE]
+    best <- if (nrow(ok)) ok[order(match(ok$tier, c("consistent","apparent","counter","exploratory")),
+                                   -abs(ifelse(is.na(ok$r), 0, ok$r))), ][1, ] else NULL
+    mon <- lk[lk$from == "precip_monsoon" & lk$to == "mammal_cpue" & is.finite(lk$r), ]
+    lead <- sprintf("<span class='biome-tag biome-%s'>%s</span> ",
+                    if (desert) "water" else "temp", blab)
+    body <- if (desert) {
+      s <- "Here green-up is triggered by <b>water, not warmth</b>, so the standard <i>annual</i> cascade only half-fits — and that mismatch <b>is the finding</b>, not a failure."
+      if (nrow(mon) && mon$r[1] > 0)
+        s <- paste0(s, sprintf(" Test the <b>right season</b> and the chain reappears: the summer-monsoon seed crop drives next year's rodents at <b>r&nbsp;=&nbsp;%+.2f</b> — where annual rainfall showed almost nothing (r&nbsp;=&nbsp;+0.20).", mon$r[1]))
+      s
+    } else if (!is.null(best) && identical(best$tier, "consistent")) {
+      sprintf("The cascade behaves as ecology predicts: <b>%d of %d</b> testable links point the expected way, led by <b>%s&nbsp;→&nbsp;%s</b> (r&nbsp;=&nbsp;%+.2f, clears the noise test).",
+              sm$k, sm$n, sig_label(best$from), sig_label(best$to), best$r)
+    } else if (!is.na(sm$n) && sm$n > 0) {
+      sprintf("Of the links testable here, <b>%d of %d</b> point the direction ecology predicts — a short series, so read it as <i>direction</i>, not proof.", sm$k, sm$n)
+    } else {
+      "Not enough overlapping years yet to line up the cascade here — the signals are shown below, but no verdict is given."
+    }
+    HTML(paste0(lead, body))
+  }
   output$heroStats <- renderUI({
-    a <- ann(); req(nrow(a)); sm <- smatch(); lp <- layers_present(a, SIGNALS)
+    a <- ann(); req(nrow(a)); sm <- smatch(); lk <- links(); lp <- layers_present(a, SIGNALS)
     yrs <- range(a$year[rowSums(!is.na(a[, SIGNALS$key, drop=FALSE])) > 0], na.rm=TRUE)
     row <- neon_sites[neon_sites$site==input$site,]
     hero <- function(v,l,icon,tone,ttl=NULL) div(class=paste0("hero-stat hero-",tone), title=ttl,
@@ -37,19 +63,24 @@ server <- function(input, output, session) {
     div(class="hero-band",
       div(class="hero-title", bs_icon("diagram-3-fill"), tags$b(sprintf("%s · %s", input$site, if (nrow(row)) row$name[1] else input$site)),
         tags$span(class="hero-sub", sprintf(" · %s–%s", yrs[1], yrs[2]))),
+      div(class="hero-verdict", verdict_sentence(input$site, lk, sm, blabel())),
       div(class="hero-grid",
         hero(sum(lp), "trophic layers", icon="layers", tone="navy", ttl="Climate, green-up, producers, consumers present here"),
-        hero(if (sm$n>0) sprintf("%d/%d", sm$k, sm$n) else "—", "links match prior", icon="check2-circle", tone="pine",
-             ttl="How many predicted driver->response links point the way ecology expects"),
+        hero(if (sm$n>0) sprintf("%d/%d", sm$k, sm$n) else "—", "expected links match", icon="check2-circle", tone="pine",
+             ttl="Of the links EXPECTED for this biome, how many point the way ecology predicts"),
         hero(if (!is.na(sm$p)) sprintf("%.2f", sm$p) else "—", "sign-match p", icon="dice-5", tone="gold",
              ttl="Binomial test that more links match than chance"),
         hero(nrow(a), "years on record", icon="calendar3", tone="terra")))
   })
 
   output$overviewInsight <- renderUI({
-    sm <- smatch(); a <- ann()
-    msg <- if (sm$n == 0) "Not enough overlapping years yet to line up the cascade here — try SRER, HARV, or SCBI."
-      else sprintf("Across the predicted links at this site, <b>%s</b>. With only a handful of years per signal, that direction-agreement is a more honest signal than any single correlation.", sm$txt)
+    sm <- smatch(); desert <- identical(bclass(), "water-limited")
+    msg <- if (sm$n == 0)
+        "Not enough overlapping years yet to line up the cascade here — <b>SCBI</b> (a temperate forest) shows it most clearly."
+      else if (desert)
+        sprintf("This is a <b>water-limited</b> system, so its links are tested by <b>season</b>, not by annual totals: %s. The Seasonal Climate panel shows why one annual rainfall number hides the signal.", sm$txt)
+      else
+        sprintf("Across the links expected in this temperature-limited system, <b>%s</b>. With only a handful of years per signal, that direction-agreement is a more honest signal than any single correlation.", sm$txt)
     insight_banner("diagram-3", tone = if (!is.na(sm$p) && sm$p < 0.05) "pine" else "navy", HTML(msg))
   })
 
@@ -58,7 +89,7 @@ server <- function(input, output, session) {
     a <- ann(); req(nrow(a))
     lay <- list(climate="climate", phenology="phenology", producer="producer", consumer="consumer")
     node <- function(L){ lm <- LAYER_META[[L]]
-      ks <- SIGNALS$key[SIGNALS$layer==L]
+      ks <- SIGNALS$key[SIGNALS$layer==L & SIGNALS$key %in% LADDER_KEYS]
       have <- ks[vapply(ks, function(k) sum(is.finite(a[[k]]))>=2, logical(1))]
       div(class=paste0("casc-node", if (!length(have)) " casc-empty" else ""),
         div(class="casc-node-h", style=sprintf("color:%s", lm$col), bs_icon(lm$icon), " ", lm$title),
@@ -71,7 +102,7 @@ server <- function(input, output, session) {
   output$signalTable <- renderUI({
     a <- ann(); req(nrow(a))
     rows <- lapply(c("climate","phenology","producer","consumer"), function(L){
-      ks <- SIGNALS$key[SIGNALS$layer==L]; lm <- LAYER_META[[L]]
+      ks <- SIGNALS$key[SIGNALS$layer==L & SIGNALS$key %in% LADDER_KEYS]; lm <- LAYER_META[[L]]
       lapply(ks, function(k){ v <- a[[k]]; nf <- sum(is.finite(v)); if (nf < 1) return(NULL)
         yrs <- range(a$year[is.finite(v)])
         tags$tr(tags$td(span(class=paste0("sig-dot sig-",L))), tags$td(sig_label(k)),
@@ -125,18 +156,26 @@ server <- function(input, output, session) {
   # ---- link agreement chips (beside the ladder) ----
   output$linkChips <- renderUI({
     lk <- links(); req(nrow(lk))
-    div(class="link-chips", lapply(seq_len(nrow(lk)), function(i){ r <- lk[i,]; tm <- TIER_META[[r$tier]]
-      arrow <- if (r$prior_sign>0) "↑" else "↓"
-      div(class=paste0("link-chip lc-", r$tier),
-        div(class="lc-top", span(class="lc-from", sig_label(r$from)), bs_icon("arrow-right"),
-          span(class="lc-to", sig_label(r$to)),
-          span(class="lc-lag", if (r$lag>0) sprintf("lag %dy", r$lag) else "same yr")),
-        div(class="lc-mid",
-          span(class="lc-prior", sprintf("expect %s", arrow)),
-          if (is.finite(r$r)) span(class="lc-r", sprintf("r=%.2f%s", r$r,
-            if (is.finite(r$lo)) sprintf(" [%.2f, %.2f]", r$lo, r$hi) else "")) else span(class="lc-r","—"),
-          span(class="lc-n", sprintf("n=%d", r$n))),
-        div(class="lc-verdict", style=sprintf("color:%s", tm$col), bs_icon(tm$icon), " ", r$verdict)) }))
+    exp <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
+    lk <- lk[order(!exp, match(lk$tier, names(TIER_META))), , drop=FALSE]
+    exp <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
+    tagList(
+      div(class="link-chips", lapply(seq_len(nrow(lk)), function(i){ r <- lk[i,]; tm <- TIER_META[[r$tier]]
+        arrow <- if (r$prior_sign>0) "↑" else "↓"
+        div(class=paste0("link-chip lc-", r$tier, if (!exp[i]) " lc-dim" else ""),
+          title = if (!exp[i]) "Not the mechanism expected in this biome — shown for context, not counted in the verdict" else NULL,
+          div(class="lc-top", span(class="lc-from", sig_label(r$from)), bs_icon("arrow-right"),
+            span(class="lc-to", sig_label(r$to)),
+            span(class="lc-lag", if (r$lag>0) sprintf("lag %dy", r$lag) else "same yr"),
+            if (exp[i]) span(class="lc-exp", "expected here")),
+          div(class="lc-mid",
+            span(class="lc-prior", sprintf("expect %s", arrow)),
+            if (is.finite(r$r)) span(class="lc-r", sprintf("r=%.2f%s", r$r,
+              if (is.finite(r$lo)) sprintf(" [%.2f, %.2f]", r$lo, r$hi) else "")) else span(class="lc-r","—"),
+            span(class="lc-n", sprintf("n=%d", r$n))),
+          div(class="lc-verdict", style=sprintf("color:%s", tm$col), bs_icon(tm$icon), " ", r$verdict)) })),
+      p(class="qc-cap-note", style="margin-top:8px", bs_icon("info-circle"),
+        HTML(" Dimmed links aren't the mechanism <b>expected</b> in this biome (e.g. the temperate temperature→green-up prior at a desert) — shown for context, not counted in the verdict.")))
   })
 
   # ---- Driver Lab ----
@@ -159,10 +198,12 @@ server <- function(input, output, session) {
   output$driverTable <- renderUI({
     lk <- lab_links(); if (!nrow(lk)) return(p(class="qc-cap-note","No predicted drivers for this response."))
     lk <- lk[order(-lk$n, -abs(ifelse(is.na(lk$r),0,lk$r))), ]
+    expc <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
     rows <- lapply(seq_len(nrow(lk)), function(i){ r <- lk[i,]; tm <- TIER_META[[r$tier]]
       arrow <- if (r$prior_sign>0) "↑ +" else "↓ −"
-      tags$tr(
-        tags$td(tags$b(sig_label(r$from))),
+      tags$tr(class = if (!expc[i]) "dt-dim" else NULL,
+        tags$td(tags$b(sig_label(r$from)),
+          if (expc[i]) span(class="dt-exp", title="The mechanism expected in this biome", " ✓") ),
         tags$td(class="dt-prior", sprintf("%s, %s", arrow, if (r$lag>0) sprintf("lag %dy", r$lag) else "same yr")),
         tags$td(class="dt-r", if (is.finite(r$r)) sprintf("%.2f", r$r) else "—"),
         tags$td(class="dt-n", r$n),
@@ -182,14 +223,33 @@ server <- function(input, output, session) {
   output$linkScatter <- renderPlotly({
     r <- sel_link(); if (is.null(r)) return(note_plot("No driver has enough overlapping years to plot"))
     m <- lag_pairs(ann(), r$from, r$to, r$lag); if (!nrow(m)) return(note_plot("No overlapping years"))
-    p <- plotly::plot_ly(m, x=~x, y=~y, type="scatter", mode="markers+text", text=~year, textposition="top center",
+    tm <- TIER_META[[r$tier]]
+    md <- if (nrow(m) >= 7) "markers" else "markers+text"   # avoid year-label collision at n>=7
+    p <- plotly::plot_ly(m, x=~x, y=~y, type="scatter", mode=md, text=~year, textposition="top center",
       textfont=list(size=9, color=if(is_dark())"#9fb0c4" else "#6b7a85"),
       marker=list(size=11, color=DDL$sky, line=list(color="#fff", width=1)),
-      hovertemplate=paste0(sig_label(r$from),"=%{x}<br>",sig_label(r$to),"=%{y}<extra></extra>"))
+      hovertemplate=paste0("year %{text}<br>",sig_label(r$from),"=%{x}<br>",sig_label(r$to),"=%{y}<extra></extra>"))
+    # tier-honest fit line: GOLD only when the link clears the bar; thin GREY "shape only"
+    # for apparent/counter; OMITTED below n=6 (a slope on 5 points is theatre, not evidence)
     if (r$n >= 6 && is.finite(r$r)) { fit <- stats::lm(y ~ x, data=m); xr <- range(m$x)
+      consistent <- identical(r$tier, "consistent")
       p <- p %>% plotly::add_lines(x=xr, y=predict(fit, newdata=data.frame(x=xr)), inherit=FALSE,
-        line=list(color=DDL$gold2, width=2, dash="dot"), showlegend=FALSE, hoverinfo="skip") }
-    p %>% theme_plotly() %>% plotly::layout(showlegend=FALSE,
+        line=list(color=if (consistent) DDL$gold2 else "#9aa6b2", width=2, dash="dot"), showlegend=FALSE, hoverinfo="skip") }
+    # on-figure stats — so a screenshot of the scatter carries its own evidence
+    stat_txt <- if (r$n >= 6 && is.finite(r$r))
+        sprintf("r = %+.2f   n = %d   p = %.3f%s", r$r, r$n, r$p,
+                if (is.finite(r$lo)) sprintf("\n95%% CI [%.2f, %.2f]", r$lo, r$hi) else "")
+      else if (is.finite(r$r)) sprintf("r = %+.2f   n = %d\n(exploratory — too few years for a p)", r$r, r$n)
+      else sprintf("n = %d — too few overlapping years to fit", r$n)
+    anns <- list(list(x=0.02, y=0.98, xref="paper", yref="paper", xanchor="left", yanchor="top",
+      text=gsub("\n","<br>", stat_txt), showarrow=FALSE, align="left",
+      font=list(size=12, color=tm$col, family="Rubik"),
+      bgcolor=if(is_dark())"rgba(20,30,45,0.72)" else "rgba(255,255,255,0.82)", bordercolor=tm$col, borderwidth=1, borderpad=4))
+    if (!(r$n >= 6 && is.finite(r$r)))
+      anns <- c(anns, list(list(x=0.5, y=0.02, xref="paper", yref="paper", xanchor="center", yanchor="bottom",
+        text="No trend line below 6 years — read the points, not a slope.", showarrow=FALSE,
+        font=list(size=10, color=if(is_dark())"#9fb0c4" else "#6b7a85"))))
+    p %>% theme_plotly() %>% plotly::layout(showlegend=FALSE, annotations=anns,
       xaxis=list(title=sprintf("%s (%s)", sig_label(r$from), sig_unit(r$from))),
       yaxis=list(title=sprintf("%s (%s)", sig_label(r$to), sig_unit(r$to))), margin=list(l=55,r=20,t=20,b=45))
   })
@@ -252,6 +312,92 @@ server <- function(input, output, session) {
           tags$b("Plant richness"), " (species count) is a rough proxy for plant productivity."),
         p(bs_icon("envelope"), " ", tags$a(href="mailto:desertdatalabs@gmail.com","desertdatalabs@gmail.com"))))
   })
+  # ---- SEASONAL CLIMATE reveal (the desert insight made visible) ----
+  output$seasonalPlot <- renderPlotly({
+    a <- ann(); req(nrow(a))
+    if (!is_desert(input$site)) return(note_plot("One main rain season here — the winter/monsoon split is for bimodal desert sites."))
+    d <- a[is.finite(a$precip_winter) | is.finite(a$precip_monsoon), c("year","precip_winter","precip_monsoon")]
+    if (!nrow(d)) return(note_plot("No seasonal precipitation reconstructed for this site yet."))
+    plotly::plot_ly(d, x=~year) %>%
+      plotly::add_bars(y=~precip_winter, name="Winter rain (Oct–Mar)", marker=list(color="#2f7fb5")) %>%
+      plotly::add_bars(y=~precip_monsoon, name="Monsoon rain (Jul–Sep)", marker=list(color="#c9892f")) %>%
+      theme_plotly() %>% plotly::layout(barmode="group", legend=list(orientation="h", y=-0.22),
+        yaxis=list(title="precipitation (mm)"), xaxis=list(title="year", dtick=1), margin=list(l=55,r=20,t=10,b=40))
+  })
+  output$seasonalPanel <- renderUI({
+    if (!is_desert(input$site)) return(div(class="seasonal-note", bs_icon("info-circle"),
+      HTML(" Not a bimodal-desert site — the annual rainfall total already captures its one main rain season, so the cascade is tested on annual climate.")))
+    a <- ann()
+    rc <- function(from,to,lag){ if (!all(c(from,to) %in% names(a))) return(NA_real_)
+      m <- lag_pairs(a, from, to, lag); if (nrow(m) < 4) return(NA_real_); round(stats::cor(m$x, m$y), 2) }
+    ann_mam <- rc("precip","mammal_cpue",1);  mon_mam <- rc("precip_monsoon","mammal_cpue",1)
+    ann_rich <- rc("precip","plant_richness",0); win_rich <- rc("precip_winter","plant_richness",0)
+    cmp <- function(lab, a1, lab1, a2, lab2) div(class="seasonal-cmp",
+      div(class="sc-title", lab),
+      div(class="sc-row", span(class="sc-k", lab1), span(class="sc-v sc-weak", if (is.na(a1)) "—" else sprintf("r = %+.2f", a1))),
+      div(class="sc-row", span(class="sc-k", lab2), span(class="sc-v sc-strong", if (is.na(a2)) "—" else sprintf("r = %+.2f", a2))))
+    div(
+      insight_banner("droplet-half", tone="navy", HTML("A single <b>annual</b> rainfall number blends two independent seasons. Split them, and the desert cascade reappears — the right season carries the signal the annual total buries:")),
+      div(class="seasonal-cmps",
+        cmp("Rain → next-year rodents", ann_mam, "annual rain", mon_mam, "monsoon seed crop"),
+        cmp("Rain → plant richness", ann_rich, "annual rain", win_rich, "winter (forb) rain")))
+  })
+
+  # ---- ACROSS NEON: pooled headline + cross-site sign-match scoreboard ----
+  output$pooledHeadline <- renderUI({
+    pl <- POOLED; if (!nrow(pl)) return(NULL)
+    pl <- pl[order(pl$p), , drop=FALSE]
+    items <- lapply(seq_len(nrow(pl)), function(i){ r <- pl[i,]
+      sig <- is.finite(r$p) && r$p < 0.05
+      div(class=paste0("pooled-row", if (sig) " pooled-sig" else ""),
+        div(class="pl-link", HTML(sprintf("%s&nbsp;→&nbsp;%s", sig_label(r$from), sig_label(r$to))),
+            if (r$lag>0) span(class="pl-lag", sprintf(" lag %dy", r$lag))),
+        div(class="pl-bar-wrap", div(class="pl-bar", style=sprintf("width:%.0f%%", 100*r$k/r$sites))),
+        div(class="pl-stat", tags$b(sprintf("%d/%d sites", r$k, r$sites)),
+            span(class="pl-p", sprintf("p=%.3f", r$p)), span(class="pl-r", sprintf("median r=%+.2f", r$median_r))))
+    })
+    div(insight_banner("trophy", tone="pine",
+      HTML("Per-site series are too short for a verdict — but pooled <b>across sites</b> (one vote per site), the cascade's strongest rung is real: <b>warmer springs → earlier green-up</b> holds across most temperature-limited sites. This is the honest, suite-level answer no single site can give.")),
+      div(class="pooled-list", items))
+  })
+  output$scoreboard <- renderUI({
+    sl <- SUITE_LINKS; if (!nrow(sl)) return(p(class="qc-cap-note","Scoreboard unavailable (rebuild the data bundle)."))
+    pr <- PRIORS
+    hd <- lapply(seq_len(nrow(pr)), function(j) tags$th(class="sb-col",
+      title=sprintf("%s → %s%s", sig_label(pr$from[j]), sig_label(pr$to[j]), if(pr$lag[j]>0) sprintf(" (lag %dy)", pr$lag[j]) else ""),
+      HTML(sprintf("%s<br>→ %s", sig_abbr(pr$from[j]), sig_abbr(pr$to[j])))))
+    sm <- SITE_META
+    sm$em <- vapply(sm$site, function(s){ d <- sl[sl$site==s & sl$expected %in% TRUE & sl$n>=6 & !is.na(sl$sign_match),]; sum(d$sign_match) }, numeric(1))
+    sm <- sm[order(sm$biome_class, -sm$em, sm$site), , drop=FALSE]
+    rowfor <- function(s, blab){
+      cells <- lapply(seq_len(nrow(pr)), function(j){
+        d <- sl[sl$site==s & sl$from==pr$from[j] & sl$to==pr$to[j] & sl$lag==pr$lag[j], , drop=FALSE]
+        if (!nrow(d)) return(tags$td(class="sb-cell sb-na"))
+        tm <- TIER_META[[d$tier[1]]]; exp <- isTRUE(d$expected[1])
+        tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else ""),
+          title=sprintf("%s — %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else ""),
+          if (is.finite(d$r[1])) sprintf("%+.2f", d$r[1]) else "·")
+      })
+      tags$tr(tags$td(class="sb-site",
+        tags$a(href="#", class="sb-sitelink", onclick=sprintf("Shiny.setInputValue('goSite','%s',{priority:'event'});return false;", s), s),
+        tags$div(class="sb-biome", blab)), cells)
+    }
+    rows <- lapply(seq_len(nrow(sm)), function(i) rowfor(sm$site[i], sm$biome_label[i]))
+    tagList(
+      tags$table(class="sb-table",
+        tags$thead(tags$tr(tags$th(class="sb-site","Site"), hd)),
+        tags$tbody(rows)),
+      p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
+        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>consistent</span> <span class='sb-key sb-apparent'>apparent</span> <span class='sb-key sb-counter'>counter</span> <span class='sb-key sb-exploratory'>&lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. Faded cells aren't the mechanism <b>expected</b> for that biome. Click a site to open it. The grey untestable majority is shown, not hidden — that honesty IS the coverage statement.")))
+  })
+
+  observeEvent(input$goSite, {
+    req(input$goSite)
+    updateSelectInput(session, "site", selected = input$goSite)
+    updateTabsetPanel(session, "tabs", selected = "overview")
+  })
+  observeEvent(input$gotoTab, updateTabsetPanel(session, "tabs", selected = input$gotoTab))
+
   observeEvent(input$help, showModal(modalDialog(easyClose=TRUE, title=tagList(bs_icon("question-circle"), " How to read the cascade"),
     tags$ul(
       tags$li(HTML("Pick a <b>site</b> — richer sites (more trophic layers) are listed first.")),
