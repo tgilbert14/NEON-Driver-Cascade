@@ -103,6 +103,17 @@ server <- function(input, output, session) {
     insight_banner("diagram-3", tone = if (!is.na(sm$p) && sm$p < 0.05) "pine" else "navy", HTML(msg))
   })
 
+  # producer standing-stock backdrop — the slow ~5-yr floor the annual signals ride on
+  output$standingStock <- renderUI({
+    ba <- site_ba(input$site); if (!is.finite(ba)) return(NULL)
+    se <- site_ba_se(input$site)
+    div(class="standing-stock", bs_icon("tree-fill"),
+      HTML(sprintf(" Woody standing stock: <b>%s m²/ha</b>%s live basal area",
+        format(round(ba, 1), nsmall = 1), if (is.finite(se)) sprintf(" ±%s", format(round(se, 1), nsmall = 1)) else "")),
+      cpop("standing"),
+      tags$span(class = "ss-note", "— the slow producer floor the annual signals ride on (a real productivity measure where species richness can't be one)."))
+  })
+
   # ---- overview cascade schematic ----
   output$cascadeSchematic <- renderUI({
     a <- ann(); req(nrow(a))
@@ -465,9 +476,11 @@ server <- function(input, output, session) {
           title=sprintf("%s — %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else ""),
           if (is.finite(d$r[1])) sprintf("%+.2f", d$r[1]) else "·")
       })
+      ba <- site_ba(s)
       tags$tr(tags$td(class="sb-site",
         tags$a(href="#", class="sb-sitelink", onclick=sprintf("Shiny.setInputValue('goSite','%s',{priority:'event'});return false;", s), s),
-        tags$div(class="sb-biome", blab)), cells)
+        tags$div(class="sb-biome", blab,
+          if (is.finite(ba)) tags$span(class="sb-ba", title="woody standing stock (live basal area)", sprintf(" · %s m²/ha", format(round(ba,1), nsmall=1))))), cells)
     }
     rows <- lapply(seq_len(nrow(sm)), function(i) rowfor(sm$site[i], sm$biome_label[i]))
     tagList(
@@ -517,7 +530,8 @@ server <- function(input, output, session) {
         tags$li(HTML("<b>precip_winter</b> = Oct&ndash;Mar sum keyed to the year it ENDS (&ge;5 of 6 months). <b>precip_monsoon</b> = Jul&ndash;Sep sum (3 of 3). <b>temp_spring</b> = Mar&ndash;May mean. Reconstructed from the monthly NEON-tower overlays.")),
         tags$li(HTML("<b>greenup_doy</b> = median first-&lsquo;yes&rsquo; onset day-of-year over the green-up phenophases, years with &ge;5 individuals.")),
         tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID) &mdash; a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
-        tags$li(HTML("<b>plant_richness</b> = species count (a COMPOSITION signal, not productivity). <b>plant_intro_pct</b> = introduced share of cover. <b>bird_index</b> = clusterSize/point &mdash; a descriptive detection index that carries NO prior.")),
+        tags$li(HTML("<b>plant_richness</b> = species count (a COMPOSITION signal, not productivity). <b>plant_intro_pct</b> = introduced share of cover. <b>fruiting_pct</b> = peak monthly STATUS yes-share for the exact &lsquo;Fruits&rsquo; phenophase (gated to months with &ge;5 individuals; honestly NA at arid sites that track no fruit). <b>bird_index</b> = clusterSize/point &mdash; a descriptive detection index that carries NO prior.")),
+        tags$li(HTML("<b>Woody standing stock</b> (per site, not annual) = live basal area m²/ha from Veg-Structure (DP1.10098.001) — directly measured, allometry-free, computable even at deserts via basal stem diameter. A slow ~5-yr STATE shown as context, the real productivity measure species richness can't be.")),
         tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory (no p); &ge;6 &rarr; permutation p + bootstrap CI + a verdict. Each prior is tested where its biome mechanism is <b>expected</b>; the cross-site pooled binomial is one vote per site."))),
       div(class="codebook-dl",
         downloadButton("dlAnnual", tagList(bs_icon("filetype-csv"), " This site's annual data"), class="btn-outline-dark btn-sm"),

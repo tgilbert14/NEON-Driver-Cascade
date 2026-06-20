@@ -21,6 +21,8 @@ APP  <- list(
   bird   = file.path(ROOT, "NEON-Breeding-Birds"),
   phe    = file.path(ROOT, "NEON-Plant-Phenology"))
 source(file.path(APP$phe, "R/phe_helpers.R"))   # onset(), GREENUP
+# veg-structure standing-stock helpers (optional context; never breaks the build)
+.have_veg <- tryCatch({ source(file.path(APP$veg, "R/veg_helpers.R")); TRUE }, error = function(e) FALSE)
 
 rd <- function(p) if (file.exists(p)) tryCatch(readRDS(p), error=function(e) NULL) else NULL
 sites_in <- function(app) { d <- file.path(APP[[app]], "data/sites"); if (!dir.exists(d)) character(0) else sub("\\.rds$","",list.files(d, "\\.rds$")) }
@@ -37,7 +39,13 @@ ann_env <- function(site) {                       # climate + coarse NEON phenol
              if (length(v) >= 8) round(mean(v), 2) else NA_real_ },                 # >=8 valid months
     precip = { p <- .data$precip_mm[is.finite(.data$precip_mm) & .data$precip_mm >= 0 & .data$precip_mm < 2000]
                if (length(p) >= 10) round(sum(p), 1) else NA_real_ },               # annual total needs ~full year
-    fruiting_pct = if (all(is.na(.data$fruiting_pct))) NA_real_ else round(max(.data$fruiting_pct, na.rm=TRUE),1),
+    # fruiting_pct is a monthly STATUS yes-share for the exact "Fruits" phenophase (DP1.10055.001,
+    # refresh_env_data.R) — a defensible % of plants in fruit, NOT a binned intensity. We take the
+    # year's PEAK, but only over months with >=5 observed individuals so a peak can't rest on 1-2
+    # plants. (Arid sites track no "Fruits" phenophase, so this is honestly NA there.)
+    fruiting_pct = { ok <- is.finite(.data$fruiting_pct) &
+                       (if ("fruiting_pct_n" %in% names(e)) is.finite(.data$fruiting_pct_n) & .data$fruiting_pct_n >= 5 else TRUE)
+                     if (any(ok)) round(max(.data$fruiting_pct[ok]), 1) else NA_real_ },
     .groups="drop")
   # Within-site temp outlier: NA any year whose annual mean is implausibly far from
   # this SITE's own median — catches a corrupted-sensor year (e.g. SCBI 2018, whose
@@ -131,6 +139,20 @@ ann_bird <- function(site) {                      # consumer: detection index + 
     left_join(spo %>% group_by(year) %>% summarise(bird_richness = dplyr::n_distinct(.data$scientificName), .groups="drop"), by="year") %>%
     mutate(site = site) %>% select(site, year, bird_index, bird_richness)
 }
+ann_veg <- function(site) {                       # producer STANDING STOCK — a slow ~5-yr STATE,
+  # NOT an annual link (its remeasurement cadence would manufacture pseudo-resolution). Live basal
+  # area m2/ha from the Veg-Structure sibling: directly measured, allometry-free, and computable at
+  # DESERTS via basal stem diameter (where richness/temp links fail). Honest cure for the richness
+  # productivity proxy — but a stock, not a flux, so it enters as per-site context, not a ladder line.
+  if (!isTRUE(.have_veg)) return(NULL)
+  b <- rd(file.path(APP$veg, "data/sites", paste0(site, ".rds")))
+  if (is.null(b) || is.null(b$trees) || is.null(b$plots)) return(NULL)
+  snap <- tryCatch(tree_snapshot(b$trees), error = function(e) NULL); if (is.null(snap) || !nrow(snap)) return(NULL)
+  spec <- tryCatch(size_spec(classify_structure(snap)), error = function(e) SIZE_FOREST)
+  ss <- tryCatch(stand_site(snap, b$plots, spec), error = function(e) NULL); if (is.null(ss)) return(NULL)
+  data.frame(site = site, veg_ba_ha = ss$ba_ha, veg_ba_se = ss$ba_se,
+             veg_type = spec$type, veg_n_plots = ss$n_plots, stringsAsFactors = FALSE)
+}
 
 # ---- assemble over the union of sites that have mammal or bird data ----
 all_sites <- sort(unique(c(sites_in("mammal"), sites_in("bird"))))
@@ -205,6 +227,12 @@ site_meta <- data.frame(
   biome_class = vapply(ALL_SITES, biome_class, character(1)),
   biome_label = vapply(ALL_SITES, biome_label, character(1)),
   stringsAsFactors = FALSE)
+# producer standing stock (live basal area m2/ha) — per-site context, not an annual signal
+veg <- do.call(rbind, lapply(ALL_SITES, ann_veg))
+if (!is.null(veg) && nrow(veg)) site_meta <- dplyr::left_join(site_meta, veg, by = "site")
+for (c in c("veg_ba_ha","veg_ba_se","veg_type","veg_n_plots"))
+  if (!c %in% names(site_meta)) site_meta[[c]] <- if (grepl("type", c)) NA_character_ else NA_real_
+cat("\nveg standing stock computed for", sum(is.finite(site_meta$veg_ba_ha)), "of", nrow(site_meta), "sites\n")
 
 # ---- PRECOMPUTE the cross-site scoreboard + pooled result (the honest headline).
 # Per-site n=6 is underpowered; pooling each link across the sites where it is EXPECTED

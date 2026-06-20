@@ -28,6 +28,11 @@ site_annual <- function(site) ANNUAL[ANNUAL$site == site, , drop = FALSE]
 site_bclass <- function(site) if (exists("biome_class")) biome_class(site) else "temperature-limited"
 site_blabel <- function(site) if (exists("biome_label")) biome_label(site) else "mixed ecosystem"
 is_desert   <- function(site) identical(site_bclass(site), "water-limited")
+# producer standing stock (live basal area m2/ha) — a slow ~5-yr STATE, per-site context
+site_ba     <- function(site) { r <- SITE_META[SITE_META$site == site, , drop = FALSE]
+  if (nrow(r) && "veg_ba_ha" %in% names(r) && is.finite(r$veg_ba_ha[1])) r$veg_ba_ha[1] else NA_real_ }
+site_ba_se  <- function(site) { r <- SITE_META[SITE_META$site == site, , drop = FALSE]
+  if (nrow(r) && "veg_ba_se" %in% names(r) && is.finite(r$veg_ba_se[1])) r$veg_ba_se[1] else NA_real_ }
 # read the precomputed biome-aware links for a site (no live recompute / permutations)
 site_links_cached <- function(site) {
   if (nrow(SUITE_LINKS) && "site" %in% names(SUITE_LINKS)) {
@@ -86,7 +91,8 @@ CONCEPT <- list(
   biome     = list(t = "Biome class", b = "Whether growth here is limited by warmth (temperate/boreal forest, prairie, tundra) or by water (desert, sagebrush). It decides which driver the cascade should follow — temperature→green-up in the cold, rain→everything in the dry."),
   signmatch = list(t = "Sign-match", b = "Does the data point the direction ecology predicts (not how big)? We tally how many links match — an honest signal even when no single short series is statistically significant."),
   expected  = list(t = "“Expected here”", b = "The link whose mechanism is established for THIS biome (warmth→green-up in forests; the monsoon seed crop→rodents in deserts). Only expected links count toward the site's tally; the rest are shown for context."),
-  pulse     = list(t = "The pulse trace", b = "Tap a year and its climate anomaly ripples DOWN the rungs at each link's lag. A rung lights green if it moved the way the prior predicts, red if it went the other way. One traced year is an anecdote — the chips and the cross-site scoreboard are the real evidence."))
+  pulse     = list(t = "The pulse trace", b = "Tap a year and its climate anomaly ripples DOWN the rungs at each link's lag. A rung lights green if it moved the way the prior predicts, red if it went the other way. One traced year is an anecdote — the chips and the cross-site scoreboard are the real evidence."),
+  standing  = list(t = "Woody standing stock", b = "Live basal area (m²/ha) — the cross-section of all living woody stems per hectare, directly measured from the Veg-Structure product. It's the slow PRODUCER FLOOR the fast annual signals ride on: ~56 in old-growth forest, ~5 in semi-desert, ~0.4 in true desert. Surveyed on a ~5-year cycle, so it's a standing-stock STATE, not a year-to-year link."))
 cpop <- function(key, placement = "auto") { c <- CONCEPT[[key]]; if (is.null(c)) return(NULL)
   bslib::popover(tags$span(class = "concept-i", bsicons::bs_icon("info-circle")), tags$p(c$b), title = c$t, placement = placement) }
 insight_banner <- function(icon, ..., tone = "navy")

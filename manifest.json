@@ -2727,7 +2727,7 @@
       "checksum": "7db857d197cb316d2f32a9437e21ff83"
     },
     "data/cascade.rds": {
-      "checksum": "ac67e878cd82ddf99b18c94f7af90c9a"
+      "checksum": "64a7d0e8abf8d95d3adae5596ac5dc7e"
     },
     "DEPLOY.md": {
       "checksum": "73bbe6b840cb2bfed426f342b22fa772"
@@ -2742,7 +2742,7 @@
       "checksum": "3612bfda930e03259fdb7ceb1a6b0566"
     },
     "global.R": {
-      "checksum": "2c2d4ea4a3888eb29793bb998d3e7b05"
+      "checksum": "80dda3364c15ee838716fb6f03a4ee73"
     },
     "R/cascade_helpers.R": {
       "checksum": "0b0ce3edcb92676112fd2de0a8f40cb1"
@@ -2753,26 +2753,32 @@
     "README.md": {
       "checksum": "80fabb3fa619855e68b436cb1d23ef9d"
     },
+    "scripts/_diag_phe.R": {
+      "checksum": "920fb241281fe95afd569a977f1ee1ec"
+    },
     "scripts/_diag_seasonal.R": {
       "checksum": "f0f6292172bd0c09a1aed8b0bbabb24f"
     },
+    "scripts/_diag_veg.R": {
+      "checksum": "3fced9f8bbc5a444feb9108e3b07d1ec"
+    },
     "scripts/build_cascade.R": {
-      "checksum": "4ba3bb4f6a677a9450e1754ad8e67a19"
+      "checksum": "09207731940fa672aa7d2991ce90ca94"
     },
     "scripts/test_helpers.R": {
       "checksum": "fd6c0238fb99a5b5945346991395e64f"
     },
     "server.R": {
-      "checksum": "ba99f1be57c4aeaf831617455e0c8ba2"
+      "checksum": "1f791a53b0def1e28ef334674859d4dc"
     },
     "ui.R": {
-      "checksum": "838d70a9a7b811a4549dd94dd682e8a4"
-    },
-    "www/app.js": {
-      "checksum": "2c6211add4ab35175b6c1eeab5d96d9a"
+      "checksum": "b6598e85666a8af5c0d35d12bf8c3f2e"
     },
     "www/cascade.css": {
-      "checksum": "ae0d27f301e3a39c3acd93993a36f756"
+      "checksum": "751c03279b447451304a5306804773f4"
+    },
+    "www/cascade.js": {
+      "checksum": "04809765f8e3527759e580fd456cc5f2"
     },
     "www/styles.css": {
       "checksum": "191d24d6c1ac69722cf33138e8b7e439"
