@@ -46,3 +46,53 @@ document.addEventListener("shown.bs.tab", function () {
     clearTimeout(window.__vwt); window.__vwt = setTimeout(sendW, 200);
   });
 })();
+
+// ---- premium DDL polish: pointer-tracked holographic sheen + scroll-reveal --------
+// The hero verdict card is the showpiece — an iridescent sheen + glare follow the
+// cursor (--mx/--my). No body-wide observer: we re-bind only when the heroStats
+// output re-renders (Shiny fires shiny:value on it). Reduced-motion users opt out.
+(function () {
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function track(e) {
+    var el = e.currentTarget, r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
+    el.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+  }
+  function reset(e) { e.currentTarget.style.setProperty("--mx", "50%"); e.currentTarget.style.setProperty("--my", "50%"); }
+  function bindHolo() {
+    if (reduce) return;
+    document.querySelectorAll(".hero-verdict:not([data-holo])").forEach(function (el) {
+      el.setAttribute("data-holo", "1");
+      el.addEventListener("pointermove", track);
+      el.addEventListener("pointerleave", reset);
+    });
+  }
+
+  // Scroll-reveal: fade cards up as they enter the viewport (one-shot, gated on no-reduce).
+  var io = (!reduce && "IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("is-visible"); io.unobserve(en.target); } });
+  }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }) : null;
+  function bindReveal() {
+    if (!io) return;
+    document.querySelectorAll(".main-tabs-wrap .card:not([data-reveal])").forEach(function (el) {
+      el.setAttribute("data-reveal", "1"); el.classList.add("reveal-card"); io.observe(el);
+    });
+  }
+  function pass() { bindHolo(); bindReveal(); }
+
+  // Shiny fires shiny:connected / shiny:value as jQuery events — native addEventListener
+  // misses them, so bind via jQuery (with a native fallback for shown.bs.tab, a real DOM event).
+  if (window.jQuery) {
+    jQuery(document).on("shiny:connected", function () { setTimeout(pass, 60); });
+    jQuery(document).on("shiny:value", function (e) {
+      if (e.target && e.target.id === "heroStats") setTimeout(bindHolo, 30);
+    });
+  }
+  // a new tab's cards mount on first show — re-scan then (cheap, scoped, no persistent observer)
+  document.addEventListener("shown.bs.tab", function () { setTimeout(pass, 80); });
+  // self-clearing early poll: binds as soon as the hero renders after connect, then stops
+  var tries = 0, iv = setInterval(function () {
+    pass(); if (++tries > 9 || document.querySelector(".hero-verdict[data-holo]")) clearInterval(iv);
+  }, 350);
+})();

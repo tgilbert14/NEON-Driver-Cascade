@@ -229,3 +229,179 @@ tr.dt-dim { opacity: .55; }
   .tab-handoff { justify-content: stretch; }
   .handoff-chip { width: 100%; justify-content: center; }
 }
+
+/* ====================================================================== *
+ *  PREMIUM DDL THEME — motion, sheen, holographics, movement.            *
+ *  Brand palette: navy #0C234B · cardinal #AB0520 · gold #FFD200 ·       *
+ *  sky #2f7fb5 · green #1a7f37, on warm paper. Light-first; dark-aware.  *
+ *  Every animation is gated by prefers-reduced-motion at the bottom.     *
+ * ====================================================================== */
+@property --mx { syntax: "<percentage>"; inherits: true; initial-value: 50%; }
+@property --my { syntax: "<percentage>"; inherits: true; initial-value: 50%; }
+
+@keyframes ddlDrift { to { background-position: 28% 16%, 74% 10%, 44% 86%, 0 0; } }
+@keyframes ddlFadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes ddlSheen { 0% { left: -65%; opacity: 0; } 12% { opacity: .85; } 100% { left: 135%; opacity: 0; } }
+@keyframes ddlHoloShift { from { background-position: var(--mx,50%) var(--my,50%), 0% 50%; } to { background-position: var(--mx,50%) var(--my,50%), 240% 50%; } }
+@keyframes ddlFloat { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(3deg); } }
+@keyframes ddlWinGlow { 0%,100% { box-shadow: inset 3px 0 0 #1a7f37, 0 4px 14px rgba(12,35,75,.10); } 50% { box-shadow: inset 3px 0 0 #1a7f37, 0 0 20px rgba(26,127,55,.30); } }
+@keyframes ddlNodeWave { 0%,100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 6px 22px rgba(47,127,181,.22), inset 0 0 0 1px rgba(47,127,181,.25); } }
+@keyframes ddlArrowFlow { 0% { transform: translateX(-3px); opacity:.45; } 50% { transform: translateX(3px); opacity:1; } 100% { transform: translateX(-3px); opacity:.45; } }
+@keyframes ddlBadgeShine { to { background-position: 240% 0; } }
+
+/* ---- (1) living aurora backdrop — brand-tinted gradients drift behind it all ---- */
+html { background: var(--bg, #eef2f8); }
+body { background-color: transparent !important; }   /* let the fixed aurora show through */
+[data-bs-theme="dark"] html { background: #0b1320; }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(820px 480px at 4% -8%, rgba(47,127,181,0.13), transparent 60%),
+    radial-gradient(760px 460px at 112% 0%, rgba(12,35,75,0.10), transparent 60%),
+    radial-gradient(720px 520px at 50% 120%, rgba(255,210,0,0.07), transparent 62%),
+    linear-gradient(180deg, var(--bg, #eef2f8), var(--bg, #eef2f8));
+  background-size: 170% 170%, 170% 170%, 170% 170%, 100% 100%;
+  background-position: 0% 0%, 100% 0%, 50% 100%, 0 0;
+  animation: ddlDrift 34s ease-in-out infinite alternate;
+}
+[data-bs-theme="dark"] body::before {
+  background:
+    radial-gradient(820px 480px at 4% -8%, rgba(47,127,181,0.16), transparent 60%),
+    radial-gradient(760px 460px at 112% 0%, rgba(94,140,220,0.12), transparent 60%),
+    radial-gradient(720px 520px at 50% 120%, rgba(255,210,0,0.06), transparent 62%),
+    linear-gradient(180deg, #0e1726, #0b1320);
+  background-size: 170% 170%, 170% 170%, 170% 170%, 100% 100%;
+}
+
+/* ---- (2) THE SHOWPIECE: the hero becomes a navy command band (matches the hub) -- */
+.hero-band { position: relative; overflow: hidden; border-radius: 18px;
+  padding: 18px 20px 16px; margin: 4px 0 16px; color: #fff;
+  background: radial-gradient(125% 150% at 16% -12%, #1b3f78 0%, #0C234B 46%, #07142f 100%);
+  box-shadow: 0 18px 46px rgba(8,20,47,.32); }
+.hero-band::after {            /* gold/white/green speckle field — the hub signature */
+  content:""; position:absolute; inset:0; opacity:.6; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(46px 46px at 10% 26%, rgba(255,210,0,.16), transparent 70%),
+    radial-gradient(66px 66px at 86% 16%, rgba(255,255,255,.10), transparent 70%),
+    radial-gradient(54px 54px at 64% 94%, rgba(94,174,58,.12), transparent 70%); }
+.hero-band > * { position: relative; z-index: 1; }
+.hero-title { color: #fff; }
+.hero-title .hero-sub { color: rgba(255,255,255,.6); }
+.hero-band .hero-title svg, .hero-band .hero-title .bi { color: var(--gold); }
+.hero-band .concept-i { color: rgba(255,255,255,.72); }
+.brand-mark { display: inline-block; animation: ddlFloat 6s ease-in-out infinite; }
+
+/* the verdict sentence: a frosted glass card with a pointer-tracked holographic sheen */
+.hero-verdict { position: relative; overflow: hidden; isolation: isolate; color: #eaf1fb;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 14px;
+  -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); box-shadow: 0 8px 26px rgba(0,0,0,.22);
+  transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .3s ease; }
+.hero-verdict b { color: #fff; position: relative; z-index: 1; }
+.hero-verdict i { color: #cfe0f5; }
+.hero-verdict::before {            /* animated rainbow top edge */
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; z-index: 3;
+  background: linear-gradient(90deg, #2f7fb5, #FFD200, #AB0520, #5fae3a, #2f7fb5);
+  background-size: 260% 100%; animation: ddlBadgeShine 6s linear infinite; }
+.hero-verdict::after {             /* iridescent sheen + cursor glare (color-dodge pops on navy) */
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
+  background:
+    radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,.5), transparent 40%),
+    repeating-linear-gradient(108deg, rgba(120,200,255,.5) 0%, rgba(255,224,138,.5) 16%, rgba(150,238,170,.45) 32%, rgba(255,150,170,.45) 50%, rgba(120,200,255,.5) 66%);
+  background-size: auto, 240% 240%;
+  background-position: var(--mx,50%) var(--my,50%), 0% 50%;
+  mix-blend-mode: color-dodge; filter: brightness(.9) contrast(1.3); opacity: 0; transition: opacity .45s ease; }
+.hero-verdict:hover { transform: translateY(-2px); box-shadow: 0 20px 46px rgba(0,0,0,.34); }
+.hero-verdict:hover::after { opacity: .7; animation: ddlHoloShift 3.4s linear infinite; }
+@media (hover: none) { .hero-verdict::after { opacity: .4; } }   /* phones: gentle always-on shimmer */
+
+.biome-tag { position: relative; overflow: hidden; }
+.biome-tag::after { content:""; position:absolute; inset:0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55), transparent 70%); background-size: 240% 100%; animation: ddlBadgeShine 4.5s linear infinite; mix-blend-mode: screen; }
+
+/* stat tiles -> translucent glass on the navy band, gold accents */
+.hero-stat { background: rgba(255,255,255,.08) !important; border: 1px solid rgba(255,255,255,.16) !important;
+  border-top-width: 3px !important; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+.hero-stat .hs-v { color: #fff !important; -webkit-text-fill-color: #fff; }
+.hero-stat .hs-l { color: rgba(255,255,255,.66); }
+.hero-stat.hero-navy { border-top-color: var(--sky) !important; }   .hero-stat.hero-navy .hs-icon  { color: #6db3e0; }
+.hero-stat.hero-pine { border-top-color: #5fae3a !important; }      .hero-stat.hero-pine .hs-icon  { color: #7cc46a; }
+.hero-stat.hero-gold { border-top-color: var(--gold) !important; }  .hero-stat.hero-gold .hs-icon  { color: var(--gold); }
+.hero-stat.hero-terra{ border-top-color: var(--cardinal) !important; } .hero-stat.hero-terra .hs-icon { color: #e0607a; }
+
+/* ---- (3) sheen sweep + hover-lift on the stat tiles, nodes, seasonal cards ------ */
+.hero-stat, .casc-node, .seasonal-cmp, .pooled-row {
+  position: relative; overflow: hidden; isolation: isolate;
+  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .28s ease, border-color .2s ease; }
+.hero-stat::before, .casc-node::before, .seasonal-cmp::before {
+  content: ""; position: absolute; top: 0; left: -65%; width: 55%; height: 100%; z-index: 4;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent);
+  transform: skewX(-18deg); pointer-events: none; opacity: 0; }
+.hero-stat:hover::before, .casc-node:hover::before, .seasonal-cmp:hover::before { animation: ddlSheen .85s ease; }
+.hero-stat:hover, .seasonal-cmp:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 34px rgba(12,35,75,.16), 0 0 0 1px rgba(47,127,181,.30); }
+.hero-stat:hover .hs-icon { transform: scale(1.12) rotate(-4deg); transition: transform .25s ease; }
+
+/* ---- (4) the cascade schematic FLOWS — a wave glides climate -> consumers ------- */
+.casc-node:hover { transform: translateY(-4px); border-color: rgba(47,127,181,.5);
+  box-shadow: 0 16px 34px rgba(12,35,75,.16); }
+.casc-node:not(.casc-empty) { animation: ddlNodeWave 5.2s ease-in-out infinite; }
+.casc-flow .casc-node:nth-of-type(1) { animation-delay: 0s; }
+.casc-flow .casc-node:nth-of-type(3) { animation-delay: .5s; }
+.casc-flow .casc-node:nth-of-type(5) { animation-delay: 1s; }
+.casc-flow .casc-node:nth-of-type(7) { animation-delay: 1.5s; }
+.casc-arrow { animation: ddlArrowFlow 2.4s ease-in-out infinite; color: var(--sky, #2f7fb5) !important; }
+.casc-flow .casc-arrow:nth-of-type(4) { animation-delay: .3s; }
+.casc-flow .casc-arrow:nth-of-type(6) { animation-delay: .6s; }
+.casc-sig { transition: transform .16s ease, box-shadow .16s ease; }
+.casc-node:hover .casc-sig { transform: translateX(2px); }
+
+/* ---- (5) celebrate the wins: significant pooled row + consistent verdicts glow -- */
+.pooled-row.pooled-sig { animation: ddlWinGlow 3.4s ease-in-out infinite; }
+.pooled-row:hover { transform: translateX(3px); box-shadow: 0 8px 20px rgba(12,35,75,.12); }
+.link-chip.lc-consistent { box-shadow: 0 0 0 1px rgba(26,127,55,.18), 0 0 14px rgba(26,127,55,.10); }
+.link-chip { transition: transform .16s ease, box-shadow .2s ease; }
+.link-chip:hover { transform: translateX(3px); box-shadow: 0 8px 18px rgba(12,35,75,.14); }
+.sb-cell.sb-consistent { position: relative; overflow: hidden; }
+.sb-cell.sb-consistent::after { content:""; position:absolute; inset:0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.45), transparent 65%); background-size: 250% 100%; animation: ddlBadgeShine 5s linear infinite; }
+.sb-cell { transition: transform .12s ease, filter .12s ease; }
+.sb-cell:hover { transform: scale(1.12); filter: brightness(1.06); z-index: 3; box-shadow: 0 4px 14px rgba(12,35,75,.25); }
+
+/* ---- (6) gradient handoff CTAs + buttons with a sweeping sheen ------------------ */
+.handoff-chip { position: relative; overflow: hidden;
+  background: linear-gradient(120deg, var(--pine, #0C234B), #16386e) !important; }
+.handoff-chip::after { content:""; position:absolute; top:0; left:-60%; width:50%; height:100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.4), transparent); transform: skewX(-18deg); }
+.handoff-chip:hover { transform: translateY(-2px) scale(1.015); box-shadow: 0 12px 26px rgba(12,35,75,.30); }
+.handoff-chip:hover::after { animation: ddlSheen .8s ease; }
+.btn { transition: transform .15s ease, box-shadow .2s ease, filter .15s ease; }
+.btn:hover { transform: translateY(-2px); filter: brightness(1.03); }
+.custom-cta { position: relative; overflow: hidden; }
+.custom-cta::after { content:""; position:absolute; top:0; left:-60%; width:45%; height:100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent); transform: skewX(-18deg); }
+.custom-cta:hover::after { animation: ddlSheen 1s ease; }
+
+/* ---- (7) tab-pane entrance + scroll-reveal cards ------------------------------- */
+.reveal-card { will-change: opacity, transform; }
+html .reveal-card[data-reveal] { opacity: 0; transform: translateY(22px);
+  transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
+html .reveal-card.is-visible { opacity: 1; transform: none; }
+.standing-stock, .pulse-banner, .scatter-detail, .chart-insight { animation: ddlFadeUp .5s cubic-bezier(.22,1,.36,1) both; }
+
+/* the active pulse banner gets an energetic glow */
+.pulse-banner.pulse-active { box-shadow: 0 0 0 1px rgba(255,210,0,.4), 0 6px 20px rgba(201,137,47,.18); }
+
+/* info dots pulse softly so they're discoverable */
+.concept-i, .info-dot { transition: transform .2s ease, opacity .2s ease; }
+.concept-i:hover, .info-dot:hover { transform: scale(1.25); }
+
+/* ---- (8) REDUCED MOTION: kill all motion, keep the static styling -------------- */
+@media (prefers-reduced-motion: reduce) {
+  body::before, .hero-verdict::before, .hero-verdict::after, .biome-tag::after, .brand-mark,
+  .casc-node:not(.casc-empty), .casc-arrow, .pooled-row.pooled-sig, .sb-cell.sb-consistent::after,
+  .standing-stock, .pulse-banner, .scatter-detail, .chart-insight,
+  .hero-stat::before, .casc-node::before, .seasonal-cmp::before, .handoff-chip::after, .custom-cta::after {
+    animation: none !important; }
+  html .reveal-card[data-reveal] { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .hero-verdict:hover, .hero-stat:hover, .casc-node:hover, .seasonal-cmp:hover, .pooled-row:hover,
+  .link-chip:hover, .handoff-chip:hover, .sb-cell:hover { transform: none; }
+}
