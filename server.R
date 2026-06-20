@@ -20,6 +20,25 @@ server <- function(input, output, session) {
   bclass <- reactive(site_bclass(input$site))
   blabel <- reactive(site_blabel(input$site))
 
+  # ---- Pulse Tracer state: the climate year being traced down the ladder ----
+  traced <- reactiveVal(NULL)
+  observeEvent(input$site, traced(NULL), ignoreInit = TRUE)          # reset on site change
+  observeEvent(input$tracedYear, {                                    # set by a ladder dot click (cascade.js onRender)
+    y <- suppressWarnings(as.integer(round(as.numeric(input$tracedYear$year))))
+    if (is.finite(y)) traced(y)
+  })
+  observeEvent(input$clearTrace, traced(NULL))
+
+  # ---- clickable scatter dots: the year being inspected in the Driver Lab ----
+  scatterYear <- reactiveVal(NULL)
+  observeEvent(input$response, scatterYear(NULL), ignoreInit = TRUE)
+  observeEvent(input$site,     scatterYear(NULL), ignoreInit = TRUE)
+  observeEvent(input$scatterYear, {
+    y <- suppressWarnings(as.integer(round(as.numeric(input$scatterYear$year))))
+    if (is.finite(y)) scatterYear(y)
+  })
+  observeEvent(input$clearScatter, scatterYear(NULL))
+
   output$siteBio <- renderUI({ b <- site_bio(input$site); if (is.null(b)) return(NULL)
     div(class="site-bio", bs_icon("info-circle-fill"), span(b)) })
 
@@ -62,7 +81,7 @@ server <- function(input, output, session) {
       div(class="hs-icon", bs_icon(icon)), div(div(class="hs-v", v), div(class="hs-l", l)))
     div(class="hero-band",
       div(class="hero-title", bs_icon("diagram-3-fill"), tags$b(sprintf("%s · %s", input$site, if (nrow(row)) row$name[1] else input$site)),
-        tags$span(class="hero-sub", sprintf(" · %s–%s", yrs[1], yrs[2]))),
+        tags$span(class="hero-sub", sprintf(" · %s–%s", yrs[1], yrs[2])), cpop("biome")),
       div(class="hero-verdict", verdict_sentence(input$site, lk, sm, blabel())),
       div(class="hero-grid",
         hero(sum(lp), "trophic layers", icon="layers", tone="navy", ttl="Climate, green-up, producers, consumers present here"),
@@ -92,7 +111,7 @@ server <- function(input, output, session) {
       ks <- SIGNALS$key[SIGNALS$layer==L & SIGNALS$key %in% LADDER_KEYS]
       have <- ks[vapply(ks, function(k) sum(is.finite(a[[k]]))>=2, logical(1))]
       div(class=paste0("casc-node", if (!length(have)) " casc-empty" else ""),
-        div(class="casc-node-h", style=sprintf("color:%s", lm$col), bs_icon(lm$icon), " ", lm$title),
+        div(class="casc-node-h", style=sprintf("color:%s", lm$col), bs_icon(lm$icon), " ", lm$title, cpop(L)),
         if (length(have)) div(class="casc-sigs", lapply(have, function(k) div(class="casc-sig", sig_label(k))))
         else div(class="casc-sigs", em("no data here"))) }
     arrow <- div(class="casc-arrow", bs_icon("arrow-right"))
@@ -133,25 +152,65 @@ server <- function(input, output, session) {
     dark_hex <- function(hex) if (!is_dark()) hex else {
       rgb <- grDevices::col2rgb(hex)/255; hsv <- grDevices::rgb2hsv(rgb)
       grDevices::hsv(hsv[1], max(0, hsv[2]*0.8), min(1, hsv[3]*1.35)) }   # lift value, ease saturation for navy bg
+    # ---- Pulse Tracer highlights for the traced year (built per signal key) ----
+    t0 <- traced(); paths <- if (!is.null(t0)) pulse_paths(a, t0) else NULL
+    hl <- list(); add_hl <- function(key, yr, z, color, sym, lab)
+      hl[[key]] <<- rbind(hl[[key]], data.frame(year=yr, z=z, color=color, sym=sym, lab=lab, stringsAsFactors=FALSE))
+    if (!is.null(paths) && nrow(paths)) {
+      vcol <- c(match="#1a7f37", miss="#AB0520", nodata="#9aa6b2")
+      for (fk in unique(paths$from)) add_hl(fk, t0, paths$src_z[paths$from==fk][1], "#e6b400", "circle",
+        sprintf("%s · traced year %d (z=%.2f)", sig_label(fk), t0, paths$src_z[paths$from==fk][1]))
+      for (i in seq_len(nrow(paths))) { pr <- paths[i,]; if (pr$verdict=="nodata") next
+        add_hl(pr$to, pr$dst_year, pr$dst_z, unname(vcol[[pr$verdict]]), if (pr$verdict=="match") "circle" else "x",
+          sprintf("%s · %d: %s the prior (z=%.2f)", sig_label(pr$to), pr$dst_year,
+                  if (pr$verdict=="match") "as" else "against", pr$dst_z)) }
+    }
     plist <- lapply(present, function(L){ dd <- dl[[L]]; lm <- LAYER_META[[L]]
       ramp <- LADDER_PAL[[L]] %||% c("#2f7fb5","#16386e","#6db3e0"); j <- 0L
       p <- plotly::plot_ly()
       for (k in unique(dd$key)) { sub <- dd[dd$key==k,]; sub <- sub[order(sub$year),]; j <- j + 1L
         col <- dark_hex(ramp[(j-1) %% length(ramp) + 1])
+        dimmed <- if (!is.null(t0)) "rgba(150,160,175,0.55)" else col   # fade base lines while tracing
         p <- p %>% plotly::add_trace(data=sub, x=~year, y=~z, type="scatter", mode="lines+markers",
-          name=sub$label[1], legendgroup=L, line=list(width=2.6, color=col),
-          marker=list(size=6, color=col),
+          name=sub$label[1], legendgroup=L, line=list(width=2.6, color=if (!is.null(t0)) dimmed else col),
+          marker=list(size=6, color=if (!is.null(t0)) dimmed else col),
           hovertemplate=paste0("<b>",sub$label[1],"</b><br>%{x}: z=%{y:.2f} (",lm$title,")<extra></extra>")) }
+      # overlay the pulse highlights for any signal in this strip
+      for (k in unique(dd$key)) if (!is.null(hl[[k]])) { h <- hl[[k]]
+        p <- p %>% plotly::add_trace(data=h, x=~year, y=~z, type="scatter", mode="markers+text",
+          text=~lab, textposition="top center", textfont=list(size=9, color=if(is_dark())"#e8eef2" else "#1f2a30"),
+          marker=list(size=16, color=h$color, symbol=h$sym, line=list(color="#fff", width=2)),
+          name="pulse", legendgroup=L, showlegend=FALSE, hovertext=h$lab, hoverinfo="text") }
       p %>% plotly::layout(yaxis=list(title=list(text=lm$title, font=list(size=11, color=lm$col)),
         zeroline=TRUE, zerolinecolor=if(is_dark())"rgba(220,230,240,0.25)" else "rgba(31,42,48,0.18)",
         gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)", tickfont=list(size=9)))
     })
     narrow <- isTRUE((input$vw %||% 1200) < 760)   # on phones the h-legend crushes into the axis
-    plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=TRUE, margin=0.035) %>%
+    sp <- plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=TRUE, margin=0.035) %>%
       theme_plotly() %>%
       plotly::layout(showlegend = !narrow, legend=list(orientation="h", y=-0.08, font=list(size=10)),
         xaxis=list(title="year", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
         margin=list(l=60,r=20,t=20,b=if (narrow) 24 else 40))
+    # capture a dot click -> Shiny input$tracedYear (re-attached on every render; plotly purge wipes handlers)
+    htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
+      if (d && d.points && d.points.length){ var yr = d.points[0].x;
+        if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('tracedYear', {year: yr, n: Math.random()}); } }); }")
+  })
+
+  output$pulseBanner <- renderUI({
+    t0 <- traced()
+    if (is.null(t0)) return(div(class="pulse-banner pulse-idle", bs_icon("hand-index-thumb"),
+      HTML(" <b>Trace a pulse:</b> tap any year's dot on the ladder — that year lights up, and its ripple lands on the rungs below at each link's lag: a <span class='pulse-key pk-match'>● moved as the prior predicts</span> or <span class='pulse-key pk-miss'>✕ counter</span>."),
+      cpop("pulse")))
+    paths <- pulse_paths(ann(), t0)
+    if (is.null(paths) || !nrow(paths)) return(div(class="pulse-banner pulse-active", bs_icon("activity"),
+      HTML(sprintf(" <b>Year %d</b> has no annual climate signal to trace here. ", t0)),
+      actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear")))
+    k <- sum(paths$verdict=="match"); tot <- sum(paths$verdict %in% c("match","miss")); nd <- sum(paths$verdict=="nodata")
+    div(class="pulse-banner pulse-active", bs_icon("activity"),
+      HTML(sprintf(" <b>Tracing %d:</b> %d of %d downstream rung%s moved the way the prior predicts%s. <i>One path is an anecdote — the chips on the right are the evidence.</i> ",
+        t0, k, tot, if (tot==1) "" else "s", if (nd>0) sprintf(" (%d had no data that year)", nd) else "")),
+      actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear"))
   })
 
   # ---- link agreement chips (beside the ladder) ----
@@ -227,9 +286,9 @@ server <- function(input, output, session) {
     tm <- TIER_META[[r$tier]]
     md <- if (nrow(m) >= 7) "markers" else "markers+text"   # avoid year-label collision at n>=7
     p <- plotly::plot_ly(m, x=~x, y=~y, type="scatter", mode=md, text=~year, textposition="top center",
-      textfont=list(size=9, color=if(is_dark())"#9fb0c4" else "#6b7a85"),
+      customdata=~year, textfont=list(size=9, color=if(is_dark())"#9fb0c4" else "#6b7a85"),
       marker=list(size=11, color=DDL$sky, line=list(color="#fff", width=1)),
-      hovertemplate=paste0("year %{text}<br>",sig_label(r$from),"=%{x}<br>",sig_label(r$to),"=%{y}<extra></extra>"))
+      hovertemplate=paste0("year %{text} — tap for detail<br>",sig_label(r$from),"=%{x}<br>",sig_label(r$to),"=%{y}<extra></extra>"))
     # tier-honest fit line: GOLD only when the link clears the bar; thin GREY "shape only"
     # for apparent/counter; OMITTED below n=6 (a slope on 5 points is theatre, not evidence)
     if (r$n >= 6 && is.finite(r$r)) { fit <- stats::lm(y ~ x, data=m); xr <- range(m$x)
@@ -250,15 +309,38 @@ server <- function(input, output, session) {
       anns <- c(anns, list(list(x=0.5, y=0.02, xref="paper", yref="paper", xanchor="center", yanchor="bottom",
         text="No trend line below 6 years — read the points, not a slope.", showarrow=FALSE,
         font=list(size=10, color=if(is_dark())"#9fb0c4" else "#6b7a85"))))
-    p %>% theme_plotly() %>% plotly::layout(showlegend=FALSE, annotations=anns,
+    sp <- p %>% theme_plotly() %>% plotly::layout(showlegend=FALSE, annotations=anns,
       xaxis=list(title=sprintf("%s (%s)", sig_label(r$from), sig_unit(r$from))),
       yaxis=list(title=sprintf("%s (%s)", sig_label(r$to), sig_unit(r$to))), margin=list(l=55,r=20,t=20,b=45))
+    htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
+      if (d && d.points && d.points.length){ var yr = d.points[0].customdata;
+        if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('scatterYear', {year: yr, n: Math.random()}); } }); }")
   })
   output$linkScatterNote <- renderUI({ r <- sel_link(); if (is.null(r)) return(NULL); tm <- TIER_META[[r$tier]]
     div(class="scatter-note",
       span(sprintf("%s → %s", sig_label(r$from), sig_label(r$to)), style="font-weight:600"),
       if (r$lag>0) span(class="sn-lag", sprintf(" (response %d yr later)", r$lag)),
       div(style=sprintf("color:%s;margin-top:4px", tm$col), bs_icon(tm$icon), " ", r$verdict)) })
+
+  # ---- tap a scatter dot -> that year's full detail ----
+  output$scatterDetail <- renderUI({
+    yr <- scatterYear(); r <- sel_link(); if (is.null(yr) || is.null(r)) return(NULL)
+    a <- ann(); drow <- a[a$year == yr, , drop = FALSE]; if (!nrow(drow)) return(NULL)
+    rrow <- a[a$year == (yr + r$lag), , drop = FALSE]
+    f <- function(v) if (length(v) == 0 || !is.finite(v)) "—" else format(round(v, 1), big.mark = ",", trim = TRUE)
+    dv <- drow[[r$from]][1]; rv <- if (nrow(rrow)) rrow[[r$to]][1] else NA_real_
+    sigs <- LADDER_KEYS[vapply(LADDER_KEYS, function(k) length(drow[[k]]) && is.finite(drow[[k]][1]), logical(1))]
+    div(class = "scatter-detail",
+      div(class = "sd-head", bs_icon("calendar-event"), tags$b(sprintf(" %d · %s", yr, input$site)),
+        actionLink("clearScatter", bs_icon("x-lg"), class = "sd-clear", title = "close")),
+      div(class = "sd-pair",
+        span(class = "sd-driver", sprintf("%s = %s %s", sig_label(r$from), f(dv), sig_unit(r$from))),
+        bs_icon("arrow-right"),
+        span(class = "sd-resp", sprintf("%s = %s %s%s", sig_label(r$to), f(rv), sig_unit(r$to),
+          if (r$lag > 0) sprintf("  ·  %d", yr + r$lag) else ""))),
+      div(class = "sd-sigs", lapply(sigs, function(k)
+        span(class = "sd-chip", tags$b(sig_label(k)), sprintf(" %s", f(drow[[k]][1]))))))
+  })
 
   # ---- About ----
   output$aboutPanel <- renderUI({

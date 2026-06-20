@@ -71,6 +71,24 @@ asset_url <- function(path) { f <- file.path("www", path)
 spin <- function(x, ...) shinycssloaders::withSpinner(x, color = DDL$sky, type = 6)
 info_pop <- function(title, ..., placement = "auto")
   bslib::popover(tags$span(class = "info-dot", bsicons::bs_icon("info-circle")), ..., title = title, placement = placement)
+
+# ---- concept glossary: a tappable ⓘ that explains a term in plain English ----
+# cpop("trophic") drops a small info dot that pops the definition. Sprinkled on the
+# concepts a newcomer hits first (the trophic-layer boxes, lag, z-score, biome…).
+CONCEPT <- list(
+  trophic   = list(t = "Trophic layer", b = "One rung of the food web — who eats whom. This app stacks four, from the ground up: climate → green-up → producers → consumers."),
+  climate   = list(t = "Climate — the driver", b = "The bottom of the cascade: precipitation and temperature, the water and warmth that set what's possible for everything above."),
+  phenology = list(t = "Green-up — the hinge", b = "The moment in spring plants leaf out, measured as the day-of-year the first leaves appear. Climate decides WHEN the landscape wakes up, which sets the table for everything that eats plants."),
+  producer  = list(t = "Producers — the plants", b = "Plants: their richness, cover, and fruiting. They turn water and warmth into food — the base of the food web."),
+  consumer  = list(t = "Consumers — the animals", b = "Small mammals and birds that eat the plants and seeds — the top of this bottom-up chain."),
+  lag       = list(t = "A lag", b = "A delay. A 1-year lag means this year's driver shows up in NEXT year's response — rain grows a seed crop that feeds the rodents the following year."),
+  zscore    = list(t = "Standardised (z-score)", b = "Each signal is rescaled so 0 = its own average year and +1 = one standard deviation above. Signals in different units can then share one axis — so you compare the TIMING of the bumps, not their heights."),
+  biome     = list(t = "Biome class", b = "Whether growth here is limited by warmth (temperate/boreal forest, prairie, tundra) or by water (desert, sagebrush). It decides which driver the cascade should follow — temperature→green-up in the cold, rain→everything in the dry."),
+  signmatch = list(t = "Sign-match", b = "Does the data point the direction ecology predicts (not how big)? We tally how many links match — an honest signal even when no single short series is statistically significant."),
+  expected  = list(t = "“Expected here”", b = "The link whose mechanism is established for THIS biome (warmth→green-up in forests; the monsoon seed crop→rodents in deserts). Only expected links count toward the site's tally; the rest are shown for context."),
+  pulse     = list(t = "The pulse trace", b = "Tap a year and its climate anomaly ripples DOWN the rungs at each link's lag. A rung lights green if it moved the way the prior predicts, red if it went the other way. One traced year is an anecdote — the chips and the cross-site scoreboard are the real evidence."))
+cpop <- function(key, placement = "auto") { c <- CONCEPT[[key]]; if (is.null(c)) return(NULL)
+  bslib::popover(tags$span(class = "concept-i", bsicons::bs_icon("info-circle")), tags$p(c$b), title = c$t, placement = placement) }
 insight_banner <- function(icon, ..., tone = "navy")
   div(class = paste("chart-insight", paste0("ci-", tone)), bsicons::bs_icon(icon), div(class = "ci-text", ...))
 # section-to-section handoff chip (turns parallel tabs into a guided sequence)
@@ -88,6 +106,29 @@ sig_abbr  <- function(k) { m <- c(temp="Temp", precip="Rain", precip_winter="Win
   precip_monsoon="Monsoon", temp_spring="Spring temp", greenup_doy="Green-up", fruiting_pct="Fruiting",
   plant_richness="Richness", plant_intro_pct="Invasion", mammal_cpue="Rodents", mammal_mnka="Rodents",
   bird_index="Birds", bird_richness="Bird rich."); if (k %in% names(m)) unname(m[k]) else k }
+
+# ---- Pulse Tracer: for a tapped climate year t0, where does its ripple land? ----
+# Follows the ANNUAL ladder climate signals (precip, temp) down the prior links. Uses
+# the SAME ladder_layer() z-scores the static ladder draws (one z implementation, no
+# drift). verdict = did the response at t0+lag move the way the prior predicts, GIVEN
+# this year's driver anomaly? predicted response sign = sign(prior_sign * driver_z).
+pulse_paths <- function(ann_site, t0) {
+  if (is.null(t0) || is.na(t0)) return(NULL)
+  z <- do.call(rbind, Filter(Negate(is.null), lapply(c("climate","phenology","producer","consumer"),
+        function(L) ladder_layer(ann_site, SIGNALS, L))))
+  if (is.null(z) || !nrow(z)) return(NULL)
+  zv <- function(key, yr){ v <- z$z[z$key == key & z$year == yr]; if (length(v)) v[1] else NA_real_ }
+  climate_keys <- intersect(c("precip","temp"), unique(z$key))   # the ladder's climate signals
+  rows <- lapply(seq_len(nrow(PRIORS)), function(i){ pr <- PRIORS[i,]
+    if (!(pr$from %in% climate_keys)) return(NULL)
+    zf <- zv(pr$from, t0); if (!is.finite(zf)) return(NULL)
+    zt <- zv(pr$to, t0 + pr$lag); predicted <- sign(pr$sign * zf)
+    verdict <- if (!is.finite(zt)) "nodata" else if (sign(zt) == predicted) "match" else "miss"
+    data.frame(from = pr$from, to = pr$to, lag = pr$lag, src_z = round(zf, 2),
+               dst_year = t0 + pr$lag, dst_z = if (is.finite(zt)) round(zt, 2) else NA_real_,
+               verdict = verdict, stringsAsFactors = FALSE) })
+  do.call(rbind, Filter(Negate(is.null), rows))
+}
 
 # site dropdown choices, richest-cascade first ("SRER — Santa Rita … (4 layers)")
 cascade_site_choices <- function() {
