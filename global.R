@@ -92,18 +92,18 @@ MASCOT_HUDDLE <- htmltools::HTML('<span class="cg-mascots" aria-hidden="true"><s
 # cpop("trophic") drops a small info dot that pops the definition. Sprinkled on the
 # concepts a newcomer hits first (the trophic-layer boxes, lag, z-score, biome…).
 CONCEPT <- list(
-  trophic   = list(t = "Trophic layer", b = "One rung of the food web — who eats whom. This app stacks four, from the ground up: climate → green-up → producers → consumers."),
-  climate   = list(t = "Climate — the driver", b = "The bottom of the cascade: precipitation and temperature, the water and warmth that set what's possible for everything above."),
-  phenology = list(t = "Green-up — the hinge", b = "The moment in spring plants leaf out, measured as the day-of-year the first leaves appear. Climate decides WHEN the landscape wakes up, which sets the table for everything that eats plants."),
-  producer  = list(t = "Producers — the plants", b = "Plants: their richness, cover, and fruiting. They turn water and warmth into food — the base of the food web."),
-  consumer  = list(t = "Consumers — the animals", b = "Small mammals and birds that eat the plants and seeds — the top of this bottom-up chain."),
-  lag       = list(t = "A lag", b = "A delay. A 1-year lag means this year's driver shows up in NEXT year's response — rain grows a seed crop that feeds the rodents the following year."),
-  zscore    = list(t = "Standardised (z-score)", b = "Each signal is rescaled so 0 = its own average year and +1 = one standard deviation above. Signals in different units can then share one axis — so you compare the TIMING of the bumps, not their heights."),
-  biome     = list(t = "Biome class", b = "Whether growth here is limited by warmth (temperate/boreal forest, prairie, tundra) or by water (desert, sagebrush). It decides which driver the cascade should follow — temperature→green-up in the cold, rain→everything in the dry."),
-  signmatch = list(t = "Sign-match", b = "Does the data point the direction ecology predicts (not how big)? We tally how many links match — an honest signal even when no single short series is statistically significant."),
+  trophic   = list(t = "Trophic layer", b = "One rung of the food web: who eats whom. This app stacks four, from the ground up: climate → green-up → producers → consumers."),
+  climate   = list(t = "Climate: the driver", b = "The bottom of the cascade: precipitation and temperature, the water and warmth that set what's possible for everything above."),
+  phenology = list(t = "Green-up: the hinge", b = "The moment in spring plants leaf out, measured as the day-of-year the first leaves appear. Climate decides WHEN the landscape wakes up, which sets the table for everything that eats plants."),
+  producer  = list(t = "Producers: the plants", b = "Plants: their richness, cover, and fruiting. They turn water and warmth into food, the base of the food web."),
+  consumer  = list(t = "Consumers: the animals", b = "Small mammals and birds that eat the plants and seeds, the top of this bottom-up chain."),
+  lag       = list(t = "A lag", b = "A delay. A 1-year lag means this year's driver shows up in NEXT year's response: rain grows a seed crop that feeds the rodents the following year."),
+  zscore    = list(t = "Standardised (z-score)", b = "Each signal is rescaled so 0 = its own average year and +1 = one standard deviation above. Signals in different units can then share one axis, so you compare the TIMING of the bumps, not their heights."),
+  biome     = list(t = "Biome class", b = "Whether growth here is limited by warmth (temperate/boreal forest, prairie, tundra) or by water (desert, sagebrush). It decides which driver the cascade should follow: temperature→green-up in the cold, rain→everything in the dry."),
+  signmatch = list(t = "Sign-match", b = "Does the data point the direction ecology predicts (not how big)? We tally how many links match, an honest signal even when no single short series is statistically significant."),
   expected  = list(t = "“Expected here”", b = "The link whose mechanism is established for THIS biome (warmth→green-up in forests; the monsoon seed crop→rodents in deserts). Only expected links count toward the site's tally; the rest are shown for context."),
-  pulse     = list(t = "The pulse trace", b = "Tap a year and its climate anomaly ripples DOWN the rungs at each link's lag. A rung lights green if it moved the way the prior predicts, red if it went the other way. One traced year is an anecdote — the chips and the cross-site scoreboard are the real evidence."),
-  standing  = list(t = "Woody standing stock", b = "Live basal area (m²/ha) — the cross-section of all living woody stems per hectare, directly measured from the Veg-Structure product. It's the slow PRODUCER FLOOR the fast annual signals ride on: ~56 in old-growth forest, ~5 in semi-desert, ~0.4 in true desert. Surveyed on a ~5-year cycle, so it's a standing-stock STATE, not a year-to-year link."))
+  pulse     = list(t = "The pulse trace", b = "Tap a year and its climate anomaly ripples DOWN the rungs at each link's lag. A rung lights green if it moved the way the prior predicts, red if it went the other way. One traced year is an anecdote; the chips and the cross-site scoreboard are the real evidence."),
+  standing  = list(t = "Woody standing stock", b = "Live basal area (m²/ha), the cross-section of all living woody stems per hectare, directly measured from the Veg-Structure product. It's the slow PRODUCER FLOOR the fast annual signals ride on: ~56 in old-growth forest, ~5 in semi-desert, ~0.4 in true desert. Surveyed on a ~5-year cycle, so it's a standing-stock STATE, not a year-to-year link."))
 cpop <- function(key, placement = "auto") { c <- CONCEPT[[key]]; if (is.null(c)) return(NULL)
   bslib::popover(tags$span(class = "concept-i", bsicons::bs_icon("info-circle")), tags$p(c$b), title = c$t, placement = placement) }
 insight_banner <- function(icon, ..., tone = "navy")
@@ -153,7 +153,7 @@ cascade_site_choices <- function() {
   s <- ALL_SITES[ord]; lay <- SITE_LAYERS[ord]
   nm <- vapply(seq_along(s), function(i) {
     row <- neon_sites[neon_sites$site == s[i], ]
-    sprintf("%s — %s · %d layer%s", s[i], if (nrow(row)) row$name[1] else s[i], lay[i], if (lay[i]==1) "" else "s")
+    sprintf("%s · %s · %d layer%s", s[i], if (nrow(row)) row$name[1] else s[i], lay[i], if (lay[i]==1) "" else "s")
   }, character(1))
   stats::setNames(s, nm)
 }

@@ -27,12 +27,12 @@ link_stat <- function(ann_site, from, to, lag, prior_sign, nperm = 2000) {
   m <- lag_pairs(ann_site, from, to, lag); n <- nrow(m)
   out <- list(from=from, to=to, lag=lag, n=n, r=NA_real_, lo=NA_real_, hi=NA_real_, p=NA_real_,
               prior_sign=prior_sign, sign_match=NA, tier="insufficient",
-              verdict=sprintf("only %d overlapping year%s — can't compare", n, if (n==1) "" else "s"))
+              verdict=sprintf("only %d overlapping year%s, can't compare", n, if (n==1) "" else "s"))
   if (n < 3) return(out)
   r <- suppressWarnings(stats::cor(m$x, m$y)); if (!is.finite(r)) return(out)
   out$r <- round(r, 2); out$sign_match <- (sign(r) == sign(prior_sign))
   if (n < 6) { out$tier <- "exploratory"
-    out$verdict <- sprintf("exploratory only — %d years is too few for a verdict (the eye, not the p-value)", n)
+    out$verdict <- sprintf("exploratory only: %d years is too few for a verdict (the eye, not the p-value)", n)
     return(out) }
   # n >= 6: permutation null (shuffle response) + bootstrap CI
   perm <- replicate(nperm, suppressWarnings(stats::cor(m$x, sample(m$y))))
@@ -183,7 +183,7 @@ cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
       add("climate_na", "warn", "Climate missing where biology is present",
           paste0("Annual temperature is NA in ", nrow(gap), " year",
                  if (nrow(gap) == 1) "" else "s",
-                 " that DO have a biological signal — either too few valid months, or a year the within-site MAD outlier filter dropped as a corrupted-sensor read. The biology is real; the driver for those years isn't, so they can't enter a link. Verify the tower record before reading the gap as 'no climate effect'."),
+                 " that DO have a biological signal, either too few valid months, or a year the within-site MAD outlier filter dropped as a corrupted-sensor read. The biology is real; the driver for those years isn't, so they can't enter a link. Verify the tower record before reading the gap as 'no climate effect'."),
           gap[, show, drop = FALSE])
     }
   }
@@ -198,7 +198,7 @@ cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
       show <- intersect(c("year","greenup_doy"), names(gu))
       add("greenup_thin", "info", "Green-up rests on a short phenology record",
           paste0("Only ", nrow(gu), " year", if (nrow(gu) == 1) "" else "s",
-                 " of green-up here (each already gated to >=5 individuals, so none rests on fewer). A short onset record is more swayed by a single late- or early-scored plant — read the timing, not a precise day-of-year. Tap to see the years."),
+                 " of green-up here (each already gated to >=5 individuals, so none rests on fewer). A short onset record is more swayed by a single late- or early-scored plant, so read the timing, not a precise day-of-year. Tap to see the years."),
           gu[, show, drop = FALSE])
     }
   }
@@ -215,7 +215,7 @@ cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
       show <- intersect(c("link","lag","n","r","lo","hi","p"), names(ap))
       add("apparent_ci0", "high", "“Apparent” links whose CI spans zero",
           paste0(nrow(ap), " link", if (nrow(ap) == 1) "" else "s",
-                 " point the predicted direction but the 95% bootstrap interval still crosses 0 — the sign is not yet distinguishable from noise at this site's n. Read as suggestive only; the honest test is the cross-site pooling on the Across NEON tab. Tap to see each link's r and interval."),
+                 " point the predicted direction but the 95% bootstrap interval still crosses 0; the sign is not yet distinguishable from noise at this site's n. Read as suggestive only; the honest test is the cross-site pooling on the Across NEON tab. Tap to see each link's r and interval."),
           ap[, show, drop = FALSE])
     }
   }
@@ -224,7 +224,7 @@ cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
   if (!length(flags)) {
     return(list(flags = list(list(key = "clean", level = "clean",
       title = "No data-quality flags at this site",
-      detail = "Climate coverage, green-up support, and every link's interval all read clean here — nothing flagged to verify.", n = 0L)),
+      detail = "Climate coverage, green-up support, and every link's interval all read clean here, with nothing flagged to verify.", n = 0L)),
       sets = list()))
   }
   ord <- order(match(vapply(flags, `[[`, character(1), "level"), c("high","warn","info","clean")))

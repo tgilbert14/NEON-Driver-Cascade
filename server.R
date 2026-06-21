@@ -59,17 +59,17 @@ server <- function(input, output, session) {
     lead <- sprintf("<span class='biome-tag biome-%s'>%s</span> ",
                     if (desert) "water" else "temp", blab)
     body <- if (desert) {
-      s <- "Here green-up is triggered by <b>water, not warmth</b>, so the standard <i>annual</i> cascade only half-fits — and that mismatch <b>is the finding</b>, not a failure."
+      s <- "Here green-up is triggered by <b>water, not warmth</b>, so the standard <i>annual</i> cascade only half-fits, and that mismatch <b>is the finding</b>, not a failure."
       if (nrow(mon) && mon$r[1] > 0)
-        s <- paste0(s, sprintf(" Test the <b>right season</b> and the chain reappears: the summer-monsoon seed crop <b>tracks</b> next year's rodents at <b>r&nbsp;=&nbsp;%+.2f</b> (a single desert — suggestive, not yet established) — where annual rainfall showed almost nothing (r&nbsp;=&nbsp;+0.20).", mon$r[1]))
+        s <- paste0(s, sprintf(" Test the <b>right season</b> and the chain reappears: the summer-monsoon seed crop <b>tracks</b> next year's rodents at <b>r&nbsp;=&nbsp;%+.2f</b> (a single desert, suggestive, not yet established), where annual rainfall showed almost nothing (r&nbsp;=&nbsp;+0.20).", mon$r[1]))
       s
     } else if (!is.null(best) && identical(best$tier, "consistent")) {
       sprintf("The cascade behaves as ecology predicts: <b>%d of %d</b> testable links point the expected way, led by <b>%s&nbsp;→&nbsp;%s</b> (r&nbsp;=&nbsp;%+.2f, clears the noise test).",
               sm$k, sm$n, sig_label(best$from), sig_label(best$to), best$r)
     } else if (!is.na(sm$n) && sm$n > 0) {
-      sprintf("Of the links testable here, <b>%d of %d</b> point the direction ecology predicts — a short series, so read it as <i>direction</i>, not proof.", sm$k, sm$n)
+      sprintf("Of the links testable here, <b>%d of %d</b> point the direction ecology predicts. A short series, so read it as <i>direction</i>, not proof.", sm$k, sm$n)
     } else {
-      "Not enough overlapping years yet to line up the cascade here — the signals are shown below, but no verdict is given."
+      "Not enough overlapping years yet to line up the cascade here. The signals are shown below, but no verdict is given."
     }
     HTML(paste0(lead, body))
   }
@@ -95,7 +95,7 @@ server <- function(input, output, session) {
   output$overviewInsight <- renderUI({
     sm <- smatch(); desert <- identical(bclass(), "water-limited")
     msg <- if (sm$n == 0)
-        "Not enough overlapping years yet to line up the cascade here — <b>SCBI</b> (a temperate forest) shows it most clearly."
+        "Not enough overlapping years yet to line up the cascade here. <b>SCBI</b> (a temperate forest) shows it most clearly."
       else if (desert)
         sprintf("This is a <b>water-limited</b> system, so its links are tested by <b>season</b>, not by annual totals: %s. The Seasonal Climate panel shows why one annual rainfall number hides the signal.", sm$txt)
       else
@@ -111,7 +111,7 @@ server <- function(input, output, session) {
       HTML(sprintf(" Woody standing stock: <b>%s m²/ha</b>%s live basal area",
         format(round(ba, 1), nsmall = 1), if (is.finite(se)) sprintf(" ±%s", format(round(se, 1), nsmall = 1)) else "")),
       cpop("standing"),
-      tags$span(class = "ss-note", "— the slow producer floor the annual signals ride on (a real productivity measure where species richness can't be one)."))
+      tags$span(class = "ss-note", "the slow producer floor the annual signals ride on (a real productivity measure where species richness can't be one)."))
   })
 
   # ---- overview cascade schematic ----
@@ -211,7 +211,7 @@ server <- function(input, output, session) {
   output$pulseBanner <- renderUI({
     t0 <- traced()
     if (is.null(t0)) return(div(class="pulse-banner pulse-idle", bs_icon("hand-index-thumb"),
-      HTML(" <b>Trace a pulse:</b> tap any year's dot on the ladder — that year lights up, and its ripple lands on the rungs below at each link's lag: a <span class='pulse-key pk-match'>● moved as the prior predicts</span> or <span class='pulse-key pk-miss'>✕ counter</span>."),
+      HTML(" <b>Trace a pulse:</b> tap any year's dot on the ladder. That year lights up, and its ripple lands on the rungs below at each link's lag: a <span class='pulse-key pk-match'>● moved as the prior predicts</span> or <span class='pulse-key pk-miss'>✕ counter</span>."),
       cpop("pulse")))
     paths <- pulse_paths(ann(), t0)
     if (is.null(paths) || !nrow(paths)) return(div(class="pulse-banner pulse-active", bs_icon("activity"),
@@ -219,7 +219,7 @@ server <- function(input, output, session) {
       actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear")))
     k <- sum(paths$verdict=="match"); tot <- sum(paths$verdict %in% c("match","miss")); nd <- sum(paths$verdict=="nodata")
     div(class="pulse-banner pulse-active", bs_icon("activity"),
-      HTML(sprintf(" <b>Tracing %d:</b> %d of %d downstream rung%s moved the way the prior predicts%s. <i>One path is an anecdote — the chips on the right are the evidence.</i> ",
+      HTML(sprintf(" <b>Tracing %d:</b> %d of %d downstream rung%s moved the way the prior predicts%s. <i>One path is an anecdote; the chips on the right are the evidence.</i> ",
         t0, k, tot, if (tot==1) "" else "s", if (nd>0) sprintf(" (%d had no data that year)", nd) else "")),
       actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear"))
   })
@@ -234,7 +234,7 @@ server <- function(input, output, session) {
       div(class="link-chips", lapply(seq_len(nrow(lk)), function(i){ r <- lk[i,]; tm <- TIER_META[[r$tier]]
         arrow <- if (r$prior_sign>0) "↑" else "↓"
         div(class=paste0("link-chip lc-", r$tier, if (!exp[i]) " lc-dim" else ""),
-          title = if (!exp[i]) "Not the mechanism expected in this biome — shown for context, not counted in the verdict" else NULL,
+          title = if (!exp[i]) "Not the mechanism expected in this biome; shown for context, not counted in the verdict" else NULL,
           div(class="lc-top", span(class="lc-from", sig_label(r$from)), bs_icon("arrow-right"),
             span(class="lc-to", sig_label(r$to)),
             span(class="lc-lag", if (r$lag>0) sprintf("lag %dy", r$lag) else "same yr"),
@@ -246,7 +246,7 @@ server <- function(input, output, session) {
             span(class="lc-n", sprintf("n=%d", r$n))),
           div(class="lc-verdict", style=sprintf("color:%s", tm$col), bs_icon(tm$icon), " ", r$verdict)) })),
       p(class="qc-cap-note", style="margin-top:8px", bs_icon("info-circle"),
-        HTML(" Dimmed links aren't the mechanism <b>expected</b> in this biome (e.g. the temperate temperature→green-up prior at a desert) — shown for context, not counted in the verdict.")))
+        HTML(" Dimmed links aren't the mechanism <b>expected</b> in this biome (e.g. the temperate temperature→green-up prior at a desert); shown for context, not counted in the verdict.")))
   })
 
   # ---- Driver Lab ----
@@ -299,7 +299,7 @@ server <- function(input, output, session) {
     p <- plotly::plot_ly(m, x=~x, y=~y, type="scatter", mode=md, text=~year, textposition="top center",
       customdata=~year, textfont=list(size=9, color=if(is_dark())"#9fb0c4" else "#6b7a85"),
       marker=list(size=11, color=DDL$sky, line=list(color="#fff", width=1)),
-      hovertemplate=paste0("year %{text} — tap for detail<br>",sig_label(r$from),"=%{x}<br>",sig_label(r$to),"=%{y}<extra></extra>"))
+      hovertemplate=paste0("year %{text} · tap for detail<br>",sig_label(r$from),"=%{x}<br>",sig_label(r$to),"=%{y}<extra></extra>"))
     # tier-honest fit line: GOLD only when the link clears the bar; thin GREY "shape only"
     # for apparent/counter; OMITTED below n=6 (a slope on 5 points is theatre, not evidence)
     if (r$n >= 6 && is.finite(r$r)) { fit <- stats::lm(y ~ x, data=m); xr <- range(m$x)
@@ -310,15 +310,15 @@ server <- function(input, output, session) {
     stat_txt <- if (r$n >= 6 && is.finite(r$r))
         sprintf("r = %+.2f   n = %d   p = %.3f%s", r$r, r$n, r$p,
                 if (is.finite(r$lo)) sprintf("\n95%% CI [%.2f, %.2f]", r$lo, r$hi) else "")
-      else if (is.finite(r$r)) sprintf("r = %+.2f   n = %d\n(exploratory — too few years for a p)", r$r, r$n)
-      else sprintf("n = %d — too few overlapping years to fit", r$n)
+      else if (is.finite(r$r)) sprintf("r = %+.2f   n = %d\n(exploratory: too few years for a p)", r$r, r$n)
+      else sprintf("n = %d, too few overlapping years to fit", r$n)
     anns <- list(list(x=0.02, y=0.98, xref="paper", yref="paper", xanchor="left", yanchor="top",
       text=gsub("\n","<br>", stat_txt), showarrow=FALSE, align="left",
       font=list(size=12, color=tm$col, family="Rubik"),
       bgcolor=if(is_dark())"rgba(20,30,45,0.72)" else "rgba(255,255,255,0.82)", bordercolor=tm$col, borderwidth=1, borderpad=4))
     if (!(r$n >= 6 && is.finite(r$r)))
       anns <- c(anns, list(list(x=0.5, y=0.02, xref="paper", yref="paper", xanchor="center", yanchor="bottom",
-        text="No trend line below 6 years — read the points, not a slope.", showarrow=FALSE,
+        text="No trend line below 6 years; read the points, not a slope.", showarrow=FALSE,
         font=list(size=10, color=if(is_dark())"#9fb0c4" else "#6b7a85"))))
     sp <- p %>% theme_plotly() %>% plotly::layout(showlegend=FALSE, annotations=anns,
       xaxis=list(title=sprintf("%s (%s)", sig_label(r$from), sig_unit(r$from))),
@@ -367,7 +367,7 @@ server <- function(input, output, session) {
       div(class="qc-section-h", bs_icon("clipboard-check"), " Cascade data-quality review ",
         tags$span(class="qcf-sub", "· verify, not errors"),
         info_pop("Why these are flags, not bugs",
-          p("The cascade's QC choices are ", tags$b("correct"), " — the ≥5-individual green-up gate, the within-site MAD temperature filter, the CI-spans-zero guard on “apparent” links."),
+          p("The cascade's QC choices are ", tags$b("correct"), ": the ≥5-individual green-up gate, the within-site MAD temperature filter, the CI-spans-zero guard on “apparent” links."),
           p("This panel surfaces ", tags$b("where those rules bit"), " for the selected site, ranked worst-first, so a reader verifies a thin or missing value before reading too much into it. Tap any flag to list the exact rows behind it."))),
       div(class="qc-flags", lapply(qf, function(f){
         clickable <- !identical(f$level, "clean") && f$n > 0
@@ -396,7 +396,7 @@ server <- function(input, output, session) {
     fmt <- function(v) if (is.numeric(v)) ifelse(is.na(v), "—", format(round(v, 2), trim=TRUE)) else format(v)
     div(class="qc-inspector",
       div(class="qci-head", bs_icon(qc_icon(f$level)),
-        tags$b(sprintf(" %s — %d row%s", f$title, f$n, if (f$n==1) "" else "s"))),
+        tags$b(sprintf(" %s · %d row%s", f$title, f$n, if (f$n==1) "" else "s"))),
       div(class="qc-cap-scroll", tags$table(class="inspect-tbl",
         tags$thead(tags$tr(lapply(cols, tags$th))),
         tags$tbody(lapply(seq_len(nrow(sv)), function(i)
@@ -407,7 +407,7 @@ server <- function(input, output, session) {
     filename = function() sprintf("%s-cascade-qc-report.csv", input$site),
     content = function(file){ rep <- cascade_qc_report(ann(), links(), SIGNALS, input$site)
       if (is.null(rep)) rep <- data.frame(note="No data-quality flags at this site.")
-      hdr <- c(sprintf("# NEON Driver Cascade — %s data-quality review (verify, not wrong).", input$site),
+      hdr <- c(sprintf("# NEON Driver Cascade · %s data-quality review (verify, not wrong).", input$site),
                "# Each flag is a value worth a second look, not an error; the cascade's QC rules are correct.", "")
       writeLines(hdr, file)
       suppressWarnings(utils::write.table(rep, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double")) })
@@ -424,55 +424,55 @@ server <- function(input, output, session) {
     gloss <- function(term, def) div(class="gloss-item", tags$b(term), tags$span(HTML(def)))
     div(class="about-wrap",
       div(class="about-card", h4("\U0001F517 What this is"),
-        p("The capstone of a family of NEON explorers. Each sibling app dives into one product — small mammals, birds, plant diversity, vegetation structure, plant phenology. This one ", tags$b("lines them up"),
+        p("The capstone of a family of NEON explorers. Each sibling app dives into one product: small mammals, birds, plant diversity, vegetation structure, plant phenology. This one ", tags$b("lines them up"),
           " at shared sites into a single ", tags$b("bottom-up cascade"), ": climate → green-up timing → producers → consumers.")),
 
-      div(class="about-card about-plain", h4(bs_icon("chat-square-text"), " How to read this — in plain English"),
+      div(class="about-card about-plain", h4(bs_icon("chat-square-text"), " How to read this, in plain English"),
         p("New to this? Start here. Everything below is jargon-free."),
-        gloss("The big idea", "Weather sets off a chain reaction through the food web. A wet or warm year first changes the <b>plants</b>, then the <b>animals</b> that eat the plants — like dominoes, from the ground up. This app checks whether each domino actually falls the way ecology says it should."),
-        gloss("Green-up", "The moment in spring when plants leaf out and the landscape turns green. We measure it as the <b>day of the year the first leaves appear</b> — a smaller number means an earlier spring."),
+        gloss("The big idea", "Weather sets off a chain reaction through the food web. A wet or warm year first changes the <b>plants</b>, then the <b>animals</b> that eat the plants, like dominoes, from the ground up. This app checks whether each domino actually falls the way ecology says it should."),
+        gloss("Green-up", "The moment in spring when plants leaf out and the landscape turns green. We measure it as the <b>day of the year the first leaves appear</b>; a smaller number means an earlier spring."),
         gloss("The “hinge”", "Green-up is the hinge between weather and wildlife: the climate decides <em>when</em> plants wake up, and that sets the table for everything that eats them."),
-        gloss("A “lag”", "A delay. A <b>1-year lag</b> means this year's rain shows up in <em>next</em> year's animals — because it takes a season for rain to grow the seeds the animals depend on."),
-        gloss("Catch rate (per 100 trap-nights)", "How many small mammals were caught for every 100 trap-nights of effort. It accounts for how hard we trapped, so years compare fairly — but it's a <b>relative index, not a true headcount</b>."),
-        gloss("The stacked “ladder”", "Each strip is one rung of the food web, drawn on a <b>standardised</b> scale so they're comparable: <b>0 = that signal's own average year</b>, up = above average, down = below. Watch whether a good year ripples <em>down</em> the rungs — compare the <b>timing</b> of the bumps across strips, not their heights."),
-        gloss("Why deserts are the clearest case", "In deserts, water is the one thing everything waits for. When rain comes, the whole food web responds at once and in step — so the chain reaction is easier to see than in wetter places, where many other things also matter.")),
+        gloss("A “lag”", "A delay. A <b>1-year lag</b> means this year's rain shows up in <em>next</em> year's animals, because it takes a season for rain to grow the seeds the animals depend on."),
+        gloss("Catch rate (per 100 trap-nights)", "How many small mammals were caught for every 100 trap-nights of effort. It accounts for how hard we trapped, so years compare fairly, but it's a <b>relative index, not a true headcount</b>."),
+        gloss("The stacked “ladder”", "Each strip is one rung of the food web, drawn on a <b>standardised</b> scale so they're comparable: <b>0 = that signal's own average year</b>, up = above average, down = below. Watch whether a good year ripples <em>down</em> the rungs; compare the <b>timing</b> of the bumps across strips, not their heights."),
+        gloss("Why deserts are the clearest case", "In deserts, water is the one thing everything waits for. When rain comes, the whole food web responds at once and in step, so the chain reaction is easier to see than in wetter places, where many other things also matter.")),
 
       div(class="about-card about-plain", h4(bs_icon("calculator"), " The statistics, in plain English"),
         gloss("“Could this be luck?” (the permutation test)", "For each link we <b>shuffle the years 2,000 times</b> and re-measure the match each time. If the real match beats almost all the shuffles, it's unlikely to be a coincidence. (We checked: these yearly numbers aren't badly auto-correlated, so the shuffle is a fair test.)"),
-        gloss("The uncertainty band (95% CI)", "A range we're fairly sure the true relationship falls in. With only ~6 years it's <b>very wide</b> — that honesty is the point: few years = lots of uncertainty."),
-        gloss("“Too few years to judge”", "Below <b>6 overlapping years</b> we show the lined-up data but give <b>no verdict</b> — there simply isn't enough to tell signal from noise."),
+        gloss("The uncertainty band (95% CI)", "A range we're fairly sure the true relationship falls in. With only ~6 years it's <b>very wide</b>, and that honesty is the point: few years = lots of uncertainty."),
+        gloss("“Too few years to judge”", "Below <b>6 overlapping years</b> we show the lined-up data but give <b>no verdict</b>; there simply isn't enough to tell signal from noise."),
         gloss("The three verdicts", "<b>Consistent with prior</b> = matches the expected direction <em>and</em> clears the luck test. <b>Apparent</b> = points the expected way but could be noise. <b>Counter</b> = runs the opposite way."),
-        gloss("Sign-match score", "Of the testable links (≥6 years), how many point the direction ecology predicts. Even when no single link is rock-solid, several all pointing the right way is itself meaningful — and we report the odds it's chance."),
-        p(class="qc-cap-note", bs_icon("info-circle"), " We never say a driver “causes” anything — a handful of yearly points can't prove cause. These are <em>consistencies with</em> the textbook mechanism, not proof.")),
+        gloss("Sign-match score", "Of the testable links (≥6 years), how many point the direction ecology predicts. Even when no single link is rock-solid, several all pointing the right way is itself meaningful, and we report the odds it's chance."),
+        p(class="qc-cap-note", bs_icon("info-circle"), " We never say a driver “causes” anything; a handful of yearly points can't prove cause. These are <em>consistencies with</em> the textbook mechanism, not proof.")),
 
       div(class="about-card", h4(bs_icon("shield-check"), " Why it's careful (and what it refuses to do)"),
         tags$ul(
-          tags$li(HTML("<b>States priors, doesn't dredge.</b> Each link's expected direction and lag come from the literature <em>before</em> looking at the data — we never report whichever lag happens to fit best.")),
-          tags$li(HTML("<b>n-gated.</b> Below 6 overlapping years, no verdict — just the aligned series. A permutation null + bootstrap CI gate the rest.")),
-          tags$li(HTML("<b>Honest about scope.</b> Several of these mechanisms are clearest <em>across regions</em> or in <em>deserts</em>; testing them within one site, year-to-year, is the hardest case — the notes say so.")),
+          tags$li(HTML("<b>States priors, doesn't dredge.</b> Each link's expected direction and lag come from the literature <em>before</em> looking at the data; we never report whichever lag happens to fit best.")),
+          tags$li(HTML("<b>n-gated.</b> Below 6 overlapping years, no verdict, just the aligned series. A permutation null + bootstrap CI gate the rest.")),
+          tags$li(HTML("<b>Honest about scope.</b> Several of these mechanisms are clearest <em>across regions</em> or in <em>deserts</em>; testing them within one site, year-to-year, is the hardest case, and the notes say so.")),
           tags$li(HTML("<b>Direction over magnitude</b>, and <b>never “drives”/“causes.”</b>")))),
 
       div(class="about-card", h4(bs_icon("diagram-3"), " The predicted cascade (the priors)"),
         tags$table(class="inspect-tbl",
           tags$thead(tags$tr(tags$th("Driver"), tags$th("Response"), tags$th("Expected"), tags$th("Lag"), tags$th("Confidence"), tags$th("In plain English"))),
           tags$tbody(lapply(seq_len(nrow(pr)), prow))),
-        p(class="qc-cap-note", style="margin-top:8px", HTML("Sources: warmer-springs→earlier green-up — <b>Fu et al. 2015</b> (Nat. Comms.), Richardson et al. 2013; rain→desert rodents (lagged, non-linear) — <b>Brown &amp; Ernest 2002</b>, Thibault et al. 2010; rain-timing — Zhang et al. 2021; dryland productivity~precipitation — Sala et al. 1988, Huxman et al. 2004, Knapp et al. 2017; the “green wave” — Merkle et al. 2016. A green-up→bird link is <b>deliberately omitted</b>: the mismatch literature is about timing-synchrony, not “later green-up → more birds.”"))),
+        p(class="qc-cap-note", style="margin-top:8px", HTML("Sources: warmer-springs→earlier green-up · <b>Fu et al. 2015</b> (Nat. Comms.), Richardson et al. 2013; rain→desert rodents (lagged, non-linear) · <b>Brown &amp; Ernest 2002</b>, Thibault et al. 2010; rain-timing · Zhang et al. 2021; dryland productivity~precipitation · Sala et al. 1988, Huxman et al. 2004, Knapp et al. 2017; the “green wave” · Merkle et al. 2016. A green-up→bird link is <b>deliberately omitted</b>: the mismatch literature is about timing-synchrony, not “later green-up → more birds.”"))),
 
       div(class="about-card", h4(bs_icon("database"), " Data & honest limits"),
         p("Per-site annual signals assembled from the five sibling apps' bundles plus the NEON-tower climate overlays. ",
-          tags$b("Small-mammal catch rate"), " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites — read within-site trends only. ",
+          tags$b("Small-mammal catch rate"), " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites, so read within-site trends only. ",
           tags$b("Temperature"), " is the year's average, a stand-in for spring warmth that works where temperature limits green-up (temperate/boreal) but not in warm deserts, where water is the trigger. ",
-          tags$b("Plant richness"), " (species count) is a COMPOSITION signal, not productivity — in drylands it can even fall in wet years, so its priors are weak and biome-scoped."),
+          tags$b("Plant richness"), " (species count) is a COMPOSITION signal, not productivity. In drylands it can even fall in wet years, so its priors are weak and biome-scoped."),
         p(bs_icon("envelope"), " ", tags$a(href="mailto:desertdatalabs@gmail.com","desertdatalabs@gmail.com"))),
 
       div(class="about-card", h4(bs_icon("table"), " Codebook & data downloads"),
-        p("Every signal, its units, how it's derived, and the n-gates — plus analysis-ready CSV exports."),
+        p("Every signal, its units, how it's derived, and the n-gates, plus analysis-ready CSV exports."),
         uiOutput("codebook")))
   })
   # ---- SEASONAL CLIMATE reveal (the desert insight made visible) ----
   output$seasonalPlot <- renderPlotly({
     a <- ann(); req(nrow(a))
-    if (!is_desert(input$site)) return(note_plot("One main rain season here — the winter/monsoon split is for bimodal desert sites."))
+    if (!is_desert(input$site)) return(note_plot("One main rain season here; the winter/monsoon split is for bimodal desert sites."))
     d <- a[is.finite(a$precip_winter) | is.finite(a$precip_monsoon), c("year","precip_winter","precip_monsoon")]
     if (!nrow(d)) return(note_plot("No seasonal precipitation reconstructed for this site yet."))
     plotly::plot_ly(d, x=~year) %>%
@@ -483,7 +483,7 @@ server <- function(input, output, session) {
   })
   output$seasonalPanel <- renderUI({
     if (!is_desert(input$site)) return(div(class="seasonal-note", bs_icon("info-circle"),
-      HTML(" Not a bimodal-desert site — the annual rainfall total already captures its one main rain season, so the cascade is tested on annual climate.")))
+      HTML(" Not a bimodal-desert site. The annual rainfall total already captures its one main rain season, so the cascade is tested on annual climate.")))
     a <- ann()
     # return r WITH its n — so the contrast carries its own sample size (these are
     # single-site, short-series numbers below the app's n>=6 verdict gate; we show
@@ -500,8 +500,8 @@ server <- function(input, output, session) {
       div(class="sc-row", span(class="sc-k", lab1), span(class="sc-v sc-weak", rv(a1), rn(a1))),
       div(class="sc-row", span(class="sc-k", lab2), span(class="sc-v sc-strong", rv(a2), rn(a2))))
     div(
-      insight_banner("droplet-half", tone="navy", HTML("A single <b>annual</b> rainfall number blends two independent seasons. Split them, and the desert cascade reappears — the right season carries the signal the annual total buries:"),
-        info_pop("Illustrative, not significant", HTML("This is a <b>single-site contrast</b> at the one desert site where the seasonal split is testable, on a short series <b>below the app's n&ge;6 verdict gate</b>. The seasonal r's are larger than the annual ones — but they are <b>not</b> statistically significant (e.g. monsoon&rarr;rodents reaches r=+0.72 at n=7, p=0.06) and they pool across just one site. Read it as a vivid illustration of the annual-aggregation artifact, not an established desert result. The honest, cross-site test is on the Across&nbsp;NEON tab."))),
+      insight_banner("droplet-half", tone="navy", HTML("A single <b>annual</b> rainfall number blends two independent seasons. Split them, and the desert cascade reappears: the right season carries the signal the annual total buries:"),
+        info_pop("Illustrative, not significant", HTML("This is a <b>single-site contrast</b> at the one desert site where the seasonal split is testable, on a short series <b>below the app's n&ge;6 verdict gate</b>. The seasonal r's are larger than the annual ones, but they are <b>not</b> statistically significant (e.g. monsoon&rarr;rodents reaches r=+0.72 at n=7, p=0.06) and they pool across just one site. Read it as a vivid illustration of the annual-aggregation artifact, not an established desert result. The honest, cross-site test is on the Across&nbsp;NEON tab."))),
       div(class="seasonal-cmps",
         cmp("Rain → next-year rodents", ann_mam, "annual rain", mon_mam, "monsoon seed crop"),
         cmp("Rain → plant richness", ann_rich, "annual rain", win_rich, "winter (forb) rain")))
@@ -531,15 +531,15 @@ server <- function(input, output, session) {
       div(class="pooled-row pooled-underfloor",
         div(class="pl-link", HTML(sprintf("%s&nbsp;→&nbsp;%s", sig_label(r$from), sig_label(r$to))),
             if (r$lag>0) span(class="pl-lag", sprintf(" lag %dy", r$lag))),
-        div(class="pl-stat", span(class="pl-notpool", sprintf("%d site%s — not poolable", r$sites, if (r$sites==1) "" else "s")),
+        div(class="pl-stat", span(class="pl-notpool", sprintf("%d site%s · not poolable", r$sites, if (r$sites==1) "" else "s")),
             span(class="pl-r", sprintf("median r=%+.2f", r$median_r))))
     }) else NULL
     div(insight_banner("trophy", tone="pine",
-      HTML("Per-site series are too short for a verdict — but pooled <b>across sites</b> (one vote per site), the cascade's strongest rung is real: <b>warmer springs → earlier green-up</b> holds across most temperature-limited sites. This is the honest, suite-level answer no single site can give.")),
+      HTML("Per-site series are too short for a verdict, but pooled <b>across sites</b> (one vote per site), the cascade's strongest rung is real: <b>warmer springs → earlier green-up</b> holds across most temperature-limited sites. This is the honest, suite-level answer no single site can give.")),
       div(class="pooled-list", items),
       if (!is.null(under_rows)) div(class="pooled-under",
         div(class="pu-head", "Below the pooling floor (<3 sites)",
-          info_pop("Not a pooled test", HTML("A pooled binomial needs at least <b>3 site votes</b> to mean anything — on 1–2 votes it is degenerate (a single vote always reads 1/1, p=0.500). These links are expected & testable at too few sites to pool, so we show them <b>without a p-value</b> rather than rank them beside the multi-site results. The desert seasonal priors live here: the cross-site sample isn't there yet."))),
+          info_pop("Not a pooled test", HTML("A pooled binomial needs at least <b>3 site votes</b> to mean anything; on 1–2 votes it is degenerate (a single vote always reads 1/1, p=0.500). These links are expected & testable at too few sites to pool, so we show them <b>without a p-value</b> rather than rank them beside the multi-site results. The desert seasonal priors live here: the cross-site sample isn't there yet."))),
         under_rows))
   })
   output$scoreboard <- renderUI({
@@ -561,8 +561,8 @@ server <- function(input, output, session) {
         # win — so flag it with a subtle corner marker (the * in the cell) and say WHY
         # in the hover/tap title: out-of-biome corroboration, not an in-prior result.
         outprior_hit <- !exp && d$tier[1] %in% c("consistent","apparent")
-        ttl <- sprintf("%s — %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else "")
-        if (outprior_hit) ttl <- paste0(ttl, " — OUT OF PRIOR BIOME: corroborates the mechanism in a related biome, but doesn't count toward this site's tally.")
+        ttl <- sprintf("%s · %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else "")
+        if (outprior_hit) ttl <- paste0(ttl, ". OUT OF PRIOR BIOME: corroborates the mechanism in a related biome, but doesn't count toward this site's tally.")
         tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else "", if (outprior_hit) " sb-outprior" else ""),
           title=ttl,
           if (is.finite(d$r[1])) sprintf("%+.2f", d$r[1]) else "·")
@@ -579,7 +579,7 @@ server <- function(input, output, session) {
         tags$thead(tags$tr(tags$th(class="sb-site","Site"), hd)),
         tags$tbody(rows)),
       p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
-        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>consistent</span> <span class='sb-key sb-apparent'>apparent</span> <span class='sb-key sb-counter'>counter</span> <span class='sb-key sb-exploratory'>&lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there — out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden — that honesty IS the coverage statement.")))
+        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>consistent</span> <span class='sb-key sb-apparent'>apparent</span> <span class='sb-key sb-counter'>counter</span> <span class='sb-key sb-exploratory'>&lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there: out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden; that honesty IS the coverage statement.")))
   })
 
   # ---- DOWNLOADS (the suite's signature export funnel) ----
@@ -587,7 +587,7 @@ server <- function(input, output, session) {
     filename = function() sprintf("%s-cascade-annual.csv", input$site),
     content = function(file) {
       a <- ann(); cols <- c("year", intersect(c(LADDER_KEYS, "precip_winter","precip_monsoon","temp_spring"), names(a)))
-      hdr <- c(sprintf("# NEON Driver Cascade — %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
+      hdr <- c(sprintf("# NEON Driver Cascade · %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
                "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
                "# precip_winter = Oct-Mar sum (year it ends); precip_monsoon = Jul-Sep sum. See the codebook in the About tab.", "")
       writeLines(hdr, file)
@@ -597,8 +597,8 @@ server <- function(input, output, session) {
     filename = function() sprintf("%s-link-scorecard.csv", input$site),
     content = function(file) {
       lk <- links(); keep <- intersect(c("from","to","lag","n","r","lo","hi","p","prior_sign","sign_match","tier","expected","expected_class","conf"), names(lk))
-      hdr <- c(sprintf("# NEON Driver Cascade — %s link scorecard. r is within-site only:", input$site),
-               "# links built on mammal_cpue/bird_index are WITHIN-SITE relative indices — pooling/comparing across sites by magnitude is invalid (only sign-match pooling is legitimate).", "")
+      hdr <- c(sprintf("# NEON Driver Cascade · %s link scorecard. r is within-site only:", input$site),
+               "# links built on mammal_cpue/bird_index are WITHIN-SITE relative indices; pooling/comparing across sites by magnitude is invalid (only sign-match pooling is legitimate).", "")
       writeLines(hdr, file)
       suppressWarnings(utils::write.table(lk[, keep, drop=FALSE], file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
     })
@@ -606,7 +606,7 @@ server <- function(input, output, session) {
     filename = function() "neon-cascade-scoreboard.csv",
     content = function(file) {
       keep <- intersect(c("site","biome","biome_class","from","to","lag","n","r","lo","hi","p","prior_sign","sign_match","tier","expected","expected_class"), names(SUITE_LINKS))
-      hdr <- c("# NEON Driver Cascade — cross-site scoreboard (every site × prior, biome-aware).",
+      hdr <- c("# NEON Driver Cascade · cross-site scoreboard (every site × prior, biome-aware).",
                "# mammal_cpue / bird_index are WITHIN-SITE relative indices: cross-site magnitude comparison is INVALID.",
                "# The only legitimate cross-site operation is the one-vote-per-site sign-match pooling (which discards magnitude).", "")
       writeLines(hdr, file)
@@ -629,7 +629,7 @@ server <- function(input, output, session) {
         tags$li(HTML("<b>greenup_doy</b> = median first-&lsquo;yes&rsquo; onset day-of-year over the green-up phenophases, years with &ge;5 individuals.")),
         tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID) &mdash; a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
         tags$li(HTML("<b>plant_richness</b> = species count (a COMPOSITION signal, not productivity). <b>plant_intro_pct</b> = introduced share of cover. <b>fruiting_pct</b> = peak monthly STATUS yes-share for the exact &lsquo;Fruits&rsquo; phenophase (gated to months with &ge;5 individuals; honestly NA at arid sites that track no fruit). <b>bird_index</b> = clusterSize/point &mdash; a descriptive detection index that carries NO prior.")),
-        tags$li(HTML("<b>Woody standing stock</b> (per site, not annual) = live basal area m²/ha from Veg-Structure (DP1.10098.001) — directly measured, allometry-free, computable even at deserts via basal stem diameter. A slow ~5-yr STATE shown as context, the real productivity measure species richness can't be.")),
+        tags$li(HTML("<b>Woody standing stock</b> (per site, not annual) = live basal area m²/ha from Veg-Structure (DP1.10098.001): directly measured, allometry-free, computable even at deserts via basal stem diameter. A slow ~5-yr STATE shown as context, the real productivity measure species richness can't be.")),
         tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory (no p); &ge;6 &rarr; permutation p + bootstrap CI + a verdict. Each prior is tested where its biome mechanism is <b>expected</b>; the cross-site pooled binomial is one vote per site."))),
       div(class="codebook-dl",
         downloadButton("dlAnnual", tagList(bs_icon("filetype-csv"), " This site's annual data"), class="btn-outline-dark btn-sm"),
@@ -646,10 +646,10 @@ server <- function(input, output, session) {
 
   observeEvent(input$help, showModal(modalDialog(easyClose=TRUE, title=tagList(bs_icon("question-circle"), " How to read the cascade"),
     tags$ul(
-      tags$li(HTML("Pick a <b>site</b> — richer sites (more trophic layers) are listed first.")),
-      tags$li(HTML("<b>Cascade Ladder</b> — standardised signals stacked by layer; watch a wet year ripple up into green-up, plants, then rodents.")),
-      tags$li(HTML("<b>Link chips</b> — each predicted driver→response link, coloured by whether the data agrees and honest about how few years back it.")),
-      tags$li(HTML("<b>Driver Lab</b> — pick a response and see every predicted driver tested against it, with a sign-match tally.")),
+      tags$li(HTML("Pick a <b>site</b>; richer sites (more trophic layers) are listed first.")),
+      tags$li(HTML("<b>Cascade Ladder</b>: standardised signals stacked by layer; watch a wet year ripple up into green-up, plants, then rodents.")),
+      tags$li(HTML("<b>Link chips</b>: each predicted driver→response link, coloured by whether the data agrees and honest about how few years back it.")),
+      tags$li(HTML("<b>Driver Lab</b>: pick a response and see every predicted driver tested against it, with a sign-match tally.")),
       tags$li(HTML("Short series: <b>read the shapes</b>, trust the direction-agreement, never read causation."))),
     footer=modalButton("Got it"))))
 }
