@@ -6,17 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>NEON Driver Cascade · the Explorer Suite by Desert Data Labs</title>
   <meta name="description"
-    content="See how climate, plants, and animals are connected across NEON research sites. Does a wetter year grow more plants, and do more plants mean more mice a year later? A free tool that lines up the climate, plant, and animal records at each site and tests those links honestly. Pick a site and start." />
+    content="See how climate, plants, and animals are connected across NEON research sites. Does a wetter year grow more plants, and do more plants mean more mice a year later? This tool lines up the climate, plant, and animal records at each site and tests those links honestly." />
   <meta name="theme-color" content="#070d1f" />
 
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/" />
   <meta property="og:title" content="NEON Driver Cascade · Desert Data Labs" />
   <meta property="og:description"
-    content="See how climate, plants, and animals connect across NEON research sites. Does a wetter year grow more plants, and do more plants feed more animals a year later? A free tool that lines up the records and tests those links honestly. Pick a site and start." />
+    content="See how climate, plants, and animals connect across NEON research sites. Does a wetter year grow more plants, and do more plants feed more animals a year later? This tool lines up the records and tests those links honestly." />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="NEON Driver Cascade · Desert Data Labs" />
-  <meta name="twitter:description" content="See how climate, plants, and animals connect across NEON research sites. A free tool that tests those links honestly. Pick a site and start." />
+  <meta name="twitter:description" content="See how climate, plants, and animals connect across NEON research sites. This tool lines up the records and tests those links honestly." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -335,9 +335,9 @@
       <p class="lead">Does a wetter year grow more plants, and do more plants mean more animals a year later?
         <b>NEON</b> is a network of research sites across the United States, funded by the National Science
         Foundation, that measures plants, animals, water, and climate the same way everywhere, year after year.
-        This <b>free</b> tool lines up the climate, plant, and animal records at each site so you can see how
+        This tool lines up the climate, plant, and animal records at each site so you can see how
         they connect, and it tests those links honestly, showing where the chain holds and where it does not.
-        Pick a site and start. No account needed.</p>
+        Pick a site to see its records.</p>
 
       <div class="cta-row">
         <a id="launch" class="launch" href="https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/">
@@ -391,8 +391,8 @@
       <div class="stats">
         <div class="stat"><div class="n">8</div><div class="l">apps in the suite</div></div>
         <div class="stat"><div class="n">46</div><div class="l">NEON sites</div></div>
-        <div class="stat"><div class="n">real</div><div class="l">free public data</div></div>
-        <div class="stat"><div class="n">instant</div><div class="l">loads right away</div></div>
+        <div class="stat"><div class="n">open</div><div class="l">public NEON data</div></div>
+        <div class="stat"><div class="n">4</div><div class="l">layers of life lined up</div></div>
       </div>
 
       <details class="more">
@@ -412,7 +412,7 @@
 
   <footer>
     <div class="wrap">
-      <a class="cta-foot" href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite">Want a custom data app like these for your project?</a><br>
+      <a class="cta-foot" href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite">Get in touch with Desert Data Labs →</a><br>
       Built by <b>Desert Data Labs</b> &middot; Tucson, AZ. Data: National Ecological Observatory Network
       (operated by Battelle, funded by NSF). Educational tools, not affiliated with NEON, Battelle, or the NSF.
     </div>
@@ -430,7 +430,7 @@
         var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
         var killer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
         fetch(DRIVERS_URL, { mode: "no-cors", cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
-          .then(function () { if (warm) warm.textContent = "Ready when you are."; })
+          .then(function () { if (warm) warm.textContent = "The app is ready."; })
           .catch(function () { if (warm) warm.textContent = ""; })
           .finally(function () { if (killer) clearTimeout(killer); });
       } catch (e) {}
