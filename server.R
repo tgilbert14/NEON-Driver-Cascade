@@ -667,7 +667,9 @@ server <- function(input, output, session) {
 
       div(class="about-card", h4(bs_icon("table"), " Codebook & data downloads"),
         p("Every signal, its units, how it's derived, and the n-gates, plus analysis-ready CSV exports."),
-        uiOutput("codebook")))
+        uiOutput("codebook")),
+
+      cascade_sources())
   })
   # ---- SEASONAL CLIMATE reveal (the desert insight made visible) ----
   output$seasonalPlot <- renderPlotly({

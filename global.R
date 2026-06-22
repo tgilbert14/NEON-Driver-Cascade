@@ -89,6 +89,53 @@ spin <- function(x, ...) shinycssloaders::withSpinner(x, color = DDL$sky, type =
 info_pop <- function(title, ..., placement = "auto")
   bslib::popover(tags$span(class = "info-dot", bsicons::bs_icon("info-circle")), ..., title = title, placement = placement)
 
+# ---- Sources panel: the literature behind every prior + method (About tab) ----
+# Folded by default so it informs without overwhelming. Grouped to the priors/methods.
+cascade_sources <- function() {
+  ref <- function(...) tags$li(htmltools::HTML(paste0(...)))
+  grp <- function(title, ...) htmltools::tagList(tags$h6(title), tags$ol(...))
+  div(class = "about-card", h4(bsicons::bs_icon("journal-text"), " Sources"),
+    tags$p(class = "src-lead",
+      "Every prior's direction and lag, and every inference method, is set from the published literature before the data is touched. The full reference list:"),
+    tags$details(class = "src-panel",
+      tags$summary(bsicons::bs_icon("book"), " Show the reference list"),
+      div(class = "src-body",
+        grp("Bottom-up trophic-cascade framing",
+          ref("Power (1992). Top-down and bottom-up forces in food webs. <i>Ecology</i>."),
+          ref("Polis, Sears, Huxel, Strong &amp; Maron (2000). When is a trophic cascade a trophic cascade? <i>TREE</i>."),
+          ref("Hunter &amp; Price (1992). Playing chutes and ladders: bottom-up and top-down forces. <i>Ecology</i>.")),
+        grp("Dryland rain to productivity to granivore pulse (the seasonal-rain priors)",
+          ref("Meserve, Kelt, Milstead &amp; Guti&eacute;rrez (2003). Thirteen years of shifting top-down and bottom-up control. <i>BioScience</i>."),
+          ref("Previtali, Lima, Meserve, Kelt &amp; Guti&eacute;rrez (2009). Population dynamics of two sympatric rodents in a variable environment. <i>Ecology</i>."),
+          ref("Brown &amp; Ernest (2002). Rain and rodents: complex dynamics of desert consumers. <i>BioScience</i>."),
+          ref("Ernest, Brown &amp; Parmenter (2000). Rodents, plants, and precipitation. <i>Oikos</i>."),
+          ref("Holmgren et al. (2006). Extreme climatic events shape arid and semiarid ecosystems. <i>Front. Ecol. Environ.</i>"),
+          ref("Holmgren, Scheffer, Ezcurra, Guti&eacute;rrez &amp; Mohren (2001). El Ni&ntilde;o effects on terrestrial ecosystems. <i>TREE</i>.")),
+        grp("Precipitation to plant production / richness",
+          ref("Noy-Meir (1973). Desert ecosystems: environment and producers. <i>Annu. Rev. Ecol. Syst.</i>"),
+          ref("Huxman et al. (2004). Convergence across biomes to a common rain-use efficiency. <i>Nature</i>.")),
+        grp("Temperature / spring warmth to green-up onset (phenology priors)",
+          ref("Richardson et al. (2013). Climate change, phenology, and phenological control of vegetation feedbacks. <i>Agric. For. Meteorol.</i>"),
+          ref("Cleland, Chuine, Menzel, Mooney &amp; Schwartz (2007). Shifting plant phenology in response to global change. <i>TREE</i>."),
+          ref("Piao et al. (2019). Plant phenology and global climate change. <i>Glob. Change Biol.</i>")),
+        grp("Temperature / rain to insect (mosquito) emergence",
+          ref("Ciota, Matacchiero, Kilpatrick &amp; Kramer (2014). Effect of temperature on life-history traits of Culex mosquitoes. <i>J. Med. Entomol.</i>"),
+          ref("Shaman &amp; Day (2007). Reproductive phase locking of mosquito populations in response to rainfall. <i>PLoS ONE</i>.")),
+        grp("Why we post NO green-up to bird prior (cited for the absence)",
+          ref("Both, Bouwhuis, Lessells &amp; Visser (2006). Climate change and population declines in a migratory bird. <i>Nature</i>."),
+          ref("Visser &amp; Both (2005). Shifts in phenology: the need for a yardstick. <i>Proc. R. Soc. B</i>."),
+          ref("Cole, Long, Zelazowski, Szulkin &amp; Sheldon (2015). Predicting bird phenology from satellite green-up. <i>Ecol. Evol.</i> (see also Mayor et al. 2017; Youngflesh et al. 2021).")),
+        grp("Inference methods",
+          ref("Edgington &amp; Onghena (2007). <i>Randomization Tests</i> (4th ed.). Permutation test for tiny-n correlation."),
+          ref("Efron &amp; Tibshirani (1993). <i>An Introduction to the Bootstrap</i>. Bootstrap CI for r."),
+          ref("Sokal &amp; Rohlf (1995). <i>Biometry</i> (3rd ed.). Binomial sign test for direction agreement."),
+          ref("Pickett (1989). Space-for-time substitution. In <i>Long-Term Studies in Ecology</i>."),
+          ref("Damgaard (2019). A critique of the space-for-time substitution practice. <i>TREE</i>.")),
+        grp("Continental design (NEON macrosystems)",
+          ref("Keller, Schimel, Hargrove &amp; Hoffman (2008). A continental strategy for NEON. <i>Front. Ecol. Environ.</i>"),
+          ref("Heffernan et al. (2014). Macrosystems ecology. <i>Front. Ecol. Environ.</i>")))))
+}
+
 # ---- the suite huddle: a tiny cluster of sibling mascots (the cascade has no single
 # creature, so it gets a "tiny suite" — a consumer, a flier, and a producer — used once
 # as a first-visit onboarding nudge in the corner). Flat, no-gradient, reused-safe SVGs. ----

@@ -567,6 +567,21 @@ html .reveal-card.is-visible { opacity: 1; transform: none; }
   gap: 12px 16px; align-items: end; margin-bottom: 10px; }
 .le-controls .form-group, .le-controls .shiny-input-container { margin-bottom: 0; }
 .le-empty, .le-readout .le-empty { font-size: 13px; color: var(--muted); font-style: italic; }
+.le-explain { font-size: 12px; color: var(--muted); margin: 8px 0 4px; display: flex; align-items: center; gap: 6px; }
+.le-explain-lab { font-style: italic; }
+
+/* ---- Sources / citations panel (About tab) ---- */
+.src-panel { margin: 16px 0 4px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.src-panel > summary { list-style: none; cursor: pointer; padding: 12px 16px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.src-panel > summary::-webkit-details-marker { display: none; }
+.src-panel > summary::after { content: "+"; margin-left: auto; color: #e0b43a; font-weight: 800; font-size: 1.2rem; }
+.src-panel[open] > summary::after { content: "\2212"; }
+.src-body { padding: 4px 18px 16px; border-top: 1px solid var(--line); font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.src-body h6 { color: var(--ink); font-size: 12.5px; font-weight: 800; margin: 13px 0 3px; }
+.src-body ol { margin: 0 0 4px; padding-left: 22px; }
+.src-body li { margin: 3px 0; }
+.src-body .src-lead { margin: 4px 0 2px; }
+[data-bs-theme="dark"] .src-panel { background: rgba(255,255,255,0.03); }
 
 /* the readout: headline adjusted-p, stats, the Sidak bar, caveats */
 .le-readout { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 10px 0;
