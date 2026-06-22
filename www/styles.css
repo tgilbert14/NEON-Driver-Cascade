@@ -756,6 +756,8 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 .about-card .caveat { color: var(--pine); font-size: 12.5px; }
 .about-card code { color: var(--pine); background: #eaf1ee; padding: 1px 5px; border-radius: 5px; }
 .about-card a { color: var(--pine); font-weight: 600; }
+/* dark mode: the body color above is a light-mode slate; recolor it readable on the dark card */
+[data-bs-theme="dark"] .about-card p, [data-bs-theme="dark"] .about-card li { color: #cdd9ee; }
 
 /* ---- overview: meet the locals ---------------------------------------- */
 .section-title { font-weight: 800; color: var(--pine); font-size: 18px; margin: 20px 4px 12px; display: flex; align-items: center; gap: 8px; }
@@ -773,6 +775,7 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 .local-stats { font-size: 12px; color: var(--muted); margin: 4px 0 6px; }
 .local-stats .ls-strong { color: var(--ink); font-weight: 700; }
 .local-blurb { font-size: 13px; color: #2c3742; line-height: 1.55; }
+[data-bs-theme="dark"] .local-blurb { color: #cdd9ee; }
 
 .hero-site-hint { color: var(--muted); font-size: 12px; margin-left: auto; }
 .hero-site-hint .bi { color: var(--gold-ink); }
