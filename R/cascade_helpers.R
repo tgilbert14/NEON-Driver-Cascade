@@ -109,6 +109,49 @@ signmatch_score <- function(links) {
                      k, tot, bt$p.value, if (bt$p.value < 0.05) ", more than chance" else ""))
 }
 
+# ---- Lag Experimenter helpers ----
+# mechanism-driven seasonal driver swap (a stated prior, not a free knob)
+exp_driver_col <- function(from, season, to = NULL) {
+  if (season != "seasonal") return(from)
+  if (from == "precip") {
+    if (!is.null(to) && to %in% c("mammal_cpue","mammal_mnka","bird_index","fruiting_pct")) return("precip_monsoon")
+    return("precip_winter")
+  }
+  if (from == "temp") return("temp_spring")
+  from
+}
+# r at each candidate lag for the curve (plain cor; n per point)
+exp_curve <- function(ann_site, from, to, lags = 0:3) {
+  do.call(rbind, lapply(lags, function(L) {
+    m <- lag_pairs(ann_site, from, to, L); n <- nrow(m)
+    r <- if (n >= 3) suppressWarnings(stats::cor(m$x, m$y)) else NA_real_
+    data.frame(lag = L, r = if (is.finite(r)) round(r, 2) else NA_real_, n = n)
+  }))
+}
+# best-of-K, autocorrelation-preserving adjusted p for the SELECTED (driver_col, lag).
+# Null = circular-shift the response series (preserves serial structure), RE-SCAN every
+# candidate (col,lag) combo, take max|r|; p_adj = P(null best |r| >= observed). Penalizes
+# both the lag/season search AND the annual autocorrelation that makes a free-shuffle p
+# anti-conservative. combos = list(list(col=, lag=), ...).
+exp_adj_p <- function(ann_site, to, combos, observed_r, nperm = 2000) {
+  y <- ann_site[[to]]; ny <- length(y)
+  if (ny < 4 || !is.finite(observed_r)) return(NA_real_)
+  scan_max <- function(a) {
+    rs <- vapply(combos, function(cb) {
+      m <- lag_pairs(a, cb$col, to, cb$lag)
+      if (nrow(m) >= 3) { r <- suppressWarnings(stats::cor(m$x, m$y)); if (is.finite(r)) abs(r) else NA_real_ } else NA_real_
+    }, numeric(1))
+    if (all(is.na(rs))) NA_real_ else max(rs, na.rm = TRUE)
+  }
+  set.seed(7L)
+  perm_max <- replicate(nperm, {
+    k <- sample.int(ny - 1L, 1L)
+    a2 <- ann_site; a2[[to]] <- y[((seq_len(ny) - 1L + k) %% ny) + 1L]
+    scan_max(a2)
+  })
+  round(mean(perm_max >= abs(observed_r) - 1e-9, na.rm = TRUE), 3)
+}
+
 # which trophic layers have any data at a site
 layers_present <- function(ann_site, signals) {
   vapply(c("climate","phenology","producer","consumer"), function(L) {

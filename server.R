@@ -94,12 +94,15 @@ server <- function(input, output, session) {
 
   output$overviewInsight <- renderUI({
     sm <- smatch(); desert <- identical(bclass(), "water-limited")
+    # the binomial tally treats each link as an independent trial; links within ONE site
+    # share their driver years, so that independence is only approximate — say so.
+    tally_caveat <- if (!is.na(sm$n) && sm$n > 1) " (links within a site share driver years, so these are not fully independent trials)" else ""
     msg <- if (sm$n == 0)
         "Not enough overlapping years yet to line up the cascade here. <b>SCBI</b> (a temperate forest) shows it most clearly."
       else if (desert)
-        sprintf("This is a <b>water-limited</b> system, so its links are tested by <b>season</b>, not by annual totals: %s. The Seasonal Climate panel shows why one annual rainfall number hides the signal.", sm$txt)
+        sprintf("This is a <b>water-limited</b> system, so its links are tested by <b>season</b>, not by annual totals: %s%s. The Seasonal Climate panel shows why one annual rainfall number hides the signal.", sm$txt, tally_caveat)
       else
-        sprintf("Across the links expected in this temperature-limited system, <b>%s</b>. With only a handful of years per signal, that direction-agreement is a more honest signal than any single correlation.", sm$txt)
+        sprintf("Across the links expected in this temperature-limited system, <b>%s</b>%s. With only a handful of years per signal, that direction-agreement is a more honest signal than any single correlation.", sm$txt, tally_caveat)
     insight_banner("diagram-3", tone = if (!is.na(sm$p) && sm$p < 0.05) "pine" else "navy", HTML(msg))
   })
 
@@ -331,7 +334,15 @@ server <- function(input, output, session) {
     div(class="scatter-note",
       span(sprintf("%s → %s", sig_label(r$from), sig_label(r$to)), style="font-weight:600"),
       if (r$lag>0) span(class="sn-lag", sprintf(" (response %d yr later)", r$lag)),
-      div(style=sprintf("color:%s;margin-top:4px", tm$col), bs_icon(tm$icon), " ", r$verdict)) })
+      div(style=sprintf("color:%s;margin-top:4px", tm$col), bs_icon(tm$icon), " ", r$verdict),
+      # stat-honesty labels on the two reported numbers (only meaningful once the link is gated)
+      if (r$n >= 6 && is.finite(r$p)) div(class="scatter-statcaveats",
+        span(class="ssc-item", bs_icon("info-circle"),
+          HTML(" <b>p</b> is a permutation null"), cpop("permp"),
+          HTML(": exchangeable-years assumption makes it a lower bound on annual series. The honest test is the cross-site pooling on Across NEON."),
+          if (is.finite(r$lo)) tagList(HTML(" <b>95% CI</b> is a bootstrap interval"), cpop("bootci"),
+            HTML(": wide at this n, indicative, not a precision claim.")))))
+  })
 
   # ---- tap a scatter dot -> that year's full detail ----
   output$scatterDetail <- renderUI({
@@ -351,6 +362,195 @@ server <- function(input, output, session) {
           if (r$lag > 0) sprintf("  ·  %d", yr + r$lag) else ""))),
       div(class = "sd-sigs", lapply(sigs, function(k)
         span(class = "sd-chip", tags$b(sig_label(k)), sprintf(" %s", f(drow[[k]][1]))))))
+  })
+
+  # ============================================================================
+  # ---- LAG & SEASON EXPLORER (the Lag Experimenter) --------------------------
+  # A FOLDED tool that lets a user re-examine a STATED prior by sliding the lag and
+  # toggling annual vs seasonal climate. Designed so p-hacking is VISIBLE and self-
+  # defeating: every off-prior reading is greyed as "EXPLORED, not a verdict", the
+  # adjusted p penalizes the K-combination search AND the annual autocorrelation, and
+  # an n<6 hard-gate refuses a p at all. The fixed-prior verdict chips / driverTable
+  # are untouched — the experimenter never alters them.
+  # ============================================================================
+  # the stated priors for the CURRENT response, as "<from> -> <to>" choices
+  exp_choices <- reactive({
+    lk <- lab_links(); if (!nrow(lk)) return(character(0))
+    ids <- sprintf("%s|%s", lk$from, lk$to)
+    nms <- sprintf("%s → %s", vapply(lk$from, sig_label, character(1)), vapply(lk$to, sig_label, character(1)))
+    stats::setNames(ids, nms)
+  })
+  output$expLinkUI <- renderUI({
+    ch <- exp_choices()
+    if (!length(ch)) return(div(class = "le-empty", "No predicted drivers for this response to explore."))
+    sl <- sel_link(); def <- if (!is.null(sl)) sprintf("%s|%s", sl$from, sl$to) else unname(ch[1])
+    if (!def %in% ch) def <- unname(ch[1])
+    selectInput("expLink", "Predicted link", choices = ch, selected = def, width = "100%")
+  })
+  # resolve from/to/prior_lag/prior_sign for the selected link (default = sel_link())
+  exp_link <- reactive({
+    lk <- lab_links(); if (!nrow(lk)) return(NULL)
+    id <- input$expLink
+    parts <- if (!is.null(id) && nzchar(id)) strsplit(id, "|", fixed = TRUE)[[1]] else NULL
+    r <- if (!is.null(parts) && length(parts) == 2)
+           lk[lk$from == parts[1] & lk$to == parts[2], , drop = FALSE] else lk[0, , drop = FALSE]
+    if (!nrow(r)) { sl <- sel_link(); if (!is.null(sl)) r <- sl else r <- lk[1, , drop = FALSE] }
+    r <- r[1, , drop = FALSE]
+    list(from = r$from, to = r$to, prior_lag = r$lag, prior_sign = r$prior_sign,
+         conf = if ("conf" %in% names(r)) r$conf else NA_character_)
+  })
+  # season radios only when the driver is a climate signal (precip or temp)
+  output$expSeasonUI <- renderUI({
+    el <- exp_link(); if (is.null(el) || !el$from %in% c("precip","temp")) return(NULL)
+    radioButtons("expSeason", "Climate driver",
+      c("Annual total" = "annual", "Seasonal (winter / monsoon)" = "seasonal"),
+      selected = isolate(input$expSeason) %||% "annual", inline = TRUE)
+  })
+  # the candidate set the user can scan (this is K): every lag 0:3 x reachable season
+  exp_combos <- reactive({
+    el <- exp_link(); if (is.null(el)) return(list())
+    seasons <- if (el$from %in% c("precip","temp")) c("annual","seasonal") else "annual"
+    cm <- list()
+    for (se in seasons) for (L in 0:3)
+      cm[[length(cm) + 1L]] <- list(col = exp_driver_col(el$from, se, el$to), lag = L)
+    cm
+  })
+  # the SELECTED driver column + its season (annual when the driver isn't climate)
+  exp_sel_season <- reactive({
+    el <- exp_link(); if (is.null(el)) return("annual")
+    if (el$from %in% c("precip","temp")) (input$expSeason %||% "annual") else "annual"
+  })
+  exp_sel_col <- reactive({ el <- exp_link(); if (is.null(el)) return(NULL)
+    exp_driver_col(el$from, exp_sel_season(), el$to) })
+
+  output$expCurve <- renderPlotly({
+    el <- exp_link(); if (is.null(el)) return(note_plot("Pick a predicted link to explore"))
+    a <- ann(); col <- exp_sel_col(); to <- el$to
+    cur <- exp_curve(a, col, to, 0:3); if (is.null(cur) || !nrow(cur)) return(note_plot("No overlapping years to plot"))
+    seasonal <- identical(exp_sel_season(), "seasonal")
+    # base curve: all-lag r, points with n<3 hollow/greyed
+    solid <- cur[is.finite(cur$r) & cur$n >= 3, , drop = FALSE]
+    thin  <- cur[is.finite(cur$r) & cur$n <  3, , drop = FALSE]
+    p <- plotly::plot_ly()
+    p <- p %>% plotly::add_trace(data = cur, x = ~lag, y = ~r, type = "scatter", mode = "lines",
+      line = list(color = "#9fb0cf", width = 2, dash = "solid"), name = "r by lag",
+      hoverinfo = "skip", showlegend = FALSE, connectgaps = TRUE)
+    if (nrow(solid)) p <- p %>% plotly::add_trace(data = solid, x = ~lag, y = ~r, type = "scatter", mode = "markers",
+      marker = list(size = 11, color = "#43b8e8", line = list(color = "#fff", width = 1)), name = "tested (n>=3)",
+      text = ~sprintf("lag %d: r=%+.2f (n=%d)", lag, r, n), hoverinfo = "text", showlegend = FALSE)
+    if (nrow(thin)) p <- p %>% plotly::add_trace(data = thin, x = ~lag, y = ~r, type = "scatter", mode = "markers",
+      marker = list(size = 10, color = "rgba(159,176,207,0.35)", line = list(color = "#9fb0cf", width = 1)),
+      text = ~sprintf("lag %d: n=%d (too few years)", lag, n), hoverinfo = "text", showlegend = FALSE)
+    # SRER-style overlay: when seasonal, draw the faint ANNUAL driver line on the same axes
+    if (seasonal) { acur <- exp_curve(a, el$from, to, 0:3)
+      if (!is.null(acur) && nrow(acur)) p <- p %>% plotly::add_trace(data = acur, x = ~lag, y = ~r,
+        type = "scatter", mode = "lines+markers", line = list(color = "rgba(159,176,207,0.55)", width = 1.6, dash = "dot"),
+        marker = list(size = 6, color = "rgba(159,176,207,0.55)"), name = "annual driver (faint)",
+        text = ~sprintf("annual, lag %d: r=%s (n=%d)", lag, ifelse(is.finite(r), sprintf("%+.2f", r), "-"), n),
+        hoverinfo = "text", showlegend = TRUE) }
+    # the LOCKED GOLD DIAMOND at the prior lag (fixed before looking)
+    pl <- el$prior_lag; prow <- cur[cur$lag == pl, , drop = FALSE]
+    py <- if (nrow(prow) && is.finite(prow$r)) prow$r[1] else 0
+    p <- p %>% plotly::add_trace(x = c(pl), y = c(py), type = "scatter", mode = "markers",
+      marker = list(size = 18, color = "#ffd24a", symbol = "diamond", line = list(color = "#fff", width = 1.5)),
+      name = "prior lag (locked)", hoverinfo = "text",
+      text = sprintf("Prior: lag %d %s (fixed before looking)", pl, exp_sel_season()), showlegend = TRUE)
+    seas_lab <- sprintf("Prior: lag %d %s (fixed before looking)", pl, exp_sel_season())
+    shp <- list(
+      list(type = "line", x0 = -0.2, x1 = 3.2, y0 = 0, y1 = 0, xref = "x", yref = "y",
+           line = list(color = if (is_dark()) "rgba(220,230,240,0.25)" else "rgba(31,42,48,0.18)", width = 1)),
+      list(type = "line", x0 = pl, x1 = pl, y0 = -1, y1 = 1, xref = "x", yref = "y",
+           line = list(color = "#ffd24a", width = 1.4, dash = "dash")))
+    anns <- list(list(x = pl, y = 1, xref = "x", yref = "y", yanchor = "bottom", xanchor = if (pl >= 2) "right" else "left",
+      text = seas_lab, showarrow = FALSE, font = list(size = 10, color = "#e0b43a", family = "Rubik")))
+    p %>% theme_plotly() %>% plotly::layout(showlegend = TRUE,
+      legend = list(orientation = "h", y = -0.22, font = list(size = 10)),
+      shapes = shp, annotations = anns,
+      xaxis = list(title = "lag (years)", dtick = 1, range = c(-0.3, 3.3),
+        gridcolor = if (is_dark()) "rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
+      yaxis = list(title = "correlation r", range = c(-1, 1), zeroline = FALSE,
+        gridcolor = if (is_dark()) "rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
+      margin = list(l = 55, r = 20, t = 24, b = 40))
+  })
+
+  output$expReadout <- renderUI({
+    el <- exp_link(); if (is.null(el)) return(NULL)
+    a <- ann(); to <- el$to; col <- exp_sel_col(); season <- exp_sel_season()
+    combos <- exp_combos(); K <- length(combos)
+    m <- lag_pairs(a, col, to, input$expLag %||% el$prior_lag); n <- nrow(m)
+    observed_r <- if (n >= 3) suppressWarnings(stats::cor(m$x, m$y)) else NA_real_
+    observed_r <- if (is.finite(observed_r)) observed_r else NA_real_
+    # naive single-lag permutation p (the un-adjusted, over-confident number)
+    naive <- if (n >= 6 && is.finite(observed_r))
+        link_stat(a, col, to, input$expLag %||% el$prior_lag, el$prior_sign)$p else NA_real_
+    # best-of-K, autocorrelation-preserving adjusted p for the SELECTED (col, lag)
+    adj <- if (n >= 6 && is.finite(observed_r)) exp_adj_p(a, to, combos, observed_r) else NA_real_
+    # bootstrap CI on the selected pairing (only meaningful at n>=6)
+    ci <- if (n >= 6 && is.finite(observed_r)) {
+        set.seed(11L); bs <- replicate(2000, { i <- sample(n, n, replace = TRUE)
+          suppressWarnings(stats::cor(m$x[i], m$y[i])) })
+        c(lo = unname(round(stats::quantile(bs, 0.025, na.rm = TRUE), 2)),
+          hi = unname(round(stats::quantile(bs, 0.975, na.rm = TRUE), 2))) } else c(lo = NA_real_, hi = NA_real_)
+    on_prior <- (input$expLag %||% el$prior_lag) == el$prior_lag &&
+                (if (el$from %in% c("precip","temp")) season == "annual" else TRUE)
+    # Sidak bar: the alpha you'd actually need after viewing K candidates
+    sidak <- round(1 - (1 - 0.05)^max(K, 1), 3)
+    n_ok <- n >= 6
+    # ---- tier badge: teal "on the prior" vs grey "EXPLORED, not a verdict" ----
+    badge <- if (on_prior)
+        span(class = "le-badge le-onprior", bs_icon("lock-fill"), " you're on the prior")
+      else
+        span(class = "le-badge le-explored", bs_icon("search"), " EXPLORED: not a verdict")
+    # the adjusted-p line: struck-through/greyed + asterisk when OFF the prior, hard-greyed at n<6
+    adj_disp <- if (!n_ok)
+        span(class = "le-adjp le-ngate", bs_icon("slash-circle"), " n<6: exploratory, no verdict")
+      else if (is.na(adj))
+        span(class = "le-adjp le-ngate", "p unavailable at this pairing")
+      else if (on_prior)
+        span(class = "le-adjp le-adjp-live", sprintf("p_adj = %.3f", adj))
+      else
+        span(class = "le-adjp le-adjp-off", tags$s(sprintf("p_adj = %.3f", adj)), tags$sup("*"))
+    rline <- span(class = "le-r",
+      if (is.finite(observed_r)) sprintf("r = %+.2f", observed_r) else "r = —",
+      span(class = "le-n", sprintf("  n = %d", n)))
+    naive_line <- if (n_ok && is.finite(naive))
+      div(class = "le-naive", sprintf("un-adjusted, single-lag p = %.3f", naive),
+        span(class = "le-naive-note", " (overstates significance when you scan)"))
+    ci_line <- if (n_ok && is.finite(ci[["lo"]]))
+      div(class = "le-ci", sprintf("bootstrap 95%% CI [%.2f, %.2f]", ci[["lo"]], ci[["hi"]]),
+        span(class = "le-naive-note", " (wide at this n; indicative, not a precision claim)"))
+    sidak_line <- div(class = "le-sidak", bs_icon("shield-exclamation"),
+      sprintf(" to claim significance after viewing K = %d candidates, you'd need p < %.3f", max(K, 1), sidak))
+    # the desert-demo caption, only when the demo pairing is loaded
+    demo_caption <- if (identical(col, "precip_monsoon") && identical(to, "mammal_cpue") &&
+                        season == "seasonal" && (input$expLag %||% 0) == 1)
+      div(class = "le-demo-caption", bs_icon("brightness-high"),
+        HTML(" The signal is not in a better lag, it is in the right <b>SEASON</b>. Annual rain (faint) stays flat at every lag; only monsoon rain at lag 1 lifts, exactly where the seed-crop mechanism predicts. n=7, p=0.06: a vivid illustration, not an established result."))
+    div(class = paste0("le-readout", if (!on_prior) " le-readout-explored" else ""),
+      div(class = "le-headline",
+        badge,
+        span(class = "le-adjp-label",
+          sprintf(" p adjusted for searching K = %d candidates (best-of-K, autocorrelation-preserving): ", max(K, 1))),
+        adj_disp),
+      div(class = "le-stats", rline, naive_line, ci_line),
+      sidak_line,
+      if (!on_prior && n_ok && !is.na(adj))
+        div(class = "le-offnote", tags$sup("*"),
+          " a p you reached by sliding off the prior is not a clean result: it is one of many you searched, shown struck through for that reason."),
+      demo_caption)
+  })
+
+  # the desert demo: jump to precip_monsoon -> mammal_cpue, seasonal, lag 1 (if present)
+  observeEvent(input$expDesertDemo, {
+    ch <- exp_choices(); target <- "precip_monsoon|mammal_cpue"
+    if (target %in% ch) {
+      updateSelectInput(session, "expLink", selected = target)
+      updateRadioButtons(session, "expSeason", selected = "seasonal")
+      updateSliderInput(session, "expLag", value = 1)
+    } else {
+      showNotification("The monsoon → rodents demo link isn't available for the current response. Pick 'Small-mammal catch rate' in the sidebar.",
+        type = "message", duration = 6)
+    }
   })
 
   # ---- QC-flag panel (§7 gold standard): ranked "verify, not wrong" flags for the
@@ -561,9 +761,21 @@ server <- function(input, output, session) {
         # win — so flag it with a subtle corner marker (the * in the cell) and say WHY
         # in the hover/tap title: out-of-biome corroboration, not an in-prior result.
         outprior_hit <- !exp && d$tier[1] %in% c("consistent","apparent")
+        # the STRONGER case: a SIGNIFICANT out-of-biome hit (p<0.05 AND the sign matches
+        # the prior). These are genuine corroboration that the mechanism generalizes past
+        # its home biome (e.g. the C4-grass seed crop firing on the monsoon->rodents link
+        # at KONZ/CPER). We mark them, but we do NOT widen expected_class — no post-hoc
+        # class-widening; the cell stays out-of-tally, the mark just names the support.
+        outprior_sig <- outprior_hit && is.finite(d$p[1]) && d$p[1] < 0.05 && isTRUE(d$sign_match[1])
+        # plain-English mechanism phrase per link, for the "generalizes beyond" tooltip
+        mech <- if (pr$from[j]=="precip_monsoon" && pr$to[j]=="mammal_cpue") "the C4-grass seed crop"
+                else if (pr$to[j]=="greenup_doy") "warm-spring leaf-out"
+                else if (pr$from[j]=="precip_monsoon" && pr$to[j]=="mosq_activity") "monsoon-water breeding"
+                else "this driver mechanism"
         ttl <- sprintf("%s · %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else "")
-        if (outprior_hit) ttl <- paste0(ttl, ". OUT OF PRIOR BIOME: corroborates the mechanism in a related biome, but doesn't count toward this site's tally.")
-        tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else "", if (outprior_hit) " sb-outprior" else ""),
+        if (outprior_sig) ttl <- paste0(ttl, sprintf(". OUT-OF-BIOME SUPPORT: the mechanism (%s) generalizes beyond deserts (p<0.05, sign matches). Corroboration only, not counted in this site's tally; the biome class is unchanged.", mech))
+        else if (outprior_hit) ttl <- paste0(ttl, ". OUT OF PRIOR BIOME: corroborates the mechanism in a related biome, but doesn't count toward this site's tally.")
+        tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else "", if (outprior_hit) " sb-outprior" else "", if (outprior_sig) " sb-outprior-sig" else ""),
           title=ttl,
           if (is.finite(d$r[1])) sprintf("%+.2f", d$r[1]) else "·")
       })

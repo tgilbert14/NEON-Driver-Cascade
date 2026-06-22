@@ -2748,10 +2748,10 @@
       "checksum": "3612bfda930e03259fdb7ceb1a6b0566"
     },
     "global.R": {
-      "checksum": "2b921c7272b7a38a22bda890d50fad4f"
+      "checksum": "db070685de9de3223376dff578fb7088"
     },
     "R/cascade_helpers.R": {
-      "checksum": "6f2142a06e89255f2ab83bcd4a6419f2"
+      "checksum": "bf604c5fd331d63ab01b49fb2f211c84"
     },
     "R/site_metadata.R": {
       "checksum": "539ba1f286d626b5aba430586dc2e2a3"
@@ -2763,19 +2763,19 @@
       "checksum": "f0f6292172bd0c09a1aed8b0bbabb24f"
     },
     "scripts/build_cascade.R": {
-      "checksum": "780688d6c20b4283e127b82ecc7d5af0"
+      "checksum": "ba56fe38302a06f4e2a1560a366172e8"
     },
     "scripts/test_helpers.R": {
       "checksum": "52cc5089911eb557e0388c9531567091"
     },
     "server.R": {
-      "checksum": "405cd503ccd075a7ac840ee4b36b8a60"
+      "checksum": "3bbd79d61bf7d3de717b55a485bd66fc"
     },
     "ui.R": {
-      "checksum": "f60c742bc759281a6af53b5d147053e7"
+      "checksum": "aba4ab9bfa3e7736543862dbf42fb46a"
     },
     "www/cascade.css": {
-      "checksum": "8696c72d1618b2f5b4af4c1aaa25c0ab"
+      "checksum": "b658529463709c455b5eda12c9285e35"
     },
     "www/cascade.js": {
       "checksum": "c67454f6112338229ddd3029a51a5a31"

@@ -17,6 +17,12 @@ CASCADE <- tryCatch(readRDS("data/cascade.rds"), error = function(e) NULL)
 ANNUAL  <- if (!is.null(CASCADE)) CASCADE$annual  else data.frame()
 SIGNALS <- if (!is.null(CASCADE)) CASCADE$signals else data.frame()
 PRIORS  <- if (!is.null(CASCADE)) CASCADE$priors  else data.frame()
+# Confidence downgrade (live now, also set at source in build_cascade.R): the
+# precip_monsoon -> mammal_cpue seed-crop link is literature-strong but in-app THIN
+# (one desert site, n=7, p=0.06). Hold its displayed confidence at "moderate" so the
+# app never reads thinner-than-shown. Cited as "strong" in the desert literature; the
+# downgrade is about what THIS app's data can carry, not the mechanism.
+if (nrow(PRIORS) && all(c("from","to","conf") %in% names(PRIORS))) PRIORS$conf[PRIORS$from=="precip_monsoon" & PRIORS$to=="mammal_cpue"] <- "moderate"
 # precomputed cross-site scoreboard + pooled headline + per-site biome (the throughline)
 SUITE_LINKS <- if (!is.null(CASCADE) && !is.null(CASCADE$suite_links)) CASCADE$suite_links else data.frame()
 POOLED      <- if (!is.null(CASCADE) && !is.null(CASCADE$pooled))      CASCADE$pooled      else data.frame()
@@ -103,7 +109,9 @@ CONCEPT <- list(
   signmatch = list(t = "Sign-match", b = "Does the data point the direction ecology predicts (not how big)? We tally how many links match, an honest signal even when no single short series is statistically significant."),
   expected  = list(t = "“Expected here”", b = "The link whose mechanism is established for THIS biome (warmth→green-up in forests; the monsoon seed crop→rodents in deserts). Only expected links count toward the site's tally; the rest are shown for context."),
   pulse     = list(t = "The pulse trace", b = "Tap a year and its climate anomaly ripples DOWN the rungs at each link's lag. A rung lights green if it moved the way the prior predicts, red if it went the other way. One traced year is an anecdote; the chips and the cross-site scoreboard are the real evidence."),
-  standing  = list(t = "Woody standing stock", b = "Live basal area (m²/ha), the cross-section of all living woody stems per hectare, directly measured from the Veg-Structure product. It's the slow PRODUCER FLOOR the fast annual signals ride on: ~56 in old-growth forest, ~5 in semi-desert, ~0.4 in true desert. Surveyed on a ~5-year cycle, so it's a standing-stock STATE, not a year-to-year link."))
+  standing  = list(t = "Woody standing stock", b = "Live basal area (m²/ha), the cross-section of all living woody stems per hectare, directly measured from the Veg-Structure product. It's the slow PRODUCER FLOOR the fast annual signals ride on: ~56 in old-growth forest, ~5 in semi-desert, ~0.4 in true desert. Surveyed on a ~5-year cycle, so it's a standing-stock STATE, not a year-to-year link."),
+  permp     = list(t = "The permutation p", b = "Permutation p assumes years are exchangeable; on autocorrelated annual series it is a lower bound on the true p. The honest test is the cross-site pooling on Across NEON."),
+  bootci    = list(t = "The bootstrap interval", b = "Bootstrap interval (wide at this n; indicative, not a precision claim). It resamples the few overlapping years to show how unstable the relationship is, not to pin down a precise value."))
 cpop <- function(key, placement = "auto") { c <- CONCEPT[[key]]; if (is.null(c)) return(NULL)
   bslib::popover(tags$span(class = "concept-i", bsicons::bs_icon("info-circle")), tags$p(c$b), title = c$t, placement = placement) }
 insight_banner <- function(icon, ..., tone = "navy")
