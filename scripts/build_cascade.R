@@ -19,7 +19,8 @@ APP  <- list(
   plant  = file.path(ROOT, "NEON-Plant-Diversity"),
   veg    = file.path(ROOT, "NEON-Veg-Structure"),
   bird   = file.path(ROOT, "NEON-Breeding-Birds"),
-  phe    = file.path(ROOT, "NEON-Plant-Phenology"))
+  phe    = file.path(ROOT, "NEON-Plant-Phenology"),
+  mosq   = file.path(ROOT, "NEON-Mosquito-Pulse"))
 source(file.path(APP$phe, "R/phe_helpers.R"))   # onset(), GREENUP
 # veg-structure standing-stock helpers (optional context; never breaks the build)
 .have_veg <- tryCatch({ source(file.path(APP$veg, "R/veg_helpers.R")); TRUE }, error = function(e) FALSE)
@@ -139,6 +140,30 @@ ann_bird <- function(site) {                      # consumer: detection index + 
     left_join(spo %>% group_by(year) %>% summarise(bird_richness = dplyr::n_distinct(.data$scientificName), .groups="drop"), by="year") %>%
     mutate(site = site) %>% select(site, year, bird_index, bird_richness)
 }
+ann_mosq <- function(site) {                      # consumer/vector: CO2-trap activity index (per trap-night)
+  # The desert-monsoon's FAST responder (weeks), parallel to temp->green-up: a
+  # climate-driven activity index, NOT a population. Per-year activity = whole-trap
+  # catch / that year's trap-nights (effort_week), honoring the CPUE/per-trap-night
+  # discipline (a 0 is "not trapped," never "extirpated"). Same-year (lag 0) — the
+  # monsoon->mosquito pulse completes within the season, unlike monsoon->rodents (lag 1).
+  b <- rd(file.path(APP$mosq, "data/sites", paste0(site, ".rds"))); if (is.null(b) || is.null(b$obs)) return(NULL)
+  o <- b$obs; if (!"year" %in% names(o)) return(NULL)
+  tg <- if ("is_target" %in% names(o)) o[o$is_target %in% TRUE, , drop=FALSE] else o
+  if (!nrow(tg)) return(NULL)
+  ew  <- b$effort_week
+  eff <- if (!is.null(ew) && "year" %in% names(ew))
+           ew %>% group_by(year) %>% summarise(tn = sum(.data$trap_nights, na.rm=TRUE), .groups="drop") else NULL
+  catch <- tg %>% group_by(year) %>% summarise(
+    total = sum(.data$count, na.rm=TRUE),
+    culex = sum(.data$count[.data$genus == "Culex"], na.rm=TRUE),
+    mosq_richness = dplyr::n_distinct(.data$scientificName[.data$is_species %in% TRUE]),
+    .groups="drop")
+  out <- if (!is.null(eff)) left_join(catch, eff, by="year") else { catch$tn <- NA_real_; catch }
+  out %>% mutate(
+    mosq_activity = ifelse(!is.na(.data$tn) & .data$tn > 0, round(.data$total / .data$tn, 2), NA_real_),
+    mosq_culex    = ifelse(.data$total > 0, round(100 * .data$culex / .data$total, 1), NA_real_),
+    site = site) %>% select(site, year, mosq_activity, mosq_richness, mosq_culex)
+}
 ann_veg <- function(site) {                       # producer STANDING STOCK — a slow ~5-yr STATE,
   # NOT an annual link (its remeasurement cadence would manufacture pseudo-resolution). Live basal
   # area m2/ha from the Veg-Structure sibling: directly measured, allometry-free, and computable at
@@ -155,10 +180,10 @@ ann_veg <- function(site) {                       # producer STANDING STOCK — 
 }
 
 # ---- assemble over the union of sites that have mammal or bird data ----
-all_sites <- sort(unique(c(sites_in("mammal"), sites_in("bird"))))
+all_sites <- sort(unique(c(sites_in("mammal"), sites_in("bird"), sites_in("mosq"))))
 cat("assembling", length(all_sites), "sites...\n")
 join_all <- function(site) {
-  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site)))
+  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site), ann_mosq(site)))
   if (!length(parts)) return(NULL)
   Reduce(function(a,b) full_join(a,b,by=c("site","year")), parts)
 }
@@ -167,7 +192,7 @@ annual <- annual[!is.na(annual$year) & annual$year >= 2013 & annual$year <= 2025
 annual <- annual %>% arrange(.data$site, .data$year)
 
 # ensure every signal column exists even if no site had it
-SIGCOLS <- c("precip","temp","precip_winter","precip_monsoon","temp_spring","fruiting_pct","greenup_doy","plant_richness","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness")
+SIGCOLS <- c("precip","temp","precip_winter","precip_monsoon","temp_spring","fruiting_pct","greenup_doy","plant_richness","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness","mosq_activity","mosq_richness","mosq_culex")
 for (c in SIGCOLS) if (!c %in% names(annual)) annual[[c]] <- NA_real_
 
 # ---- signal metadata: trophic layer + display + direction-of-"more" ----
@@ -187,7 +212,10 @@ signals <- tibble::tribble(
   "mammal_cpue",   "Small-mammal catch rate",      "consumer",   "per 100 TN", "more rodents",  TRUE,
   "mammal_mnka",   "Small mammals (indiv.)",       "consumer",   "individuals","more rodents",  TRUE,
   "bird_index",    "Bird detection index",         "consumer",   "birds/point","more birds",    TRUE,
-  "bird_richness", "Bird richness",                "consumer",   "species",    "more species",  TRUE)
+  "bird_richness", "Bird richness",                "consumer",   "species",    "more species",  TRUE,
+  "mosq_activity", "Mosquito activity",            "consumer",   "per trap-nt","more mosquitoes",TRUE,
+  "mosq_richness", "Mosquito richness",            "consumer",   "species",    "more species",  FALSE,
+  "mosq_culex",    "Culex share (WNV group)",      "consumer",   "% of catch", "more Culex",    FALSE)
 
 # ---- literature priors: expected sign + lag (years). The `note` is PLAIN-ENGLISH
 # for non-technical users AND carries the honest scope caveat (the science review:
@@ -212,7 +240,9 @@ priors <- tibble::tribble(
   "precip_winter",  "plant_richness",  +1L, 0L, "moderate", "water-limited",       "In deserts the COOL-SEASON (Oct–Mar) rain germinates the spring forbs — so winter rain, not the annual total, is what tracks plant diversity that year. (At Santa Rita this recovers the link the annual number hides.)",
   "precip_monsoon", "mammal_cpue",     +1L, 1L, "strong",   "water-limited",       "Desert granivores (kangaroo rats, pocket mice) track the SUMMER-MONSOON (Jul–Sep) seed crop: a big monsoon grows the seeds, and a year later the seed-eaters boom. Testing the monsoon at a 1-year lag — not annual rain — recovers this link (Santa Rita r≈+0.7).",
   "fruiting_pct",   "mammal_cpue",     +1L, 1L, "weak",     "all",                 "A good fruit-and-seed year should feed the seed-eaters into the next year — but our fruiting signal is a coarse peak-intensity index, so read this as suggestive only, not a measured seed crop.",
-  "plant_richness", "mammal_cpue",     +1L, 1L, "weak",     "all",                 "More varied plant communities MIGHT support more animals the next year — the least certain link in the cascade: plant variety is only a rough stand-in for food, so even the direction is uncertain, and the data bears that out.")
+  "plant_richness", "mammal_cpue",     +1L, 1L, "weak",     "all",                 "More varied plant communities MIGHT support more animals the next year — the least certain link in the cascade: plant variety is only a rough stand-in for food, so even the direction is uncertain, and the data bears that out.",
+  "precip_monsoon", "mosq_activity",   +1L, 0L, "moderate", "water-limited",       "A big summer monsoon fills the ephemeral water mosquito larvae need, so a wet monsoon means more mosquitoes that SAME season — the monsoon's FAST pulse (weeks), the desert-water mirror of temp→green-up. (Read this coarse annual link as an echo of the within-season pulse the Mosquito Pulse app shows directly.)",
+  "temp_spring",    "mosq_activity",   +1L, 0L, "moderate", "temperature-limited", "Warmer springs speed mosquito larval development, so temperate sites with warm springs reach emergence sooner and larger — degree-days PACE the pulse where temperature, not water, is the brake. (Above the heat optimum, extreme desert temperatures reverse this; that ceiling is why it's scored only where temperature limits.)")
 # NOTE: no green-up -> bird prior. The trophic-mismatch literature (Both; Visser;
 # Mayor 2017; Youngflesh 2021) is about SYNCHRONY between bird breeding and the food
 # peak — not "later green-up DOY -> more birds", and the direction reverses by region.
