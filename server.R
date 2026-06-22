@@ -200,7 +200,7 @@ server <- function(input, output, session) {
     sp <- plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=TRUE, margin=0.035) %>%
       theme_plotly() %>%
       plotly::layout(showlegend = !narrow, legend=list(orientation="h", y=-0.08, font=list(size=10)),
-        xaxis=list(title="year", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
+        xaxis=list(title="", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
         margin=list(l=60,r=20,t=20,b=if (narrow) 24 else 40))
     # capture a dot click -> Shiny input$tracedYear (re-attached on every render; plotly purge wipes handlers)
     htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
@@ -479,7 +479,7 @@ server <- function(input, output, session) {
       plotly::add_bars(y=~precip_winter, name="Winter rain (Oct–Mar)", marker=list(color="#43b8e8")) %>%
       plotly::add_bars(y=~precip_monsoon, name="Monsoon rain (Jul–Sep)", marker=list(color="#ffd24a")) %>%
       theme_plotly() %>% plotly::layout(barmode="group", legend=list(orientation="h", y=-0.22),
-        yaxis=list(title="precipitation (mm)"), xaxis=list(title="year", dtick=1), margin=list(l=55,r=20,t=10,b=40))
+        yaxis=list(title="precipitation (mm)"), xaxis=list(title="", dtick=1), margin=list(l=55,r=20,t=10,b=40))
   })
   output$seasonalPanel <- renderUI({
     if (!is_desert(input$site)) return(div(class="seasonal-note", bs_icon("info-circle"),
