@@ -49,15 +49,25 @@ test (and tally) the links *expected* for that biome:
 - **About** — the full priors table + the honesty manifesto + citations.
 
 ### What it surfaces (real, honest findings)
+These are the two results that actually **pool across sites** (one vote per site), the only honest test past the
+short-series problem:
 - **The suite headline (pooled):** **warmer springs → earlier green-up holds at 23 of 32 temperature-limited
   sites, binomial p = 0.010** — a real result no single short site can show. Led by **SCBI** (r=−0.92, n=6,
-  permutation p=0.007). The producer→consumer links pool to ~null (richness→rodents 22/40, p=0.318) — and the
-  app says so.
-- **SRER (the desert that "didn't match"):** the annual cascade looks weak (1–2/3), but that was mostly a
-  *method* artifact. Test the **right season**: the summer-monsoon seed crop tracks next-year rodents at
-  **r = +0.72** (one desert, n = 7 yrs, p ≈ 0.06 — suggestive, not established; annual rain showed +0.20), and
-  winter rain → forb richness flips from −0.11 to +0.27.
-  The desert cascade was there all along — the annual aggregation was hiding it.
+  permutation p=0.007). Note the honest tension: the same mechanism on the *mechanistically-correct spring
+  window* (temp_spring → green-up) does **not** resolve when pooled (16 of 28 sites, p = 0.286), so the headline
+  rests on the better-sampled annual-mean stand-in. The app states that caveat on the headline itself.
+- **Producer → consumer links pool to ~null** (richness → rodents 22 of 40 sites, p = 0.318) — and the app
+  says so rather than dressing it up.
+
+#### Illustration of the annual-aggregation artifact (single site, not significant)
+This is **not** a pooled result — it is one desert site, below the app's n ≥ 6 verdict gate, shown to make the
+artifact visible, never as evidence:
+- **SRER (the desert that "didn't match"):** the annual cascade looks weak (1–2/3), but that is mostly a
+  *method* artifact. Test the **right season** and the summer-monsoon seed crop tracks next-year rodents at
+  **r = +0.72** (one desert, n = 7 yrs, **p ≈ 0.06 — suggestive, not established**; annual rain showed +0.20),
+  and winter rain → forb richness flips from −0.11 to +0.27. The desert cascade was there all along; the annual
+  aggregation was hiding it. The honest, cross-site version of this prior pools at too few sites yet (it sits
+  below the pooling floor in the app).
 
 ## Run it
 R 4.5.x: `shiny::runApp(".", port = 8194)`. Default site **SRER** (Santa Rita — the Sonoran-desert home
@@ -72,6 +82,9 @@ climate overlays (`scripts/build_cascade.R`) — no re-fetch; plain R reads the 
 `suite_links`/`pooled` are the **precomputed** cross-site scoreboard (every site × prior, biome-aware,
 2000-permutation), so the app reads them instead of recomputing on every site switch. Small-mammal catch
 rate is a relative annual index (captures per 100 trap-nights), not effort-standardised across sites.
-Rebuild + refresh the deploy manifest: `Rscript scripts/build_cascade.R && Rscript -e 'rsconnect::writeManifest()'`.
+Rebuild + refresh the deploy manifest: `Rscript scripts/build_cascade.R` (it rebuilds the bundle, emits
+`data/neon-cascade-codebook.csv`, then runs the lean, hard-gated `scripts/write_manifest.R`). A `.rscignore`
+keeps `scripts/`, internal `docs/*.md`, and `README.md` out of the Connect Cloud bundle (the public
+`docs/index.html` landing cover still ships).
 
 Built by Desert Data Labs · desertdatalabs@gmail.com. Not affiliated with NEON/Battelle/NSF.

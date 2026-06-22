@@ -73,9 +73,10 @@ jobs:
       - name: Install R packages
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          # rsconnect: build_cascade.R's tail regenerates manifest.json so the pinned
-          # checksum matches the freshly rebuilt bundle (else Connect serves stale data).
-          packages: dplyr, tidyr, stringr, tibble, rsconnect
+          # rsconnect + jsonlite: build_cascade.R's tail runs the lean, hard-gated
+          # scripts/write_manifest.R so the pinned checksum matches the freshly rebuilt
+          # bundle (else Connect serves stale data) and a heavy-package leak fails the job.
+          packages: dplyr, tidyr, stringr, tibble, rsconnect, jsonlite
 
       - name: Rebuild data/cascade.rds from the sibling bundles
         run: Rscript scripts/build_cascade.R
@@ -90,7 +91,9 @@ jobs:
         run: |
           git config user.name  "neon-data-bot"
           git config user.email "neon-data-bot@users.noreply.github.com"
-          git add data/cascade.rds manifest.json
+          # explicit paths only (never a blanket add that could sweep a gitignored sibling
+          # or another session's half-written file): the bundle, the codebook, the manifest.
+          git add data/cascade.rds data/neon-cascade-codebook.csv manifest.json
           if git diff --cached --quiet; then
             echo "No change in cascade.rds — nothing to deploy."
           else

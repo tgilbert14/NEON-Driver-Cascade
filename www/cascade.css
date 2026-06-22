@@ -127,9 +127,23 @@ tr.dt-dim { opacity: .55; }
 .sc-v { font-weight: 800; font-variant-numeric: tabular-nums; }
 .sc-weak { color: #9fb0cf; }
 .sc-strong { color: #5fb56a; }
+/* non-colour cue on the STRONGER (seasonal) value, so the weak/strong contrast never
+   rests on the ~1.2:1 green luminance difference alone (colour-vision safe) */
+.sc-stronger { display: inline-flex; align-items: center; gap: 1px; margin-left: 6px;
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  color: #2f7d44; background: rgba(95,181,106,.16); border: 1px solid rgba(95,181,106,.4);
+  border-radius: 7px; padding: 1px 5px 1px 3px; vertical-align: middle; }
+[data-bs-theme="dark"] .sc-stronger { color: #86c98e; background: rgba(95,181,106,.14); border-color: rgba(95,181,106,.34); }
+.sc-p { font-weight: 500; font-size: 11px; color: var(--muted); margin-left: 5px; opacity: 0.85; }
 .sc-n { font-weight: 500; font-size: 11px; color: var(--muted); margin-left: 5px; opacity: 0.85; }
+.precip-coverage-note { display: flex; gap: 6px; align-items: baseline; margin: 10px 0 0;
+  font-size: 12px; line-height: 1.45; color: var(--muted); font-style: italic; }
 
 /* ---- pooled headline -------------------------------------------------- */
+.pooled-tension { display: flex; gap: 7px; align-items: baseline; margin: 8px 0 0; padding: 9px 12px;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink); background: rgba(201,163,0,.10);
+  border: 1px solid rgba(201,163,0,.32); border-radius: 10px; }
+[data-bs-theme="dark"] .pooled-tension { background: rgba(255,210,74,.08); border-color: rgba(255,210,74,.28); }
 .pooled-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .pooled-row { display: grid; grid-template-columns: minmax(170px, 1.4fr) minmax(80px, 1fr) minmax(180px, 1.2fr);
   gap: 12px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
@@ -219,8 +233,11 @@ tr.dt-dim { opacity: .55; }
 [data-bs-theme="dark"] .sd-chip { background: rgba(255,255,255,0.04); }
 
 /* ---- inline concept info dots (cpop) --------------------------------- */
-.concept-i { display: inline-flex; align-items: center; cursor: pointer; margin-left: 4px;
-  color: var(--sky, #2f7fb5); opacity: .7; font-size: .82em; vertical-align: middle; transition: opacity .12s ease; }
+.concept-i { display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  color: var(--sky, #2f7fb5); opacity: .7; font-size: .82em; vertical-align: middle; transition: opacity .12s ease;
+  /* keep the small inline glyph but give this disclosure trigger a >=44px hit box;
+     negative margins absorb the padding so surrounding text isn't pushed around */
+  min-width: 44px; min-height: 44px; padding: 13px; margin: -13px -13px -13px -9px; box-sizing: content-box; }
 .concept-i:hover { opacity: 1; }
 .casc-node-h .concept-i { margin-left: auto; }   /* push the layer ⓘ to the right of the node header */
 

@@ -286,10 +286,51 @@ pooled <- pooled_links(suite_links)
 # the column the server prefers (it falls back to sites>=3 only if absent).
 pooled$poolable <- pooled$sites >= 3
 
+# ---- machine-readable codebook (emitted ONCE here, iterating the ACTUAL exported
+# `signals` keep-vector so the dictionary can never drift from the emitted columns).
+# Columns: key,label,layer,unit,higher_is,na_meaning,n_gate. na_meaning documents WHY
+# a cell is NA (the QC gate that produced it); n_gate is the per-signal coverage gate.
+na_meaning <- c(
+  precip          = "NA when fewer than 10 valid monthly precip records that year (a partial year is dropped, not summed).",
+  temp            = "NA when fewer than 8 valid monthly temp records, or the within-site MAD outlier filter NA'd a corrupted-sensor year.",
+  precip_winter   = "NA when fewer than 5 of the 6 Oct-Mar months are present.",
+  precip_monsoon  = "NA when any of the 3 Jul-Sep months is missing.",
+  temp_spring     = "NA when the Mar-May months are not all present.",
+  greenup_doy     = "NA in years with fewer than 5 tracked individuals (the onset gate), or no green-up phenophase observed.",
+  fruiting_pct    = "NA at sites/months tracking no fruit, or months with fewer than 5 individuals (honestly NA at arid sites).",
+  plant_richness  = "NA when the plant-diversity bundle has no plot data that year.",
+  plant_intro_pct = "NA when cover is unscored that year.",
+  mammal_cpue     = "NA when no trapping effort (deployed trap-nights) is recorded that year.",
+  mammal_mnka     = "NA when no tagged-individual records that year.",
+  bird_index      = "NA when no point-count that year (descriptive only; carries no prior).",
+  bird_richness   = "NA when no point-count that year.",
+  mosq_activity   = "NA when no CO2 trap effort that year.",
+  mosq_richness   = "NA when no identified mosquito catch that year.",
+  mosq_culex      = "NA when the catch is zero or unidentified to the Culex group.")
+n_gate <- c(
+  precip = ">=10 months", temp = ">=8 months", precip_winter = ">=5 of 6 months",
+  precip_monsoon = "3 of 3 months", temp_spring = "3 of 3 months",
+  greenup_doy = ">=5 individuals/yr", fruiting_pct = ">=5 individuals/month",
+  plant_richness = "1+ plot/yr", plant_intro_pct = "1+ plot/yr",
+  mammal_cpue = "effort>0", mammal_mnka = "1+ tag/yr", bird_index = "1+ count/yr",
+  bird_richness = "1+ count/yr", mosq_activity = "effort>0", mosq_richness = "1+ catch/yr",
+  mosq_culex = "1+ Culex/yr")
+codebook <- data.frame(
+  key       = signals$key,
+  label     = signals$label,
+  layer     = signals$layer,
+  unit      = signals$unit,
+  higher_is = signals$higher_is,
+  na_meaning = unname(na_meaning[signals$key]),
+  n_gate     = unname(n_gate[signals$key]),
+  stringsAsFactors = FALSE)
+dir.create("data", showWarnings = FALSE)
+utils::write.csv(codebook, "data/neon-cascade-codebook.csv", row.names = FALSE)
+cat("\ncodebook written: data/neon-cascade-codebook.csv (", nrow(codebook), "signals )\n")
+
 meta <- list(built = "annual + seasonal climate signals from sibling bundles + mammal env overlays; biome-aware priors; cross-site precompute",
              n_sites = length(ALL_SITES), built_when = format(Sys.Date()))
-dir.create("data", showWarnings = FALSE)
-saveRDS(list(annual = annual, signals = signals, priors = priors,
+saveRDS(list(annual = annual, signals = signals, priors = priors, codebook = codebook,
              suite_links = suite_links, pooled = pooled, site_meta = site_meta, meta = meta),
         "data/cascade.rds")
 
@@ -311,6 +352,12 @@ print(as.data.frame(annual[annual$site == "SRER", c("year","precip","precip_wint
 
 # ---- refresh the deploy manifest so Connect Cloud serves THIS bundle ----
 # A rebuilt-but-unmanifested .rds silently serves stale data (the checksum is pinned).
+# Use the LEAN, hard-gated writer (scripts/write_manifest.R): it scopes appFiles to
+# global/ui/server + R/ + www/ + data + data-sample (no scripts/docs leak) and stop()s
+# if neonUtilities/arrow/data.table leaks. Run it as a separate process so its hard-gate
+# stop() surfaces as a real failure rather than being swallowed by this build.
 if (requireNamespace("rsconnect", quietly = TRUE)) {
-  try({ rsconnect::writeManifest(); cat("\nmanifest.json regenerated\n") }, silent = TRUE)
-} else cat("\n[note] rsconnect not installed — run rsconnect::writeManifest() before deploy\n")
+  rc <- system2(file.path(R.home("bin"), "Rscript"), c("scripts/write_manifest.R"))
+  if (!identical(rc, 0L)) stop("write_manifest.R failed (manifest may be heavy/leaked) — see output above")
+  cat("\nmanifest.json regenerated (lean, hard-gated)\n")
+} else cat("\n[note] rsconnect not installed — run scripts/write_manifest.R before deploy\n")

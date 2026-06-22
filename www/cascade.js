@@ -12,6 +12,19 @@
    looking for zero `.count-up` elements (an active per-render perf drain).
    ========================================================================= */
 
+// ---- open the offcanvas sidebar (the site picker lives only there) ----
+// Used by the hero "change site" affordance on narrow screens, where bslib collapses
+// the sidebar. Clicks bslib's own collapse toggle so the picker slides in.
+function cascadeOpenSidebar() {
+  var t = document.querySelector(".bslib-sidebar-layout > .collapse-toggle, .bslib-sidebar-layout .collapse-toggle");
+  if (t) { t.click(); }
+  // after the offcanvas paints, nudge focus to the site select for keyboard users
+  setTimeout(function () {
+    var sel = document.querySelector("#site");
+    if (sel && sel.focus) { try { sel.focus(); } catch (e) {} }
+  }, 320);
+}
+
 // ---- dismiss any open bslib/Bootstrap info popover (outside-click + Esc) ----
 function cascadeClosePopovers() {
   document.querySelectorAll(".popover").forEach(function (pop) {

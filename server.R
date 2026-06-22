@@ -81,7 +81,11 @@ server <- function(input, output, session) {
       div(class="hs-icon", bs_icon(icon)), div(div(class="hs-v", v), div(class="hs-l", l)))
     div(class="hero-band",
       div(class="hero-title", bs_icon("diagram-3-fill"), tags$b(sprintf("%s · %s", input$site, if (nrow(row)) row$name[1] else input$site)),
-        tags$span(class="hero-sub", sprintf(" · %s–%s", yrs[1], yrs[2])), cpop("biome")),
+        tags$span(class="hero-sub", sprintf(" · %s–%s", yrs[1], yrs[2])), cpop("biome"),
+        # compact "change site" affordance: the site picker lives only in the offcanvas
+        # sidebar, so on narrow screens this opens it. Hidden on desktop (sidebar visible).
+        tags$a(class="hero-change", href="#", onclick="cascadeOpenSidebar();return false;",
+          bs_icon("pin-map"), " change site")),
       div(class="hero-verdict", verdict_sentence(input$site, lk, sm, blabel())),
       div(class="hero-grid",
         hero(sum(lp), "trophic layers", icon="layers", tone="navy", ttl="Climate, green-up, producers, consumers present here"),
@@ -266,7 +270,12 @@ server <- function(input, output, session) {
     msg <- if (!is.null(best)) sprintf("Of the literature's predicted drivers, <b>%s</b> is %s here.", sig_label(best$from), best$verdict)
       else if (tot>0) sprintf("%d of %d predicted drivers point the expected way, but none clears the bar for a verdict at this site's short series.", k, tot)
       else "Too few overlapping years to test any predicted driver here."
-    insight_banner("bullseye", tone = if (!is.null(best)) "pine" else "navy", HTML(msg))
+    # precip-coverage caveat: only when a rain driver is among the predicted links here
+    has_precip <- any(grepl("^precip", lk$from))
+    tagList(
+      insight_banner("bullseye", tone = if (!is.null(best)) "pine" else "navy", HTML(msg)),
+      if (has_precip) p(class="precip-coverage-note", bs_icon("info-circle"),
+        HTML(" Annual precipitation is available at 19 of 46 NEON sites; rain-driven rungs are testable only where the tower precip record exists.")))
   })
 
   output$driverTable <- renderUI({
@@ -697,16 +706,31 @@ server <- function(input, output, session) {
     ann_rich <- rc("precip","plant_richness",0); win_rich <- rc("precip_winter","plant_richness",0)
     rv <- function(x) if (is.na(x$r)) "—" else sprintf("r = %+.2f", x$r)
     rn <- function(x) if (x$n > 0) span(class="sc-n", sprintf(" n=%d", x$n)) else NULL
-    cmp <- function(lab, a1, lab1, a2, lab2) div(class="seasonal-cmp",
-      div(class="sc-title", lab),
-      div(class="sc-row", span(class="sc-k", lab1), span(class="sc-v sc-weak", rv(a1), rn(a1))),
-      div(class="sc-row", span(class="sc-k", lab2), span(class="sc-v sc-strong", rv(a2), rn(a2))))
+    # CVD: the contrast between the weak (annual) and strong (seasonal) r must NOT rest on
+    # colour alone (the two greens sit near 1.2:1 luminance). Pair the STRONG value with a
+    # non-colour cue (up-arrow + a "stronger" chip), and carry the honest stats (n + the
+    # p where it's the headline monsoon link) right on the number, never colour-only.
+    cmp <- function(lab, a1, lab1, a2, lab2, strong_p = NA_real_) {
+      strong_p_lab <- if (!is.na(a2$r) && is.finite(strong_p))
+        span(class="sc-p", sprintf(" p=%.2f", strong_p)) else NULL
+      strong_cue <- if (!is.na(a2$r))
+        span(class="sc-stronger", bs_icon("arrow-up-short"), "stronger") else NULL
+      div(class="seasonal-cmp",
+        div(class="sc-title", lab),
+        div(class="sc-row", span(class="sc-k", lab1), span(class="sc-v sc-weak", rv(a1), rn(a1))),
+        div(class="sc-row", span(class="sc-k", lab2),
+          span(class="sc-v sc-strong", rv(a2), rn(a2), strong_p_lab, strong_cue)))
+    }
     div(
       insight_banner("droplet-half", tone="navy", HTML("A single <b>annual</b> rainfall number blends two independent seasons. Split them, and the desert cascade reappears: the right season carries the signal the annual total buries:"),
         info_pop("Illustrative, not significant", HTML("This is a <b>single-site contrast</b> at the one desert site where the seasonal split is testable, on a short series <b>below the app's n&ge;6 verdict gate</b>. The seasonal r's are larger than the annual ones, but they are <b>not</b> statistically significant (e.g. monsoon&rarr;rodents reaches r=+0.72 at n=7, p=0.06) and they pool across just one site. Read it as a vivid illustration of the annual-aggregation artifact, not an established desert result. The honest, cross-site test is on the Across&nbsp;NEON tab."))),
       div(class="seasonal-cmps",
-        cmp("Rain → next-year rodents", ann_mam, "annual rain", mon_mam, "monsoon seed crop"),
-        cmp("Rain → plant richness", ann_rich, "annual rain", win_rich, "winter (forb) rain")))
+        # the monsoon->rodents r carries its p (suggestive, p~0.06 at n=7) so the
+        # "stronger" cue can never be read as "significant"; richness has no gated p here
+        cmp("Rain → next-year rodents", ann_mam, "annual rain", mon_mam, "monsoon seed crop", strong_p = 0.06),
+        cmp("Rain → plant richness", ann_rich, "annual rain", win_rich, "winter (forb) rain")),
+      p(class="precip-coverage-note", bs_icon("info-circle"),
+        HTML(" Annual precipitation is available at 19 of 46 NEON sites; rain-driven rungs are testable only where the tower precip record exists.")))
   })
 
   # ---- ACROSS NEON: pooled headline + cross-site sign-match scoreboard ----
@@ -736,8 +760,19 @@ server <- function(input, output, session) {
         div(class="pl-stat", span(class="pl-notpool", sprintf("%d site%s · not poolable", r$sites, if (r$sites==1) "" else "s")),
             span(class="pl-r", sprintf("median r=%+.2f", r$median_r))))
     }) else NULL
+    # The headline rung is ONE mechanism (warmer springs -> earlier green-up) tested two
+    # ways: on the annual-mean temperature stand-in it pools (p=0.010); on the
+    # mechanistically-correct spring window it does NOT resolve (p=0.286). State that
+    # tension ON the headline rather than letting the stronger row stand alone.
+    gp_ann <- pl[pl$from=="temp"        & pl$to=="greenup_doy", , drop=FALSE]
+    gp_spr <- pl[pl$from=="temp_spring" & pl$to=="greenup_doy", , drop=FALSE]
+    tension <- if (nrow(gp_ann) && nrow(gp_spr) && is.finite(gp_ann$p[1]) && is.finite(gp_spr$p[1]))
+      HTML(sprintf(" The same mechanism tested two ways carries a caveat: on <b>annual mean temperature</b> it holds (%d/%d sites, p=%.3f), but on the <b>mechanistic spring window</b> it does not resolve (%d/%d sites, p=%.3f) — read it as a coverage/proxy caveat, not a clean win: the annual mean is the better-sampled stand-in, the spring-only signal is thinner.",
+        gp_ann$k[1], gp_ann$sites[1], gp_ann$p[1], gp_spr$k[1], gp_spr$sites[1], gp_spr$p[1]))
+      else NULL
     div(insight_banner("trophy", tone="pine",
       HTML("Per-site series are too short for a verdict, but pooled <b>across sites</b> (one vote per site), the cascade's strongest rung is real: <b>warmer springs → earlier green-up</b> holds across most temperature-limited sites. This is the honest, suite-level answer no single site can give.")),
+      if (!is.null(tension)) p(class="pooled-tension", bs_icon("exclamation-triangle"), tension),
       div(class="pooled-list", items),
       if (!is.null(under_rows)) div(class="pooled-under",
         div(class="pu-head", "Below the pooling floor (<3 sites)",
@@ -800,7 +835,7 @@ server <- function(input, output, session) {
   output$dlAnnual <- downloadHandler(
     filename = function() sprintf("%s-cascade-annual.csv", input$site),
     content = function(file) {
-      a <- ann(); cols <- c("year", intersect(c(LADDER_KEYS, "precip_winter","precip_monsoon","temp_spring"), names(a)))
+      a <- ann(); cols <- c("year", intersect(c(LADDER_KEYS, "precip_winter","precip_monsoon","temp_spring","mosq_richness","mosq_culex"), names(a)))
       hdr <- c(sprintf("# NEON Driver Cascade · %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
                "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
                "# precip_winter = Oct-Mar sum (year it ends); precip_monsoon = Jul-Sep sum. See the codebook in the About tab.", "")
@@ -827,6 +862,17 @@ server <- function(input, output, session) {
       suppressWarnings(utils::write.table(SUITE_LINKS[, keep, drop=FALSE], file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
     })
 
+  output$dlCodebook <- downloadHandler(
+    filename = function() "neon-cascade-codebook.csv",
+    content = function(file) {
+      cb <- CODEBOOK
+      hdr <- c("# NEON Driver Cascade · data codebook (every emitted signal, its unit, NA-semantics, and n-gate).",
+               "# Generated from the actual exported keep-vector, so it cannot drift from the columns the app emits.",
+               "# na_meaning = the QC gate that produces an NA cell; n_gate = the per-signal coverage gate.", "")
+      writeLines(hdr, file)
+      suppressWarnings(utils::write.table(cb, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
+    })
+
   # ---- CODEBOOK (the cheapest credibility win) ----
   output$codebook <- renderUI({
     rows <- lapply(seq_len(nrow(SIGNALS)), function(i){ s <- SIGNALS[i,]
@@ -844,10 +890,12 @@ server <- function(input, output, session) {
         tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID) &mdash; a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
         tags$li(HTML("<b>plant_richness</b> = species count (a COMPOSITION signal, not productivity). <b>plant_intro_pct</b> = introduced share of cover. <b>fruiting_pct</b> = peak monthly STATUS yes-share for the exact &lsquo;Fruits&rsquo; phenophase (gated to months with &ge;5 individuals; honestly NA at arid sites that track no fruit). <b>bird_index</b> = clusterSize/point &mdash; a descriptive detection index that carries NO prior.")),
         tags$li(HTML("<b>Woody standing stock</b> (per site, not annual) = live basal area m²/ha from Veg-Structure (DP1.10098.001): directly measured, allometry-free, computable even at deserts via basal stem diameter. A slow ~5-yr STATE shown as context, the real productivity measure species richness can't be.")),
-        tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory (no p); &ge;6 &rarr; permutation p + bootstrap CI + a verdict. Each prior is tested where its biome mechanism is <b>expected</b>; the cross-site pooled binomial is one vote per site."))),
+        tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory (no p); &ge;6 &rarr; permutation p + bootstrap CI + a verdict. Each prior is tested where its biome mechanism is <b>expected</b>; the cross-site pooled binomial is one vote per site.")),
+        tags$li(HTML("<b>NA semantics:</b> a blank/NA cell is never a zero &mdash; it means the signal failed its coverage gate that year (a partial-year climate total dropped, a green-up year below 5 individuals, no trapping effort). The downloadable codebook CSV documents the exact gate behind every column's NAs."))),
       div(class="codebook-dl",
         downloadButton("dlAnnual", tagList(bs_icon("filetype-csv"), " This site's annual data"), class="btn-outline-dark btn-sm"),
         downloadButton("dlLinks",  tagList(bs_icon("filetype-csv"), " This site's link scorecard"), class="btn-outline-dark btn-sm"),
+        downloadButton("dlCodebook", tagList(bs_icon("filetype-csv"), " Codebook (every signal, unit, NA-rule)"), class="btn-outline-dark btn-sm"),
         tags$span(class="codebook-dl-note", "(the full cross-site scoreboard CSV is on the Across NEON tab)")))
   })
 

@@ -27,6 +27,13 @@ if (nrow(PRIORS) && all(c("from","to","conf") %in% names(PRIORS))) PRIORS$conf[P
 SUITE_LINKS <- if (!is.null(CASCADE) && !is.null(CASCADE$suite_links)) CASCADE$suite_links else data.frame()
 POOLED      <- if (!is.null(CASCADE) && !is.null(CASCADE$pooled))      CASCADE$pooled      else data.frame()
 SITE_META   <- if (!is.null(CASCADE) && !is.null(CASCADE$site_meta))   CASCADE$site_meta   else data.frame()
+# machine-readable codebook (emitted by build_cascade.R from the SIGNALS keep-vector).
+# Fall back to deriving the core columns from SIGNALS so a pre-rebuild bundle still
+# yields a downloadable codebook (na_meaning/n_gate just blank until the next build).
+CODEBOOK <- if (!is.null(CASCADE) && !is.null(CASCADE$codebook)) CASCADE$codebook else
+  if (nrow(SIGNALS)) data.frame(key = SIGNALS$key, label = SIGNALS$label, layer = SIGNALS$layer,
+    unit = SIGNALS$unit, higher_is = SIGNALS$higher_is, na_meaning = NA_character_,
+    n_gate = NA_character_, stringsAsFactors = FALSE) else data.frame()
 # signals shown on the main ladder (seasonal climate signals are ladder=FALSE)
 LADDER_KEYS <- if ("ladder" %in% names(SIGNALS)) SIGNALS$key[SIGNALS$ladder %in% TRUE] else SIGNALS$key
 
