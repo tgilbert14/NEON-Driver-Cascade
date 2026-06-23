@@ -212,6 +212,25 @@ agent) and validate on contrasting sites so it never cries wolf (target ~0 high 
 CSS class convention: standardize on `.qc-flag-<level>` (not `.qc-flag.<level>`). Full recipe +
 bird thresholds: memory `neonize-qc-flag-pattern`.
 
+**Search the network (the bundled-index search tab — every app with a national footprint gets it):**
+a "Search" nav_panel that queries a SMALL precomputed `data/search_index.rds` (one row per searchable
+unit), loaded ONCE at boot like `site_index` and filtered in memory, so it stays instant with NO live
+fetch. Builder `scripts/build_search_index.R` READS the committed bundles (never fetches) and writes the
+index; add the index to `data/` so `write_manifest.R`'s `data/*.rds` glob bundles it (rerun the manifest:
+DT becomes a dependency). Two query modes via a radio/segmented control: **(a) Find-a-taxon/link** —
+a `selectizeInput` autocomplete of every unit in the index → a `DT` of every site where it occurs with
+the app's honest per-site MEASURE + years; **(b) a product-specific threshold query** → a `DT` of the
+matching sites, sortable. Each row carries a **"Open →"** link that raises the SAME `goSite`/`siteExplore`
+input the browse list uses, so the jump loads from the bundle and lands on the Overview (one selection
+path everywhere). Show a **result count** ("12 of 46 sites"), an **empty state**, and a **one-line honest
+caption** (the measure is a within-site index / space-for-time screen, not an absolute ranking; for short
+per-site series, keep the pooling caveat and point to the cross-site test). DT gotcha: wrap `DTOutput`
+in a plain `div(style="width:100%")` and do NOT `spin()` it (the bslib fill-container 0-width trap).
+*First built on the Driver Cascade* (DP-derived, no taxa): the searchable units are the per-site cascade
+LINK results (`cascade.rds$suite_links`) — "find every site where a driver→response prior is significant"
++ "rank sites by how many expected links the data agrees with" — both labelled as underpowered within-site
+screens, deferring to the pooled binomial on Across NEON.
+
 **Sibling links + cover page:** maintain ONE registry of the suite (name · emoji · tagline · DPID ·
 github.io showcase URL · live Connect Cloud URL) and render it both in `docs/index.html` (the
 `.series-grid`) AND in-app (an "Explore the NEON series" block in About/footer). When a new app ships,

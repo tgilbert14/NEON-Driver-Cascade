@@ -8,7 +8,7 @@
 suppressPackageStartupMessages({
   library(shiny); library(bslib); library(bsicons)
   library(dplyr); library(plotly); library(htmltools)
-  library(shinyjs); library(shinycssloaders)
+  library(shinyjs); library(shinycssloaders); library(DT)
 })
 source("R/site_metadata.R", local = FALSE)
 source("R/cascade_helpers.R", local = FALSE)
@@ -36,6 +36,29 @@ CODEBOOK <- if (!is.null(CASCADE) && !is.null(CASCADE$codebook)) CASCADE$codeboo
     n_gate = NA_character_, stringsAsFactors = FALSE) else data.frame()
 # signals shown on the main ladder (seasonal climate signals are ladder=FALSE)
 LADDER_KEYS <- if ("ladder" %in% names(SIGNALS)) SIGNALS$key[SIGNALS$ladder %in% TRUE] else SIGNALS$key
+
+# ---- Search-the-network index (small, bundled, precomputed) ---------------------
+# One small .rds loaded ONCE at boot, like site_index in the sibling apps; the Search
+# tab filters it in memory (no live fetch, instant). Built by scripts/build_search_index.R
+# from the committed cascade bundle. Holds: links (one row per site x prior, with the
+# per-site test + biome-expected flag), link_catalog (the autocomplete), site_strength
+# (how many expected priors resolve per site), prior_pooled (the honest pooled p).
+SEARCH_IDX  <- tryCatch(readRDS("data/search_index.rds"), error = function(e) NULL)
+SRCH_LINKS  <- if (!is.null(SEARCH_IDX)) SEARCH_IDX$links         else data.frame()
+SRCH_CATALOG<- if (!is.null(SEARCH_IDX)) SEARCH_IDX$link_catalog  else data.frame()
+SRCH_STR    <- if (!is.null(SEARCH_IDX)) SEARCH_IDX$site_strength else data.frame()
+SRCH_POOLED <- if (!is.null(SEARCH_IDX)) SEARCH_IDX$prior_pooled  else data.frame()
+# autocomplete choices: link label -> link_id (richest/most-confident priors first is fine;
+# leave alphabetical for findability). Empty-safe.
+search_link_choices <- function() {
+  if (!nrow(SRCH_CATALOG)) return(character(0))
+  stats::setNames(SRCH_CATALOG$link_id, SRCH_CATALOG$link_label)
+}
+# site short name for the result tables (falls back to the code)
+srch_site_name <- function(code) {
+  r <- neon_sites[neon_sites$site == code, ]
+  if (nrow(r)) r$name[1] else code
+}
 
 site_annual <- function(site) ANNUAL[ANNUAL$site == site, , drop = FALSE]
 site_bclass <- function(site) if (exists("biome_class")) biome_class(site) else "temperature-limited"

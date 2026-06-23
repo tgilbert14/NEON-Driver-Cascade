@@ -946,6 +946,113 @@ server <- function(input, output, session) {
         tags$span(class="codebook-dl-note", "(the full cross-site scoreboard CSV is on the Across NEON tab)")))
   })
 
+  # ---- SEARCH THE NETWORK (bundled index, in-memory filter, instant) --------
+  # A "Go to this site" link in each row raises the SAME goSite input the browse
+  # list and scoreboard use, so the jump loads from the bundle and lands on the
+  # Overview — one selection path everywhere.
+  go_link <- function(code) sprintf(
+    "<a href='#' class='srch-go' onclick=\"Shiny.setInputValue('goSite','%s',{priority:'event'});return false;\">Open &rarr;</a>", code)
+  verdict_pill <- function(tier) {
+    tm <- TIER_META[[tier]]; if (is.null(tm)) return(htmltools::htmlEscape(tier))
+    sprintf("<span class='srch-pill srch-%s'>%s</span>", tier, htmltools::htmlEscape(tm$lab))
+  }
+  srch_dt_opts <- list(dom = "tp", pageLength = 12, autoWidth = FALSE, scrollX = TRUE,
+    language = list(emptyTable = "No sites match — try widening the filter."),
+    columnDefs = list(list(className = "dt-center", targets = "_all")))
+
+  # (a) FIND A LINK -----------------------------------------------------------
+  search_link_rows <- reactive({
+    if (!nrow(SRCH_LINKS) || is.null(input$searchLink)) return(SRCH_LINKS[0, , drop = FALSE])
+    d <- SRCH_LINKS[SRCH_LINKS$link_id == input$searchLink, , drop = FALSE]
+    if (isTRUE(input$searchSignifOnly)) d <- d[d$is_signif %in% TRUE, , drop = FALSE]
+    # significant first, then by p (NA last), then by site
+    d[order(!(d$is_signif %in% TRUE), ifelse(is.finite(d$p), d$p, Inf), d$site), , drop = FALSE]
+  })
+
+  output$searchLinkSummary <- renderUI({
+    if (is.null(input$searchLink) || !nrow(SRCH_CATALOG)) return(NULL)
+    cat_row <- SRCH_CATALOG[SRCH_CATALOG$link_id == input$searchLink, , drop = FALSE]
+    total <- sum(SRCH_LINKS$link_id == input$searchLink)
+    shown <- nrow(search_link_rows())
+    pooled_row <- if (nrow(SRCH_POOLED)) SRCH_POOLED[SRCH_POOLED$link_id == input$searchLink, , drop = FALSE] else SRCH_POOLED[0, ]
+    pooled_txt <- if (nrow(pooled_row) && isTRUE(pooled_row$poolable[1]) && is.finite(pooled_row$p_pooled[1]))
+      sprintf("Pooled across the %d expected sites: p = %.3f (median r = %+.2f). That cross-site test, not any single site, is the honest read.",
+              pooled_row$sites[1], pooled_row$p_pooled[1], pooled_row$median_r[1])
+      else "Too few expected sites to pool this link yet, so there is no honest cross-site verdict for it."
+    conf <- if (nrow(cat_row)) cat_row$conf[1] else NA
+    div(class = "search-summary",
+      div(class = "ss-count", bs_icon("geo-alt-fill"),
+        sprintf(" %d of %d sites", shown, total),
+        tags$span(class = "ss-sub", sprintf(" tested for %s", if (nrow(cat_row)) cat_row$link_label[1] else input$searchLink))),
+      if (!is.na(conf)) div(class = "ss-conf", sprintf("Prior confidence: %s", conf)),
+      div(class = "ss-pooled", bs_icon("people-fill"), " ", pooled_txt))
+  })
+
+  output$searchLinkTable <- DT::renderDT({
+    d <- search_link_rows()
+    if (!nrow(d)) return(DT::datatable(
+      data.frame(Site = character(0), `Site name` = character(0), Biome = character(0),
+                 n = integer(0), r = numeric(0), p = numeric(0), Verdict = character(0),
+                 Years = character(0), Open = character(0), check.names = FALSE),
+      escape = FALSE, rownames = FALSE, selection = "none", options = srch_dt_opts))
+    yrs <- ifelse(is.na(d$year_min) | is.na(d$year_max), "—", sprintf("%d–%d", d$year_min, d$year_max))
+    tbl <- data.frame(
+      Site = sprintf("<b>%s</b>%s", d$site, ifelse(d$expected %in% TRUE, "", " <span class='srch-oob' title='out of the biome where this mechanism is expected; shown as corroboration, not counted'>(out of biome)</span>")),
+      `Site name` = vapply(d$site, srch_site_name, character(1)),
+      Biome = d$biome,
+      n = d$n,
+      r = ifelse(is.finite(d$r), sprintf("%+.2f", d$r), "—"),
+      p = ifelse(is.finite(d$p), sprintf("%.3f", d$p), "—"),
+      Verdict = vapply(d$tier, verdict_pill, character(1)),
+      Years = yrs,
+      Open = vapply(d$site, go_link, character(1)),
+      check.names = FALSE, stringsAsFactors = FALSE)
+    DT::datatable(tbl, escape = FALSE, rownames = FALSE, selection = "none",
+      options = c(srch_dt_opts, list(order = list())),
+      class = "srch-dt compact stripe")
+  })
+
+  # (b) CASCADE STRENGTH ------------------------------------------------------
+  search_strength_rows <- reactive({
+    if (!nrow(SRCH_STR)) return(SRCH_STR)
+    thr <- if (is.null(input$searchMinResolved)) 0 else input$searchMinResolved
+    d <- SRCH_STR[SRCH_STR$n_resolved >= thr, , drop = FALSE]
+    d[order(-d$n_resolved, -d$n_signif, d$site), , drop = FALSE]
+  })
+
+  output$searchStrengthSummary <- renderUI({
+    if (!nrow(SRCH_STR)) return(NULL)
+    shown <- nrow(search_strength_rows()); total <- nrow(SRCH_STR)
+    div(class = "search-summary",
+      div(class = "ss-count", bs_icon("geo-alt-fill"),
+        sprintf(" %d of %d sites", shown, total),
+        tags$span(class = "ss-sub", " meet the agreement filter")),
+      div(class = "ss-pooled", bs_icon("info-circle"),
+        " The count is expected links whose DIRECTION agrees, not significance. It ranks where to look, not which ecosystem is 'stronger'."))
+  })
+
+  output$searchStrengthTable <- DT::renderDT({
+    d <- search_strength_rows()
+    if (!nrow(d)) return(DT::datatable(
+      data.frame(Site = character(0), Biome = character(0), Agree = character(0),
+                 Significant = integer(0), Counter = integer(0), Years = character(0),
+                 Open = character(0), check.names = FALSE),
+      escape = FALSE, rownames = FALSE, selection = "none", options = srch_dt_opts))
+    yrs <- ifelse(is.na(d$year_min) | is.na(d$year_max), "—", sprintf("%d–%d", d$year_min, d$year_max))
+    tbl <- data.frame(
+      Site = sprintf("<b>%s</b> <span class='srch-sn'>%s</span>", d$site, vapply(d$site, srch_site_name, character(1))),
+      Biome = d$biome,
+      `Agree (of expected)` = sprintf("<b>%d</b> of %d", d$n_resolved, d$expected_testable),
+      Significant = d$n_signif,
+      Counter = d$n_counter,
+      Years = yrs,
+      Open = vapply(d$site, go_link, character(1)),
+      check.names = FALSE, stringsAsFactors = FALSE)
+    DT::datatable(tbl, escape = FALSE, rownames = FALSE, selection = "none",
+      options = c(srch_dt_opts, list(order = list())),
+      class = "srch-dt compact stripe")
+  })
+
   observeEvent(input$goSite, {
     req(input$goSite)
     updateSelectInput(session, "site", selected = input$goSite)

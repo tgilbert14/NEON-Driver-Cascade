@@ -531,6 +531,47 @@ html .reveal-card.is-visible { opacity: 1; transform: none; }
 .concept-i, .info-dot { transition: transform .2s ease, opacity .2s ease; }
 .concept-i:hover, .info-dot:hover { transform: scale(1.25); }
 
+/* ---- Search the network -------------------------------------------------------- */
+.search-modeswitch { margin: 4px 0 14px; }
+.search-modeswitch .radio-inline, .search-modeswitch .form-check-inline { margin-right: 18px; }
+.search-controls { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; margin-bottom: 6px; }
+.search-controls > .form-group, .search-controls > .shiny-input-container { flex: 1 1 280px; margin-bottom: 0; }
+.search-summary { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center;
+  margin: 4px 0 12px; padding: 9px 13px; border-radius: 11px;
+  background: rgba(67,184,232,.08); border: 1px solid rgba(67,184,232,.22); }
+.search-summary .ss-count { font-weight: 700; font-size: 15px; color: var(--ink, #eaf2ff); }
+.search-summary .ss-count .ss-sub { font-weight: 500; font-size: 12.5px; color: var(--muted); margin-left: 4px; }
+.search-summary .ss-conf { font-size: 12px; color: var(--muted); padding: 2px 9px;
+  border-radius: 9px; background: rgba(255,210,74,.12); border: 1px solid rgba(255,210,74,.3); }
+.search-summary .ss-pooled { flex: 1 1 100%; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.search-foot-caveat { margin-top: 14px; font-size: 12.5px; color: var(--muted); line-height: 1.55;
+  padding: 10px 13px; border-radius: 10px; border: 1px dashed rgba(159,176,207,.3); }
+/* verdict pills (mirror the scoreboard tier palette) */
+.srch-pill { display: inline-block; font-weight: 700; font-size: 10.5px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.srch-consistent  { background:#2dd4bf; color:#06231f; }
+.srch-apparent    { background:#e0b43a; color:#2e2406; }
+.srch-counter     { background:#fb8a7e; color:#3a0e08; }
+.srch-exploratory { background:#4a5d78; color:#dbe6f5; }
+.srch-insufficient{ background:#1c2c48; color:#8fa3c2; }
+.srch-go { font-weight: 700; text-decoration: none; color: var(--sky, #43b8e8); white-space: nowrap; }
+.srch-go:hover { text-decoration: underline; }
+.srch-oob { font-size: 10px; color: var(--muted); font-weight: 500; }
+.srch-sn { font-weight: 500; font-size: 11px; color: var(--muted); }
+/* desert-night DataTables theming so the DT inherits the dark card */
+.srch-dt { width: 100% !important; font-size: 12.5px; }
+.srch-dt thead th { color: var(--ink, #16243a); border-bottom: 2px solid rgba(127,127,127,.25) !important; }
+[data-bs-theme="dark"] .srch-dt, [data-bs-theme="dark"] .srch-dt thead th,
+[data-bs-theme="dark"] .srch-dt td { color: var(--ink, #eaf2ff); }
+[data-bs-theme="dark"] table.dataTable.stripe tbody tr.odd,
+[data-bs-theme="dark"] table.dataTable.display tbody tr.odd { background: rgba(255,255,255,.03); }
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button { color: var(--muted) !important; }
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  color: var(--ink, #eaf2ff) !important; background: rgba(67,184,232,.18) !important; border-color: rgba(67,184,232,.4) !important; }
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_info,
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter,
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate { color: var(--muted) !important; }
+
 /* ---- (8) REDUCED MOTION: kill all motion, keep the static styling -------------- */
 @media (prefers-reduced-motion: reduce) {
   body::before, .hero-band::before, .hero-verdict::before, .hero-verdict::after, .biome-tag::after, .brand-mark,
