@@ -64,6 +64,7 @@ jobs:
           gh NEON-Breeding-Birds                  NEON-Breeding-Birds
           gh NEON-Plant-Phenology-Explorer        NEON-Plant-Phenology
           gh NEON-Vegetation-Structure-Explorer   NEON-Veg-Structure
+          gh NEON-Mosquito-Pulse                  NEON-Mosquito-Pulse
           echo "CASCADE_ROOT=$ws" >> "$GITHUB_ENV"
 
       - uses: r-lib/actions/setup-r@v2
@@ -81,6 +82,19 @@ jobs:
       - name: Rebuild data/cascade.rds from the sibling bundles
         run: Rscript scripts/build_cascade.R
 
+      # Reshape the freshly rebuilt cascade into the bundled "Search the network"
+      # index. MUST run AFTER the cascade rebuild (it reads data/cascade.rds) and
+      # BEFORE the manifest write below, so the manifest pins THIS search_index.rds
+      # checksum (a stale-checksum index would silently serve yesterday's search).
+      - name: Rebuild the search index
+        run: Rscript scripts/build_search_index.R
+
+      # Re-pin the lean manifest now that BOTH data/cascade.rds and
+      # data/search_index.rds are fresh (write_manifest.R is check-only: it writes
+      # then hard-gates on a heavy-package leak; it builds no data of its own).
+      - name: Regenerate the lean manifest
+        run: Rscript scripts/write_manifest.R
+
       # Fail the job on a malformed bundle rather than deploying it.
       - name: Test the rebuilt bundle
         run: Rscript scripts/test_helpers.R
@@ -93,7 +107,7 @@ jobs:
           git config user.email "neon-data-bot@users.noreply.github.com"
           # explicit paths only (never a blanket add that could sweep a gitignored sibling
           # or another session's half-written file): the bundle, the codebook, the manifest.
-          git add data/cascade.rds data/neon-cascade-codebook.csv manifest.json
+          git add data/cascade.rds data/search_index.rds data/neon-cascade-codebook.csv manifest.json
           if git diff --cached --quiet; then
             echo "No change in cascade.rds — nothing to deploy."
           else
