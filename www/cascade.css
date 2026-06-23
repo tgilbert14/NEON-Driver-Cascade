@@ -3,6 +3,60 @@
    ========================================================================= */
 .brand-mark { font-size: 24px; }
 
+/* ---- v2: persistent top bar (replaces the sidebar header) -------------- */
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  padding: 8px 14px; margin: 2px 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+.top-bar-brand { display: flex; align-items: baseline; gap: 9px; min-width: 0; flex-wrap: wrap; }
+.top-bar-brand .tb-mark { font-size: 22px; line-height: 1; flex: none; }
+.top-bar-brand .tb-title { font-weight: 800; font-size: 16px; color: var(--pine);
+  letter-spacing: .2px; white-space: nowrap; }
+.top-bar-brand .tb-sub { font-size: 10.5px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.6px; white-space: nowrap; }
+.top-bar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.top-bar-actions .tb-help, .top-bar-actions .tb-report {
+  min-height: 44px; display: inline-flex; align-items: center; font-weight: 700; }
+.tb-theme { display: flex; align-items: center; gap: 6px; }
+.tb-theme-lab { color: var(--muted); font-size: 15px; display: inline-flex; align-items: center; }
+.tb-theme .form-check, .tb-theme bslib-input-dark-mode {
+  min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 620px) {
+  .top-bar { padding: 7px 10px; }
+  .top-bar-brand .tb-sub { display: none; }
+  .top-bar-actions .tb-help .bi + *, .top-bar-actions .tb-report .bi + * { display: none; }
+}
+
+/* ---- v2: relocated site/response select panel (was the sidebar) ------- */
+.select-panel {
+  max-width: 920px; margin: 6px auto 16px; text-align: left;
+  background: var(--bg); border: 1px solid var(--line);
+  border-left: 4px solid var(--pine); border-radius: 14px;
+  padding: 16px 18px; box-shadow: 0 4px 16px var(--shadow);
+}
+[data-bs-theme="dark"] .select-panel {
+  background: linear-gradient(180deg, #112748 0%, var(--paper) 100%);
+}
+.select-panel .sp-head { font-weight: 700; color: var(--pine); font-size: 13.5px;
+  display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+.select-panel .sp-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+.select-panel .sp-field { flex: 1 1 240px; min-width: 200px; }
+.select-panel .sp-field .form-group,
+.select-panel .sp-field .shiny-input-container { margin-bottom: 0; width: 100%; }
+.select-panel label, .select-panel .control-label {
+  color: var(--ink); font-weight: 600; font-size: 13px; }
+.select-panel .sp-field .form-control,
+.select-panel .sp-field .form-select,
+.select-panel .sp-field .selectize-input { min-height: 44px; }
+.select-panel .site-bio { margin: 12px 0 2px; }
+@media (max-width: 560px) {
+  .select-panel { padding: 14px 13px; }
+  .select-panel .sp-row { gap: 10px; }
+  .select-panel .sp-field { flex: 1 1 100%; min-width: 0; }
+}
+
 /* ---- hero band -------------------------------------------------------- */
 .hero-band { margin: 4px 0 14px; }
 .hero-title { font-weight: 700; color: var(--pine); font-size: 17px; display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }

@@ -82,9 +82,9 @@ server <- function(input, output, session) {
     div(class="hero-band",
       div(class="hero-title", bs_icon("diagram-3-fill"), tags$b(sprintf("%s · %s", input$site, if (nrow(row)) row$name[1] else input$site)),
         tags$span(class="hero-sub", sprintf(" · %s–%s", yrs[1], yrs[2])), cpop("biome"),
-        # compact "change site" affordance: the site picker lives only in the offcanvas
-        # sidebar, so on narrow screens this opens it. Hidden on desktop (sidebar visible).
-        tags$a(class="hero-change", href="#", onclick="cascadeOpenSidebar();return false;",
+        # "change site" affordance: the picker lives on the Overview select-panel now,
+        # so this hops to Overview and scrolls the panel into view (works on every width).
+        tags$a(class="hero-change", href="#", onclick="cascadeChangeSite();return false;",
           bs_icon("pin-map"), " change site")),
       div(class="hero-verdict", verdict_sentence(input$site, lk, sm, blabel())),
       div(class="hero-grid",
@@ -557,7 +557,7 @@ server <- function(input, output, session) {
       updateRadioButtons(session, "expSeason", selected = "seasonal")
       updateSliderInput(session, "expLag", value = 1)
     } else {
-      showNotification("The monsoon → rodents demo link isn't available for the current response. Pick 'Small-mammal catch rate' in the sidebar.",
+      showNotification("This pairing needs the small-mammal response. Set 'Driver Lab: explain…' to 'Small-mammal catch rate' on the Overview, then try again.",
         type = "message", duration = 6)
     }
   })
@@ -620,6 +620,53 @@ server <- function(input, output, session) {
                "# Each flag is a value worth a second look, not an error; the cascade's QC rules are correct.", "")
       writeLines(hdr, file)
       suppressWarnings(utils::write.table(rep, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double")) })
+
+  # ---- top-bar Report: the focal site's report card (one self-describing CSV) ----
+  # Reuses the existing reactives/helpers: the verdict sentence, the annual signals,
+  # the biome-aware link scorecard, and the QC review. Sections are stacked in one
+  # file so the export is the site's whole story, not a single table.
+  output$dlReport <- downloadHandler(
+    filename = function() sprintf("driver-cascade-%s-report-card.csv", input$site),
+    content = function(file){
+      s <- input$site
+      row <- neon_sites[neon_sites$site == s, ]
+      nm  <- if (nrow(row)) row$name[1] else s
+      st  <- if (nrow(row)) row$state[1] else ""
+      sm  <- smatch(); lk <- links(); a <- ann()
+      verdict <- tryCatch(verdict_sentence(s, lk, sm, blabel()), error = function(e) "")
+      # strip any HTML tags the verdict helper may carry, so the CSV stays plain text
+      verdict <- gsub("<[^>]+>", "", as.character(verdict))
+      con <- file(file, open = "w", encoding = "UTF-8")
+      on.exit(close(con))
+      writeLines(c(
+        sprintf("# NEON Driver Cascade - site report card: %s (%s%s)", s, nm,
+                if (nzchar(st)) paste0(", ", st) else ""),
+        sprintf("# Biome class: %s", site_blabel(s)),
+        sprintf("# Years on record: %d", nrow(a)),
+        sprintf("# Expected links matching their predicted direction: %s",
+                if (!is.na(sm$n) && sm$n > 0) sprintf("%d of %d (sign-match p = %s)",
+                  sm$k, sm$n, if (!is.na(sm$p)) format(round(sm$p, 3)) else "NA") else "too few overlapping years"),
+        sprintf("# Verdict: %s", verdict),
+        "# An educational synthesis tool. r-values are within-site only; never read as causation.",
+        ""), con)
+      # section 1: annual signals
+      writeLines("## Annual signals (one row per year)", con)
+      suppressWarnings(utils::write.table(a, con, sep = ",", row.names = FALSE, qmethod = "double"))
+      writeLines("", con)
+      # section 2: link scorecard
+      if (!is.null(lk) && nrow(lk)) {
+        writeLines("## Predicted-link scorecard (within-site)", con)
+        suppressWarnings(utils::write.table(lk, con, sep = ",", row.names = FALSE, qmethod = "double"))
+        writeLines("", con)
+      }
+      # section 3: QC review (verify, not wrong)
+      qcrep <- tryCatch(cascade_qc_report(a, lk, SIGNALS, s), error = function(e) NULL)
+      writeLines("## Data-quality review (verify, not wrong - each flag is a value to look at, not a bug)", con)
+      if (is.null(qcrep) || !nrow(qcrep))
+        writeLines("All clear - no flags at this site.", con)
+      else
+        suppressWarnings(utils::write.table(qcrep, con, sep = ",", row.names = FALSE, qmethod = "double"))
+    })
 
   # ---- About ----
   output$aboutPanel <- renderUI({

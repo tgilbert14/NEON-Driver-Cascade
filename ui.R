@@ -1,7 +1,7 @@
 # ===========================================================================
 # NEON Driver Cascade — ui.R
 # ===========================================================================
-ui <- bslib::page_sidebar(
+ui <- bslib::page_fillable(
   theme = app_theme, title = NULL,
   window_title = "NEON Driver Cascade", fillable = FALSE,
   tags$head(
@@ -13,30 +13,48 @@ ui <- bslib::page_sidebar(
     tags$script(src = asset_url("cascade.js"))
   ),
   useShinyjs(),
-  sidebar = sidebar(
-    width = 330, class = "control-deck",
-    div(class = "brand", div(class = "brand-mark", "\U0001F517"),
-      div(div(class = "brand-title", "Driver Cascade"), div(class = "brand-sub", "NEON · cross-product synthesis"))),
-    selectInput("site", label = tagList(bs_icon("pin-map-fill"), " Site"),
-                choices = cascade_site_choices(), selected = DEFAULT_SITE, width = "100%"),
-    uiOutput("siteBio"),
-    uiOutput("signalChips"),
-    hr(class = "deck-hr"),
-    selectInput("response", label = tagList(bs_icon("bullseye"), " Driver Lab: explain…"),
-                choices = c("Small-mammal catch rate" = "mammal_cpue",
-                            "Plant richness" = "plant_richness", "Green-up onset" = "greenup_doy"),
-                selected = "mammal_cpue", width = "100%"),
-    hr(class = "deck-hr"),
-    actionButton("help", tagList(bs_icon("question-circle"), " How to read this"), class = "btn-outline-dark btn-sm w-100"),
-    div(class = "theme-toggle-row", tags$span(class = "theme-toggle-lab", bs_icon("circle-half"), " Theme"),
-      input_dark_mode(id = "colorMode", mode = "dark")),
-    div(class = "deck-foot", bs_icon("diagram-3"), " 5 NEON products, one cascade",
-      br(), tags$a(href = "https://desertdatalabs.com", target = "_blank", bs_icon("box-arrow-up-right"), " Desert Data Labs"))
+
+  # ---- persistent top bar (v2 flow) --------------------------------------
+  # The sidebar is gone: the site picker + response selector now live on a
+  # select-panel at the top of the Overview (the landing). The three controls
+  # that must stay reachable everywhere — How to read this, the per-site Report
+  # export, and the theme toggle — sit in this slim top-right bar.
+  div(class = "top-bar",
+    div(class = "top-bar-brand",
+      tags$span(class = "tb-mark", "\U0001F517"),
+      tags$span(class = "tb-title", "Driver Cascade"),
+      tags$span(class = "tb-sub", "NEON · cross-product synthesis")),
+    div(class = "top-bar-actions",
+      actionButton("help", tagList(bs_icon("question-circle"), " How to read this"),
+                   class = "btn-outline-dark btn-sm tb-help"),
+      downloadButton("dlReport", tagList(bs_icon("file-earmark-arrow-down"), " Report"),
+                     class = "btn-outline-dark btn-sm tb-report"),
+      div(class = "tb-theme",
+        tags$span(class = "tb-theme-lab", bs_icon("circle-half")),
+        input_dark_mode(id = "colorMode", mode = "dark")))
   ),
+
   uiOutput("heroStats"),
   div(class = "main-tabs-wrap",
     navset_card_tab(id = "tabs",
       nav_panel(title = tagList(bs_icon("compass"), " Overview"), value = "overview",
+        # ---- relocated site/response controls (was the sidebar) ------------
+        # Same input ids the server depends on (site, response). The site picker
+        # is the primary control; the Browse-all list below it is the by-name
+        # fallback. The hero "change site" link scrolls back up here.
+        div(id = "sitePanel", class = "select-panel",
+          div(class = "sp-head", bs_icon("sliders"), " Pick a site, and choose what to explain"),
+          div(class = "sp-row",
+            div(class = "sp-field",
+              selectInput("site", label = tagList(bs_icon("pin-map-fill"), " Site"),
+                          choices = cascade_site_choices(), selected = DEFAULT_SITE, width = "100%")),
+            div(class = "sp-field",
+              selectInput("response", label = tagList(bs_icon("bullseye"), " Driver Lab: explain…"),
+                          choices = c("Small-mammal catch rate" = "mammal_cpue",
+                                      "Plant richness" = "plant_richness", "Green-up onset" = "greenup_doy"),
+                          selected = "mammal_cpue", width = "100%"))),
+          uiOutput("siteBio"),
+          uiOutput("signalChips")),
         card(card_head("diagram-3-fill", "The idea: populations are driven from the bottom up",
           info_pop("The cascade",
             p("Five NEON products, normally explored apart, share field sites. This app lines them up by year into one ", tags$b("bottom-up cascade"), ":"),
@@ -156,7 +174,7 @@ ui <- bslib::page_sidebar(
              info_pop("Verify, not wrong",
                p("The suite gold-standard QC panel: ranked ", tags$b("“verify, not wrong”"), " flags for the selected site, worst-first."),
                p("Every flag is a value to ", tags$b("look at"), " before over-reading it, never a bug. The cascade's QC rules (the ≥5-individual green-up gate, the within-site temperature outlier filter, the CI-spans-zero guard) are correct; this just shows where they bit. Tap a flag for the exact rows; export the whole review as CSV."))),
-          p("A clean site shows a single green all-clear. Pick another site in the sidebar to review it."))),
+          p("A clean site shows a single green all-clear. Pick another site on the Overview to review it."))),
         card(card_head("clipboard-check", "Flags worth a second look"),
           uiOutput("qcFlags"))),
 

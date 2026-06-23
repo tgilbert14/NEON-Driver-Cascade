@@ -12,17 +12,22 @@
    looking for zero `.count-up` elements (an active per-render perf drain).
    ========================================================================= */
 
-// ---- open the offcanvas sidebar (the site picker lives only there) ----
-// Used by the hero "change site" affordance on narrow screens, where bslib collapses
-// the sidebar. Clicks bslib's own collapse toggle so the picker slides in.
-function cascadeOpenSidebar() {
-  var t = document.querySelector(".bslib-sidebar-layout > .collapse-toggle, .bslib-sidebar-layout .collapse-toggle");
-  if (t) { t.click(); }
-  // after the offcanvas paints, nudge focus to the site select for keyboard users
+// ---- "change site": hop to Overview, scroll the select-panel into view ----
+// v2 flow: the site picker lives on the Overview select-panel (no sidebar). The
+// hero "change site" link switches to the Overview tab, scrolls the panel into
+// view, and nudges focus to the site select for keyboard users.
+function cascadeChangeSite() {
+  // switch to the Overview tab (bslib nav uses data-bs-target / data-value)
+  var ov = document.querySelector('a.nav-link[data-value="overview"]');
+  if (ov) { try { ov.click(); } catch (e) {} }
   setTimeout(function () {
-    var sel = document.querySelector("#site");
+    var panel = document.getElementById("sitePanel");
+    if (panel && panel.scrollIntoView) {
+      try { panel.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { panel.scrollIntoView(); }
+    }
+    var sel = document.querySelector("#sitePanel .selectize-input, #site");
     if (sel && sel.focus) { try { sel.focus(); } catch (e) {} }
-  }, 320);
+  }, 120);
 }
 
 // ---- dismiss any open bslib/Bootstrap info popover (outside-click + Esc) ----
