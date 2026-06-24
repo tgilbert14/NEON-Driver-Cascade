@@ -7,6 +7,10 @@ field sites into a single trophic cascade:
 
 > **CLIMATE → GREEN-UP (the hinge) → PRODUCERS → CONSUMERS**
 
+> **Where this is headed:** [`docs/CASCADE-ROADMAP.md`](docs/CASCADE-ROADMAP.md) is the living plan
+> for growing this into a two-axis (terrestrial + aquatic) cascade — wiring Beetle, Mosquito, Inverts
+> and Water Chem in, the repeatable add-a-product framework, and the per-app science feedback loop.
+
 ## Why it's careful (and what it refuses to do)
 
 Each NEON site has only ~3–13 years of annual data. At that length a lag-aware correlation scan
