@@ -725,7 +725,15 @@ server <- function(input, output, session) {
         p("Every signal, its units, how it's derived, and the n-gates, plus analysis-ready CSV exports."),
         uiOutput("codebook")),
 
-      cascade_sources())
+      cascade_sources(),
+
+      div(class="about-card", h4(bs_icon("award"), " Data attribution & license"),
+        p(class="qc-cap-note",
+          "Built with data from the National Ecological Observatory Network (NEON), a U.S. National Science Foundation program operated by Battelle. NEON data are provided under a Creative Commons Attribution 4.0 International (CC BY 4.0) license (",
+          tags$a(href="https://creativecommons.org/licenses/by/4.0/", target="_blank", "creativecommons.org/licenses/by/4.0"),
+          "). This app aggregates and derives summary metrics from the raw NEON data products; the underlying measurements are unaltered. It is an independent, unofficial tool and is not endorsed by NEON, Battelle, or the NSF."),
+        p(class="qc-cap-note", style="margin-top:6px",
+          "A multi-product synthesis joining: small mammals (DP1.10072.001), breeding birds (DP1.10003.001), plant diversity (DP1.10058.001), vegetation structure (DP1.10098.001), plant phenology (DP1.10055.001), mosquitoes (DP1.10043.001), and NEON climate overlays (air temperature DP1.00002.001, precipitation DP1.00044.001), each provided under CC BY 4.0.")))
   })
   # ---- SEASONAL CLIMATE reveal (the desert insight made visible) ----
   output$seasonalPlot <- renderPlotly({
@@ -915,7 +923,8 @@ server <- function(input, output, session) {
       cb <- CODEBOOK
       hdr <- c("# NEON Driver Cascade · data codebook (every emitted signal, its unit, NA-semantics, and n-gate).",
                "# Generated from the actual exported keep-vector, so it cannot drift from the columns the app emits.",
-               "# na_meaning = the QC gate that produces an NA cell; n_gate = the per-signal coverage gate.", "")
+               "# na_meaning = the QC gate that produces an NA cell; n_gate = the per-signal coverage gate.",
+               "# Source: NEON multi-product synthesis (DP1.10072.001, DP1.10003.001, DP1.10058.001, DP1.10098.001, DP1.10055.001, DP1.10043.001, DP1.00002.001, DP1.00044.001), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); aggregated and derived by this app.", "")
       writeLines(hdr, file)
       suppressWarnings(utils::write.table(cb, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
     })
