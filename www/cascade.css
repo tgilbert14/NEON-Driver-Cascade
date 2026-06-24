@@ -402,7 +402,15 @@ body::before {
 }
 
 /* ---- (2) THE SHOWPIECE: the hero becomes a navy command band (matches the hub) -- */
-.hero-band { position: relative; overflow: hidden; border-radius: 18px;
+/* flex:0 0 auto is load-bearing, not cosmetic: page_fillable makes <body> a
+   fixed-height flex COLUMN and pins its direct children with `.bslib-page-fill
+   > * { flex:0 0 auto }`. But heroStats' uiOutput wrapper is display:contents,
+   so the real flex item is THIS .hero-band (a DOM grandchild) which that
+   selector never reaches — leaving it the CSS default flex:0 1 auto. On a short
+   viewport the overflowing column then dumps ALL its shrink pressure onto the
+   one shrinkable child, crushing the band to a ~34px sliver (overflow:hidden
+   clips the title and hides the verdict + stat tiles). Pin it like its siblings. */
+.hero-band { flex: 0 0 auto; position: relative; overflow: hidden; border-radius: 18px;
   padding: 18px 20px 16px; margin: 4px 0 16px; color: #fff;
   background: radial-gradient(125% 150% at 16% -12%, #15425f 0%, #0b1733 46%, #070d1f 100%);
   box-shadow: 0 18px 46px rgba(3,8,20,.45), inset 0 0 0 1px rgba(45,212,191,.18); }

@@ -106,8 +106,8 @@ DDL <- list(
   cardinal = "#fb8a7e", coral = "#fb8a7e", gold = "#ffd24a", gold2 = "#e0b43a",
   sky = "#43b8e8", green = "#5fb56a", green2 = "#9bd24a",
   ink = "#eaf2ff", muted = "#9fb0cf", bg = "#070d1f", paper = "#0e1d40", line = "rgba(255,255,255,0.12)")
-# Light "desert-day" base (shown if the user toggles light). DARK is the default
-# (input_dark_mode mode="dark") and the showcase — the desert-night creative system.
+# Light "desert-day" base is the DEFAULT (input_dark_mode mode="light"); the user can
+# toggle to the dark desert-night showcase. The navy hero command band stays navy in both.
 app_theme <- bs_theme(version = 5, bg = "#eef3fb", fg = "#16243a",
   primary = "#149086", secondary = "#e0685a", success = "#3f9a52", info = "#2f8fc4",
   warning = "#d6a31c", danger = "#e0685a",

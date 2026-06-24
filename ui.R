@@ -31,7 +31,7 @@ ui <- bslib::page_fillable(
                      class = "btn-outline-dark btn-sm tb-report"),
       div(class = "tb-theme",
         tags$span(class = "tb-theme-lab", bs_icon("circle-half")),
-        input_dark_mode(id = "colorMode", mode = "dark")))
+        input_dark_mode(id = "colorMode", mode = "light")))
   ),
 
   uiOutput("heroStats"),
