@@ -195,7 +195,7 @@ server <- function(input, output, session) {
           hovertemplate=paste0("<b>",sub$label[1],"</b><br>%{x}: z=%{y:.2f} (",lm$title,")<extra></extra>")) }
       # overlay the pulse highlights for any signal in this strip
       for (k in unique(dd$key)) if (!is.null(hl[[k]])) { h <- hl[[k]]
-        p <- p %>% plotly::add_trace(data=h, x=~year, y=~z, type="scatter", mode="markers+text",
+        p <- p %>% plotly::add_trace(data=h, x=~year, y=~z, type="scatter", mode="markers+text", cliponaxis=FALSE,
           text=~lab, textposition="top center", textfont=list(size=9, color=if(is_dark())"#e8eef2" else "#1f2a30"),
           marker=list(size=16, color=h$color, symbol=h$sym, line=list(color="#fff", width=2)),
           name="pulse", legendgroup=L, showlegend=FALSE, hovertext=h$lab, hoverinfo="text") }
@@ -208,7 +208,7 @@ server <- function(input, output, session) {
       theme_plotly() %>%
       plotly::layout(showlegend = !narrow, legend=list(orientation="h", y=-0.08, font=list(size=10)),
         xaxis=list(title="", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
-        margin=list(l=60,r=20,t=20,b=if (narrow) 24 else 40))
+        margin = list(l = 60, r = 20, t = 36, b = if (narrow) 24 else 40))
     # capture a dot click -> Shiny input$tracedYear (re-attached on every render; plotly purge wipes handlers)
     htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
       if (d && d.points && d.points.length){ var yr = d.points[0].x;
@@ -333,8 +333,8 @@ server <- function(input, output, session) {
         text="No trend line below 6 years; read the points, not a slope.", showarrow=FALSE,
         font=list(size=10, color=if(is_dark())"#9fb0c4" else "#6b7a85"))))
     sp <- p %>% theme_plotly() %>% plotly::layout(showlegend=FALSE, annotations=anns,
-      xaxis=list(title=sprintf("%s (%s)", sig_label(r$from), sig_unit(r$from))),
-      yaxis=list(title=sprintf("%s (%s)", sig_label(r$to), sig_unit(r$to))), margin=list(l=55,r=20,t=20,b=45))
+      xaxis = list(title = list(text = sprintf("Driver: %s", sig_label(r$from)), standoff = 12), automargin = TRUE),
+      yaxis = list(title = list(text = sprintf("Response: %s", sig_label(r$to)), standoff = 14), automargin = TRUE), margin = list(l = 80, r = 20, t = 30, b = 50))
     htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
       if (d && d.points && d.points.length){ var yr = d.points[0].customdata;
         if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('scatterYear', {year: yr, n: Math.random()}); } }); }")

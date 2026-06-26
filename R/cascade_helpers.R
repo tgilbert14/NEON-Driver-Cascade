@@ -18,10 +18,34 @@ lag_pairs <- function(ann_site, from, to, lag = 0L) {
   if (is.null(ann_site) || !all(c(from, to) %in% names(ann_site))) return(data.frame())
   drv <- data.frame(year = ann_site$year,        x = ann_site[[from]])
   rsp <- data.frame(year = ann_site$year - lag,  y = ann_site[[to]])   # response at t+lag keyed to driver year t
+  if (anyDuplicated(drv$year)) {
+    warning("lag_pairs(): duplicate driver years detected; collapsing by year mean.", call. = FALSE)
+    drv <- stats::aggregate(x ~ year, data = drv, FUN = function(v) if (all(is.na(v))) NA_real_ else mean(v, na.rm = TRUE))
+  }
+  if (anyDuplicated(rsp$year)) {
+    warning("lag_pairs(): duplicate response years detected; collapsing by year mean.", call. = FALSE)
+    rsp <- stats::aggregate(y ~ year, data = rsp, FUN = function(v) if (all(is.na(v))) NA_real_ else mean(v, na.rm = TRUE))
+  }
   m <- merge(drv, rsp, by = "year")
   m[is.finite(m$x) & is.finite(m$y), , drop = FALSE]
 }
 
+
+# dependence-preserving null: circularly shift response years, not free-shuffle.
+perm_p_circular <- function(x, y, nperm = 2000) {
+  n <- length(y)
+  if (n < 3) return(NA_real_)
+  obs <- suppressWarnings(stats::cor(x, y))
+  if (!is.finite(obs)) return(NA_real_)
+  shifts <- seq_len(max(1L, n - 1L))
+  pick <- if (length(shifts) <= nperm) shifts else sample(shifts, nperm, replace = FALSE)
+  null <- vapply(pick, function(k) {
+    yk <- y[((seq_len(n) - 1L + k) %% n) + 1L]
+    suppressWarnings(stats::cor(x, yk))
+  }, numeric(1))
+  b <- sum(abs(null) >= abs(obs) - 1e-9, na.rm = TRUE)
+  round((b + 1) / (sum(is.finite(null)) + 1), 3)
+}
 # one prior link's statistics, n-gated. prior_sign in {-1,+1}.
 link_stat <- function(ann_site, from, to, lag, prior_sign, nperm = 2000) {
   m <- lag_pairs(ann_site, from, to, lag); n <- nrow(m)
@@ -34,9 +58,8 @@ link_stat <- function(ann_site, from, to, lag, prior_sign, nperm = 2000) {
   if (n < 6) { out$tier <- "exploratory"
     out$verdict <- sprintf("exploratory only: %d years is too few for a verdict (the eye, not the p-value)", n)
     return(out) }
-  # n >= 6: permutation null (shuffle response) + bootstrap CI
-  perm <- replicate(nperm, suppressWarnings(stats::cor(m$x, sample(m$y))))
-  out$p <- round(mean(abs(perm) >= abs(r) - 1e-9, na.rm = TRUE), 3)
+  # n >= 6: autocorrelation-preserving permutation null (circular shift) + bootstrap CI
+  out$p <- perm_p_circular(m$x, m$y, nperm = nperm)
   bs <- replicate(2000, { i <- sample(n, n, replace = TRUE); suppressWarnings(stats::cor(m$x[i], m$y[i])) })
   out$lo <- unname(round(stats::quantile(bs, 0.025, na.rm = TRUE), 2)); out$hi <- unname(round(stats::quantile(bs, 0.975, na.rm = TRUE), 2))
   spans0 <- is.finite(out$lo) && is.finite(out$hi) && out$lo < 0 && out$hi > 0

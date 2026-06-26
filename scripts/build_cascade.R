@@ -28,6 +28,15 @@ source(file.path(APP$phe, "R/phe_helpers.R"))   # onset(), GREENUP
 rd <- function(p) if (file.exists(p)) tryCatch(readRDS(p), error=function(e) NULL) else NULL
 sites_in <- function(app) { d <- file.path(APP[[app]], "data/sites"); if (!dir.exists(d)) character(0) else sub("\\.rds$","",list.files(d, "\\.rds$")) }
 yr_of <- function(x) suppressWarnings(as.integer(format(as.Date(x), "%Y")))
+assert_unique_year <- function(df, label) {
+  if (is.null(df) || !nrow(df)) return(invisible(df))
+  dup <- dplyr::count(df, .data$year, name = "n")
+  dup <- dup[dup$n > 1, , drop = FALSE]
+  if (nrow(dup)) {
+    stop(sprintf("%s has duplicate year rows; fix upstream aggregation before joining.", label), call. = FALSE)
+  }
+  invisible(df)
+}
 
 # ---- per-product annual extractors (return data.frame site,year,<signals>) ----
 ann_env <- function(site) {                       # climate + coarse NEON phenology %
@@ -78,7 +87,8 @@ ann_env_seasonal <- function(site) {              # SEASONAL climate — the des
     summarise(precip_monsoon = if (sum(!is.na(.data$precip_mm)) == 3) round(sum(.data$precip_mm, na.rm = TRUE), 1) else NA_real_, .groups = "drop")
   spr <- e %>% filter(.data$mo %in% c(3,4,5)) %>% group_by(year = .data$year) %>%
     summarise(temp_spring = if (sum(!is.na(.data$temp_c)) >= 2) round(mean(.data$temp_c, na.rm = TRUE), 2) else NA_real_, .groups = "drop")
-  out <- Reduce(function(a, b) full_join(a, b, by = "year"), list(win, mon, spr))
+  assert_unique_year(win, paste0(site, " winter climate")); assert_unique_year(mon, paste0(site, " monsoon climate")); assert_unique_year(spr, paste0(site, " spring temp"));
+  out <- Reduce(function(a, b) full_join(a, b, by = "year", relationship = "one-to-one"), list(win, mon, spr))
   # same within-site MAD outlier QC the annual temp path uses (catches the SCBI-2018
   # corrupted-sensor year a naive seasonal recompute would let through).
   tv <- out$temp_spring[is.finite(out$temp_spring)]
@@ -158,7 +168,8 @@ ann_mosq <- function(site) {                      # consumer/vector: CO2-trap ac
     culex = sum(.data$count[.data$genus == "Culex"], na.rm=TRUE),
     mosq_richness = dplyr::n_distinct(.data$scientificName[.data$is_species %in% TRUE]),
     .groups="drop")
-  out <- if (!is.null(eff)) left_join(catch, eff, by="year") else { catch$tn <- NA_real_; catch }
+  if (!is.null(eff)) assert_unique_year(eff, paste0(site, " mosquito effort")); assert_unique_year(catch, paste0(site, " mosquito catch"));
+  out <- if (!is.null(eff)) left_join(catch, eff, by="year", relationship = "one-to-one") else { catch$tn <- NA_real_; catch }
   out %>% mutate(
     mosq_activity = ifelse(!is.na(.data$tn) & .data$tn > 0, round(.data$total / .data$tn, 2), NA_real_),
     mosq_culex    = ifelse(.data$total > 0, round(100 * .data$culex / .data$total, 1), NA_real_),
@@ -185,7 +196,8 @@ cat("assembling", length(all_sites), "sites...\n")
 join_all <- function(site) {
   parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site), ann_mosq(site)))
   if (!length(parts)) return(NULL)
-  Reduce(function(a,b) full_join(a,b,by=c("site","year")), parts)
+  invisible(lapply(seq_along(parts), function(i) assert_unique_year(parts[[i]], paste0(site, " part ", i))));
+  Reduce(function(a,b) full_join(a,b,by=c("site","year"), relationship = "one-to-one"), parts)
 }
 annual <- bind_rows(lapply(all_sites, join_all))
 annual <- annual[!is.na(annual$year) & annual$year >= 2013 & annual$year <= 2025, , drop=FALSE]
@@ -234,7 +246,7 @@ signals <- tibble::tribble(
 priors <- tibble::tribble(
   ~from,            ~to,              ~sign, ~lag, ~conf,      ~expected_class,       ~note,
   "temp",           "greenup_doy",     -1L, 0L, "strong",   "temperature-limited", "Warmer springs make plants leaf out earlier — the most reliable rung of the whole cascade, and it holds across most temperate and boreal sites. (Annual mean temperature stands in for spring warmth, which works where temperature is what limits green-up — not in warm deserts, where water is the trigger.)",
-  "temp_spring",    "greenup_doy",     -1L, 0L, "strong",   "temperature-limited", "Spring temperature is the mechanistically-correct driver of leaf-out: the same warmer-springs-leaf-out-earlier link as the row above, but tested on the spring months that actually trigger green-up rather than the annual-mean stand-in. Where green-up is well sampled this is the honest, on-the-right-season version of the suite's one robust rung — report it alongside temp→greenup, not instead of it.",
+  "temp_spring",    "greenup_doy",     -1L, 0L, "strong",   "temperature-limited", "Spring temperature is the mechanistically-correct driver of leaf-out: the same warmer-springs-leaf-out-earlier link as the row above, but tested on the spring months that actually trigger green-up rather than the annual-mean stand-in. Where green-up is well sampled this is the honest, on-the-right-season version of the suite's strongest supported pooled signal — report it alongside temp→greenup, not instead of it.",
   "precip",         "plant_richness",  +1L, 0L, "weak",     "temperature-limited", "More rain can mean more plant growth — but species RICHNESS is a poor stand-in for productivity (it can even FALL in wet years as a few species take over), so this link is weak and its direction varies from place to place.",
   "precip",         "mammal_cpue",     +1L, 1L, "moderate", "temperature-limited", "A wet year grows more food, and a year later small-mammal numbers rise — the classic bottom-up lag, clearest where a single rain season feeds the system.",
   "precip_winter",  "plant_richness",  +1L, 0L, "moderate", "water-limited",       "In deserts the COOL-SEASON (Oct–Mar) rain germinates the spring forbs — so winter rain, not the annual total, is what tracks plant diversity that year. (At Santa Rita this recovers the link the annual number hides.)",
@@ -295,7 +307,7 @@ na_meaning <- c(
   temp            = "NA when fewer than 8 valid monthly temp records, or the within-site MAD outlier filter NA'd a corrupted-sensor year.",
   precip_winter   = "NA when fewer than 5 of the 6 Oct-Mar months are present.",
   precip_monsoon  = "NA when any of the 3 Jul-Sep months is missing.",
-  temp_spring     = "NA when the Mar-May months are not all present.",
+  temp_spring     = "NA when fewer than 2 of the 3 Mar-May months are present, or when within-site MAD outlier QC flags an implausible spring-temperature year.",
   greenup_doy     = "NA in years with fewer than 5 tracked individuals (the onset gate), or no green-up phenophase observed.",
   fruiting_pct    = "NA at sites/months tracking no fruit, or months with fewer than 5 individuals (honestly NA at arid sites).",
   plant_richness  = "NA when the plant-diversity bundle has no plot data that year.",
@@ -309,7 +321,7 @@ na_meaning <- c(
   mosq_culex      = "NA when the catch is zero or unidentified to the Culex group.")
 n_gate <- c(
   precip = ">=10 months", temp = ">=8 months", precip_winter = ">=5 of 6 months",
-  precip_monsoon = "3 of 3 months", temp_spring = "3 of 3 months",
+  precip_monsoon = "3 of 3 months", temp_spring = ">=2 of 3 months",
   greenup_doy = ">=5 individuals/yr", fruiting_pct = ">=5 individuals/month",
   plant_richness = "1+ plot/yr", plant_intro_pct = "1+ plot/yr",
   mammal_cpue = "effort>0", mammal_mnka = "1+ tag/yr", bird_index = "1+ count/yr",
