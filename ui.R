@@ -284,13 +284,13 @@ ui <- bslib::page_fillable(
           div(
             class = "sb-sortbar",
             tags$span(class = "sb-sort-lab", bs_icon("sort-down"), " Sort sites by"),
-            selectInput("sbSort", NULL, width = "210px",
+            selectInput("sbSort", NULL, width = "210px", selectize = FALSE,
               choices = c(
-                "Biome, then agreement (default)" = "default",
-                "Site name (A-Z)"                 = "abc",
-                "Most links agreeing"             = "agree",
-                "Most testable links"             = "coverage",
-                "Woody standing stock"            = "ba"
+                "Biome + agreement (default)" = "default",
+                "Site name (A-Z)"             = "abc",
+                "Most links agreeing"         = "agree",
+                "Most testable links"         = "coverage",
+                "Woody standing stock"        = "ba"
               ), selected = "default")
           ),
           div(class = "sb-scroll", uiOutput("scoreboard"))

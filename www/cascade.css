@@ -229,7 +229,7 @@ tr.dt-dim { opacity: .55; }
 .sb-sitelink:hover { color: var(--cardinal, #AB0520); text-decoration: underline; }
 .sb-biome { font-size: 9.5px; color: var(--muted); line-height: 1.1; }
 .sb-cell { text-align: center; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums;
-  border-radius: 5px; padding: 5px 3px; min-width: 52px; }
+  border-radius: 6px; padding: 6px 4px; min-width: 54px; letter-spacing: .2px; transition: outline-color .1s; }
 .sb-cell.sb-consistent  { background: #2dd4bf; color: #06231f; }
 .sb-cell.sb-apparent    { background: #e0b43a; color: #2e2406; }
 .sb-cell.sb-counter     { background: #fb8a7e; color: #3a0e08; }
@@ -758,9 +758,17 @@ html .reveal-card.is-visible { opacity: 1; transform: none; }
 .meta-list li { margin: 3px 0; }
 .pooled-s4t { font-size: 12px; }
 /* scoreboard sort bar (left-aligned, above the grid) */
-.sb-sortbar { display: flex; align-items: center; gap: 8px; margin: 2px 0 10px; flex-wrap: wrap; }
+.sb-sortbar { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
 .sb-sort-lab { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
 .sb-sortbar .shiny-input-container, .sb-sortbar .form-group { margin-bottom: 0 !important; }
+.sb-sortbar select.form-control, .sb-sortbar select.form-select {
+  font-size: 12.5px; height: 34px; padding: 4px 28px 4px 10px; border-radius: 8px;
+  cursor: pointer; border-color: var(--line); background-color: var(--paper); }
+/* sticky site column: a soft right edge so site names separate from the grid while scrolling */
+.sb-table td.sb-site, .sb-table th.sb-site { box-shadow: 7px 0 8px -7px rgba(12,35,75,.16); }
+.sb-table th.sb-col { padding-bottom: 8px; }
+[data-bs-theme="dark"] .sb-sortbar select.form-control,
+[data-bs-theme="dark"] .sb-sortbar select.form-select { background-color: #14233b; color: #dbe6f5; }
 /* clickable scoreboard cells -> detail modal */
 .sb-cell.sb-clk { cursor: pointer; }
 .sb-cell.sb-clk:hover { outline: 2px solid rgba(255,255,255,.7); outline-offset: -2px; }
