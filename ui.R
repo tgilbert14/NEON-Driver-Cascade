@@ -123,7 +123,8 @@ ui <- bslib::page_fillable(
         ),
         card(
           card_head("list-check", "What's measured here", info_pop("Signals", p("The annual signals available at this site, by trophic layer."))),
-          uiOutput("signalTable")
+          uiOutput("signalTable"),
+          uiOutput("hillProfile")
         ),
         handoff("See the cascade year by year", "ladder")
       ),

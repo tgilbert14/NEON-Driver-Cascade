@@ -14,6 +14,10 @@ source("R/site_metadata.R")     # neon_sites, biome_class(), biome_of(), biome_l
 # workflow clones each sibling into a workspace and sets CASCADE_ROOT to it. The
 # dir names below must match the clone target dirs the workflow uses.
 ROOT <- Sys.getenv("CASCADE_ROOT", unset = "C:/Users/tsgil/OneDrive/Documents/VGS - R")
+# Fail LOUD if the sibling-repo root is wrong: a silent bad ROOT makes every rd() return
+# NULL and ships an EMPTY bundle with no error (the CI-killer). Better to stop here.
+if (!dir.exists(ROOT))
+  stop(sprintf("CASCADE_ROOT does not exist: '%s'. Set the CASCADE_ROOT env var to the folder that holds the sibling app repos.", ROOT), call. = FALSE)
 APP  <- list(
   mammal = file.path(ROOT, "App-NEON-Small-Mammal-Tracker"),
   plant  = file.path(ROOT, "NEON-Plant-Diversity"),
@@ -108,6 +112,16 @@ ann_plant <- function(site) {                     # producer: richness + introdu
   oc <- b$occ; sp <- oc[oc$is_species %in% TRUE, , drop=FALSE]
   sp %>% group_by(year) %>% summarise(
     plant_richness = dplyr::n_distinct(.data$scientificName),
+    # Hill numbers q1/q2 (EFFECTIVE species), abundance-weighted by cover share. Unlike raw
+    # richness (q0), they do NOT inflate with sampling effort and do NOT invert in wet years
+    # when a few species dominate (Hill 1973; Jost 2006). Manual formulas (no vegan dependency,
+    # keeps the manifest lean): q1 = exp(Shannon), q2 = inverse-Simpson. NA when <2 species.
+    plant_q1 = { ag <- tapply(.data$percentCover, .data$scientificName, sum, na.rm = TRUE)
+                 ag <- ag[is.finite(ag) & ag > 0]
+                 if (length(ag) < 2) NA_real_ else { p <- ag / sum(ag); round(exp(-sum(p * log(p))), 1) } },
+    plant_q2 = { ag <- tapply(.data$percentCover, .data$scientificName, sum, na.rm = TRUE)
+                 ag <- ag[is.finite(ag) & ag > 0]
+                 if (length(ag) < 2) NA_real_ else { p <- ag / sum(ag); round(1 / sum(p^2), 1) } },
     plant_intro_pct = { tot <- sum(.data$percentCover, na.rm=TRUE)
       if (tot > 0) round(100 * sum(.data$percentCover[.data$nativeStatusCode %in% c("I","NI")], na.rm=TRUE) / tot, 1) else NA_real_ },
     .groups="drop") %>% mutate(site = site, .before = 1)
@@ -204,8 +218,8 @@ annual <- annual[!is.na(annual$year) & annual$year >= 2013 & annual$year <= 2025
 annual <- annual %>% arrange(.data$site, .data$year)
 
 # ensure every signal column exists even if no site had it
-SIGCOLS <- c("precip","temp","precip_winter","precip_monsoon","temp_spring","fruiting_pct","greenup_doy","plant_richness","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness","mosq_activity","mosq_richness","mosq_culex")
-for (c in SIGCOLS) if (!c %in% names(annual)) annual[[c]] <- NA_real_
+SIGCOLS <- c("precip","temp","precip_winter","precip_monsoon","temp_spring","fruiting_pct","greenup_doy","plant_richness","plant_q1","plant_q2","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness","mosq_activity","mosq_richness","mosq_culex")
+for (col in SIGCOLS) if (!col %in% names(annual)) annual[[col]] <- NA_real_
 
 # ---- signal metadata: trophic layer + display + direction-of-"more" ----
 # `ladder` = show on the main stacked ladder. Seasonal climate signals are ladder=FALSE:
@@ -220,6 +234,8 @@ signals <- tibble::tribble(
   "greenup_doy",   "Green-up onset",               "phenology",  "day-of-year","later",         TRUE,
   "fruiting_pct",  "Peak fruiting",                "producer",   "% plants",   "more fruit",    TRUE,
   "plant_richness","Plant richness",               "producer",   "species",    "more diverse",  TRUE,
+  "plant_q1",      "Plant diversity (q1)",         "producer",   "eff. species","more diverse",  FALSE,
+  "plant_q2",      "Plant diversity (q2)",         "producer",   "eff. species","more diverse",  FALSE,
   "plant_intro_pct","Introduced plant cover",      "producer",   "% cover",    "more invaded",  TRUE,
   "mammal_cpue",   "Small-mammal catch rate",      "consumer",   "per 100 TN", "more rodents",  TRUE,
   "mammal_mnka",   "Small mammals (indiv.)",       "consumer",   "individuals","more rodents",  TRUE,
@@ -251,7 +267,7 @@ priors <- tibble::tribble(
   "precip",         "mammal_cpue",     +1L, 1L, "moderate", "temperature-limited", "A wet year grows more food, and a year later small-mammal numbers rise — the classic bottom-up lag, clearest where a single rain season feeds the system.",
   "precip_winter",  "plant_richness",  +1L, 0L, "moderate", "water-limited",       "In deserts the COOL-SEASON (Oct–Mar) rain germinates the spring forbs — so winter rain, not the annual total, is what tracks plant diversity that year. (At Santa Rita this recovers the link the annual number hides.)",
   "precip_monsoon", "mammal_cpue",     +1L, 1L, "moderate", "water-limited",       "Desert granivores (kangaroo rats, pocket mice) track the SUMMER-MONSOON (Jul–Sep) seed crop: a big monsoon grows the seeds, and a year later the seed-eaters boom. Testing the monsoon at a 1-year lag, not annual rain, recovers this link (Santa Rita r≈+0.7). Literature-strong but scored MODERATE here: in-app it rests on a single desert site (n=7, p=0.06), so the displayed confidence reflects what this app's data can carry, not the mechanism.",
-  "fruiting_pct",   "mammal_cpue",     +1L, 1L, "weak",     "all",                 "A good fruit-and-seed year should feed the seed-eaters into the next year — but our fruiting signal is a coarse peak-intensity index, so read this as suggestive only, not a measured seed crop.",
+  "fruiting_pct",   "mammal_cpue",     +1L, 1L, "weak",     "none",                "A good fruit-and-seed year should feed the seed-eaters into the next year — but our fruiting signal is a coarse peak-intensity index, so read this as suggestive only, not a measured seed crop. Shown for context only (expected_class='none'): a proxy this coarse should not cast a sign-vote in the pooled tally, and its mechanism is the monsoon-seed pathway (water-limited), so 'all' wrongly pooled it over mesic sites. Excluded from every site's sign-match and the pooled binomial; still computed and visible in Driver Lab.",
   "plant_richness", "mammal_cpue",     +1L, 1L, "weak",     "all",                 "More varied plant communities MIGHT support more animals the next year — the least certain link in the cascade: plant variety is only a rough stand-in for food, so even the direction is uncertain, and the data bears that out.",
   "precip_monsoon", "mosq_activity",   +1L, 0L, "moderate", "water-limited",       "A big summer monsoon fills the ephemeral water mosquito larvae need, so a wet monsoon means more mosquitoes that SAME season — the monsoon's FAST pulse (weeks), the desert-water mirror of temp→green-up. (Read this coarse annual link as an echo of the within-season pulse the Mosquito Pulse app shows directly.)",
   "temp_spring",    "mosq_activity",   +1L, 0L, "moderate", "temperature-limited", "Warmer springs speed mosquito larval development, so temperate sites with warm springs reach emergence sooner and larger — degree-days PACE the pulse where temperature, not water, is the brake. (Above the heat optimum, extreme desert temperatures reverse this; that ceiling is why it's scored only where temperature limits.)")
@@ -273,8 +289,8 @@ site_meta <- data.frame(
 # producer standing stock (live basal area m2/ha) — per-site context, not an annual signal
 veg <- do.call(rbind, lapply(ALL_SITES, ann_veg))
 if (!is.null(veg) && nrow(veg)) site_meta <- dplyr::left_join(site_meta, veg, by = "site")
-for (c in c("veg_ba_ha","veg_ba_se","veg_type","veg_n_plots"))
-  if (!c %in% names(site_meta)) site_meta[[c]] <- if (grepl("type", c)) NA_character_ else NA_real_
+for (col in c("veg_ba_ha","veg_ba_se","veg_type","veg_n_plots"))
+  if (!col %in% names(site_meta)) site_meta[[col]] <- if (grepl("type", col)) NA_character_ else NA_real_
 cat("\nveg standing stock computed for", sum(is.finite(site_meta$veg_ba_ha)), "of", nrow(site_meta), "sites\n")
 
 # ---- PRECOMPUTE the cross-site scoreboard + pooled result (the honest headline).
@@ -297,6 +313,12 @@ pooled <- pooled_links(suite_links)
 # this; we re-assert it here so a future change to that helper can't silently drop
 # the column the server prefers (it falls back to sites>=3 only if absent).
 pooled$poolable <- pooled$sites >= 3
+# Build-time guard: EVERY selectable site must be in the precomputed scoreboard, or the
+# app's site_links_cached() fallback would run a live 2000-permutation fit on the reactive
+# path (a multi-second freeze). The site dropdown is keyed on unique(annual$site); assert
+# parity here so a coverage gap fails the BUILD, not the user.
+stopifnot("suite_links is missing sites that appear in annual" =
+  setequal(unique(suite_links$site), unique(annual$site)))
 
 # ---- machine-readable codebook (emitted ONCE here, iterating the ACTUAL exported
 # `signals` keep-vector so the dictionary can never drift from the emitted columns).
@@ -311,6 +333,8 @@ na_meaning <- c(
   greenup_doy     = "NA in years with fewer than 5 tracked individuals (the onset gate), or no green-up phenophase observed.",
   fruiting_pct    = "NA at sites/months tracking no fruit, or months with fewer than 5 individuals (honestly NA at arid sites).",
   plant_richness  = "NA when the plant-diversity bundle has no plot data that year.",
+  plant_q1        = "Effective species (exp-Shannon Hill number); NA when fewer than 2 cover-scored species that year.",
+  plant_q2        = "Effective species (inverse-Simpson Hill number); NA when fewer than 2 cover-scored species that year.",
   plant_intro_pct = "NA when cover is unscored that year.",
   mammal_cpue     = "NA when no trapping effort (deployed trap-nights) is recorded that year.",
   mammal_mnka     = "NA when no tagged-individual records that year.",
@@ -323,7 +347,7 @@ n_gate <- c(
   precip = ">=10 months", temp = ">=8 months", precip_winter = ">=5 of 6 months",
   precip_monsoon = "3 of 3 months", temp_spring = ">=2 of 3 months",
   greenup_doy = ">=5 individuals/yr", fruiting_pct = ">=5 individuals/month",
-  plant_richness = "1+ plot/yr", plant_intro_pct = "1+ plot/yr",
+  plant_richness = "1+ plot/yr", plant_q1 = ">=2 species/yr", plant_q2 = ">=2 species/yr", plant_intro_pct = "1+ plot/yr",
   mammal_cpue = "effort>0", mammal_mnka = "1+ tag/yr", bird_index = "1+ count/yr",
   bird_richness = "1+ count/yr", mosq_activity = "effort>0", mosq_richness = "1+ catch/yr",
   mosq_culex = "1+ Culex/yr")

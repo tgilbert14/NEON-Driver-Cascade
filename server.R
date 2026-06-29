@@ -56,10 +56,18 @@ server <- function(input, output, session) {
     best <- if (nrow(ok)) ok[order(match(ok$tier, c("consistent","apparent","counter","exploratory")),
                                    -abs(ifelse(is.na(ok$r), 0, ok$r))), ][1, ] else NULL
     mon <- lk[lk$from == "precip_monsoon" & lk$to == "mammal_cpue" & is.finite(lk$r), ]
+    # Suite-level lead (Cass): on a desert landing page, open with the ONE result that
+    # survives cross-site pooling (warmer springs -> earlier green-up), THEN the desert
+    # seasonal-split as the app's core insight, hedged. Neither buries the other.
+    gp <- POOLED[POOLED$from == "temp" & POOLED$to == "greenup_doy" &
+                 (if ("poolable" %in% names(POOLED)) POOLED$poolable %in% TRUE else POOLED$sites >= 3), , drop = FALSE]
+    suite_lead <- if (nrow(gp) && is.finite(gp$p[1]))
+      sprintf("Across the network, the cascade's most reliable rung holds: <b>warmer springs &rarr; earlier green-up</b> at <b>%d of %d</b> temperature-limited sites (pooled p&nbsp;=&nbsp;%.3f). ",
+              gp$k[1], gp$sites[1], gp$p[1]) else ""
     lead <- sprintf("<span class='biome-tag biome-%s'>%s</span> ",
                     if (desert) "water" else "temp", blab)
     body <- if (desert) {
-      s <- "Here green-up is triggered by <b>water, not warmth</b>, so the standard <i>annual</i> cascade only half-fits, and that mismatch <b>is the finding</b>, not a failure."
+      s <- paste0(suite_lead, "Here, though, green-up is triggered by <b>water, not warmth</b>, so the standard <i>annual</i> cascade only half-fits, and that mismatch <b>is the finding</b>, not a failure.")
       if (nrow(mon) && mon$r[1] > 0)
         s <- paste0(s, sprintf(" Test the <b>right season</b> and the chain reappears: the summer-monsoon seed crop <b>tracks</b> next year's rodents at <b>r&nbsp;=&nbsp;%+.2f</b> (a single desert, suggestive, not yet established), where annual rainfall showed almost nothing (r&nbsp;=&nbsp;+0.20).", mon$r[1]))
       s
@@ -151,6 +159,26 @@ server <- function(input, output, session) {
       tags$tbody(rows))
   })
 
+  # ---- Hill diversity profile (q0/q1/q2): the producer-diversity profile a raw richness
+  # count can't be — effective species at three weightings, median across this site's years.
+  # Descriptive (no prior, not on the ladder); surfaces the q0 vs q1/q2 gap that signals a
+  # few-species-dominate community where richness alone would overstate diversity (Hill 1973).
+  output$hillProfile <- renderUI({
+    a <- ann(); req(nrow(a))
+    if (!all(c("plant_q1","plant_q2") %in% names(a))) return(NULL)
+    med <- function(v) { v <- v[is.finite(v)]; if (length(v)) stats::median(v) else NA_real_ }
+    q0 <- med(a$plant_richness); q1 <- med(a$plant_q1); q2 <- med(a$plant_q2)
+    if (!is.finite(q1) && !is.finite(q2)) return(NULL)
+    tile <- function(lab, v, sub) div(class = "hill-tile",
+      div(class = "hill-v", if (is.finite(v)) format(round(v)) else "—"),
+      div(class = "hill-lab", lab), div(class = "hill-sub", sub))
+    div(class = "hill-panel",
+      div(class = "hill-intro", bs_icon("diagram-2"),
+        HTML(" <b>Diversity profile</b> (Hill numbers, median across years): effective species at three weightings. <b>q0</b> counts every species equally (= richness, effort-sensitive); <b>q1</b> weights by commonness (exp-Shannon); <b>q2</b> by dominance (inverse-Simpson). When q1/q2 sit well below q0, a few species dominate, so richness alone overstates diversity.")),
+      div(class = "hill-tiles",
+        tile("q0", q0, "richness"), tile("q1", q1, "exp-Shannon"), tile("q2", q2, "inv-Simpson")))
+  })
+
   # ---- flagship: the alignment ladder ----
   output$ladderPlot <- renderPlotly({
     a <- ann(); req(nrow(a))
@@ -189,10 +217,11 @@ server <- function(input, output, session) {
       for (k in unique(dd$key)) { sub <- dd[dd$key==k,]; sub <- sub[order(sub$year),]; j <- j + 1L
         col <- dark_hex(ramp[(j-1) %% length(ramp) + 1])
         dimmed <- if (!is.null(t0)) "rgba(150,160,175,0.55)" else col   # fade base lines while tracing
+        nfin <- sum(is.finite(sub$raw))   # surface coverage: a 3-yr z-line must not look as solid as a 12-yr one
         p <- p %>% plotly::add_trace(data=sub, x=~year, y=~z, type="scatter", mode="lines+markers",
-          name=sub$label[1], legendgroup=L, line=list(width=2.6, color=if (!is.null(t0)) dimmed else col),
+          name=sprintf("%s (n=%d)", sub$label[1], nfin), legendgroup=L, line=list(width=2.6, color=if (!is.null(t0)) dimmed else col),
           marker=list(size=6, color=if (!is.null(t0)) dimmed else col),
-          hovertemplate=paste0("<b>",sub$label[1],"</b><br>%{x}: z=%{y:.2f} (",lm$title,")<extra></extra>")) }
+          hovertemplate=paste0("<b>",sub$label[1],"</b> (n=",nfin,")<br>%{x}: z=%{y:.2f} (",lm$title,")<extra></extra>")) }
       # overlay the pulse highlights for any signal in this strip
       for (k in unique(dd$key)) if (!is.null(hl[[k]])) { h <- hl[[k]]
         p <- p %>% plotly::add_trace(data=h, x=~year, y=~z, type="scatter", mode="markers+text", cliponaxis=FALSE,
@@ -324,6 +353,14 @@ server <- function(input, output, session) {
                 if (is.finite(r$lo)) sprintf("\n95%% CI [%.2f, %.2f]", r$lo, r$hi) else "")
       else if (is.finite(r$r)) sprintf("r = %+.2f   n = %d\n(exploratory: too few years for a p)", r$r, r$n)
       else sprintf("n = %d, too few overlapping years to fit", r$n)
+    # shared-trend check (Cass, n>=8 only): the year-to-year CHANGE correlation. Agreeing in
+    # sign with the level r means the link survives detrending; disagreeing flags a possible
+    # shared trend. A diagnostic shown alongside, never a verdict input (differencing burns a
+    # df, so it is suppressed below n=8 where it would be a coin flip).
+    if (r$n >= 8 && is.finite(r$r)) {
+      dr <- suppressWarnings(stats::cor(diff(m$x), diff(m$y)))
+      if (is.finite(dr)) stat_txt <- paste0(stat_txt, sprintf("\nyear-to-year change: r = %+.2f", round(dr, 2)))
+    }
     anns <- list(list(x=0.02, y=0.98, xref="paper", yref="paper", xanchor="left", yanchor="top",
       text=gsub("\n","<br>", stat_txt), showarrow=FALSE, align="left",
       font=list(size=12, color=tm$col, family="Rubik"),
@@ -701,6 +738,22 @@ server <- function(input, output, session) {
         gloss("Sign-match score", "Of the testable links (≥6 years), how many point the direction ecology predicts. Even when no single link is rock-solid, several all pointing the right way is itself meaningful, and we report the odds it's chance."),
         p(class="qc-cap-note", bs_icon("info-circle"), " We never say a driver “causes” anything; a handful of yearly points can't prove cause. These are <em>consistencies with</em> the textbook mechanism, not proof.")),
 
+      local({
+        meta <- tryCatch(readRDS("data/cascade_meta.rds"), error = function(e) NULL)
+        gp <- if (!is.null(meta)) Filter(function(x) isTRUE(x$poolable), meta) else list()
+        div(class = "about-card about-plain", h4(bs_icon("graph-up-arrow"), " Companion test: a meta-analysis of the green-up rung"),
+          p(HTML("The headline pooled statistic is the <b>binomial sign test</b> (how many sites agree in direction). As a companion, and ONLY on the well-replicated green-up rung (the ~32-site link where between-site heterogeneity is estimable), we also run a <b>random-effects meta-analysis</b> of the per-site correlations. It adds a pooled effect size and a direct probability of the predicted direction; it <b>corroborates</b> the headline, it does not replace it.")),
+          if (length(gp)) tags$ul(class = "meta-list", lapply(gp, function(r) { rma <- r$rma
+            tags$li(HTML(sprintf("<b>%s &rarr; %s</b>: sign-match %s%s",
+              sig_label(r$from), sig_label(r$to), r$sign_match,
+              if (!is.null(rma)) sprintf("; pooled r = %+.2f [%.2f, %.2f], P(earlier green-up) = %.2f, between-site I&sup2; = %.0f%%",
+                rma$pooled_r, rma$ci_r[1], rma$ci_r[2], rma$p_direction_predicted, rma$I2)
+              else " (install the metafor package and re-run scripts/cascade_meta.R for the pooled estimate)"))) }))
+          else p(class = "qc-cap-note", bs_icon("info-circle"),
+            HTML(" Run <code>Rscript scripts/cascade_meta.R</code> to generate this companion (it writes data/cascade_meta.rds). It is computed offline, not in the app, because it needs the <code>metafor</code> package; it is run only on the green-up rung, never on the within-site indices.")),
+          p(class = "qc-cap-note", "A high probability here corroborates the binomial headline with an effect size; it does not upgrade any per-site verdict, and it is reported only on the rung where the site count supports it."))
+      }),
+
       div(class="about-card", h4(bs_icon("shield-check"), " Why it's careful (and what it refuses to do)"),
         tags$ul(
           tags$li(HTML("<b>States priors, doesn't dredge.</b> Each link's expected direction and lag come from the literature <em>before</em> looking at the data; we never report whichever lag happens to fit best.")),
@@ -827,6 +880,8 @@ server <- function(input, output, session) {
       else NULL
     div(insight_banner("trophy", tone="pine",
       HTML("Per-site series are too short for a verdict, but pooled <b>across sites</b> (one vote per site), the cascade's strongest rung is real: <b>warmer springs → earlier green-up</b> holds across most temperature-limited sites. This is the honest, suite-level answer no single site can give.")),
+      p(class="qc-cap-note pooled-s4t", style="margin-top:8px", bs_icon("info-circle"),
+        HTML(" <b>Pooled across sites, not years.</b> Each link is tested within each site, then we count how many sites agree in direction (one vote per site). This substitutes variation across space for variation through time (Damgaard 2019): it assumes the same mechanism operates the same way at every pooled site. We pool sign-agreement, not effect sizes, the conservative form of that assumption, but it remains an assumption, not within-site replication.")),
       if (!is.null(tension)) p(class="pooled-tension", bs_icon("exclamation-triangle"), tension),
       div(class="pooled-list", items),
       if (!is.null(under_rows)) div(class="pooled-under",
@@ -867,9 +922,14 @@ server <- function(input, output, session) {
         ttl <- sprintf("%s · %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else "")
         if (outprior_sig) ttl <- paste0(ttl, sprintf(". OUT-OF-BIOME SUPPORT: the mechanism (%s) generalizes beyond deserts (p<0.05, sign matches). Corroboration only, not counted in this site's tally; the biome class is unchanged.", mech))
         else if (outprior_hit) ttl <- paste0(ttl, ". OUT OF PRIOR BIOME: corroborates the mechanism in a related biome, but doesn't count toward this site's tally.")
+        # CVD: the verdict must not be COLOUR-ONLY (teal/coral fail red-green). Prefix the
+        # cell with a tier glyph so shape always travels with the colour (Tufte; Okabe-Ito).
+        gly <- switch(d$tier[1], consistent="✓", apparent="≈", counter="✗", exploratory="·", "")
+        cell_txt <- if (is.finite(d$r[1])) {
+          if (nzchar(gly)) sprintf("%s %+.2f", gly, d$r[1]) else sprintf("%+.2f", d$r[1])
+        } else if (nzchar(gly)) gly else "·"
         tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else "", if (outprior_hit) " sb-outprior" else "", if (outprior_sig) " sb-outprior-sig" else ""),
-          title=ttl,
-          if (is.finite(d$r[1])) sprintf("%+.2f", d$r[1]) else "·")
+          title=ttl, cell_txt)
       })
       ba <- site_ba(s)
       tags$tr(tags$td(class="sb-site",
@@ -883,7 +943,7 @@ server <- function(input, output, session) {
         tags$thead(tags$tr(tags$th(class="sb-site","Site"), hd)),
         tags$tbody(rows)),
       p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
-        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>consistent</span> <span class='sb-key sb-apparent'>apparent</span> <span class='sb-key sb-counter'>counter</span> <span class='sb-key sb-exploratory'>&lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there: out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden; that honesty IS the coverage statement.")))
+        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>✓ consistent</span> <span class='sb-key sb-apparent'>≈ apparent</span> <span class='sb-key sb-counter'>✗ counter</span> <span class='sb-key sb-exploratory'>· &lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span> (the glyph carries the verdict, so it never rests on colour alone). Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there: out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden; that honesty IS the coverage statement.")))
   })
 
   # ---- DOWNLOADS (the suite's signature export funnel) ----
