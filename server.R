@@ -928,8 +928,10 @@ server <- function(input, output, session) {
         cell_txt <- if (is.finite(d$r[1])) {
           if (nzchar(gly)) sprintf("%s %+.2f", gly, d$r[1]) else sprintf("%+.2f", d$r[1])
         } else if (nzchar(gly)) gly else "·"
-        tags$td(class=paste0("sb-cell sb-", d$tier[1], if (!exp) " sb-dim" else "", if (outprior_hit) " sb-outprior" else "", if (outprior_sig) " sb-outprior-sig" else ""),
-          title=ttl, cell_txt)
+        tags$td(class=paste0("sb-cell sb-clk sb-", d$tier[1], if (!exp) " sb-dim" else "", if (outprior_hit) " sb-outprior" else "", if (outprior_sig) " sb-outprior-sig" else ""),
+          title=ttl,
+          onclick=sprintf("Shiny.setInputValue('sbCell','%s|%s|%s|%d',{priority:'event'})", s, pr$from[j], pr$to[j], pr$lag[j]),
+          cell_txt)
       })
       ba <- site_ba(s)
       tags$tr(tags$td(class="sb-site",
@@ -943,7 +945,7 @@ server <- function(input, output, session) {
         tags$thead(tags$tr(tags$th(class="sb-site","Site"), hd)),
         tags$tbody(rows)),
       p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
-        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>✓ aligned</span> <span class='sb-key sb-apparent'>≈ apparent</span> <span class='sb-key sb-counter'>✗ counter</span> <span class='sb-key sb-exploratory'>· &lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span> (the glyph carries the verdict, so it never rests on colour alone). Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there: out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden; that honesty IS the coverage statement.")))
+        HTML(" Each cell shows a <b>verdict glyph</b> and the <b>correlation r</b> for that link at that site: <span class='sb-key sb-consistent'>✓ aligned</span> <span class='sb-key sb-apparent'>≈ apparent</span> <span class='sb-key sb-counter'>✗ counter</span> <span class='sb-key sb-exploratory'>· &lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. <b>r</b> runs from −1 to +1: the <b>sign</b> is the direction (does the response move the way the prior predicts) and the <b>size</b> is how tightly the driver and response move together within that site (0 = no link, ±1 = in lockstep). The glyph carries the verdict so it never rests on colour alone. Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior-key'></span> <b>corner mark</b> still fired there: out-of-biome corroboration that doesn't count toward the tally. <b>Click any cell</b> for its full detail (r, years, interval, and the prior); click a site name to open it. The grey untestable majority is shown, not hidden; that honesty IS the coverage statement.")))
   })
 
   # ---- DOWNLOADS (the suite's signature export funnel) ----
@@ -1126,6 +1128,54 @@ server <- function(input, output, session) {
     req(input$goSite)
     updateSelectInput(session, "site", selected = input$goSite)
     updateTabsetPanel(session, "tabs", selected = "overview")
+  })
+
+  # ---- Across NEON: click a scoreboard cell -> full plain-English detail for that
+  # site x link (what r is, the years behind it, the bootstrap interval, the permutation
+  # p with its floor, the literature prior, and whether it counts toward the tally). ----
+  observeEvent(input$sbCell, {
+    parts <- strsplit(input$sbCell %||% "", "|", fixed = TRUE)[[1]]
+    if (length(parts) != 4) return()
+    s <- parts[1]; from <- parts[2]; to <- parts[3]; lag <- suppressWarnings(as.integer(parts[4]))
+    d <- SUITE_LINKS[SUITE_LINKS$site == s & SUITE_LINKS$from == from &
+                     SUITE_LINKS$to == to & SUITE_LINKS$lag == lag, , drop = FALSE]
+    if (!nrow(d)) return()
+    d <- d[1, ]; tm <- TIER_META[[d$tier]] %||% list(col = "#6b7a89", icon = "slash-circle", lab = d$tier)
+    arrow <- if (isTRUE(d$prior_sign > 0)) "more driver → more response (↑)" else "more driver → earlier / less response (↓)"
+    verdict_plain <- switch(d$tier,
+      consistent  = "Aligned: points the predicted direction AND the bootstrap interval excludes zero. A clean per-site direction, not a significance claim.",
+      apparent    = "Apparent: points the predicted direction, but the bootstrap interval still crosses zero at this few years.",
+      counter     = "Counter: runs the opposite way to what the prior predicts.",
+      exploratory = "Exploratory: fewer than 6 overlapping years, so the data is shown but no verdict is given.",
+      "Too few overlapping years to compare at this site.")
+    r_plain <- if (is.finite(d$r))
+      sprintf("<b>r = %+.2f</b> is the correlation between the driver and the response at this site. r runs from −1 (they move opposite) through 0 (no link) to +1 (they move in lockstep): the sign is the direction, the size is how tightly they track. The prior expects <b>%s</b>, and this %s.",
+              d$r, arrow, if (isTRUE(d$sign_match)) "matches that direction" else "runs counter to it")
+      else "There aren't enough overlapping years here to compute a correlation."
+    ci_line <- if (is.finite(d$lo) && is.finite(d$hi))
+      sprintf("<b>95%% interval [%.2f, %.2f]</b> (bootstrap): %s. Intervals are honestly wide at this few years.",
+              d$lo, d$hi, if (d$lo > 0 || d$hi < 0) "it excludes zero, so the direction is clean" else "it still crosses zero, so the sign isn't yet clean") else NULL
+    p_line <- if (isTRUE(d$n >= 6) && is.finite(d$p))
+      sprintf("<b>Permutation p = %.3f</b>, shown for transparency, not as a significance test: its smallest possible value at %d years is 1/%d = %.2f, so a single short series cannot reach 0.05. Significance lives only in the cross-site pooled test at the top of this tab.", d$p, d$n, d$n, 1 / d$n) else NULL
+    exp_line <- if (isTRUE(d$expected))
+      "<b>Expected here.</b> This is the mechanism the literature predicts for this biome, so it counts toward this site's tally."
+      else "<b>Not expected in this biome.</b> Shown for context (out-of-biome corroboration); it does <b>not</b> count toward this site's tally."
+    showModal(modalDialog(easyClose = TRUE, size = "m",
+      title = HTML(sprintf("%s &nbsp;·&nbsp; %s &rarr; %s%s", s, sig_label(from), sig_label(to),
+                           if (isTRUE(lag > 0)) sprintf(" (lag %dy)", lag) else "")),
+      div(class = "sb-detail",
+        p(tags$span(style = sprintf("color:%s;font-weight:700", tm$col), bs_icon(tm$icon %||% "circle"), " ", tm$lab),
+          tags$br(), verdict_plain),
+        p(HTML(r_plain)),
+        p(sprintf("Based on %d overlapping year%s of data.", d$n, if (isTRUE(d$n == 1)) "" else "s")),
+        if (!is.null(ci_line)) p(HTML(ci_line)),
+        if (!is.null(p_line)) p(HTML(p_line)),
+        tags$hr(),
+        p(HTML(sprintf("<b>The prior</b> (fixed before looking at the data): expect <b>%s</b>, lag <b>%s</b>, confidence <b>%s</b>.",
+          arrow, if (isTRUE(lag > 0)) sprintf("%d year%s later", lag, if (lag == 1) "" else "s") else "same year", d$conf %||% "—"))),
+        if (!is.na(d$note) && nzchar(d$note)) p(class = "qc-cap-note", style = "margin-top:6px", d$note),
+        p(HTML(exp_line))),
+      footer = modalButton("Close")))
   })
   observeEvent(input$gotoTab, updateTabsetPanel(session, "tabs", selected = input$gotoTab))
 
