@@ -281,6 +281,18 @@ ui <- bslib::page_fillable(
             info_pop("Reading the grid", p("Rows are sites grouped by biome; columns are the predicted links. Cell colour = the verdict; faded cells aren't the mechanism expected for that biome.")),
             downloadButton("dlSuite", tagList(bs_icon("filetype-csv"), " CSV"), class = "btn-outline-dark btn-sm ms-auto")
           ),
+          div(
+            class = "sb-sortbar",
+            tags$span(class = "sb-sort-lab", bs_icon("sort-down"), " Sort sites by"),
+            selectInput("sbSort", NULL, width = "210px",
+              choices = c(
+                "Biome, then agreement (default)" = "default",
+                "Site name (A-Z)"                 = "abc",
+                "Most links agreeing"             = "agree",
+                "Most testable links"             = "coverage",
+                "Woody standing stock"            = "ba"
+              ), selected = "default")
+          ),
           div(class = "sb-scroll", uiOutput("scoreboard"))
         )
       ),

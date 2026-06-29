@@ -897,7 +897,15 @@ server <- function(input, output, session) {
       HTML(sprintf("%s<br>→ %s", sig_abbr(pr$from[j]), sig_abbr(pr$to[j])))))
     sm <- SITE_META
     sm$em <- vapply(sm$site, function(s){ d <- sl[sl$site==s & sl$expected %in% TRUE & sl$n>=6 & !is.na(sl$sign_match),]; sum(d$sign_match) }, numeric(1))
-    sm <- sm[order(sm$biome_class, -sm$em, sm$site), , drop=FALSE]
+    # testable-link count (the denominator behind em): expected links with n>=6 and a known sign
+    sm$ntest <- vapply(sm$site, function(s){ sum(sl$site==s & sl$expected %in% TRUE & sl$n>=6 & !is.na(sl$sign_match)) }, numeric(1))
+    sm$ba_sort <- if ("veg_ba_ha" %in% names(sm)) ifelse(is.finite(sm$veg_ba_ha), sm$veg_ba_ha, -Inf) else rep(-Inf, nrow(sm))
+    sm <- switch(input$sbSort %||% "default",
+      abc      = sm[order(sm$site), , drop=FALSE],                       # A-Z lookup
+      agree    = sm[order(-sm$em, -sm$ntest, sm$site), , drop=FALSE],     # where the cascade holds best
+      coverage = sm[order(-sm$ntest, -sm$em, sm$site), , drop=FALSE],     # richest-data sites first
+      ba       = sm[order(-sm$ba_sort, sm$site), , drop=FALSE],           # productivity gradient (forest -> desert)
+      sm[order(sm$biome_class, -sm$em, sm$site), , drop=FALSE])           # default: biome, then agreement
     rowfor <- function(s, blab){
       cells <- lapply(seq_len(nrow(pr)), function(j){
         d <- sl[sl$site==s & sl$from==pr$from[j] & sl$to==pr$to[j] & sl$lag==pr$lag[j], , drop=FALSE]
