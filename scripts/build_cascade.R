@@ -24,7 +24,8 @@ APP  <- list(
   veg    = file.path(ROOT, "NEON-Veg-Structure"),
   bird   = file.path(ROOT, "NEON-Breeding-Birds"),
   phe    = file.path(ROOT, "NEON-Plant-Phenology"),
-  mosq   = file.path(ROOT, "NEON-Mosquito-Pulse"))
+  mosq   = file.path(ROOT, "NEON-Mosquito-Pulse"),
+  beetle = file.path(ROOT, "NEON-Ground-Beetle-Tracker"))
 source(file.path(APP$phe, "R/phe_helpers.R"))   # onset(), GREENUP
 # veg-structure standing-stock helpers (optional context; never breaks the build)
 .have_veg <- tryCatch({ source(file.path(APP$veg, "R/veg_helpers.R")); TRUE }, error = function(e) FALSE)
@@ -189,6 +190,38 @@ ann_mosq <- function(site) {                      # consumer/vector: CO2-trap ac
     mosq_culex    = ifelse(.data$total > 0, round(100 * .data$culex / .data$total, 1), NA_real_),
     site = site) %>% select(site, year, mosq_activity, mosq_richness, mosq_culex)
 }
+ann_beetle <- function(site) {                    # consumer: pitfall ACTIVITY-DENSITY (per 100 trap-nights) + richness
+  # Ground beetles (Carabidae), NEON DP1.10022.001 (Hoekman et al. 2017, Ecosphere e01744).
+  # The sibling bundle is already carabid-only (assemble_beetles filters sampleType=="carabid"
+  # and applies the expert ID), so no bycatch guard is needed. Flat tibble: siteID, plotID,
+  # collectDate (Date), taxonID, scientificName, taxonRank, individualCount, trapnights.
+  # HONESTY (carried on the label "more active beetles"): pitfall catch is ACTIVITY-density,
+  # NOT density — it confounds true abundance with locomotor activity (Thiele 1977; Greenslade
+  # 1964; Lovei & Sunderland 1996). A within-site relative index, never a cross-site head-count;
+  # a 0 is "trapped, none active", NA is "not trapped". EFFORT: trapnights repeats across every
+  # species row of the same plot x bout, so it MUST be deduped to one value per (plot, bout)
+  # before summing, or a raw sum multiplies effort by the species count and craters the index.
+  d <- rd(file.path(APP$beetle, "data/sites", paste0(site, ".rds")))
+  if (is.null(d) || !is.data.frame(d) || !nrow(d)) return(NULL)
+  d$year <- yr_of(d$collectDate)
+  d$individualCount <- suppressWarnings(as.numeric(d$individualCount))
+  d$trapnights      <- suppressWarnings(as.numeric(d$trapnights))
+  d <- d[is.finite(d$year) & is.finite(d$individualCount) & d$individualCount > 0 &
+           !is.na(d$scientificName) & nzchar(d$scientificName), , drop = FALSE]
+  if (!nrow(d)) return(NULL)
+  d$is_sp <- !is.na(d$taxonRank) & d$taxonRank %in% c("species", "subspecies", "speciesGroup")
+  eff <- d %>% distinct(.data$year, .data$plotID, .data$collectDate, .data$trapnights) %>%
+    group_by(.data$year) %>% summarise(tn = sum(.data$trapnights, na.rm = TRUE), .groups = "drop")
+  catch <- d %>% group_by(.data$year) %>% summarise(
+    total = sum(.data$individualCount, na.rm = TRUE),
+    beetle_richness = dplyr::n_distinct(.data$scientificName[.data$is_sp]),
+    .groups = "drop")
+  assert_unique_year(eff, paste0(site, " beetle effort")); assert_unique_year(catch, paste0(site, " beetle catch"));
+  out <- left_join(catch, eff, by = "year", relationship = "one-to-one")
+  out %>% mutate(   # per 100 trap-nights, same scaling as mammal_cpue (both per-100-TN trap indices)
+    beetle_activity = ifelse(!is.na(.data$tn) & .data$tn > 0, round(100 * .data$total / .data$tn, 2), NA_real_),
+    site = site) %>% select(site, year, beetle_activity, beetle_richness)
+}
 ann_veg <- function(site) {                       # producer STANDING STOCK — a slow ~5-yr STATE,
   # NOT an annual link (its remeasurement cadence would manufacture pseudo-resolution). Live basal
   # area m2/ha from the Veg-Structure sibling: directly measured, allometry-free, and computable at
@@ -205,10 +238,10 @@ ann_veg <- function(site) {                       # producer STANDING STOCK — 
 }
 
 # ---- assemble over the union of sites that have mammal or bird data ----
-all_sites <- sort(unique(c(sites_in("mammal"), sites_in("bird"), sites_in("mosq"))))
+all_sites <- sort(unique(c(sites_in("mammal"), sites_in("bird"), sites_in("mosq"), sites_in("beetle"))))
 cat("assembling", length(all_sites), "sites...\n")
 join_all <- function(site) {
-  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site), ann_mosq(site)))
+  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site), ann_mosq(site), ann_beetle(site)))
   if (!length(parts)) return(NULL)
   invisible(lapply(seq_along(parts), function(i) assert_unique_year(parts[[i]], paste0(site, " part ", i))));
   Reduce(function(a,b) full_join(a,b,by=c("site","year"), relationship = "one-to-one"), parts)
@@ -218,7 +251,7 @@ annual <- annual[!is.na(annual$year) & annual$year >= 2013 & annual$year <= 2025
 annual <- annual %>% arrange(.data$site, .data$year)
 
 # ensure every signal column exists even if no site had it
-SIGCOLS <- c("precip","temp","precip_winter","precip_monsoon","temp_spring","fruiting_pct","greenup_doy","plant_richness","plant_q1","plant_q2","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness","mosq_activity","mosq_richness","mosq_culex")
+SIGCOLS <- c("precip","temp","precip_winter","precip_monsoon","temp_spring","fruiting_pct","greenup_doy","plant_richness","plant_q1","plant_q2","plant_intro_pct","mammal_cpue","mammal_mnka","bird_index","bird_richness","mosq_activity","mosq_richness","mosq_culex","beetle_activity","beetle_richness")
 for (col in SIGCOLS) if (!col %in% names(annual)) annual[[col]] <- NA_real_
 
 # ---- signal metadata: trophic layer + display + direction-of-"more" ----
@@ -243,7 +276,9 @@ signals <- tibble::tribble(
   "bird_richness", "Bird richness",                "consumer",   "species",    "more species",  TRUE,
   "mosq_activity", "Mosquito activity",            "consumer",   "per trap-nt","more mosquitoes",TRUE,
   "mosq_richness", "Mosquito richness",            "consumer",   "species",    "more species",  FALSE,
-  "mosq_culex",    "Culex share (WNV group)",      "consumer",   "% of catch", "more Culex",    FALSE)
+  "mosq_culex",    "Culex share (WNV group)",      "consumer",   "% of catch", "more Culex",    FALSE,
+  "beetle_activity","Ground-beetle activity",       "consumer",   "per 100 TN", "more active beetles", TRUE,
+  "beetle_richness","Ground-beetle richness",       "consumer",   "species",    "more species",  FALSE)
 
 # ---- literature priors: expected sign + lag (years). The `note` is PLAIN-ENGLISH
 # for non-technical users AND carries the honest scope caveat (the science review:
@@ -270,13 +305,22 @@ priors <- tibble::tribble(
   "fruiting_pct",   "mammal_cpue",     +1L, 1L, "weak",     "none",                "A good fruit-and-seed year should feed the seed-eaters into the next year — but our fruiting signal is a coarse peak-intensity index, so read this as suggestive only, not a measured seed crop. Shown for context only (expected_class='none'): a proxy this coarse should not cast a sign-vote in the pooled tally, and its mechanism is the monsoon-seed pathway (water-limited), so 'all' wrongly pooled it over mesic sites. Excluded from every site's sign-match and the pooled binomial; still computed and visible in Driver Lab.",
   "plant_richness", "mammal_cpue",     +1L, 1L, "weak",     "all",                 "More varied plant communities MIGHT support more animals the next year — the least certain link in the cascade: plant variety is only a rough stand-in for food, so even the direction is uncertain, and the data bears that out.",
   "precip_monsoon", "mosq_activity",   +1L, 0L, "moderate", "water-limited",       "A big summer monsoon fills the ephemeral water mosquito larvae need, so a wet monsoon means more mosquitoes that SAME season — the monsoon's FAST pulse (weeks), the desert-water mirror of temp→green-up. (Read this coarse annual link as an echo of the within-season pulse the Mosquito Pulse app shows directly.)",
-  "temp_spring",    "mosq_activity",   +1L, 0L, "moderate", "temperature-limited", "Warmer springs speed mosquito larval development, so temperate sites with warm springs reach emergence sooner and larger — degree-days PACE the pulse where temperature, not water, is the brake. (Above the heat optimum, extreme desert temperatures reverse this; that ceiling is why it's scored only where temperature limits.)")
+  "temp_spring",    "mosq_activity",   +1L, 0L, "moderate", "temperature-limited", "Warmer springs speed mosquito larval development, so temperate sites with warm springs reach emergence sooner and larger — degree-days PACE the pulse where temperature, not water, is the brake. (Above the heat optimum, extreme desert temperatures reverse this; that ceiling is why it's scored only where temperature limits.)",
+  "temp_spring",    "beetle_activity", +1L, 0L, "moderate", "temperature-limited", "Warmer springs make ground beetles MORE ACTIVE, so more walk into pitfall traps — the index climbs that SAME season (degree-day pacing of activity, Thiele 1977; the carabid mirror of the warm-spring mosquito pulse). Read the climb as partly real abundance and partly just more movement: the NEON metric is activity-density, not a head-count, so warmth lifts the index through activity as well as numbers (Lovei & Sunderland 1996).",
+  "precip_monsoon", "beetle_activity", +1L, 0L, "weak",     "water-limited",       "In water-limited systems a wet summer monsoon greens the litter and the prey within it, so detritivore and predatory ground beetles are more active and better trapped that SAME season (the desert-moisture counterpart to the temperature row). Weak: the carabid moisture link is taxon-mixed and the activity-density index confounds 'more beetles' with 'more moving beetles' (wet ground is also more walkable), so read the direction as suggestive only.")
 # NOTE: no green-up -> bird prior. The trophic-mismatch literature (Both; Visser;
 # Mayor 2017; Youngflesh 2021) is about SYNCHRONY between bird breeding and the food
 # peak — not "later green-up DOY -> more birds", and the direction reverses by region.
 # We can't compute a defensible mismatch from a detection index, so we post no prior
 # rather than one the cited literature doesn't support. bird_index still shows on the
 # ladder as a descriptive consumer signal.
+# NOTE: no producer -> beetle prior. Carabids are a guild mix (predators, granivores,
+# detritivores); plant productivity feeds some and not others, and dense vegetation can
+# LOWER surface activity/catch — so the literature gives no single defensible sign for
+# plants -> beetle activity. Routing a richness proxy (already weak: composition, not
+# productivity) into an activity-density index would stack two confounds. We post no
+# prior rather than one the literature won't sign; beetle_activity still shows on the
+# ladder and is testable in Driver Lab. (Cass + Cara, 2026-06.)
 
 # ---- per-site biome classification (the throughline) ----
 ALL_SITES <- sort(unique(annual$site))
@@ -342,7 +386,9 @@ na_meaning <- c(
   bird_richness   = "NA when no point-count that year.",
   mosq_activity   = "NA when no CO2 trap effort that year.",
   mosq_richness   = "NA when no identified mosquito catch that year.",
-  mosq_culex      = "NA when the catch is zero or unidentified to the Culex group.")
+  mosq_culex      = "NA when the catch is zero or unidentified to the Culex group.",
+  beetle_activity = "NA when no pitfall trap effort (trap-nights) that year; effort is summed over UNIQUE (plot, bout) so repeated per-row trapnights aren't multiplied by species count. Activity-density (per 100 trap-nights), not abundance.",
+  beetle_richness = "Species-level carabids only (taxonRank species/subspecies/speciesGroup); genus/family IDs excluded. NA when no identified carabid catch that year.")
 n_gate <- c(
   precip = ">=10 months", temp = ">=8 months", precip_winter = ">=5 of 6 months",
   precip_monsoon = "3 of 3 months", temp_spring = ">=2 of 3 months",
@@ -350,7 +396,7 @@ n_gate <- c(
   plant_richness = "1+ plot/yr", plant_q1 = ">=2 species/yr", plant_q2 = ">=2 species/yr", plant_intro_pct = "1+ plot/yr",
   mammal_cpue = "effort>0", mammal_mnka = "1+ tag/yr", bird_index = "1+ count/yr",
   bird_richness = "1+ count/yr", mosq_activity = "effort>0", mosq_richness = "1+ catch/yr",
-  mosq_culex = "1+ Culex/yr")
+  mosq_culex = "1+ Culex/yr", beetle_activity = "effort>0", beetle_richness = "1+ species/yr")
 codebook <- data.frame(
   key       = signals$key,
   label     = signals$label,

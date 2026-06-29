@@ -392,7 +392,7 @@ ui <- bslib::page_fillable(
       style = "margin-top:12px", HTML("Built by <strong>Desert Data Labs</strong> · Tucson, AZ · get in touch → "),
       tags$a(href = "mailto:desertdatalabs@gmail.com?subject=NEON%20Driver%20Cascade", "desertdatalabs@gmail.com")
     ),
-    p(style = "font-size:12px;opacity:.85", "Synthesis of NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology), and NEON/Daymet climate. Not affiliated with NEON, Battelle, or the NSF. An educational data-exploration tool.")
+    p(style = "font-size:12px;opacity:.85", "Synthesis of NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology), DP1.10043.001 (mosquitoes), DP1.10022.001 (ground beetles), and NEON/Daymet climate. Not affiliated with NEON, Battelle, or the NSF. An educational data-exploration tool.")
   ),
   div(
     class = "cascade-guide", id = "cascadeGuide", role = "note",

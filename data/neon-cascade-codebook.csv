@@ -17,3 +17,5 @@
 "mosq_activity","Mosquito activity","consumer","per trap-nt","more mosquitoes","NA when no CO2 trap effort that year.","effort>0"
 "mosq_richness","Mosquito richness","consumer","species","more species","NA when no identified mosquito catch that year.","1+ catch/yr"
 "mosq_culex","Culex share (WNV group)","consumer","% of catch","more Culex","NA when the catch is zero or unidentified to the Culex group.","1+ Culex/yr"
+"beetle_activity","Ground-beetle activity","consumer","per 100 TN","more active beetles","NA when no pitfall trap effort (trap-nights) that year; effort is summed over UNIQUE (plot, bout) so repeated per-row trapnights aren't multiplied by species count. Activity-density (per 100 trap-nights), not abundance.","effort>0"
+"beetle_richness","Ground-beetle richness","consumer","species","more species","Species-level carabids only (taxonRank species/subspecies/speciesGroup); genus/family IDs excluded. NA when no identified carabid catch that year.","1+ species/yr"

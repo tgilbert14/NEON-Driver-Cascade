@@ -2,7 +2,7 @@
 
 The **capstone** of the NEONize family — a cross-product synthesis of *what drives populations*,
 bottom-up. Where each sibling app (small mammals, breeding birds, plant diversity, vegetation
-structure, plant phenology) dives into one NEON product, this one **lines them up** at shared
+structure, plant phenology, mosquitoes, ground beetles) dives into one NEON product, this one **lines them up** at shared
 field sites into a single trophic cascade:
 
 > **CLIMATE → GREEN-UP (the hinge) → PRODUCERS → CONSUMERS**
