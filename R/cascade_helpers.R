@@ -10,6 +10,12 @@
 # ===========================================================================
 `%||%` <- function(a, b) if (is.null(a) || length(a) == 0) b else a
 
+# Tier-rule version. BUMP this whenever link_stat()'s tier definition changes. The build
+# stamps it into the bundle's meta, and the app refuses to boot on a bundle whose tier_rule
+# does not match (the 2026-06 stale-tiered-bundle guard: a code change to the null/tier must
+# rebuild the bundle, it can never silently ride on a stale precompute). One source of truth.
+TIER_RULE_VERSION <- "2026-06-direction-aligned-CIgate"
+
 zscore <- function(x) { x <- as.numeric(x); m <- mean(x, na.rm=TRUE); s <- stats::sd(x, na.rm=TRUE)
   if (!is.finite(s) || s == 0) return(rep(NA_real_, length(x))); (x - m) / s }
 
@@ -58,16 +64,25 @@ link_stat <- function(ann_site, from, to, lag, prior_sign, nperm = 2000) {
   if (n < 6) { out$tier <- "exploratory"
     out$verdict <- sprintf("exploratory only: %d years is too few for a verdict (the eye, not the p-value)", n)
     return(out) }
-  # n >= 6: autocorrelation-preserving permutation null (circular shift) + bootstrap CI
+  # n >= 6: bootstrap CI for the EFFECT, plus a circular-shift permutation p that is REPORTED
+  # but NOT used to gate the tier. Why not: the circular-shift null has only (n-1) distinct
+  # shifts, so its smallest possible p is 1/n; at n<=11 NO single series can reach p<0.05, i.e.
+  # a short series simply cannot be "significant" on its own — that is the honest truth, not a
+  # defect to engineer around. So the per-site TIER is a DIRECTION verdict (does the sign match,
+  # and does the bootstrap interval exclude zero), NEVER a significance claim; cross-site
+  # significance lives ONLY in pooled_links(). The tier key "consistent" is kept stable (the CSS
+  # and lookups depend on it) but it now means ALIGNED: sign matches AND the interval excludes
+  # zero. (Cass ruling, 2026-06; see TIER_RULE_VERSION.)
   out$p <- perm_p_circular(m$x, m$y, nperm = nperm)
   bs <- replicate(2000, { i <- sample(n, n, replace = TRUE); suppressWarnings(stats::cor(m$x[i], m$y[i])) })
   out$lo <- unname(round(stats::quantile(bs, 0.025, na.rm = TRUE), 2)); out$hi <- unname(round(stats::quantile(bs, 0.975, na.rm = TRUE), 2))
-  spans0 <- is.finite(out$lo) && is.finite(out$hi) && out$lo < 0 && out$hi > 0
-  out$tier <- if (!is.na(out$p) && out$p < 0.05 && out$sign_match && !spans0) "consistent"
+  spans0   <- is.finite(out$lo) && is.finite(out$hi) && out$lo < 0 && out$hi > 0
+  ci_excl0 <- is.finite(out$lo) && is.finite(out$hi) && !spans0
+  out$tier <- if (isTRUE(out$sign_match) && ci_excl0) "consistent"
               else if (isTRUE(out$sign_match)) "apparent" else "counter"
   out$verdict <- switch(out$tier,
-    consistent = "consistent with the expected direction (clears the permutation null)",
-    apparent   = "matches the expected sign, but not distinguishable from noise at this n",
+    consistent = "points the predicted direction and the bootstrap interval excludes zero (a clean per-site direction, NOT a significance claim; the honest test is the cross-site pooling)",
+    apparent   = "matches the expected sign, but the bootstrap interval still crosses zero at this n",
     counter    = "runs counter to the expected direction")
   out
 }
@@ -206,10 +221,11 @@ LAYER_META <- list(
   phenology = list(title = "GREEN-UP",  icon = "flower2",         col = "#9bd24a"),
   producer  = list(title = "PRODUCERS", icon = "tree",            col = "#5fb56a"),
   consumer  = list(title = "CONSUMERS", icon = "bug",             col = "#fb8a7e"))
-# Verdict tiers, harmonised to the teal/coral/gold system (semantics preserved):
-# consistent = teal (the brand win), apparent = gold, counter = coral, the rest dim.
+# Verdict tiers are DIRECTION verdicts, NOT significance claims (significance is the pooled
+# binomial only). The "consistent" key is kept for CSS/lookup stability but now means ALIGNED:
+# sign matches AND the bootstrap interval excludes zero. teal/gold/coral preserved.
 TIER_META <- list(
-  consistent  = list(lab = "Consistent with prior", col = "#2dd4bf", icon = "check-circle-fill"),
+  consistent  = list(lab = "Aligned (clean direction)", col = "#2dd4bf", icon = "check-circle-fill"),
   apparent    = list(lab = "Apparent only",         col = "#e0b43a", icon = "dash-circle-fill"),
   counter     = list(lab = "Counter to prior",      col = "#fb8a7e", icon = "x-circle-fill"),
   exploratory = list(lab = "Exploratory (n<6)",     col = "#9fb0cf", icon = "hourglass-split"),

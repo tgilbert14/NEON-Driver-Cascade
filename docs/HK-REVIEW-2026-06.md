@@ -99,6 +99,16 @@ Rscript scripts/cascade_meta.R
     shows the green-up companion (pooled r, P(direction), I²) when present, with a graceful "run
     `scripts/cascade_meta.R`" note when absent. Companion framing, never the headline (Stan + Cass + Few).
 
+### Round 3 — the "no consistent cells" investigation (Cass ruling 2026-06)
+A user noticed the Across-NEON grid had **zero ✓ "consistent" cells** (and JORN no sign-match p). Investigated in R:
+- **JORN is correct** — it has 12 years but **zero testable (n≥6) expected links** (sparse tower precip; its one n=5 link is exploratory). Not a bug; Cass had flagged JORN/YELL as untestable.
+- **The "consistent" tier was a real problem.** The deployed bundle had 7 "consistent" cells that were **artifacts of an older i.i.d.-shuffle null**, never rebuilt after the code switched to the circular-shift null. Under the honest circular-shift null, the smallest possible p is **1/n**, so at n≤11 **no single site can reach p<0.05** — "consistent" (gated on p<0.05) was mathematically unreachable, which clashed with the whole app's copy ("clears the permutation null", "green columns mean the mechanism holds").
+
+**Cass's ruling, implemented:** keep the honest circular-shift null and its 1/n floor; do **not** re-gate significance onto the shaky bootstrap CI. Instead, demote the per-site tiers to honest **direction** verdicts. The "consistent" key now means **ALIGNED**: `sign_match AND bootstrap-CI-excludes-zero` (p reported for transparency, **never gates the tier**). All significance language now points at the pooled binomial. The SCBI "p=0.007" claim (an i.i.d.-null artifact) is replaced by its CI [−0.99, −0.28]. Added a **stale-bundle guard**: a `TIER_RULE_VERSION` stamped into the bundle that the app **boot-checks** (refuses to start on a mismatched/stale tiered bundle).
+- Verified after rebuild: **14 aligned cells** (honest, CI-based), SCBI is `aligned` via its CI, the **pooled headline is unchanged** (23/32, p=0.010), the boot-guard passes, and all renders execute at SRER/SCBI/JORN.
+
+> **This whole review WAS verified in R 4.5.2** (found at `C:\Program Files\R\R-4.5.2`): all files parse, the build runs clean (`stopifnot`s pass), Hill q1/q2 compute (430/509), the meta companion yields P(earlier green-up)=0.975 I²=0%, and every render executes via `testServer`. The "Verify" commands below remain the recommended pre-deploy smoke test for the live visual look.
+
 ## Deferred (recommended, not yet applied)
 - **`n_eff`/lag-1 ACF as display metadata** on the verdict chip (Cass: show, never feed into the p).
   Low value; skipped to avoid chip clutter (Few).

@@ -20,6 +20,16 @@ source("R/site_metadata.R", local = FALSE)
 source("R/cascade_helpers.R", local = FALSE)
 
 CASCADE <- tryCatch(readRDS("data/cascade.rds"), error = function(e) NULL)
+# Stale-tiered-bundle guard (2026-06): refuse to boot on a bundle whose tier rule does not match
+# the running code, so a change to link_stat()'s tier definition can never silently ride on a
+# stale precompute (the incident that showed 7 "consistent" cells the circular-shift null no
+# longer produces). Rebuild with: Rscript scripts/build_cascade.R
+if (!is.null(CASCADE) && exists("TIER_RULE_VERSION")) {
+  .bundle_rule <- CASCADE$meta$tier_rule %||% "<unstamped>"
+  if (!identical(.bundle_rule, TIER_RULE_VERSION))
+    stop(sprintf("cascade.rds tier rule '%s' != code '%s' — rebuild the bundle: Rscript scripts/build_cascade.R",
+                 .bundle_rule, TIER_RULE_VERSION), call. = FALSE)
+}
 ANNUAL <- if (!is.null(CASCADE)) CASCADE$annual else data.frame()
 SIGNALS <- if (!is.null(CASCADE)) CASCADE$signals else data.frame()
 PRIORS <- if (!is.null(CASCADE)) CASCADE$priors else data.frame()
@@ -245,7 +255,7 @@ CONCEPT <- list(
   expected  = list(t = "“Expected here”", b = "The link whose mechanism is established for THIS biome (warmth→green-up in forests; the monsoon seed crop→rodents in deserts). Only expected links count toward the site's tally; the rest are shown for context."),
   pulse     = list(t = "The pulse trace", b = "Tap a year and its climate anomaly ripples DOWN the rungs at each link's lag. A rung lights green if it moved the way the prior predicts, red if it went the other way. One traced year is an anecdote; the chips and the cross-site scoreboard are the real evidence."),
   standing  = list(t = "Woody standing stock", b = "Live basal area (m²/ha), the cross-section of all living woody stems per hectare, directly measured from the Veg-Structure product. It's the slow PRODUCER FLOOR the fast annual signals ride on: ~56 in old-growth forest, ~5 in semi-desert, ~0.4 in true desert. Surveyed on a ~5-year cycle, so it's a standing-stock STATE, not a year-to-year link."),
-  permp     = list(t = "The permutation p", b = "Permutation p uses a circular-shift null: years keep their serial structure while response years are rotated. On autocorrelated annual series this is usually more conservative than free-shuffle p, but it still assumes roughly stable year-to-year structure. The honest test is the cross-site pooling on Across NEON."),
+  permp     = list(t = "The permutation p", b = "A circular-shift null: response years are rotated so the year-to-year autocorrelation is preserved. <b>It has a floor:</b> with N years the smallest possible p is 1/N, so a series this short (N&le;11 here) cannot reach p&lt;0.05 no matter how strong the link, a single short series simply can't be significant on its own. So this p is shown for transparency, not as a per-site significance test, and it does NOT set the verdict. The real significance test is the cross-site pooling on Across NEON."),
   bootci    = list(t = "The bootstrap interval", b = "Bootstrap interval (wide at this n; indicative, not a precision claim). It resamples the few overlapping years to show how unstable the relationship is, not to pin down a precise value.")
 )
 cpop <- function(key, placement = "auto") {

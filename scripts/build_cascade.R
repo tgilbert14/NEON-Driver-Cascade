@@ -365,7 +365,8 @@ utils::write.csv(codebook, "data/neon-cascade-codebook.csv", row.names = FALSE)
 cat("\ncodebook written: data/neon-cascade-codebook.csv (", nrow(codebook), "signals )\n")
 
 meta <- list(built = "annual + seasonal climate signals from sibling bundles + mammal env overlays; biome-aware priors; cross-site precompute",
-             n_sites = length(ALL_SITES), built_when = format(Sys.Date()))
+             n_sites = length(ALL_SITES), built_when = format(Sys.Date()),
+             tier_rule = TIER_RULE_VERSION)   # stale-tiered-bundle guard: the app boot-checks this
 saveRDS(list(annual = annual, signals = signals, priors = priors, codebook = codebook,
              suite_links = suite_links, pooled = pooled, site_meta = site_meta, meta = meta),
         "data/cascade.rds")

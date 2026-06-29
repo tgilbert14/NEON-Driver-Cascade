@@ -22,7 +22,7 @@ literature review of bottom-up driver ecology and short-time-series statistics:
   Thibault 2010; Owen 2006; Cole 2015 green-up/NDVI; Both & Visser phenological mismatch;
   dryland ANPP–precipitation). We never report whichever lag happens to fit best.
 - **n-gated.** Below **6 overlapping years** no verdict is given — just the aligned series.
-  At n≥6 a **permutation null** + **bootstrap CI** gate the verdict.
+  At n≥6 the **bootstrap CI** sets the per-site direction verdict; a circular-shift permutation p is reported for transparency but cannot reach significance at this n (its floor is 1/n) — significance is the cross-site pooled test's job.
 - **Direction over magnitude.** The headline is a **sign-match tally** — a binomial test of how
   many links point the predicted way — which is honest about multiple comparisons in a way a
   single correlation isn't.
@@ -56,10 +56,13 @@ test (and tally) the links *expected* for that biome:
 These are the two results that actually **pool across sites** (one vote per site), the only honest test past the
 short-series problem:
 - **The suite headline (pooled):** **warmer springs → earlier green-up holds at 23 of 32 temperature-limited
-  sites, binomial p = 0.010** — a real result no single short site can show. Led by **SCBI** (r=−0.92, n=6,
-  permutation p=0.007). Note the honest tension: the same mechanism on the *mechanistically-correct spring
-  window* (temp_spring → green-up) does **not** resolve when pooled (16 of 28 sites, p = 0.286), so the headline
-  rests on the better-sampled annual-mean stand-in. The app states that caveat on the headline itself.
+  sites, binomial p = 0.010** — a real result no single short site can show. The strongest single site is **SCBI**
+  (r=−0.92, n=6, bootstrap 95% CI [−0.99, −0.28], which excludes zero), but **no single short series can be
+  significant on its own** (the per-site circular-shift permutation floor is 1/n, so at n≤11 nothing reaches
+  p<0.05) — the cross-site pooling, not any one site, is what carries the result. Note the honest tension: the
+  same mechanism on the *mechanistically-correct spring window* (temp_spring → green-up) does **not** resolve
+  when pooled (16 of 28 sites, p = 0.286), so the headline rests on the better-sampled annual-mean stand-in. The
+  app states that caveat on the headline itself.
 - **Producer → consumer links pool to ~null** (richness → rodents 22 of 40 sites, p = 0.318) — and the app
   says so rather than dressing it up.
 

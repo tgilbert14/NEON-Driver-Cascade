@@ -72,7 +72,7 @@ server <- function(input, output, session) {
         s <- paste0(s, sprintf(" Test the <b>right season</b> and the chain reappears: the summer-monsoon seed crop <b>tracks</b> next year's rodents at <b>r&nbsp;=&nbsp;%+.2f</b> (a single desert, suggestive, not yet established), where annual rainfall showed almost nothing (r&nbsp;=&nbsp;+0.20).", mon$r[1]))
       s
     } else if (!is.null(best) && identical(best$tier, "consistent")) {
-      sprintf("The cascade behaves as ecology predicts: <b>%d of %d</b> testable links point the expected way, led by <b>%s&nbsp;→&nbsp;%s</b> (r&nbsp;=&nbsp;%+.2f, clears the noise test).",
+      sprintf("The cascade points the way ecology predicts: <b>%d of %d</b> testable links align with the expected direction, led by <b>%s&nbsp;→&nbsp;%s</b> (r&nbsp;=&nbsp;%+.2f, interval clean, a clean direction at this site, not a significance claim, the cross-site pooling is the real test).",
               sm$k, sm$n, sig_label(best$from), sig_label(best$to), best$r)
     } else if (!is.na(sm$n) && sm$n > 0) {
       sprintf("Of the links testable here, <b>%d of %d</b> point the direction ecology predicts. A short series, so read it as <i>direction</i>, not proof.", sm$k, sm$n)
@@ -297,7 +297,7 @@ server <- function(input, output, session) {
     k <- sum(nshow$sign_match, na.rm=TRUE); tot <- nrow(nshow)
     best <- if (any(lk$tier=="consistent")) lk[lk$tier=="consistent",][1,] else NULL
     msg <- if (!is.null(best)) sprintf("Of the literature's predicted drivers, <b>%s</b> is %s here.", sig_label(best$from), best$verdict)
-      else if (tot>0) sprintf("%d of %d predicted drivers point the expected way, but none clears the bar for a verdict at this site's short series.", k, tot)
+      else if (tot>0) sprintf("%d of %d predicted drivers point the expected way, but none stands out as a clean direction (interval excludes zero) at this site's short series.", k, tot)
       else "Too few overlapping years to test any predicted driver here."
     # precip-coverage caveat: only when a rain driver is among the predicted links here
     has_precip <- any(grepl("^precip", lk$from))
@@ -385,7 +385,7 @@ server <- function(input, output, session) {
       if (r$n >= 6 && is.finite(r$p)) div(class="scatter-statcaveats",
         span(class="ssc-item", bs_icon("info-circle"),
           HTML(" <b>p</b> is a permutation null"), cpop("permp"),
-          HTML(": exchangeable-years assumption makes it a lower bound on annual series. The honest test is the cross-site pooling on Across NEON."),
+          HTML(sprintf(": with %d years its smallest possible value is 1/%d=%.2f, so a short series can't reach 0.05 here. It does not set the verdict; the honest test is the cross-site pooling on Across NEON.", r$n, r$n, 1/r$n)),
           if (is.finite(r$lo)) tagList(HTML(" <b>95% CI</b> is a bootstrap interval"), cpop("bootci"),
             HTML(": wide at this n, indicative, not a precision claim.")))))
   })
@@ -734,7 +734,7 @@ server <- function(input, output, session) {
         gloss("“Could this be luck?” (the permutation test)", "For each link we <b>shuffle the years 2,000 times</b> and re-measure the match each time. If the real match beats almost all the shuffles, it's unlikely to be a coincidence. (We checked: these yearly numbers aren't badly auto-correlated, so the shuffle is a fair test.)"),
         gloss("The uncertainty band (95% CI)", "A range we're fairly sure the true relationship falls in. With only ~6 years it's <b>very wide</b>, and that honesty is the point: few years = lots of uncertainty."),
         gloss("“Too few years to judge”", "Below <b>6 overlapping years</b> we show the lined-up data but give <b>no verdict</b>; there simply isn't enough to tell signal from noise."),
-        gloss("The three verdicts", "<b>Consistent with prior</b> = matches the expected direction <em>and</em> clears the luck test. <b>Apparent</b> = points the expected way but could be noise. <b>Counter</b> = runs the opposite way."),
+        gloss("The three verdicts", "<b>Aligned</b> = points the expected direction <em>and</em> the bootstrap interval excludes zero (a clean per-site direction, not a significance claim). <b>Apparent</b> = points the expected way but the interval still crosses zero. <b>Counter</b> = runs the opposite way. Significance is never a per-site claim here, it lives only in the cross-site pooling."),
         gloss("Sign-match score", "Of the testable links (≥6 years), how many point the direction ecology predicts. Even when no single link is rock-solid, several all pointing the right way is itself meaningful, and we report the odds it's chance."),
         p(class="qc-cap-note", bs_icon("info-circle"), " We never say a driver “causes” anything; a handful of yearly points can't prove cause. These are <em>consistencies with</em> the textbook mechanism, not proof.")),
 
@@ -757,7 +757,7 @@ server <- function(input, output, session) {
       div(class="about-card", h4(bs_icon("shield-check"), " Why it's careful (and what it refuses to do)"),
         tags$ul(
           tags$li(HTML("<b>States priors, doesn't dredge.</b> Each link's expected direction and lag come from the literature <em>before</em> looking at the data; we never report whichever lag happens to fit best.")),
-          tags$li(HTML("<b>n-gated.</b> Below 6 overlapping years, no verdict, just the aligned series. A permutation null + bootstrap CI gate the rest.")),
+          tags$li(HTML("<b>n-gated.</b> Below 6 overlapping years, no verdict, just the lined-up series. At n&ge;6 the bootstrap interval sets the per-site DIRECTION verdict; a circular-shift permutation p is reported for transparency but cannot reach significance at this n (its floor is 1/n), that is the cross-site pooled test's job.")),
           tags$li(HTML("<b>Honest about scope.</b> Several of these mechanisms are clearest <em>across regions</em> or in <em>deserts</em>; testing them within one site, year-to-year, is the hardest case, and the notes say so.")),
           tags$li(HTML("<b>Direction over magnitude</b>, and <b>never “drives”/“causes.”</b>")))),
 
@@ -943,7 +943,7 @@ server <- function(input, output, session) {
         tags$thead(tags$tr(tags$th(class="sb-site","Site"), hd)),
         tags$tbody(rows)),
       p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
-        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>✓ consistent</span> <span class='sb-key sb-apparent'>≈ apparent</span> <span class='sb-key sb-counter'>✗ counter</span> <span class='sb-key sb-exploratory'>· &lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span> (the glyph carries the verdict, so it never rests on colour alone). Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there: out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden; that honesty IS the coverage statement.")))
+        HTML(" Each cell is a link's verdict at that site: <span class='sb-key sb-consistent'>✓ aligned</span> <span class='sb-key sb-apparent'>≈ apparent</span> <span class='sb-key sb-counter'>✗ counter</span> <span class='sb-key sb-exploratory'>· &lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span> (the glyph carries the verdict, so it never rests on colour alone). Faded cells aren't the mechanism <b>expected</b> for that biome; a faded cell with a <span class='sb-outprior sb-outprior-key'>corner mark</span> still fired there: out-of-biome corroboration that doesn't count toward the tally. Click a site (or hover a cell) for detail. The grey untestable majority is shown, not hidden; that honesty IS the coverage statement.")))
   })
 
   # ---- DOWNLOADS (the suite's signature export funnel) ----

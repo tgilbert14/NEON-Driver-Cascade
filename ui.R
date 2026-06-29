@@ -185,7 +185,7 @@ ui <- bslib::page_fillable(
             info_pop(
               "Driver Lab",
               p("For the response you pick (left), every candidate driver the literature proposes, with its expected ", tags$b("sign"), " and ", tags$b("lag"), ", checked against this site's data."),
-              p("At ", tags$b("n < 6 years"), " no verdict is given (the series is too short); links are shown as ", tags$b("exploratory"), ". Expected lag/sign are literature priors on annual site-year summaries (not selected by monthly correlation in this table). A permutation null + bootstrap CI gate the rest. Never read these as causation.")
+              p("At ", tags$b("n < 6 years"), " no verdict is given (the series is too short); links are shown as ", tags$b("exploratory"), ". Expected lag/sign are literature priors on annual site-year summaries (not selected by monthly correlation in this table). At n≥6 the bootstrap interval sets the per-site direction verdict; the permutation p is reported but cannot reach significance at this n (that is the cross-site pooled test's job). Never read these as causation.")
             )
           ),
           p("Which drivers explain this response here, measured against what ecology predicts, not against whichever lag looks best.")
@@ -269,7 +269,7 @@ ui <- bslib::page_fillable(
             info_pop(
               "The scoreboard",
               p("One site's handful of years can't settle anything. But each predicted link can be ", tags$b("pooled across the sites where it's expected"), " (one vote per site), which is the statistically honest way past the short-series problem."),
-              p("The grid shows every link's verdict at every site. ", tags$b("Green"), " columns marching down a biome block mean the mechanism holds there; ", tags$b("grey"), " means too few years to tell, and we show that, rather than hide it.")
+              p("The grid shows every link's verdict at every site. ", tags$b("Green"), " columns marching down a biome block mean the predicted direction holds cleanly at those sites (the per-site verdict is direction, not significance, a short series can't be significant on its own); the ", tags$b("pooled"), " test above the grid is where significance lives. ", tags$b("Grey"), " means too few years to tell, and we show that, rather than hide it.")
             )
           ),
           p("Per-site series are short; pooling across sites gives a stronger test of direction. Each cell is one link's verdict at one site. Click any site to open it.")
