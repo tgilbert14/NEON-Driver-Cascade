@@ -70,3 +70,22 @@ if ("data.table" %in% tolower(pkgs) || "data.table" %in% pkgs) {
               paste(carriers, collapse = ", ")))
 }
 cat("OK: manifest is lean (no neonUtilities / arrow; data.table only via plotly).\n")
+
+# HARD GATE (completeness): every package global.R LOADS at boot must be pinned in the
+# manifest. writeManifest() only pins packages it finds INSTALLED, so if a runtime dep is
+# missing from this environment it is silently DROPPED and the deploy dies at boot with
+# "there is no package called '<x>'". A monthly rebuild did exactly this (dropped plotly/
+# DT/bsicons/shinyjs/shinycssloaders, 73 -> 46 pkgs). Derive the required set straight from
+# global.R's library() calls so it stays in lock-step with the code, and fail loudly here.
+gl <- readLines("global.R", warn = FALSE)
+loaded <- unique(regmatches(gl, regexpr("(?<=library\\()[A-Za-z0-9._]+", gl, perl = TRUE)))
+missing_runtime <- setdiff(loaded, pkgs)
+if (length(missing_runtime)) {
+  stop(sprintf(paste0("RUNTIME PACKAGE(S) MISSING FROM manifest.json: %s. global.R loads them ",
+                      "but writeManifest() did not pin them (not installed in this environment?). ",
+                      "Add them to the refresh workflow's 'packages:' list, then re-run. ",
+                      "Deploying this manifest would die at boot."),
+               paste(missing_runtime, collapse = ", ")))
+}
+cat(sprintf("OK: all %d runtime packages loaded by global.R are pinned in the manifest.\n",
+            length(loaded)))
