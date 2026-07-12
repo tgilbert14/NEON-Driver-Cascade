@@ -77,7 +77,13 @@ jobs:
           # rsconnect + jsonlite: build_cascade.R's tail runs the lean, hard-gated
           # scripts/write_manifest.R so the pinned checksum matches the freshly rebuilt
           # bundle (else Connect serves stale data) and a heavy-package leak fails the job.
-          packages: dplyr, tidyr, stringr, tibble, rsconnect, jsonlite
+          # The app's DIRECT runtime deps (everything global.R load()s at boot) MUST be
+          # installed here too: writeManifest() only pins packages it finds INSTALLED, so
+          # any runtime package absent from this list is silently DROPPED from the manifest
+          # and the deploy dies at boot with "there is no package called '<x>'". This bit
+          # us when a monthly rebuild regenerated the manifest without plotly/DT/bsicons/
+          # shinyjs/shinycssloaders (73 -> 46 pkgs). write_manifest.R now hard-gates on it.
+          packages: dplyr, tidyr, stringr, tibble, rsconnect, jsonlite, shiny, bslib, bsicons, plotly, htmltools, shinyjs, shinycssloaders, DT
 
       - name: Rebuild data/cascade.rds from the sibling bundles
         run: Rscript scripts/build_cascade.R
