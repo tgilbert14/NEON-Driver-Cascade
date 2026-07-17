@@ -731,3 +731,13 @@ Rules:
 - **Failure/cleanup:** no local generated files were changed. The workflow now requests `cpp11` directly; `git diff --check` and the local workflow guard must pass before push.
 - **Residual risk:** GitHub Actions must confirm the added package is available from the pinned Posit repository; merge and Pages publication remain pending.
 - **Next action:** commit/push this CI dependency repair, wait for PR checks to pass, merge, update repository metadata, and verify the public Pages cover and share asset.
+
+### 2026-07-17 14:45 MST - sibling checkout line-ending portability repair / root
+
+- **Changed:** kept exact detached-commit and index checks, but replaced the sibling worktree cleanliness assertion with `git diff --quiet --ignore-space-at-eol` plus an explicit cached-index check. Removed temporary fetch tracing after identifying the affected row. No application or generated artifact bytes changed.
+- **Learned:** the pinned beetle commit stores its CSV with CRLF in the index while `.gitattributes` declares `eol=lf`; Ubuntu therefore reports a line-ending-only worktree modification after checkout even though the commit is exact. A clean-content check must distinguish normalization-only EOL changes from substantive edits.
+- **Test process:** the traced GitHub run fetched and verified all seven exact commits, then failed only on `data-sample/beetle_demo.csv` showing ` M` from EOL normalization. Local reproduction confirmed the same attribute/index behavior; the new guard ignores only end-of-line whitespace and still rejects staged or substantive differences.
+- **Evidence invalidated:** only the traced remote PR check; local generated artifacts and deterministic rebuild evidence remain valid because the fix is CI guard logic only.
+- **Failure/cleanup:** temporary diagnostics were removed; `git diff --check` passes. The next remote run is the authoritative validation of the portability fix.
+- **Residual risk:** merge and Pages publication remain pending until the full rebuild and manifest comparison complete on GitHub.
+- **Next action:** push this final CI portability repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.

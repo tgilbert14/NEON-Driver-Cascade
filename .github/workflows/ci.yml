@@ -50,7 +50,7 @@ jobs:
         env:
           CASCADE_ROOT: ""
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           Rscript --vanilla -e 'for (f in c("global.R","ui.R","server.R","R/cascade_helpers.R","R/site_metadata.R")) parse(f); source("global.R"); source("ui.R"); source("server.R")'
           node --check www/cascade.js
           PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
@@ -66,23 +66,22 @@ jobs:
 
       - name: Fetch the seven recorded sibling commits detached
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           ws="$RUNNER_TEMP/siblings"
           mkdir -p "$ws"
           while IFS=$'\t' read -r product directory origin commit; do
-            echo "Fetching $product from $origin at $commit"
             test -n "$product" && test -n "$directory"
             test "${origin#github.com/tgilbert14/}" != "$origin"
             repo="$ws/$directory"
             git init -q "$repo"
             git -C "$repo" remote add origin "https://${origin}.git"
-            git -C "$repo" fetch --no-tags --depth=1 origin "$commit"
+            git -C "$repo" fetch --quiet --no-tags --depth=1 origin "$commit"
             test "$(git -C "$repo" rev-parse FETCH_HEAD)" = "$commit"
             git -C "$repo" -c advice.detachedHead=false checkout --quiet --detach "$commit"
             test "$(git -C "$repo" rev-parse HEAD)" = "$commit"
-            test -z "$(git -C "$repo" status --porcelain --untracked-files=normal)"
+            git -C "$repo" diff --quiet --ignore-space-at-eol -- .
+            git -C "$repo" diff --cached --quiet -- .
           done < "$RUNNER_TEMP/source-lock.tsv"
-          find "$ws" -mindepth 1 -maxdepth 1 -type d -print
           test "$(find "$ws" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 7
           echo "CASCADE_ROOT=$ws" >> "$GITHUB_ENV"
 
