@@ -307,7 +307,7 @@ validate_manifest_policy <- function(manifest, deploy_files, check_checksums = T
         !identical(description$Package, package) ||
         !.scalar_character(description$Version) ||
         !grepl("^[0-9]+(?:[.-][A-Za-z0-9]+)*$", description$Version, perl = TRUE) ||
-        !identical(description$Repository, "CRAN") ||
+        !(description$Repository %in% c("CRAN", "RSPM")) ||
         !.built_r_compatible(description$Built))
       .manifest_fail("manifest package record is incomplete or untrusted: %s", package)
     .validate_standard_cran_provenance(description, package)

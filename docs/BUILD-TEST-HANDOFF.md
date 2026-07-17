@@ -757,3 +757,11 @@ Rules:
 - **Evidence invalidated:** the latest remote rebuild only; the locale normalization is a writer-only portability fix and does not alter source locks or artifact inputs.
 - **Residual risk:** GitHub must confirm the patched writer preserves manifest semantic comparison and the final deploy manifest checks.
 - **Next action:** push the writer fix, wait for the complete rebuild to pass, merge, update repository metadata, and verify the public Pages cover/share asset.
+### 2026-07-17 15:12 MST - Posit RSPM manifest trust repair / root
+
+- **Changed:** allowed the standard CRAN package record label `RSPM` alongside `CRAN` when the recorded `RemoteRepos` host remains the trusted pinned Posit repository; removed temporary DT logging. No package versions, dependency projections, or deploy checksums are relaxed.
+- **Learned:** Ubuntu's Posit snapshot records ordinary CRAN packages with `Source=CRAN` but `description$Repository=RSPM`, while the Windows-generated baseline records `CRAN`. The prior policy treated this legitimate platform packaging label as untrusted even though the remote provenance fields were exact.
+- **Test process:** the diagnostic run printed the DT record and isolated the mismatch to `description$Repository=RSPM`; package version, standard remote ref/SHA, trusted RemoteRepos, and R 4.5 compatibility all matched policy. The next GitHub run must validate the full manifest projection and rebuild.
+- **Evidence invalidated:** only the diagnostic remote check; artifact hashes remain unchanged because this is manifest-policy validation logic.
+- **Residual risk:** the candidate manifest may still expose a different dependency projection; `compare_manifests.R` will catch any semantic drift after policy validation.
+- **Next action:** push this narrow trust-policy repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
