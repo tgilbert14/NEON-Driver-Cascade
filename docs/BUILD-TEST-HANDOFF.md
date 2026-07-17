@@ -722,3 +722,12 @@ Rules:
   merge and Pages publication remain pending.
 - **Next action:** commit/push this test-only portability fix, wait for the remote check
   to pass, merge, update repository metadata, and verify the public Pages cover.
+### 2026-07-17 14:28 MST - CI manifest dependency repair / root
+
+- **Changed:** added `cpp11` to the explicit Linux CI dependency bootstrap because the committed manifest requires it at runtime. No application, workflow input inventory, or generated artifact bytes changed beyond this workflow dependency declaration.
+- **Learned:** a hard dependency install can complete while a manifest-governed runtime package remains absent when that package is only exposed through recorded LinkingTo/configuration metadata. CI must install the manifest's required runtime set explicitly before verification.
+- **Test process:** the third remote check passed all parser, publisher, UTF-8 helper, manifest, and contract tests, then failed at the runtime-library completeness gate with `cpp11` missing. Local workflow/pin checks and the full deterministic rebuild evidence remain valid because this is a workflow-only repair.
+- **Evidence invalidated:** only the third remote PR check; no artifact promotion or repository snapshot mutation occurred in the failed job.
+- **Failure/cleanup:** no local generated files were changed. The workflow now requests `cpp11` directly; `git diff --check` and the local workflow guard must pass before push.
+- **Residual risk:** GitHub Actions must confirm the added package is available from the pinned Posit repository; merge and Pages publication remain pending.
+- **Next action:** commit/push this CI dependency repair, wait for PR checks to pass, merge, update repository metadata, and verify the public Pages cover and share asset.
