@@ -50,7 +50,7 @@ jobs:
         env:
           CASCADE_ROOT: ""
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           Rscript --vanilla -e 'for (f in c("global.R","ui.R","server.R","R/cascade_helpers.R","R/site_metadata.R")) parse(f); source("global.R"); source("ui.R"); source("server.R")'
           node --check www/cascade.js
           PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
@@ -66,7 +66,7 @@ jobs:
 
       - name: Fetch the seven recorded sibling commits detached
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           ws="$RUNNER_TEMP/siblings"
           mkdir -p "$ws"
           while IFS=$'\t' read -r product directory origin commit; do
@@ -82,6 +82,7 @@ jobs:
             test "$(git -C "$repo" rev-parse HEAD)" = "$commit"
             test -z "$(git -C "$repo" status --porcelain --untracked-files=normal)"
           done < "$RUNNER_TEMP/source-lock.tsv"
+          find "$ws" -mindepth 1 -maxdepth 1 -type d -print
           test "$(find "$ws" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 7
           echo "CASCADE_ROOT=$ws" >> "$GITHUB_ENV"
 
