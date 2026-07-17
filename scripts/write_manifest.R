@@ -30,6 +30,7 @@ manifest_text <- readChar("manifest.json", file.info("manifest.json")$size, useB
 manifest_text <- sub('("locale"[[:space:]]*:[[:space:]]*")[^"]+(")', "\\1en_US\\2", manifest_text, perl = TRUE)
 writeBin(charToRaw(manifest_text), "manifest.json")
 manifest <- jsonlite::fromJSON("manifest.json", simplifyVector = FALSE)
+if ("DT" %in% names(manifest$packages)) message("DT_RECORD=", jsonlite::toJSON(manifest$packages$DT, auto_unbox = TRUE, null = "null"))
 result <- validate_manifest_policy(manifest, DEPLOY_APP_FILES, check_checksums = TRUE)
 validate_manifest_library(manifest)
 cat(sprintf("manifest.json written and verified: %d packages, %d files.\n",
