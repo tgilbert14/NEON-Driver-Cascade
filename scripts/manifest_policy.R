@@ -16,7 +16,8 @@ MANIFEST_ALLOWED_REPOSITORY_HOSTS <- c(
   "cloud.r-project.org", "cran.r-project.org", "cran.rstudio.com",
   "packagemanager.posit.co")
 MANIFEST_STANDARD_REMOTE_FIELDS <- c(
-  "RemoteType", "RemoteRepos", "RemotePkgRef", "RemoteRef", "RemoteSha")
+  "RemoteType", "RemoteRepos", "RemotePkgRef", "RemoteRef", "RemoteSha",
+  "RemotePkgPlatform")
 
 `%||%` <- function(x, y) if (is.null(x) || !length(x)) y else x
 

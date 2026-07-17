@@ -765,3 +765,11 @@ Rules:
 - **Evidence invalidated:** only the diagnostic remote check; artifact hashes remain unchanged because this is manifest-policy validation logic.
 - **Residual risk:** the candidate manifest may still expose a different dependency projection; `compare_manifests.R` will catch any semantic drift after policy validation.
 - **Next action:** push this narrow trust-policy repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+### 2026-07-17 15:18 MST - Posit remote platform provenance repair / root
+
+- **Changed:** allow rsconnect's `RemotePkgPlatform` field as an optional standard Posit provenance field, while preserving exact RemoteType/ref/SHA and trusted RemoteRepos validation. No dependency projection or deploy checksum is relaxed.
+- **Learned:** after accepting the legitimate `RSPM` repository label, Ubuntu's rsconnect added a truthful platform field (`x86_64-pc-linux-gnu-ubuntu-24.04`) that the older allowlist rejected as unexpected. Platform-specific provenance metadata must be allowlisted without becoming a trust bypass.
+- **Test process:** the latest run passed all source contracts and reached manifest generation; the sole failure was `unexpected package provenance field(s) for DT: RemotePkgPlatform`. The next run must validate manifest semantic reproducibility after this narrow allowlist update.
+- **Evidence invalidated:** only the latest remote check; artifact and source-lock evidence remain valid.
+- **Residual risk:** additional RSPM metadata fields, if present, should remain rejected unless they are separately understood and validated.
+- **Next action:** push this narrow provenance-field repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
