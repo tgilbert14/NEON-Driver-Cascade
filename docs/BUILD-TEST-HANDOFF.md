@@ -633,3 +633,43 @@ Rules:
 - **Next action:** review the intentional worktree diff, then commit/publish/deploy
   only if explicitly requested. If code or artifacts change first, mark the affected
   matrix rows invalid and rerun from the earliest invalidated gate.
+
+### 2026-07-17 13:59 MST - merged release, deterministic rebuild, and publication prep / root
+
+- **Changed:** merged `origin/master` into `codex/publish-response-atlas-20260717`
+  (`e0ca139`); retained the hardened receipt workflow, generation-guarded manifest
+  writer, and system-only app font stack. Added the share-card asset, canonical/social
+  metadata, README Explore links, and a desktop-safe two-line cover heading.
+- **Learned:** the stage-8 remote-font gate intentionally rejects a forbidden helper
+  token even when it appears only in a comment; explain the offline policy without
+  copying that token. The final shell wrapper must use `git -C` after app smoke, and
+  the workflow pin audit must recurse through every `jobs.*.steps.*.uses` entry.
+- **Test process:** cwd `D:\Git\NEON-Driver-Cascade`; R 4.5.2; `R_LIBS=C:/tmp/cascade-r-lib`;
+  dated Posit package cache; canonical seven-repository `CASCADE_ROOT`; session-scoped
+  Git safe-directory config. Ran `scripts/rebuild_all.R` twice, all nine stages each
+  time; both generations passed contract, manifest, malformed-generation, staged-app
+  boot, smoke, and post-promotion checks. Then ran R parse, JavaScript, Python, YAML,
+  13 pinned-action, workflow-guard, live helpers, manifest verification/comparison,
+  boot-integrity, and app-smoke gates. Expected locale/package-build warnings only;
+  all required gates passed.
+- **Evidence invalidated:** the earlier pre-merge generation hashes were invalidated
+  by the upstream merge and font-policy comment change; the final two-pass family is
+  the applicable evidence.
+- **Artifacts:** final byte-identical SHA-256 family: cascade
+  `5453e448cd5f1ea82a0844425a61bbf5ed5d15ddcd57f35f3eaedbed68097845`, search
+  `1e3449cfee4ebb8d41c40ce0f1544f210c8ae1ea671cb33e0f57777221a0ce1d`, meta
+  `7e1aef4fc614c0cfbe9a7646b974ecd8bf520c1af8db762f51abccf2c6c5f8f4`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, manifest
+  `b1851e53d1796f4989a2f46b39df02577ae95bc92c9aeca5d67549dbc62c0150`.
+- **Failure/cleanup:** the first post-merge pass stopped at 8/9 because its explanatory
+  comment triggered the remote-font scanner; it did not promote, the five live hashes
+  stayed unchanged, and lock/stage/backup/pending state was removed. The corrected
+  rerun passed and promoted; the initial inline workflow checker was a harness false
+  negative and was replaced by the corrected 13-entry recursive check.
+- **Residual risk:** GitHub metadata, branch push/merge, Pages deployment, and final
+  public URL verification remain unchecked; the current static cover was browser-tested
+  locally at desktop and mobile sizes, but the published Pages response is not yet
+  verified.
+- **Next action:** stage the final generated manifest and this ledger entry, commit,
+  push the release branch, merge it, update the repository description/homepage, wait
+  for Pages, and verify the direct public cover plus share asset.

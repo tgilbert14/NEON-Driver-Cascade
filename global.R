@@ -682,7 +682,7 @@ DDL <- list(
 )
 # Light "desert-day" base is the DEFAULT (input_dark_mode mode="light"); the user can
 # toggle to the dark desert-night showcase. The navy hero command band stays navy in both.
-# Do not replace this with bslib::font_google(): it can fetch fonts at application startup.
+# Avoid adding a startup font-fetching helper here: it can make cold starts depend on network availability.
 # This system-only stack deliberately has no runtime network font dependency.
 APP_FONT_STACK <- "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 APP_FONT_COLLECTION <- font_collection(
