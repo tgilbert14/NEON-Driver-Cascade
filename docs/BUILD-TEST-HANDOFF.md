@@ -8,19 +8,21 @@ can continue safely without relying on chat history.
 
 ## Current handoff state
 
-**Release-validation state for the captured product/build state through `3700c34`: BLOCKED as of
-2026-07-17.** PR #4 is open, red, and unmerged. Commits after the last accepted
+**Release-validation state for the captured product/build state through
+`3700c34`: BLOCKED as of 2026-07-17.** PR #4 is open, red, and unmerged.
+Commits after the last accepted
 Windows generation changed the captured writer/policy/search-build surface, so the
 earlier build, determinism, manifest/live-root, writer-guard, browser, and final-state
 passes are historical evidence—not validation of current HEAD. Repository metadata,
 Pages deployment, and public cover/share-card verification remain pending.
 
-The latest Ubuntu 24.04 / R 4.5.2 CI run completed the nine-stage rebuild and passed
-its source, science, manifest, boot, and smoke contracts, then failed the required
-committed-artifact byte gate: `data/search_index.rds` and
-`data/cascade_meta.rds` differed, while `data/cascade.rds` and the codebook
-matched. The later semantic-manifest comparison was not reached, and no CI candidate
-artifact was retained or promoted.
+The 2026-07-17 Ubuntu 24.04 / R 4.5.2 run at documentation head `e906497`
+completed the nine-stage rebuild and passed every source, science, manifest, boot,
+and smoke contract. It promoted the validated candidate inside the ephemeral CI
+workspace, then the committed-artifact byte gate reported all three RDS files
+(`cascade`, `search_index`, and `cascade_meta`) different; only the CSV
+codebook matched. The semantic-manifest comparison was not reached. Job cleanup
+removed the ephemeral candidate; none of its files were retained, exported, or committed.
 
 A Windows R 4.5.2 rebuild against the exact seven pinned snapshots passed stages
 1–4, then failed closed at stage 5 with `partial standard CRAN provenance: DT`.
@@ -429,7 +431,7 @@ code change invalidates earlier build, determinism, browser, and manifest eviden
 | 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; no bytecode, lock, stage, backup, pending, temp config, credential, or scratch residue. |
 | 5 | Authoritative build | BLOCKED | 2026-07-17 | No accepted current-HEAD family: Ubuntu rebuilt but later failed exact bytes; Windows failed stage 5 before promotion. |
 | 6 | Independent live-root checks | NOT RUN | 2026-07-17 | No complete independent live-root suite exists for a promoted current-HEAD family. |
-| 7 | Determinism | FAIL | 2026-07-17 | Ubuntu exact-reproduction gate differs for search and meta; do not weaken the byte gate. |
+| 7 | Determinism | FAIL | 2026-07-17 | Latest Ubuntu exact-reproduction gate differs for all three RDS files; only the CSV codebook matches. Do not weaken the byte gate. |
 | 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
 | 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
 | 10 | Writer capability guard | NOT RUN | 2026-07-17 | Search and manifest writers changed after the prior guard evidence; rerun against final current code. |
@@ -892,3 +894,42 @@ Rules:
 - **Next action:** validate and commit/push these documentation changes to PR #4,
   then—with explicit owner approval—retrieve the unmodified Linux artifacts for
   semantic/serialization diagnosis without changing the existing gates.
+
+### 2026-07-17 16:44 MST - post-push CI evidence reconciliation / root
+
+- **Changed:** updated only this handoff's current-state and completion-matrix text
+  after the documentation push produced newer CI evidence. No application, build,
+  workflow, test, manifest-policy, or generated artifact file changed.
+- **Learned:** explicit search collation did not solve reproducibility, and the
+  differing set is not stable across the last two runs. At head `e906497`, all
+  three RDS files differed and only the CSV codebook matched. That makes
+  search-ordering alone insufficient and does not prove either serialization or a
+  semantic difference. Candidate inspection is required before proposing a fix.
+- **Test process:** followed the installed GitHub CI-fix workflow: verified existing
+  `gh` authentication, then ran its `inspect_pr_checks.py --repo . --pr 4 --json`
+  inspector against GitHub Actions run
+  [29621153262](https://github.com/tgilbert14/NEON-Driver-Cascade/actions/runs/29621153262),
+  job `rebuild-contracts`, head `e906497924d9dc2d02beb160870f78179dadea0f`.
+  Expected result was a precise failed-step/log receipt; actual result confirmed all
+  nine build stages and every source/science/manifest/boot/smoke contract passed,
+  then exact Git diff failed for `cascade.rds`, `search_index.rds`, and
+  `cascade_meta.rds`; the codebook did not differ. The later semantic-manifest
+  gate was not reached. After this entry, strict UTF-8/control/final-LF,
+  trailing-whitespace, ledger-spacing, required-evidence, exact five-hash,
+  rebuild-lock, and `git diff --check` gates all passed.
+- **Evidence invalidated:** the prior top-level statement that the latest run differed
+  only for search/meta and matched cascade. The dated 16:28 entry remains an accurate
+  record of evidence available before run 29621153262 completed.
+- **Artifacts:** the CI candidate was promoted only inside its ephemeral workspace,
+  then runner cleanup removed it. No candidate was uploaded, retained, downloaded,
+  committed, or promoted locally. The five local live hashes remain unchanged.
+- **Failure/cleanup:** GitHub failed only at the exact committed-artifact comparison
+  after a complete validated build. Runner post-job cleanup completed. Locally,
+  there is no rebuild lock or R process and no generated file changed.
+- **Residual risk:** without the candidate RDS files, semantic versus serialization
+  differences cannot be separated. The distinct manifest-policy conflict also
+  remains unresolved, and PR #4 cannot be merged.
+- **Next action:** obtain explicit owner approval for a temporary, SHA-pinned
+  failed-run artifact upload, inspect the three RDS candidates against the committed
+  family, remove the diagnostic step, and propose a focused fix without weakening
+  any existing gate.
