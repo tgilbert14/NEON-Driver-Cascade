@@ -673,3 +673,27 @@ Rules:
 - **Next action:** stage the final generated manifest and this ledger entry, commit,
   push the release branch, merge it, update the repository description/homepage, wait
   for Pages, and verify the direct public cover plus share asset.
+
+### 2026-07-17 14:06 MST - remote CI repair / root
+
+- **Changed:** after PR #4 started, GitHub Actions failed before project tests because
+  the Ubuntu runner lacked `libcurl` headers while `pak-version: repo` compiled pak
+  from source. Changed all three dependency-install jobs in the two workflows to
+  `pak-version: stable`; no app or generated artifact bytes changed.
+- **Learned:** local Windows package availability does not prove the Linux runner has
+  native headers. Treat dependency-bootstrap failures separately from product gates,
+  and prefer the action's published stable pak distribution when a source build adds
+  an unnecessary system-toolchain dependency.
+- **Test process:** reran the safe YAML parser, all 13 immutable action-SHA checks,
+  trusted-publisher fixtures, and `git diff --check`; expected result PASS, actual
+  result PASS. The prior local two-pass rebuild and live-root matrix remain valid
+  because this change is workflow-only.
+- **Evidence invalidated:** only the remote PR check; the failed job reached no project
+  build or contract stage. Local artifact hashes and live-root evidence remain valid.
+- **Failure/cleanup:** GitHub job failed in pak installation with `curl/curl.h: No such
+  file or directory`; no repository artifacts were written. Local workflow fix is
+  staged and statically validated; PR check must rerun.
+- **Residual risk:** the replacement `stable` pak distribution still requires GitHub
+  Actions to complete; merge and Pages publication remain pending.
+- **Next action:** commit/push the CI repair, wait for PR checks to pass, merge, update
+  repository metadata, and verify the live Pages cover and share asset.
