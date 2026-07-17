@@ -10,6 +10,23 @@ read `docs/BUILD-TEST-HANDOFF.md` completely. Treat it as the durable cross-sess
 record of the current build state, scientific pins, required test matrix, known
 failures, residual risks, and next action.
 
+## Suite learning continuity
+
+For any session that changes a product definition, estimator, data contract, QC
+rule, shared UI/build pattern, publication pattern, or possible Driver input, also
+read `docs/NEON-SUITE-LEARNING-LOOP.md` completely before acting. That file is the
+central program register for the nine sibling-app passes, the optional
+complementary-product decision, and Driver v2 reintegration.
+
+Every suite-relevant session must classify its result as app-local,
+suite-platform, scientific-contract, and/or Driver-impacting, then update the
+central evidence register and Driver implication backlog before its final report.
+Record an explicit `NONE` when no Driver implication exists; silence is not a
+decision. When work moves to a sibling repository, install the equivalent local
+instruction there: update its own handoff every session and update this Driver
+repository's central register at the end of each completed app pass. Chat history
+is never the only copy of a reusable lesson or test process.
+
 ## Non-negotiable rules
 
 1. Start and end with `git status --short`. The worktree may intentionally contain

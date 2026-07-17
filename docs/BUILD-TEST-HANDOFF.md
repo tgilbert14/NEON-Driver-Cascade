@@ -8,19 +8,30 @@ can continue safely without relying on chat history.
 
 ## Current handoff state
 
-**Local release-validation state: complete for the unchanged generation below as of
-2026-07-17 12:15 MST.** Every applicable completion-matrix row has dated passing
-evidence. This is a local, validated release candidate; no commit, push, deployment,
-or publication was performed. The broad uncommitted worktree is intentional and must
-still be reviewed and preserved.
+**Release-validation state for the captured product/build state through `3700c34`: BLOCKED as of
+2026-07-17.** PR #4 is open, red, and unmerged. Commits after the last accepted
+Windows generation changed the captured writer/policy/search-build surface, so the
+earlier build, determinism, manifest/live-root, writer-guard, browser, and final-state
+passes are historical evidence—not validation of current HEAD. Repository metadata,
+Pages deployment, and public cover/share-card verification remain pending.
 
-A change to the captured runtime/build surface or any of the five generated files
-invalidates the generation-scoped build, determinism, manifest, live-root, and browser
-evidence. A future session should not repeat the expensive matrix merely to recreate
-evidence; it should first compare the generation hashes and only rerun gates invalidated
-by an actual change.
+The latest Ubuntu 24.04 / R 4.5.2 CI run completed the nine-stage rebuild and passed
+its source, science, manifest, boot, and smoke contracts, then failed the required
+committed-artifact byte gate: `data/search_index.rds` and
+`data/cascade_meta.rds` differed, while `data/cascade.rds` and the codebook
+matched. The later semantic-manifest comparison was not reached, and no CI candidate
+artifact was retained or promoted.
 
-### Validated five-file generation
+A Windows R 4.5.2 rebuild against the exact seven pinned snapshots passed stages
+1–4, then failed closed at stage 5 with `partial standard CRAN provenance: DT`.
+Promotion did not begin; all five live files stayed unchanged; and no rebuild lock,
+pending/stage/backup state, or R process remained. Explicit collation did not solve
+the gate, the new meta difference means the cause is not established, and neither
+row ordering nor serialization is yet proven. Do not weaken exact-byte or
+provenance gates. Inspecting unmodified Linux outputs requires explicit owner
+approval for a temporary diagnostic artifact upload; that approval is not recorded.
+
+### Historical validated five-file generation (not current HEAD evidence)
 
 | Artifact | Bytes | MD5 | SHA-256 |
 |---|---:|---|---|
@@ -28,10 +39,14 @@ by an actual change.
 | `data/search_index.rds` | 18318 | `28de029bb7fe9ac6abcd0d0b9396b399` | `1e3449cfee4ebb8d41c40ce0f1544f210c8ae1ea671cb33e0f57777221a0ce1d` |
 | `data/cascade_meta.rds` | 2484 | `bb2066295994b9d0e4137221f187b932` | `7e1aef4fc614c0cfbe9a7646b974ecd8bf520c1af8db762f51abccf2c6c5f8f4` |
 | `data/neon-cascade-codebook.csv` | 15080 | `9f970cd051b1743cc3b45b4bf61e5eb8` | `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3` |
-| `manifest.json` | 210836 | `60567ad8f2f84207ef8513df631549f3` | `dffe9d2de03bd4b301958839f1a41f5c19302445f92a95b02fefb92032aaa344` |
+| `manifest.json` | 210836 | `7ada31ae9ff396e5e06a9c53c11daeb0` | `b1851e53d1796f4989a2f46b39df02577ae95bc92c9aeca5d67549dbc62c0150` |
 
-The two final authoritative nine-stage rebuilds produced these exact bytes for all
-five files. They used 364 archived RDS inputs from these immutable source commits:
+The two post-merge authoritative Windows rebuilds at 2026-07-17 13:59 MST
+produced these exact bytes for all five files. Current live files retain these
+bytes, but current writer/policy/search-builder code has not reproduced them
+through a passing cross-platform matrix. Treat this table and the dated passes
+below as audit history only. The builds used 364 archived RDS inputs from these
+immutable source commits:
 
 | Product | Commit |
 |---|---|
@@ -47,7 +62,8 @@ five files. They used 364 archived RDS inputs from these immutable source commit
 
 | Date | Scope | Validated result | Limits/notes |
 |---|---|---|---|
-| 2026-07-17 12:15 MST | Authoritative build and determinism | Two consecutive full rebuilds passed all nine stages, promoted, post-verified, and produced byte-identical five-file families. | Applies only to the exact hashes and source commits above. |
+| 2026-07-17 13:59 MST | Post-merge authoritative build and determinism | Two consecutive nine-stage Windows rebuilds passed and produced the historical five-file family above. | Superseded for current HEAD by later writer/policy/search-builder changes; retain as historical evidence only. |
+| 2026-07-17 12:15 MST | Earlier authoritative build and determinism | Two consecutive full rebuilds passed all nine stages, promoted, post-verified, and produced byte-identical five-file families. | Its earlier manifest hash is preserved in the 12:15 ledger; this family was superseded by the 13:59 row above. |
 | 2026-07-17 12:15 MST | Independent live-root and science audit | `test_helpers.R`, `verify_manifest.R`, `test_manifest_compare.R`, `test_boot_integrity.R`, and `smoke_app.R` passed. Contracts covered 510 annual rows, 46 sites, 552 links, 73 trusted packages, 12 deploy files, 12 malformed/mutated boot fixtures, and six ordered promotion cuts. | Windows rejected startup `C.UTF-8`; the runtime selected a real UTF-8 locale and the cross-locale reopen passed. |
 | 2026-07-17 12:15 MST | Failure safety | Invalid `CASCADE_ROOT` failed before promotion with unchanged hashes; all four direct writers rejected a missing generation capability; a controlled copy-3 promotion failure restored all five prior files exactly; owned lock/stage/backup/pending state was clean. | Hard process kill and power-loss limits remain as described below. |
 | 2026-07-17 12:15 MST | Static/workflow/security | All 22 R files parsed; JavaScript, Python, Python fixtures, both workflow YAML files, 13 SHA-pinned action references, workflow receipt fixtures, manifest fixtures, remote-font scan, deploy regular-file scan, and `git diff --check` passed. | R printed two non-fatal native-encoding warnings during a direct parse probe; use the UTF-8 parse pattern documented below. |
@@ -56,7 +72,8 @@ five files. They used 364 archived RDS inputs from these immutable source commit
 
 ## Session start protocol
 
-1. Read root `AGENTS.md` and this file completely.
+1. Read root `AGENTS.md` and this file completely. For suite-relevant work,
+   also read the [NEON suite learning loop](NEON-SUITE-LEARNING-LOOP.md).
 2. Run `git status --short`. Inspect relevant diffs before editing. Existing changes
    belong to the user or another session unless proved otherwise.
 3. Check whether `.cascade-rebuild.lock` exists. Read its `owner.txt`; do not remove
@@ -114,6 +131,13 @@ text under the startup C locale. CSV generation temporarily activates a real UTF
 any inability to activate UTF-8, any C0/C1 control, U+FFFD, unknown-marked non-ASCII
 text, or cross-locale reopen failure as a real failing gate.
 
+Endpoint security on this workstation may deny Codex's WindowsApps `pwsh.exe`
+launcher with `CreateProcessAsUserW ... Access is denied`. Invoking
+`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe` explicitly has
+worked. Treat this as an orchestration-path issue, not an application or test
+failure; ask the owner to intervene only if the explicit system shell is also
+blocked.
+
 The reproducible workflow repository is the dated Posit Package Manager snapshot:
 
 ```text
@@ -145,6 +169,25 @@ validation must not invent or rewrite provenance. Semantic comparison may normal
 the two valid standard-CRAN forms only after each manifest passes policy on its own.
 In the explicit form, `RemoteSha` equal to `Version` is reference metadata, not an
 independent package-content digest.
+
+### Unresolved current-HEAD manifest-policy conflict
+
+The canonical contract above and current implementation disagree in three observed
+ways:
+
+1. `scripts/write_manifest.R` rewrites locale after
+   `rsconnect::writeManifest()`, despite the untouched-output rule;
+2. `scripts/manifest_policy.R` accepts `description.Repository` in
+   `{CRAN, RSPM}`, despite the exactly-CRAN rule; and
+3. `MANIFEST_STANDARD_REMOTE_FIELDS` includes `RemotePkgPlatform`, making it a
+   sixth all-or-none field although the 15:18 ledger calls it optional.
+
+The third conflict caused the Windows stage-5 DT failure; Linux required platform
+metadata to advance. This is release-blocking. Do not weaken, normalize, or relabel
+either contract merely to clear CI, and do not copy this unresolved behavior into
+the other suite apps. Obtain an owner policy decision, then update canonical text,
+writer, validator, comparator fixtures, and workflow atomically and rerun the full
+unchanged matrix on both platforms.
 
 An outer `Repository: null` is **not** permission to:
 
@@ -374,23 +417,24 @@ to "fix."
 ## Completion test matrix
 
 "Done" means every applicable row below has dated evidence for the final unchanged
-code/data state. Run in this order; a later code change invalidates earlier build,
-determinism, browser, and manifest evidence.
+code/data state. This table now reports current applicability; historical detail
+remains in the dated ledger. Run in order after the blockers are corrected. A later
+code change invalidates earlier build, determinism, browser, and manifest evidence.
 
 | Order | Gate | Status | Date | Generation / evidence |
 |---:|---|---|---|---|
-| 1 | Worktree ownership | PASS | 2026-07-17 | Broad intentional dirty tree reviewed and preserved; no conflicting rebuild/editor; tracked `_diag_seasonal.R` deletion left untouched. |
+| 1 | Worktree ownership | PASS | 2026-07-17 | Current documentation changes are owned; no rebuild process or conflicting editor remains; unrelated history is preserved. |
 | 2 | Static syntax | PASS | 2026-07-17 | 22 R files parsed as UTF-8; `node --check`; both Python files compiled in memory; Python fixtures passed. |
 | 3 | Workflow policy | PASS | 2026-07-17 | Both YAML files safe-loaded; all 13 `uses:` values are full lowercase 40-hex pins; receipt self-test passed. |
 | 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; no bytecode, lock, stage, backup, pending, temp config, credential, or scratch residue. |
-| 5 | Authoritative build | PASS | 2026-07-17 | Nine of nine stages plus live post-promotion verification passed for SHA family `5453e448…/dffe9d2d…`. |
-| 6 | Independent live-root checks | PASS | 2026-07-17 | All five required R checks passed independently; 73 packages, 12 files, 510 annual rows, 552 links. |
-| 7 | Determinism | PASS | 2026-07-17 | Second complete rebuild from identical code/source/environment was byte-identical 5/5. |
-| 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Invalid source root failed before promotion; all five hashes unchanged; environment/working directory restored; cleanup clean. |
-| 9 | Promotion rollback safety | PASS | 2026-07-17 | Controlled third-copy failure restored exact prior bytes/hashes 5/5; environment/working directory restored; cleanup clean. |
-| 10 | Writer capability guard | PASS | 2026-07-17 | Four direct writers rejected missing generation capability; all five hashes unchanged. |
-| 11 | Browser QA | PASS | 2026-07-17 | Final generation passed desktop/mobile navigation, search, theme, four plots, QC/About, accessibility/live regions, screenshots, local-only boot assets, and console review. |
-| 12 | Final state | PASS | 2026-07-17 | Exact hashes, failures, cleanup, residual risks, and next action are recorded here; final status preserves intentional product changes. |
+| 5 | Authoritative build | BLOCKED | 2026-07-17 | No accepted current-HEAD family: Ubuntu rebuilt but later failed exact bytes; Windows failed stage 5 before promotion. |
+| 6 | Independent live-root checks | NOT RUN | 2026-07-17 | No complete independent live-root suite exists for a promoted current-HEAD family. |
+| 7 | Determinism | FAIL | 2026-07-17 | Ubuntu exact-reproduction gate differs for search and meta; do not weaken the byte gate. |
+| 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
+| 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
+| 10 | Writer capability guard | NOT RUN | 2026-07-17 | Search and manifest writers changed after the prior guard evidence; rerun against final current code. |
+| 11 | Browser QA | NOT RUN | 2026-07-17 | Historical desktop/mobile pass predates the current captured build surface and accepted current-head generation. |
+| 12 | Final state | BLOCKED | 2026-07-17 | PR/merge/metadata/Pages/public verification and the release gates above remain pending. |
 
 ### Static and focused commands
 
@@ -507,12 +551,16 @@ replace browser QA, and screenshots do not replace interaction/console checks.
 | ordinary promotion fails | Rollback should restore all five prior files. Prove exact hashes and cleanup; stop if any mismatch remains. |
 | power loss/hard kill during promotion | Treat live family as suspect even if files exist. Runtime guard should refuse mixed bytes. Rerun the full rebuild before use. |
 | direct artifact writer refuses to run | Expected generation-capability protection; use `rebuild_all.R`. |
+| post-rebuild generated-file diff | Current release fails exact reproducibility even if staged science/boot checks pass. Do not weaken the gate or promote ad hoc; compare candidate semantics/serialization only through an explicitly approved diagnostic transfer, fix the cause, then rerun. |
+| `partial standard CRAN provenance: DT` | The current all-or-none field policy differs across Windows/Linux records. Stop at the manifest-policy conflict above; do not omit, synthesize, or make fields optional merely to pass. |
 
 ## Residual risks currently carried
 
-- No commit, push, deployment, or publication was performed. The validated release
-  candidate remains a broad uncommitted worktree and needs deliberate human review
-  before any publication action.
+- Branch changes are committed and pushed and PR #4 is open, but current CI is red.
+  Merge, repository metadata, Pages deployment, and public URL/share-card
+  verification are pending; Linux candidate bytes were not retained for inspection.
+- Locale rewriting, CRAN-versus-RSPM labeling, and the all-or-none
+  `RemotePkgPlatform` rule are unresolved cross-platform manifest-policy conflicts.
 - The dated Posit Package Manager URL and strict CRAN identity policy do not archive
   or independently content-hash every upstream package tarball.
 - Five separate filesystem entries cannot be indivisibly atomic across hard power
@@ -521,9 +569,9 @@ replace browser QA, and screenshots do not replace interaction/console checks.
 - The process starts with invalid `C.UTF-8` environment settings on this Windows
   host. Runtime activation of `English_United States.utf8` is tested and required,
   but bypassing the supported runtime/helper path can reintroduce corruption.
-- Browser coverage is finite. The final matrix covered the principal desktop/mobile,
-  interaction, plot, Unicode, and accessibility paths, not every device/browser or
-  every possible input combination.
+- Browser coverage is finite. Historical QA covered the principal desktop/mobile,
+  interaction, plot, Unicode, and accessibility paths, but current HEAD still needs
+  browser/publication verification after a passing generated family exists.
 - The user Sass cache is not writable in this sandbox; Shiny safely falls back to a
   temporary cache. Some installed R packages report that they were built under R
   4.5.3 while tests run under R 4.5.2. Neither warning changed validated output,
@@ -568,6 +616,10 @@ Rules:
   were unchanged/restored, and whether owned temporary/lock state was removed.
 - A scoped docs/test/tooling task can be complete only at that narrow scope when
   omitted matrix rows are explicit. Never translate it into product completion.
+- For suite-relevant work, update
+  `docs/NEON-SUITE-LEARNING-LOOP.md` in the same session, including the evidence
+  register and Driver implication backlog. The app-local handoff remains the
+  detailed evidence source; chat history is not durable evidence.
 - Finish with `git status --short`; preserve every unrelated change.
 
 ## Session ledger
@@ -722,6 +774,7 @@ Rules:
   merge and Pages publication remain pending.
 - **Next action:** commit/push this test-only portability fix, wait for the remote check
   to pass, merge, update repository metadata, and verify the public Pages cover.
+
 ### 2026-07-17 14:28 MST - CI manifest dependency repair / root
 
 - **Changed:** added `cpp11` to the explicit Linux CI dependency bootstrap because the committed manifest requires it at runtime. No application, workflow input inventory, or generated artifact bytes changed beyond this workflow dependency declaration.
@@ -741,6 +794,7 @@ Rules:
 - **Failure/cleanup:** temporary diagnostics were removed; `git diff --check` passes. The next remote run is the authoritative validation of the portability fix.
 - **Residual risk:** merge and Pages publication remain pending until the full rebuild and manifest comparison complete on GitHub.
 - **Next action:** push this final CI portability repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+
 ### 2026-07-17 14:55 MST - cross-platform sensitivity precision repair / root
 
 - **Changed:** relaxed only the two recomputed correlation comparisons for detrended and adjacent-change sensitivities from `1e-15` to `1e-12`; counts, signs, NA states, and all other exact contracts remain unchanged. No generated artifact bytes changed.
@@ -749,6 +803,7 @@ Rules:
 - **Evidence invalidated:** only the latest remote PR check; deterministic artifacts and prior local rebuild evidence remain valid because the test comparator change does not alter production code or bytes.
 - **Residual risk:** if the remote mismatch is structural rather than numeric, the remaining exact count/sign checks will still fail and require further diagnosis.
 - **Next action:** push this focused test repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+
 ### 2026-07-17 15:05 MST - manifest locale portability repair / root
 
 - **Changed:** normalized rsconnect's informational manifest locale token to `en_US` immediately after write, preserving all other generated bytes and the approved manifest schema. No scientific computations or deploy-file checksums changed.
@@ -757,6 +812,7 @@ Rules:
 - **Evidence invalidated:** the latest remote rebuild only; the locale normalization is a writer-only portability fix and does not alter source locks or artifact inputs.
 - **Residual risk:** GitHub must confirm the patched writer preserves manifest semantic comparison and the final deploy manifest checks.
 - **Next action:** push the writer fix, wait for the complete rebuild to pass, merge, update repository metadata, and verify the public Pages cover/share asset.
+
 ### 2026-07-17 15:12 MST - Posit RSPM manifest trust repair / root
 
 - **Changed:** allowed the standard CRAN package record label `RSPM` alongside `CRAN` when the recorded `RemoteRepos` host remains the trusted pinned Posit repository; removed temporary DT logging. No package versions, dependency projections, or deploy checksums are relaxed.
@@ -765,6 +821,7 @@ Rules:
 - **Evidence invalidated:** only the diagnostic remote check; artifact hashes remain unchanged because this is manifest-policy validation logic.
 - **Residual risk:** the candidate manifest may still expose a different dependency projection; `compare_manifests.R` will catch any semantic drift after policy validation.
 - **Next action:** push this narrow trust-policy repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+
 ### 2026-07-17 15:18 MST - Posit remote platform provenance repair / root
 
 - **Changed:** allow rsconnect's `RemotePkgPlatform` field as an optional standard Posit provenance field, while preserving exact RemoteType/ref/SHA and trusted RemoteRepos validation. No dependency projection or deploy checksum is relaxed.
@@ -773,6 +830,7 @@ Rules:
 - **Evidence invalidated:** only the latest remote check; artifact and source-lock evidence remain valid.
 - **Residual risk:** additional RSPM metadata fields, if present, should remain rejected unless they are separately understood and validated.
 - **Next action:** push this narrow provenance-field repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+
 ### 2026-07-17 15:21 MST - provenance fixture alignment / root
 
 - **Changed:** updated the manifest comparator fixture to populate the newly allowlisted `RemotePkgPlatform` field in explicit provenance records, so its partial/singleton-field tests continue to exercise the complete standard field set. No production manifest or artifact bytes changed.
@@ -781,6 +839,7 @@ Rules:
 - **Evidence invalidated:** only the latest remote check; all generated artifacts remain unaffected.
 - **Residual risk:** the next check must still complete sibling rebuild, artifact byte comparison, and semantic manifest comparison.
 - **Next action:** push the aligned fixture, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+
 ### 2026-07-17 15:34 MST - search-index ordering portability repair / root
 
 - **Changed:** made all three search-index `arrange()` calls use explicit `.locale = "en"` ordering. This targets row-order bytes only; link values, calculations, counts, and source bundle hashes are unchanged.
@@ -789,3 +848,47 @@ Rules:
 - **Evidence invalidated:** only the latest remote check; committed scientific artifacts remain untouched locally.
 - **Residual risk:** if the remaining byte difference is serialization rather than row order, the next run will isolate that with the same one-file diff.
 - **Next action:** push this deterministic ordering repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+
+### 2026-07-17 16:28 MST - suite learning continuity and release-state reconciliation / root, with two read-only audits
+
+- **Changed:** added `docs/NEON-SUITE-LEARNING-LOOP.md` as the central ten-app
+  evidence/Driver-feedback register; required suite continuity in `AGENTS.md`; and
+  updated `docs/neonize-playbook.md` so each app pass emits durable local and central
+  evidence, integrates Driver only after nine pinned app passes, and uses
+  network-independent font/boot assets. Corrected this handoff's stale release claim
+  and exposed, without resolving, the current manifest-policy contradiction.
+- **Learned:** useful suite memory needs both an exact app-local test receipt and a
+  compact cross-product decision package. Driver should receive definitions,
+  support, effort/zero rules, joins, mechanisms, and claim limits—not UI headlines.
+  Driver parity failures must flow back to the owning app. The WindowsApps
+  PowerShell launcher can be blocked by endpoint security while the explicit system
+  PowerShell path works. Locale rewriting, RSPM/platform provenance, and the older
+  canonical manifest contract cannot safely be cloned across the suite until they
+  are reconciled together.
+- **Test process:** documentation-only scope in
+  `D:\Git\NEON-Driver-Cascade`; started from branch `3700c34` with only the new
+  suite loop untracked. Read the complete handoff and playbook, reviewed branch
+  history/current five-file hashes, and used independent read-only science/process
+  and handoff-reconciliation audits. Ran `git diff --check`; strict UTF-8 decode,
+  BOM/control/trailing-whitespace/fence checks on all four edited documents;
+  missing-heading-spacing and stale-policy scans; required-text/link/lock checks;
+  and exact SHA-256 verification of all five live artifacts. Expected result PASS;
+  actual result PASS. The changed-file scope is exactly these four documents, no R
+  process or rebuild lock remains, and no product/artifact bytes changed.
+- **Evidence invalidated:** none by these documentation-only changes. Earlier
+  generation evidence was already invalidated by writer/policy/search-builder
+  commits through `3700c34`; this edit makes that state explicit.
+- **Artifacts:** no generation or promotion ran. The live family remains cascade
+  `5453e448…`, search `1e3449cf…`, meta `7e1aef4f…`, codebook
+  `a79cc754…`, manifest `b1851e53…`.
+- **Failure/cleanup:** the latest Linux exact-byte gate remains failed for
+  search/meta; the local exact-snapshot run remains failed closed at stage 5 for DT
+  provenance. No current R rebuild process or owned lock/stage/backup/pending
+  residue remains. No temporary failed-run artifact upload was added or performed.
+- **Residual risk:** PR #4 remains red; manifest semantics and cross-platform
+  artifact bytes remain unresolved; merge, metadata,
+  Pages publication, and public verification remain not run. Temporary diagnostic
+  transfer of failed-run Linux artifacts still requires explicit owner approval.
+- **Next action:** validate and commit/push these documentation changes to PR #4,
+  then—with explicit owner approval—retrieve the unmodified Linux artifacts for
+  semantic/serialization diagnosis without changing the existing gates.
