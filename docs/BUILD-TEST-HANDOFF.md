@@ -697,3 +697,28 @@ Rules:
   Actions to complete; merge and Pages publication remain pending.
 - **Next action:** commit/push the CI repair, wait for PR checks to pass, merge, update
   repository metadata, and verify the live Pages cover and share asset.
+
+### 2026-07-17 14:18 MST - cross-platform UTF-8 contract repair / root
+
+- **Changed:** updated `scripts/test_helpers.R` so unmarked UTF-8 rejection is
+  locale-invariant and added an explicitly foreign-marked fixture for the byte-change
+  guard. No generated artifact or deploy file changed; the test is outside the build
+  input inventory.
+- **Learned:** Linux `C.UTF-8` can preserve raw UTF-8 bytes through `enc2utf8()` while
+  Windows startup C/activated UTF-8 changes the same unmarked fixture. The durable
+  contract is the required UTF-8 mark plus a separate deterministic foreign-mark test,
+  not a locale-specific byte-change count.
+- **Test process:** the second GitHub check reached project tests and failed at the
+  old locale-specific assertion. After the fix, the full local `scripts/test_helpers.R`
+  source/oracle suite passed under R 4.5.2 with the canonical seven-source root;
+  the earlier 13-action YAML/pin and publisher gates remain green.
+- **Evidence invalidated:** only the second remote PR check; local two-pass artifact,
+  manifest, boot, smoke, and live-root evidence remains valid because generated inputs
+  and bytes are unchanged.
+- **Failure/cleanup:** GitHub failed with `valid UTF-8 with an unknown/native mark is
+  rejected` under `C.UTF-8`; no artifact promotion or repository writes occurred.
+  The corrected local helper run completed cleanly and removed its session config.
+- **Residual risk:** PR #4 must rerun the cross-platform helper and full rebuild job;
+  merge and Pages publication remain pending.
+- **Next action:** commit/push this test-only portability fix, wait for the remote check
+  to pass, merge, update repository metadata, and verify the public Pages cover.

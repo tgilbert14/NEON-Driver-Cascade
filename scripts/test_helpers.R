@@ -744,9 +744,14 @@ raw_arrow <- rawToChar(as.raw(c(0xE2, 0x86, 0x92)))
 raw_dash <- rawToChar(as.raw(c(0xE2, 0x80, 0x93)))
 encoding_fixture <- list(arrow = raw_arrow, dash = raw_dash)
 encoding_issues <- cascade_artifact_text_issues(encoding_fixture, "unknown")
-check(sum(grepl("unmarked non-ASCII", encoding_issues, fixed = TRUE)) == 2L &&
-        sum(grepl("changes during UTF-8 serialization", encoding_issues, fixed = TRUE)) == 2L,
-      "valid UTF-8 with an unknown/native mark is rejected")
+check(sum(grepl("unmarked non-ASCII", encoding_issues, fixed = TRUE)) == 2L,
+      "unmarked UTF-8 text is rejected consistently across locales")
+foreign_fixture <- rawToChar(as.raw(c(0xE2, 0x86, 0x92)))
+Encoding(foreign_fixture) <- "latin1"
+foreign_issues <- cascade_artifact_text_issues(list(arrow = foreign_fixture), "foreign-mark")
+check(sum(grepl("unmarked non-ASCII", foreign_issues, fixed = TRUE)) == 1L &&
+        sum(grepl("changes during UTF-8 serialization", foreign_issues, fixed = TRUE)) == 1L,
+      "foreign-marked text that changes during UTF-8 serialization is rejected")
 encoding_fixture <- cascade_normalize_artifact_text(encoding_fixture)
 check(!length(cascade_artifact_text_issues(encoding_fixture, "normalized")) &&
         identical(Encoding(encoding_fixture$arrow), "UTF-8") &&
