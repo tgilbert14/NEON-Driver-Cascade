@@ -25,6 +25,7 @@ for (package in names(explicit_provenance$packages)) {
   record$description$RemotePkgRef <- package
   record$description$RemoteRef <- package
   record$description$RemoteSha <- record$description$Version
+  record$description$RemotePkgPlatform <- "x86_64-pc-linux-gnu"
   explicit_provenance$packages[[package]] <- record
 }
 validate_manifest_policy(explicit_provenance, DEPLOY_APP_FILES,

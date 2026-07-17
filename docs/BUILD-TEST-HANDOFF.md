@@ -773,3 +773,11 @@ Rules:
 - **Evidence invalidated:** only the latest remote check; artifact and source-lock evidence remain valid.
 - **Residual risk:** additional RSPM metadata fields, if present, should remain rejected unless they are separately understood and validated.
 - **Next action:** push this narrow provenance-field repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+### 2026-07-17 15:21 MST - provenance fixture alignment / root
+
+- **Changed:** updated the manifest comparator fixture to populate the newly allowlisted `RemotePkgPlatform` field in explicit provenance records, so its partial/singleton-field tests continue to exercise the complete standard field set. No production manifest or artifact bytes changed.
+- **Learned:** expanding a schema allowlist requires updating its adversarial fixtures; otherwise the fixture itself becomes a partial-provenance record and fails for the wrong reason.
+- **Test process:** the latest CI run passed all contracts and manifest verification, then failed inside `test_manifest_compare.R` because its synthetic explicit record lacked the newly recognized field. This is a test-fixture-only correction.
+- **Evidence invalidated:** only the latest remote check; all generated artifacts remain unaffected.
+- **Residual risk:** the next check must still complete sibling rebuild, artifact byte comparison, and semantic manifest comparison.
+- **Next action:** push the aligned fixture, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
