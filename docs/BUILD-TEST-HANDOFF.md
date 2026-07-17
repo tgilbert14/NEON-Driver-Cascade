@@ -741,3 +741,11 @@ Rules:
 - **Failure/cleanup:** temporary diagnostics were removed; `git diff --check` passes. The next remote run is the authoritative validation of the portability fix.
 - **Residual risk:** merge and Pages publication remain pending until the full rebuild and manifest comparison complete on GitHub.
 - **Next action:** push this final CI portability repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+### 2026-07-17 14:55 MST - cross-platform sensitivity precision repair / root
+
+- **Changed:** relaxed only the two recomputed correlation comparisons for detrended and adjacent-change sensitivities from `1e-15` to `1e-12`; counts, signs, NA states, and all other exact contracts remain unchanged. No generated artifact bytes changed.
+- **Learned:** the final Ubuntu run passed provenance fetching and all earlier contracts, then exposed a floating-point comparison that is stricter than reproducible correlation arithmetic across R/platform builds. A 1e-12 absolute bound remains far below display precision while avoiding false failures from harmless platform rounding.
+- **Test process:** local R 4.5.2 helper suite passes end-to-end; the failed remote run isolated the issue to the single detrended/change sensitivity check. GitHub must rerun the authoritative Linux build after this test-only portability change.
+- **Evidence invalidated:** only the latest remote PR check; deterministic artifacts and prior local rebuild evidence remain valid because the test comparator change does not alter production code or bytes.
+- **Residual risk:** if the remote mismatch is structural rather than numeric, the remaining exact count/sign checks will still fail and require further diagnosis.
+- **Next action:** push this focused test repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.

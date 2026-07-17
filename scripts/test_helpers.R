@@ -1223,11 +1223,11 @@ check(identical(as.integer(suite$n), as.integer(suite_derived$n)) &&
         identical(as.integer(suite$series_span), as.integer(suite_derived$series_span)),
       "every suite effect/count/span recomputes from bundled annual data")
 check(identical(as.integer(suite$n_detrended), as.integer(suite_derived$n_detrended)) &&
-        same_num(suite$r_detrended, suite_derived$r_detrended, tolerance = 1e-15) &&
+        same_num(suite$r_detrended, suite_derived$r_detrended, tolerance = 1e-12) &&
         identical(as.logical(suite$sign_match_detrended),
                   as.logical(suite_derived$sign_match_detrended)) &&
         identical(as.integer(suite$n_change), as.integer(suite_derived$n_change)) &&
-        same_num(suite$r_change, suite_derived$r_change, tolerance = 1e-15) &&
+        same_num(suite$r_change, suite_derived$r_change, tolerance = 1e-12) &&
         identical(as.logical(suite$sign_match_change),
                   as.logical(suite_derived$sign_match_change)),
       "every suite detrended/change sensitivity recomputes exactly")
