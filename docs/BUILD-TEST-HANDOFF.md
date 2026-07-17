@@ -781,3 +781,11 @@ Rules:
 - **Evidence invalidated:** only the latest remote check; all generated artifacts remain unaffected.
 - **Residual risk:** the next check must still complete sibling rebuild, artifact byte comparison, and semantic manifest comparison.
 - **Next action:** push the aligned fixture, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.
+### 2026-07-17 15:34 MST - search-index ordering portability repair / root
+
+- **Changed:** made all three search-index `arrange()` calls use explicit `.locale = "en"` ordering. This targets row-order bytes only; link values, calculations, counts, and source bundle hashes are unchanged.
+- **Learned:** the Linux rebuild passed every contract and all artifact stages except the byte-exact search-index comparison. The index is the only artifact built from dplyr-sorted human labels/catalogues, so implicit host collation is the leading reproducibility risk; explicit locale ordering removes that dependency.
+- **Test process:** the failing run reported only `data/search_index.rds` as binary-different; cascade.rds, metadata, codebook, and manifest checks did not fail before the gate. The exact seven-snapshot local reproduction is available, though a prior local child rebuild is still finishing and owns temporary test processes.
+- **Evidence invalidated:** only the latest remote check; committed scientific artifacts remain untouched locally.
+- **Residual risk:** if the remaining byte difference is serialization rather than row order, the next run will isolate that with the same one-file diff.
+- **Next action:** push this deterministic ordering repair, wait for green checks, merge, update repository metadata, and verify the public Pages cover/share asset.

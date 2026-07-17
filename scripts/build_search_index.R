@@ -111,14 +111,14 @@ links <- sl %>%
          ci_excludes_zero, tier, verdict, is_aligned, is_testable,
          year_min, year_max, site_year_min, site_year_max) %>%
   arrange(link_label, desc(expected), match(tier, c("consistent", "apparent", "neutral", "counter", "exploratory", "insufficient")),
-          desc(abs(r)), site)
+          desc(abs(r)), site, .locale = "en")
 
 # ---- LINK catalogue (one row per distinct prior) for the autocomplete --------
 link_catalog <- links %>%
   distinct(link_id, link_label, driver, response, lag) %>%
   left_join(pr %>% transmute(link_id = sprintf("%s|%s|%d", from, to, lag),
                              conf, expected_class, note), by = "link_id") %>%
-  arrange(link_label)
+  arrange(link_label, .locale = "en")
 
 # ---- SITE strength roll-up: how many VOTE-ELIGIBLE priors resolve per site ---
 # resolved = vote-eligible, n>=6, sign matches the prior (direction agrees).
@@ -136,7 +136,7 @@ site_strength <- links %>%
     n_layers          = NA_integer_,
     .groups = "drop") %>%
   left_join(yr, by = "site") %>%
-  arrange(desc(n_resolved), desc(n_aligned), site)
+  arrange(desc(n_resolved), desc(n_aligned), site, .locale = "en")
 
 # small denominators per prior (for honest captions on the threshold query)
 prior_pooled <- if (!is.null(pooled) && nrow(pooled)) {
