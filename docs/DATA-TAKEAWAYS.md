@@ -1,4 +1,13 @@
 # NEON Driver Cascade — Data Takeaways & Critical Review
+
+> **SUPERSEDED — July 2026 scientific audit.** The counts and conclusions below describe an older
+> bundle and must not be quoted as current results. That bundle treated left-censored phenology onsets
+> as exact, did not control species turnover, let outcome-conditioned beetle effort enter votes, used
+> unmatched seasonal consumer responses, and framed separate pairwise links as a cascade. The rebuilt
+> app uses a left-censor-screened composition-adjusted green-up index, demotes unsupported plant/animal links to
+> context, adds trend sensitivities, and explicitly presents a cross-product response atlas rather than a
+> tested trophic chain. Current values are generated from `data/cascade.rds` and its exports.
+
 _Suite audit — June 2026. Synthesis of NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology) + NEON-tower/Daymet climate._
 
 This is the integrator app: it joins the five sibling-product signals into a per-site **annual panel** (`cascade.rds$annual`, 509 site-years × 15 columns, 46 sites, 2013–2025) and tests a bottom-up cascade — climate → green-up → producers → consumers — link by link, biome-aware, n-gated, with a cross-site pooled headline.

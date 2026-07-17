@@ -1,15 +1,16 @@
-# Files excluded from the Posit Connect Cloud bundle (rsconnect honours .rscignore).
-# Keep the deploy lean: the app runs off data/cascade.rds + global/ui/server + R/ + www/.
-# docs/index.html is the public landing cover and STAYS; the internal .md docs do not ship.
+# Defense-in-depth for ad-hoc rsconnect uploads. Git-backed Connect deployments
+# can archive the repository target directory independently of this file; the
+# manifest checksum map, CI, publisher, and app-boot guard are the runtime contract.
 scripts/
+R/source_adapters.R
 README.md
 DEPLOY.md
-docs/DATA-TAKEAWAYS.md
-docs/EXPERT-REVIEW.md
-docs/_phase23_plan.md
-docs/neonize-playbook.md
+docs/
 .github/
 .claude/
+.cascade-rebuild.lock/
+.gitattributes
+renv.lock
 _digest.py
 _digest2.py
 _digest3.py

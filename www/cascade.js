@@ -1,144 +1,352 @@
 /* =========================================================================
-   cascade.js — lean client layer for the NEON Driver Cascade.
+   cascade.js — small progressive-enhancement layer for the Response Atlas.
 
-   Only what THIS app actually uses:
-     1. dismissible "ⓘ" info popovers (outside-click + Esc),
-     2. a plotly re-fit when a tab becomes visible (hidden-init sizing fix),
-     3. a debounced viewport-width signal so charts can de-clutter on phones.
-
-   Replaces the inherited small-mammal app.js, whose count-up / confetti /
-   loading-overlay / guided-tour / card-export were all dead here — and whose
-   body-wide MutationObserver fired a counter sweep on EVERY plotly render
-   looking for zero `.count-up` elements (an active per-render perf drain).
+   Native HTML remains the baseline. This file adds focus-safe popovers and
+   onboarding, delegated Shiny actions, keyboard activation for generated
+   controls, responsive Plotly reflow, and scoped visual polish.
    ========================================================================= */
 
-// ---- "change site": hop to Overview, scroll the select-panel into view ----
-// v2 flow: the site picker lives on the Overview select-panel (no sidebar). The
-// hero "change site" link switches to the Overview tab, scrolls the panel into
-// view, and nudges focus to the site select for keyboard users.
+function cascadeReducedMotion() {
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+// ---- "change site": open Overview, scroll to and focus the picker -----------
 function cascadeChangeSite() {
-  // switch to the Overview tab (bslib nav uses data-bs-target / data-value)
-  var ov = document.querySelector('a.nav-link[data-value="overview"]');
-  if (ov) { try { ov.click(); } catch (e) {} }
+  var overview = document.querySelector('a.nav-link[data-value="overview"]');
+  if (overview) { try { overview.click(); } catch (e) {} }
   setTimeout(function () {
     var panel = document.getElementById("sitePanel");
     if (panel && panel.scrollIntoView) {
-      try { panel.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { panel.scrollIntoView(); }
+      try {
+        panel.scrollIntoView({ behavior: cascadeReducedMotion() ? "auto" : "smooth", block: "center" });
+      } catch (e) { panel.scrollIntoView(); }
     }
-    var sel = document.querySelector("#sitePanel .selectize-input, #site");
-    if (sel && sel.focus) { try { sel.focus(); } catch (e) {} }
+    var select = document.querySelector("#sitePanel .selectize-input, #site");
+    if (select && select.focus) { try { select.focus(); } catch (e) {} }
   }, 120);
 }
 
-// ---- dismiss any open bslib/Bootstrap info popover (outside-click + Esc) ----
-function cascadeClosePopovers() {
-  document.querySelectorAll(".popover").forEach(function (pop) {
-    var trig = pop.id ? document.querySelector('[aria-describedby="' + pop.id + '"]') : null;
-    if (trig && window.bootstrap && bootstrap.Popover) {
-      var inst = bootstrap.Popover.getInstance(trig);
-      if (inst) { inst.hide(); return; }
+// ---- focus-safe bslib/Bootstrap popovers -------------------------------------
+var cascadeLastPopoverTrigger = null;
+
+function cascadeClosePopovers(restoreFocus) {
+  var found = false;
+  document.querySelectorAll(".popover").forEach(function (popover) {
+    found = true;
+    var trigger = popover.id ? document.querySelector('[aria-describedby="' + popover.id + '"]') : null;
+    if (trigger) cascadeLastPopoverTrigger = trigger;
+    if (trigger && window.bootstrap && window.bootstrap.Popover) {
+      var instance = window.bootstrap.Popover.getInstance(trigger);
+      if (instance) { instance.hide(); return; }
     }
-    pop.remove(); // fallback: just remove the floating popover
+    popover.remove();
+    if (trigger) {
+      trigger.removeAttribute("aria-describedby");
+      trigger.setAttribute("aria-expanded", "false");
+    }
+  });
+  if (found && restoreFocus && cascadeLastPopoverTrigger && cascadeLastPopoverTrigger.focus) {
+    setTimeout(function () { try { cascadeLastPopoverTrigger.focus(); } catch (e) {} }, 0);
+  }
+  return found;
+}
+
+// Programmatic panel changes must not strand keyboard focus inside a panel that
+// just became hidden. The server names either the active tab or a concrete ID.
+function cascadeRegisterFocusHandler() {
+  if (!window.Shiny || !window.Shiny.addCustomMessageHandler ||
+      window.cascadeFocusHandlerRegistered) return;
+  window.cascadeFocusHandlerRegistered = true;
+  window.Shiny.addCustomMessageHandler("cascade-focus", function (message) {
+    window.setTimeout(function () {
+      var target = null;
+      if (message && message.id) target = document.getElementById(message.id);
+      if (!target && message && message.tab) {
+        var candidates = document.querySelectorAll(".nav-link[data-value], [role='tab'][data-value]");
+        for (var i = 0; i < candidates.length; i += 1) {
+          if (candidates[i].getAttribute("data-value") === message.tab) {
+            target = candidates[i]; break;
+          }
+        }
+      }
+      if (!target) return;
+      if (target.matches("select.shiny-bound-input") && target.offsetParent === null) {
+        var wrapper = target.closest(".form-group");
+        target = wrapper && wrapper.querySelector(".selectize-input, select:not([aria-hidden='true'])") || target;
+      }
+      if (!target.hasAttribute("tabindex") && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(target.tagName))
+        target.setAttribute("tabindex", "-1");
+      try { target.focus({ preventScroll: false }); } catch (e) { target.focus(); }
+    }, message && message.delay ? message.delay : 140);
   });
 }
-document.addEventListener("click", function (e) {
-  if (e.target.closest(".popover") || e.target.closest(".info-dot") ||
-      e.target.closest("bslib-popover")) return;            // inside/trigger -> leave it
-  if (document.querySelector(".popover")) cascadeClosePopovers();
-});
-document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") cascadeClosePopovers();
+
+document.addEventListener("shiny:connected", cascadeRegisterFocusHandler);
+if (window.jQuery) window.jQuery(document).on("shiny:connected", cascadeRegisterFocusHandler);
+window.setTimeout(cascadeRegisterFocusHandler, 800);
+document.addEventListener("click", function (event) {
+  var infoTrigger = event.target.closest(".info-dot, .concept-i");
+  if (infoTrigger) {
+    cascadeLastPopoverTrigger = infoTrigger;
+    return;
+  }
+  if (event.target.closest(".popover") || event.target.closest("bslib-popover")) return;
+  if (document.querySelector(".popover")) cascadeClosePopovers(false);
 });
 
-// ---- re-fit plotly the moment its tab becomes visible (hidden-init blank fix) ----
+// ---- delegated app actions: no per-link inline JavaScript required -----------
+function cascadeDispatchAction(element) {
+  if (!element) return false;
+  var action = element.getAttribute("data-cascade-action");
+  if (action === "change-site") {
+    cascadeChangeSite();
+    return true;
+  }
+  if (!window.Shiny || !window.Shiny.setInputValue) return false;
+  var inputName = null;
+  var value = null;
+  if (action === "select-site") {
+    inputName = "goSite"; value = element.getAttribute("data-site");
+  } else if (action === "goto-tab") {
+    inputName = "gotoTab"; value = element.getAttribute("data-tab");
+  } else if (action === "inspect-qc") {
+    inputName = "qcInspect"; value = element.getAttribute("data-key");
+  } else if (action === "inspect-score") {
+    inputName = "sbCell"; value = element.getAttribute("data-value");
+  }
+  if (!inputName || value == null || value === "") return false;
+  window.Shiny.setInputValue(inputName, value, { priority: "event" });
+  return true;
+}
+
+function cascadeDispatchShinyInput(element) {
+  if (!element || !window.Shiny || !window.Shiny.setInputValue) return false;
+  var inputName = element.getAttribute("data-shiny-input");
+  var value = element.getAttribute("data-shiny-value");
+  if (!inputName || value == null || value === "") return false;
+  window.Shiny.setInputValue(inputName, value, { priority: "event" });
+  return true;
+}
+
+document.addEventListener("click", function (event) {
+  var action = event.target.closest("[data-cascade-action], [data-shiny-input]");
+  if (!action) return;
+  var dispatched = action.hasAttribute("data-cascade-action")
+    ? cascadeDispatchAction(action)
+    : cascadeDispatchShinyInput(action);
+  if (dispatched) event.preventDefault();
+});
+
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape" && cascadeClosePopovers(true)) {
+    event.preventDefault();
+    return;
+  }
+  if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
+  if (event.target.closest("button, a[href], input, select, textarea, summary")) return;
+  // Only app-owned non-native controls need this fallback. Bootstrap/bslib
+  // popover triggers already implement Enter/Space; re-clicking every generic
+  // role=button would bubble into a second toggle and immediately close them.
+  var buttonLike = event.target.closest(
+    '[role="button"][data-cascade-action], [role="button"][data-shiny-input]'
+  );
+  if (!buttonLike) return;
+  event.preventDefault();
+  buttonLike.click();
+});
+
+// ---- generated-output accessibility ------------------------------------------
+function cascadeCaptionFor(table) {
+  if (table.classList.contains("driver-tbl")) return "Current build-locked driver pairings and their data verdicts";
+  if (table.classList.contains("sig-tbl")) return "Signals measured at the selected site";
+  if (table.classList.contains("sb-table")) return "Site by current-pairing direction scoreboard";
+  return "NEON Response Atlas data table";
+}
+
+function cascadeEnhanceTable(table) {
+  if (!table || table.hasAttribute("data-a11y-table")) return;
+  table.setAttribute("data-a11y-table", "true");
+  if (!table.querySelector("caption")) {
+    var caption = table.createCaption();
+    caption.className = "visually-hidden";
+    caption.textContent = cascadeCaptionFor(table);
+  }
+  table.querySelectorAll("thead th").forEach(function (header) { header.setAttribute("scope", "col"); });
+  if (!table.closest(".table-scroll, .table-region, .qc-cap-scroll, .sb-scroll")) {
+    var wrapper = document.createElement("div");
+    wrapper.className = "table-scroll";
+    wrapper.setAttribute("role", "region");
+    wrapper.setAttribute("tabindex", "0");
+    wrapper.setAttribute("aria-label", cascadeCaptionFor(table));
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  }
+}
+
+function cascadeEnhanceScoreCell(cell) {
+  if (!cell || cell.querySelector(".sb-cell-button")) return;
+  var label = cell.getAttribute("title") || ("Open detail for " + cell.textContent.trim());
+  var button = document.createElement("button");
+  button.type = "button";
+  button.className = "sb-cell-button";
+  button.setAttribute("aria-label", label);
+  button.textContent = cell.textContent.trim() || "Open";
+  cell.textContent = "";
+  cell.removeAttribute("role");
+  cell.removeAttribute("tabindex");
+  cell.appendChild(button);
+}
+
+function cascadeEnhanceDom(root) {
+  var scope = root && root.querySelectorAll ? root : document;
+  scope.querySelectorAll("table.inspect-tbl, table.sb-table").forEach(cascadeEnhanceTable);
+  scope.querySelectorAll(".sb-cell.sb-clk").forEach(cascadeEnhanceScoreCell);
+  scope.querySelectorAll('[role="button"]:not(button):not(a)').forEach(function (control) {
+    if (!control.hasAttribute("tabindex")) control.setAttribute("tabindex", "0");
+  });
+  scope.querySelectorAll(".qc-cap-scroll, .sb-scroll").forEach(function (region) {
+    if (!region.hasAttribute("tabindex")) region.setAttribute("tabindex", "0");
+    if (!region.hasAttribute("role")) region.setAttribute("role", "region");
+  });
+}
+
+// ---- Plotly hidden-tab reflow + viewport signal -------------------------------
 document.addEventListener("shown.bs.tab", function () {
-  setTimeout(function () { try { window.dispatchEvent(new Event("resize")); } catch (e) {} }, 60);
+  setTimeout(function () {
+    cascadeEnhanceDom(document);
+    try { window.dispatchEvent(new Event("resize")); } catch (e) {}
+  }, 60);
 });
 
-// ---- debounced viewport-width signal (lets the ladder drop its legend on phones) ----
 (function () {
-  function sendW() { if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue("vw", window.innerWidth); }
-  if (window.jQuery) jQuery(document).on("shiny:connected", sendW);
-  document.addEventListener("shiny:connected", sendW);     // belt-and-suspenders
+  function sendWidth() {
+    if (window.Shiny && window.Shiny.setInputValue) {
+      window.Shiny.setInputValue("vw", window.innerWidth);
+    }
+  }
+  if (window.jQuery) window.jQuery(document).on("shiny:connected", sendWidth);
+  document.addEventListener("shiny:connected", sendWidth);
   window.addEventListener("resize", function () {
-    clearTimeout(window.__vwt); window.__vwt = setTimeout(sendW, 200);
+    clearTimeout(window.__cascadeViewportTimer);
+    window.__cascadeViewportTimer = setTimeout(sendWidth, 200);
   });
 })();
 
-// ---- premium DDL polish: pointer-tracked holographic sheen + scroll-reveal --------
-// The hero verdict card is the showpiece — an iridescent sheen + glare follow the
-// cursor (--mx/--my). No body-wide observer: we re-bind only when the heroStats
-// output re-renders (Shiny fires shiny:value on it). Reduced-motion users opt out.
+// ---- restrained pointer sheen + one-shot card reveal -------------------------
 (function () {
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var reduce = cascadeReducedMotion();
 
-  function track(e) {
-    var el = e.currentTarget, r = el.getBoundingClientRect();
-    el.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%");
-    el.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+  function track(event) {
+    var element = event.currentTarget;
+    element.__cascadePointer = { x: event.clientX, y: event.clientY };
+    if (element.__cascadePointerFrame) return;
+    element.__cascadePointerFrame = window.requestAnimationFrame(function () {
+      var rect = element.getBoundingClientRect();
+      var point = element.__cascadePointer;
+      element.style.setProperty("--mx", ((point.x - rect.left) / rect.width * 100).toFixed(1) + "%");
+      element.style.setProperty("--my", ((point.y - rect.top) / rect.height * 100).toFixed(1) + "%");
+      element.__cascadePointerFrame = null;
+    });
   }
-  function reset(e) { e.currentTarget.style.setProperty("--mx", "50%"); e.currentTarget.style.setProperty("--my", "50%"); }
+  function reset(event) {
+    event.currentTarget.style.setProperty("--mx", "50%");
+    event.currentTarget.style.setProperty("--my", "50%");
+  }
   function bindHolo() {
     if (reduce) return;
-    document.querySelectorAll(".hero-verdict:not([data-holo])").forEach(function (el) {
-      el.setAttribute("data-holo", "1");
-      el.addEventListener("pointermove", track);
-      el.addEventListener("pointerleave", reset);
+    document.querySelectorAll(".hero-band:not(.hero-band-compact) .hero-verdict:not([data-holo])").forEach(function (element) {
+      element.setAttribute("data-holo", "true");
+      element.addEventListener("pointermove", track);
+      element.addEventListener("pointerleave", reset);
     });
   }
 
-  // Scroll-reveal: fade cards up as they enter the viewport (one-shot, gated on no-reduce).
-  var io = (!reduce && "IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
-    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("is-visible"); io.unobserve(en.target); } });
+  var observer = (!reduce && "IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    });
   }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }) : null;
-  function bindReveal() {
-    if (!io) return;
-    document.querySelectorAll(".main-tabs-wrap .card:not([data-reveal])").forEach(function (el) {
-      el.setAttribute("data-reveal", "1"); el.classList.add("reveal-card"); io.observe(el);
-    });
-  }
-  function pass() { bindHolo(); bindReveal(); }
 
-  // Shiny fires shiny:connected / shiny:value as jQuery events — native addEventListener
-  // misses them, so bind via jQuery (with a native fallback for shown.bs.tab, a real DOM event).
-  if (window.jQuery) {
-    jQuery(document).on("shiny:connected", function () { setTimeout(pass, 60); });
-    jQuery(document).on("shiny:value", function (e) {
-      if (e.target && e.target.id === "heroStats") setTimeout(bindHolo, 30);
+  function bindReveal() {
+    if (!observer) return;
+    document.querySelectorAll(".main-tabs-wrap .card:not([data-reveal])").forEach(function (element) {
+      element.setAttribute("data-reveal", "true");
+      element.classList.add("reveal-card");
+      observer.observe(element);
     });
   }
-  // a new tab's cards mount on first show — re-scan then (cheap, scoped, no persistent observer)
-  document.addEventListener("shown.bs.tab", function () { setTimeout(pass, 80); });
-  // self-clearing early poll: binds as soon as the hero renders after connect, then stops
-  var tries = 0, iv = setInterval(function () {
-    pass(); if (++tries > 9 || document.querySelector(".hero-verdict[data-holo]")) clearInterval(iv);
+  function enhance() { bindHolo(); bindReveal(); cascadeEnhanceDom(document); }
+
+  if (window.jQuery) {
+    window.jQuery(document).on("shiny:connected", function () { setTimeout(enhance, 60); });
+    window.jQuery(document).on("shiny:value", function (event) {
+      setTimeout(function () {
+        cascadeEnhanceDom(event.target || document);
+        if (event.target && event.target.id === "heroStats") bindHolo();
+      }, 30);
+    });
+  }
+  document.addEventListener("shown.bs.tab", function () { setTimeout(enhance, 80); });
+  document.addEventListener("DOMContentLoaded", function () { cascadeEnhanceDom(document); });
+
+  var tries = 0;
+  var early = setInterval(function () {
+    enhance();
+    if (++tries > 9 || document.querySelector(".hero-verdict[data-holo]")) clearInterval(early);
   }, 350);
 })();
 
-// ---- first-visit suite-huddle guide: a one-time, dismissible onboarding nudge -------
-// The cascade synthesis app has no single mascot, so the sidebar link-mark stays and a
-// tiny HUDDLE of sibling creatures (mouse + bird + sprout) peeks in once, bottom-right,
-// with a one-line "where to start" tip. Shown a SINGLE time (localStorage), then auto-
-// hides after a few seconds or on click. Reduced-motion users get the fade, not the hop.
+// ---- first-visit guide: truly hidden/inert before and after use ---------------
 (function () {
   var armed = false;
+
+  function setGuideInert(guide, value) {
+    if (value) guide.setAttribute("inert", "");
+    else guide.removeAttribute("inert");
+    try { guide.inert = value; } catch (e) {}
+  }
+
   function showGuide() {
     if (armed) return;
-    var g = document.getElementById("cascadeGuide");
-    if (!g) return;
-    try { if (localStorage.getItem("cascadeGuideSeen") === "1") return; } catch (e) { return; }
+    var guide = document.getElementById("cascadeGuide");
+    if (!guide) return;
+    var seen = false;
+    try { seen = window.localStorage.getItem("cascadeGuideSeen") === "1"; } catch (e) {}
     armed = true;
-    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var hideTimer;
-    function dismiss() { g.classList.remove("show", "wave"); clearTimeout(hideTimer); }
+    if (seen) return;
+
+    var reduce = cascadeReducedMotion();
+    var closeButton = guide.querySelector(".cg-close");
+
+    function dismiss() {
+      var ownedFocus = guide.contains(document.activeElement);
+      try { window.localStorage.setItem("cascadeGuideSeen", "1"); } catch (e) {}
+      guide.classList.remove("show", "wave");
+      guide.setAttribute("aria-hidden", "true");
+      setGuideInert(guide, true);
+      if (ownedFocus) {
+        var main = document.getElementById("mainContent");
+        if (main && main.focus) main.focus();
+      }
+      setTimeout(function () { if (!guide.classList.contains("show")) guide.hidden = true; }, reduce ? 0 : 550);
+    }
+
+    if (closeButton) closeButton.addEventListener("click", dismiss);
     setTimeout(function () {
-      g.classList.add("show"); if (!reduce) g.classList.add("wave");
-      try { localStorage.setItem("cascadeGuideSeen", "1"); } catch (e) {}
-      hideTimer = setTimeout(dismiss, 9000);
+      guide.hidden = false;
+      setGuideInert(guide, false);
+      guide.setAttribute("aria-hidden", "false");
+      window.requestAnimationFrame(function () {
+        guide.classList.add("show");
+        if (!reduce) guide.classList.add("wave");
+      });
     }, 1200);
-    g.addEventListener("click", dismiss);
   }
-  if (window.jQuery) jQuery(document).on("shiny:connected", function () { setTimeout(showGuide, 400); });
+
+  if (window.jQuery) window.jQuery(document).on("shiny:connected", function () { setTimeout(showGuide, 400); });
   document.addEventListener("shiny:connected", function () { setTimeout(showGuide, 400); });
   document.addEventListener("DOMContentLoaded", function () { setTimeout(showGuide, 1600); });
 })();

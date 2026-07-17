@@ -92,14 +92,14 @@ site_label <- function(code) {
 }
 
 # ---------------------------------------------------------------------------
-# Biome / limiting-resource classification — the THROUGHLINE of the cascade app.
-# The science (verified against the data + Shen et al. 2020, Brown & Ernest 2002):
-# green-up is TEMPERATURE-triggered where temperature limits phenology (temperate &
-# boreal forest, prairie, tundra) and WATER-triggered in arid systems (warm/cold
-# desert, sagebrush). So the temp->green-up prior is "expected" in the former and
-# the seasonal-rain priors (winter rain->forbs, monsoon seed->granivores) in the
-# latter. We classify by climate, not by whether a given short series happens to
-# correlate — biome is a documented expectation, not a hard data filter.
+# Descriptive site-group heuristic retained for display context.
+# IMPORTANT: this is NOT a measured climate/resource-limitation classification.
+# It is a reproducible keyword rule over the one-line site bio: bios containing
+# desert/sagebrush/semi-desert enter the internal "water-limited" group; every
+# other bio defaults to "temperature-limited". Those legacy keys are retained for
+# artifact compatibility. Current vote-eligible results are not conditioned on it.
+# Dry forests, semiarid grasslands, Mediterranean systems, and mixed sagebrush+
+# conifer sites can be misgrouped. The app and bundle disclose that sensitivity.
 # ---------------------------------------------------------------------------
 # fine biome label (for the picker / bios)
 biome_of <- function(code) {
@@ -112,12 +112,23 @@ biome_of <- function(code) {
   else if (grepl("forest|hardwood|pine|conifer|spruce|fir|woodland|oak|timber", b)) "forest"
   else "other"
 }
-# coarse limiting-resource class that drives which priors are EXPECTED at a site
-#   "water-limited"        -> arid: green-up & production gated by rain season
-#   "temperature-limited"  -> energy-limited: green-up gated by spring warmth
+BIOME_CLASS_METHOD <- paste(
+  "keyword heuristic over site bio: desert|sagebrush|semi-desert -> water-limited;",
+  "all other sites -> temperature-limited; not a measured aridity or resource-limitation rule")
+
+# Legacy coarse keys retained as descriptive context. Treat them as heuristic
+# groups, not observed site properties; the current vote family applies to all sites.
 biome_class <- function(code) {
   b <- tolower(paste(site_bio(code) %||% "", code))
   if (grepl("desert|sagebrush|semi-desert", b)) "water-limited" else "temperature-limited"
+}
+biome_class_basis <- function(code) {
+  b <- tolower(site_bio(code) %||% "")
+  hits <- regmatches(b, gregexpr("desert|sagebrush|semi-desert", b, perl = TRUE))[[1]]
+  if (length(hits) && !identical(hits, ""))
+    sprintf("dryland keyword hit: %s", paste(unique(hits), collapse = ", "))
+  else
+    "default other-site group: no dryland keyword hit"
 }
 # short, human label for the hero band ("Sonoran desert", "temperate forest", ...)
 biome_label <- function(code) {

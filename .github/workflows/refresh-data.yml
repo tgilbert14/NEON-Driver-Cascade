@@ -1,117 +1,259 @@
 name: Refresh NEON Driver Cascade bundle
 
-# The Driver Cascade is a DERIVED app: its data/cascade.rds is assembled FROM the
-# five sibling apps' committed .rds bundles (no direct NEON pull). So this workflow
-# CLONES each sibling repo, rebuilds cascade.rds, and pushes it — which makes
-# Posit Connect Cloud auto-redeploy (git-backed deploy; see docs/neonize-playbook.md §6).
-#
-# CADENCE: the SECOND Saturday night of each month (Arizona), one week AFTER the
-# siblings refresh on the FIRST Saturday — so we always rebuild from their freshly
-# refreshed bundles. Same off-peak slot ("0 6 * * 0" weekly, gated below).
-#
-# ACTIVATION (one-time, manual — until then this is staged-but-idle):
-#   1. Make this repo a Connect Cloud app pointed at branch `master` (then a push = deploy).
-#   2. (optional) make the repo public for the GitHub Pages showcase.
-# Run on demand any time from the Actions tab (workflow_dispatch).
-
+# The build job reads public sibling data but has no write token. Its four data
+# outputs cross two independent receipt checks and a fresh read-only contract job
+# before the publisher receives them. The publisher never deserializes incoming RDS.
 on:
   schedule:
-    - cron: "0 6 * * 0"   # Sunday 06:00 UTC == Saturday 23:00 America/Phoenix
+    - cron: "0 6 * * 0"
   workflow_dispatch:
 
 permissions:
-  contents: write          # push the rebuilt cascade.rds to master (= the deploy)
+  contents: read
+
+concurrency:
+  group: neon-cascade-refresh
+  cancel-in-progress: false
+
+env:
+  BUILD_SHA: ${{ github.sha }}
+  RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
+  RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
 
 jobs:
   gate:
-    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     outputs:
       run: ${{ steps.check.outputs.run }}
     steps:
       - id: check
         run: |
+          set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "Manual run — proceeding."; echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+            echo "Manual run: proceeding."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          dow=$(TZ='America/Phoenix' date +%u)    # 6 = Saturday
+          dow=$(TZ='America/Phoenix' date +%u)
           day=$(TZ='America/Phoenix' date +%-d)
           if [ "$dow" = "6" ] && [ "$day" -ge 8 ] && [ "$day" -le 14 ]; then
-            echo "Second Saturday in Arizona (day $day) — proceeding (siblings refreshed last week)."
+            echo "Second Saturday in Arizona: proceeding."
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Not the second Saturday in Arizona (dow=$dow day=$day) — skipping."
+            echo "Outside the second-Saturday window: skipping."
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
   rebuild:
     needs: gate
     if: needs.gate.outputs.run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-      - name: Checkout the Cascade repo
-        uses: actions/checkout@v4
+      - name: Checkout immutable reviewed build code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
 
-      # Clone the sibling repos into a workspace, using the dir NAMES build_cascade.R
-      # expects (slug -> dir). Shallow + public, so no auth needed.
-      - name: Clone sibling bundles
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: '4.5.2'
+          use-public-rspm: false
+
+      - name: Install build and runtime dependencies
+        uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          packages: shiny, bslib, bsicons, dplyr, plotly, htmltools, htmlwidgets, shinyjs, shinycssloaders, DT, tidyr, stringr, tibble, metafor, rsconnect, jsonlite
+          pak-version: repo
+          dependencies: '"hard"'
+          cache-version: cascade-ppm-2026-07-15-v1
+          install-pandoc: 'false'
+          install-quarto: 'false'
+
+      - name: Validate committed baseline before external source access
+        env:
+          CASCADE_ROOT: ""
         run: |
-          ws="$RUNNER_TEMP/siblings"; mkdir -p "$ws"
-          gh() { git clone --depth 1 "https://github.com/tgilbert14/$1.git" "$ws/$2"; }
-          gh NEON-Small-Mammal-Tracker-App        App-NEON-Small-Mammal-Tracker
-          gh NEON-Plant-Diversity                 NEON-Plant-Diversity
-          gh NEON-Breeding-Birds                  NEON-Breeding-Birds
-          gh NEON-Plant-Phenology-Explorer        NEON-Plant-Phenology
-          gh NEON-Vegetation-Structure-Explorer   NEON-Veg-Structure
-          gh NEON-Mosquito-Pulse                  NEON-Mosquito-Pulse
+          set -euo pipefail
+          Rscript --vanilla -e 'for (f in c("global.R","ui.R","server.R","R/cascade_helpers.R","R/site_metadata.R")) parse(f); source("global.R"); source("ui.R"); source("server.R")'
+          node --check www/cascade.js
+          PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
+          Rscript --vanilla scripts/workflow_guard.R self-test
+          Rscript --vanilla scripts/test_helpers.R
+          Rscript --vanilla scripts/verify_manifest.R
+          Rscript --vanilla scripts/workflow_guard.R approved-sources "$RUNNER_TEMP/approved-sources.tsv"
+          test "$(wc -l < "$RUNNER_TEMP/approved-sources.tsv")" -eq 7
+
+      - name: Fetch current data from the seven fixed origins and detach
+        run: |
+          set -euo pipefail
+          ws="$RUNNER_TEMP/siblings"
+          mkdir -p "$ws"
+          while IFS=$'\t' read -r product directory origin; do
+            test -n "$product" && test -n "$directory"
+            test "${origin#github.com/tgilbert14/}" != "$origin"
+            repo="$ws/$directory"
+            git init -q "$repo"
+            git -C "$repo" remote add origin "https://${origin}.git"
+            git -C "$repo" fetch --quiet --no-tags --depth=1 origin HEAD
+            commit=$(git -C "$repo" rev-parse FETCH_HEAD)
+            test "${#commit}" -eq 40
+            git -C "$repo" -c advice.detachedHead=false checkout --quiet --detach "$commit"
+            test "$(git -C "$repo" rev-parse HEAD)" = "$commit"
+            test -z "$(git -C "$repo" status --porcelain --untracked-files=normal)"
+          done < "$RUNNER_TEMP/approved-sources.tsv"
+          test "$(find "$ws" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 7
           echo "CASCADE_ROOT=$ws" >> "$GITHUB_ENV"
 
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
+      - name: Rebuild and validate the complete artifact family
+        run: Rscript --vanilla scripts/rebuild_all.R
 
-      - name: Install R packages
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          # rsconnect + jsonlite: build_cascade.R's tail runs the lean, hard-gated
-          # scripts/write_manifest.R so the pinned checksum matches the freshly rebuilt
-          # bundle (else Connect serves stale data) and a heavy-package leak fails the job.
-          packages: dplyr, tidyr, stringr, tibble, rsconnect, jsonlite
-
-      - name: Rebuild data/cascade.rds from the sibling bundles
-        run: Rscript scripts/build_cascade.R
-
-      # Reshape the freshly rebuilt cascade into the bundled "Search the network"
-      # index. MUST run AFTER the cascade rebuild (it reads data/cascade.rds) and
-      # BEFORE the manifest write below, so the manifest pins THIS search_index.rds
-      # checksum (a stale-checksum index would silently serve yesterday's search).
-      - name: Rebuild the search index
-        run: Rscript scripts/build_search_index.R
-
-      # Re-pin the lean manifest now that BOTH data/cascade.rds and
-      # data/search_index.rds are fresh (write_manifest.R is check-only: it writes
-      # then hard-gates on a heavy-package leak; it builds no data of its own).
-      - name: Regenerate the lean manifest
-        run: Rscript scripts/write_manifest.R
-
-      # Fail the job on a malformed bundle rather than deploying it.
-      - name: Test the rebuilt bundle
-        run: Rscript scripts/test_helpers.R
-
-      # Commit + push the rebuilt bundle AND the refreshed manifest to master. THIS is
-      # the deploy: Connect Cloud auto-redeploys on the push. No-ops when nothing changed.
-      - name: Commit & push rebuilt cascade.rds + manifest
+      - name: Stage exactly four data artifacts and write SHA-256 receipt
         run: |
-          git config user.name  "neon-data-bot"
+          set -euo pipefail
+          test ! -e outgoing
+          mkdir -p outgoing/data
+          install -m 0644 data/cascade.rds outgoing/data/cascade.rds
+          install -m 0644 data/search_index.rds outgoing/data/search_index.rds
+          install -m 0644 data/cascade_meta.rds outgoing/data/cascade_meta.rds
+          install -m 0644 data/neon-cascade-codebook.csv outgoing/data/neon-cascade-codebook.csv
+          Rscript --vanilla scripts/workflow_guard.R write-receipt "$BUILD_SHA" outgoing outgoing/artifact-receipt.tsv
+          Rscript --vanilla scripts/workflow_guard.R verify-receipt "$BUILD_SHA" outgoing outgoing/artifact-receipt.tsv
+
+      - name: Upload data artifacts and receipt only
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: validated-cascade-data
+          retention-days: 1
+          if-no-files-found: error
+          path: outgoing/
+
+  validate-artifacts:
+    needs: [gate, rebuild]
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the same immutable trusted validators
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: '4.5.2'
+          use-public-rspm: false
+
+      - name: Install validation dependencies
+        uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          packages: shiny, bslib, bsicons, dplyr, plotly, htmltools, htmlwidgets, shinyjs, shinycssloaders, DT, tidyr, stringr, tibble, metafor, jsonlite
+          pak-version: repo
+          dependencies: '"hard"'
+          cache-version: cascade-ppm-2026-07-15-v1
+          install-pandoc: 'false'
+          install-quarto: 'false'
+
+      - name: Download candidate data into an isolated directory
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: validated-cascade-data
+          path: incoming
+
+      - name: Verify receipt, promote four files locally, and rerun contracts
+        run: |
+          set -euo pipefail
+          Rscript --vanilla scripts/verify_manifest.R
+          python scripts/trusted_publish.py verify-receipt "$BUILD_SHA" incoming
+          install -m 0644 incoming/data/cascade.rds data/cascade.rds
+          install -m 0644 incoming/data/search_index.rds data/search_index.rds
+          install -m 0644 incoming/data/cascade_meta.rds data/cascade_meta.rds
+          install -m 0644 incoming/data/neon-cascade-codebook.csv data/neon-cascade-codebook.csv
+          python scripts/trusted_publish.py update-manifest manifest.json
+          python scripts/trusted_publish.py verify-manifest manifest.json
+          Rscript --vanilla -e 'for (f in c("global.R","ui.R","server.R","R/cascade_helpers.R","R/site_metadata.R")) parse(f); source("global.R"); source("ui.R"); source("server.R")'
+          node --check www/cascade.js
+          PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
+          Rscript --vanilla scripts/workflow_guard.R self-test
+          Rscript --vanilla scripts/test_helpers.R
+
+  publish:
+    needs: [gate, rebuild, validate-artifacts]
+    if: github.ref == 'refs/heads/master' && needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout current master for the allowlisted publish
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: master
+          fetch-depth: 1
+
+      - name: Refuse a stale or advanced master
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$BUILD_SHA"
+          git fetch --quiet --no-tags origin master
+          test "$(git rev-parse origin/master)" = "$BUILD_SHA"
+
+
+      - name: Download the read-only-validated candidate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: validated-cascade-data
+          path: incoming
+
+      # This invokes only Python standard-library code from the trusted checkout;
+      # it never deserializes incoming RDS payloads or installs third-party packages.
+      - name: Verify receipt and install exactly four data files
+        run: |
+          set -euo pipefail
+          python scripts/trusted_publish.py verify-receipt "$BUILD_SHA" incoming
+          install -m 0644 incoming/data/cascade.rds data/cascade.rds
+          install -m 0644 incoming/data/search_index.rds data/search_index.rds
+          install -m 0644 incoming/data/cascade_meta.rds data/cascade_meta.rds
+          install -m 0644 incoming/data/neon-cascade-codebook.csv data/neon-cascade-codebook.csv
+
+      - name: Refresh checksums without changing the validated package graph
+        run: |
+          set -euo pipefail
+          python scripts/trusted_publish.py update-manifest manifest.json
+          python scripts/trusted_publish.py verify-manifest manifest.json
+          cmp -s incoming/data/cascade.rds data/cascade.rds
+          cmp -s incoming/data/search_index.rds data/search_index.rds
+          cmp -s incoming/data/cascade_meta.rds data/cascade_meta.rds
+          cmp -s incoming/data/neon-cascade-codebook.csv data/neon-cascade-codebook.csv
+          python scripts/trusted_publish.py verify-receipt "$BUILD_SHA" incoming
+          rm -rf -- incoming
+
+      - name: Commit and push only the approved publish surface
+        run: |
+          set -euo pipefail
+          test -z "$(git ls-files --others --exclude-standard)"
+          while IFS= read -r path; do
+            case "$path" in
+              data/cascade.rds|data/search_index.rds|data/cascade_meta.rds|data/neon-cascade-codebook.csv|manifest.json) ;;
+              *) echo "Unexpected publisher change: $path" >&2; exit 1 ;;
+            esac
+          done < <(git diff --name-only)
+          git config user.name "neon-data-bot"
           git config user.email "neon-data-bot@users.noreply.github.com"
-          # explicit paths only (never a blanket add that could sweep a gitignored sibling
-          # or another session's half-written file): the bundle, the codebook, the manifest.
-          git add data/cascade.rds data/search_index.rds data/neon-cascade-codebook.csv manifest.json
+          git add data/cascade.rds data/search_index.rds data/cascade_meta.rds data/neon-cascade-codebook.csv manifest.json
           if git diff --cached --quiet; then
-            echo "No change in cascade.rds — nothing to deploy."
-          else
-            git commit -m "data: monthly cross-product cascade rebuild [bot]"
-            git push origin HEAD:master
-            echo "Pushed rebuilt cascade.rds + manifest — Connect Cloud will redeploy."
+            echo "No artifact change; nothing to deploy."
+            exit 0
           fi
+          git commit -m "data: monthly response-atlas rebuild [bot]"
+          git fetch --quiet --no-tags origin master
+          test "$(git rev-parse origin/master)" = "$BUILD_SHA"
+          git push origin HEAD:master

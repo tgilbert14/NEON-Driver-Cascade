@@ -226,10 +226,11 @@ path everywhere). Show a **result count** ("12 of 46 sites"), an **empty state**
 caption** (the measure is a within-site index / space-for-time screen, not an absolute ranking; for short
 per-site series, keep the pooling caveat and point to the cross-site test). DT gotcha: wrap `DTOutput`
 in a plain `div(style="width:100%")` and do NOT `spin()` it (the bslib fill-container 0-width trap).
-*First built on the Driver Cascade* (DP-derived, no taxa): the searchable units are the per-site cascade
-LINK results (`cascade.rds$suite_links`) — "find every site where a driver→response prior is significant"
-+ "rank sites by how many expected links the data agrees with" — both labelled as underpowered within-site
-screens, deferring to the pooled binomial on Across NEON.
+*First built on the Driver Cascade / Response Atlas* (DP-derived, no taxa): the searchable units are the
+per-site direct-pair rows (`cascade.rds$suite_links`) — “find every site with data for a registered
+driver→response pairing” + “rank sites by descriptive direction agreement among vote-eligible rows.”
+Per-site rows are never called significant; context-only rows remain searchable but excluded from inference,
+and the Across NEON panel carries the exploratory cross-site summary and its sensitivities.
 
 **Sibling links + cover page:** maintain ONE registry of the suite (name · emoji · tagline · DPID ·
 github.io showcase URL · live Connect Cloud URL) and render it both in `docs/index.html` (the

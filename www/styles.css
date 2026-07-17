@@ -1,17 +1,19 @@
 /* =========================================================================
-   NEON Small Mammal Tracker — styles.css
-   Light "desert field" theme, Desert Data Labs / Girth-Index house style.
+   NEON Cross-Product Response Atlas — shared foundation styles.
+   Light "desert field" theme, Desert Data Labs house style.
    Warm paper background, white cards with colored top borders + headers,
-   evergreen / terracotta / golden-hour triad, Rubik font.
+   evergreen / terracotta / golden-hour triad, native system font stack.
    ========================================================================= */
 
 /* Variable names kept for low churn; VALUES are the Girth Index house palette:
    --pine = navy (primary), --terra = cardinal (accent), --gold = gold.       */
 :root {                                  /* light "desert-day" (toggle) */
-  --pine: #149086;   --pine2: #0f6f67;     /* primary -> deep teal */
-  --terra: #e0685a;  --cardinal: #e0685a;  /* accent  -> coral */
-  --gold: #d6a31c;   --gold-ink: #9a7a00;
-  --sky: #2f8fc4;    --green: #3f9a52;
+  /* Accent fills and text tokens are deliberately dark enough for small text
+     on the default light surfaces. Brighter showcase hues live in dark mode. */
+  --pine: #0f6f67;   --pine2: #0b5f59;     /* primary -> deep teal */
+  --terra: #b74338;  --cardinal: #b74338;  /* accent  -> deep coral */
+  --gold: #9a7200;   --gold-ink: #735500;
+  --sky: #176b98;    --green: #287a3b;
   --ink: #16243a;    --muted: #5a6675;
   --bg: #eef3fb;     --paper: #ffffff; --line: #d8e0ea;
   --shadow: rgba(20, 144, 134, 0.12);
@@ -48,6 +50,7 @@
 /* the navy --pine token used as TEXT is unreadable on dark -> light blue */
 [data-bs-theme="dark"] .brand-title,
 [data-bs-theme="dark"] .bio-links-title,
+[data-bs-theme="dark"] .tab-head-text h2,
 [data-bs-theme="dark"] .tab-head-text h4,
 [data-bs-theme="dark"] .hr-indiv-lab,
 [data-bs-theme="dark"] .stat-sub,
@@ -309,8 +312,9 @@ body {
 .card-header.with-info { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 /* let the title take the room and WRAP instead of clipping; the hint drops to
    its own line on a tight card rather than stealing the title's width */
-.card-header.with-info > .ch-title { flex: 1 1 auto; min-width: 0; white-space: normal;
-  overflow-wrap: anywhere; line-height: 1.25; }
+.card-header.with-info > .ch-title { flex: 1 1 auto; min-width: 0; margin: 0;
+  display: flex; align-items: center; gap: 6px; color: inherit; font: inherit;
+  letter-spacing: inherit; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
 .card-hint { font-size: 11px; color: rgba(255,255,255,.85); font-weight: 400; flex: 0 0 auto; }
 
 /* compact °F/°C unit toggle in the (navy) detection-card header */
@@ -328,7 +332,7 @@ body {
 /* ---- tab heads -------------------------------------------------------- */
 .main-tabs-wrap { margin-top: 4px; }
 .tab-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 14px; padding: 14px 4px 6px; }
-.tab-head-text h4 { font-weight: 800; color: var(--pine); margin: 0; font-size: 21px; }
+.tab-head-text h2, .tab-head-text h4 { font-weight: 800; color: var(--pine); margin: 0; font-size: 21px; }
 .tab-head-text p { color: var(--muted); font-size: 13.5px; font-weight: 450; margin: 4px 0 0; max-width: 660px; line-height: 1.5; }
 .tab-intro { color: var(--muted); font-size: 12.5px; margin: 10px 4px 4px; display: flex; align-items: center; gap: 6px; }
 .tab-intro .bi { color: var(--pine); }
@@ -541,11 +545,10 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 /* "change site" link in the hero band — only useful on narrow screens, where the
    bslib sidebar (and its site picker) collapses into an offcanvas. Hidden on desktop,
    where the sidebar is always visible. */
-.hero-change { display: none; align-items: center; gap: 4px; margin-left: 10px;
+.hero-change { display: inline-flex; align-items: center; gap: 4px; margin-left: 10px;
   font-size: 12.5px; font-weight: 700; color: var(--terra); text-decoration: none;
   border-left: 1px solid rgba(255,255,255,.28); padding-left: 10px; cursor: pointer; }
 .hero-change:hover { color: #fff; text-decoration: underline; }
-@media (max-width: 992px) { .hero-change { display: inline-flex; } }
 
 @media (max-width: 640px) {
   .splash-map { padding: 22px 14px 18px; }
@@ -556,9 +559,9 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 /* ---- Hill-numbers diversity profile ----------------------------------- */
 .hill-note { display: flex; flex-direction: column; gap: 12px; height: 100%; justify-content: center; padding: 6px 4px; }
 .hill-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.hill-tile { text-align: center; background: #f5f8fc; border: 1px solid var(--line);
-  border-top: 3px solid var(--hc); border-radius: 10px; padding: 10px 6px 8px; }
-.hill-v { font-size: 24px; font-weight: 800; color: var(--hc); line-height: 1; }
+.hill-tile { text-align: center; background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+  border-top: 3px solid var(--hc, var(--pine)); border-radius: 10px; padding: 10px 6px 8px; }
+.hill-v { font-size: 24px; font-weight: 800; color: var(--hc, var(--pine)); line-height: 1; }
 .hill-l { font-size: 12px; font-weight: 700; color: var(--ink); margin-top: 4px; }
 .hill-s { font-size: 10.5px; color: var(--muted); }
 .hill-even { font-size: 13px; color: var(--ink); background: #fffdf6; border: 1px dashed var(--gold);
@@ -722,6 +725,9 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 .card-header .info-dot:hover { color: #fff; background: rgba(255,255,255,.2); }
 .tab-head-text .info-dot { color: var(--muted); margin-left: 6px; }
 .tab-head-text .info-dot:hover { color: var(--pine); background: #eaf1ee; }
+.info-dot:focus-visible {
+  outline: 3px solid var(--gold); outline-offset: 2px; opacity: 1;
+}
 .popover { background: var(--paper) !important; border: 1px solid var(--line) !important; border-radius: 12px !important; box-shadow: 0 14px 40px -12px var(--shadow) !important; max-width: 340px; }
 .popover .popover-header { background: var(--pine) !important; color: #fff !important; border-bottom: none !important; font-weight: 700; }
 .popover .popover-body { color: var(--ink) !important; font-size: 13px; line-height: 1.55; }
@@ -731,7 +737,7 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 .tooltip-inner { background: var(--ink) !important; color: #fff !important; font-size: 12px; }
 
 /* ---- modal (clickable-stat ranked list) ------------------------------- */
-.modal-content { border-radius: 14px; border: none; box-shadow: 0 24px 60px -20px rgba(0,0,0,.3); }
+.modal-content { background: var(--paper); color: var(--ink); border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 24px 60px -20px rgba(0,0,0,.3); }
 .modal-header { background: var(--pine); color: #fff; border-radius: 14px 14px 0 0; border-bottom: none; }
 .modal-title { font-weight: 800; }
 .modal-header .btn-close { filter: invert(1) grayscale(1) brightness(2); }
@@ -753,14 +759,14 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 .ddl-footer a { color: var(--pine); font-weight: 700; text-decoration: none; }
 .ddl-footer a:hover { text-decoration: underline; }
 .custom-cta { display: inline-flex; align-items: center; gap: 8px; background: #fffdf6; border: 1.5px solid var(--gold); color: var(--pine); font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 10px; text-decoration: none; margin-top: 6px; transition: .15s; }
-.custom-cta:hover { background: var(--gold); color: var(--pine); }
+.custom-cta:hover { background: var(--gold); color: #fff; }
 .custom-cta .hand { font-size: 17px; }
 
 /* ---- about ------------------------------------------------------------ */
 .about-wrap { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 8px 2px; }
 @media (max-width: 800px) { .about-wrap { grid-template-columns: 1fr; } }
 .about-card { background: var(--paper); border: 1px solid var(--line); border-top: 3px solid var(--pine); border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px var(--shadow); }
-.about-card h4 { font-weight: 800; color: var(--pine); font-size: 16px; }
+.about-card h3 { font-weight: 800; color: var(--pine); font-size: 16px; }
 .about-card p, .about-card li { color: #344049; font-size: 13.5px; line-height: 1.6; }
 .about-card .caveat { color: var(--pine); font-size: 12.5px; }
 .about-card code { color: var(--pine); background: #eaf1ee; padding: 1px 5px; border-radius: 5px; }
@@ -932,7 +938,7 @@ table.dataTable tbody tr:active { background: #dfe8f4 !important; }
 .podium-medal { font-size: 26px; line-height: 1; }
 .podium-1 .podium-medal { font-size: 32px; }
 .podium-emoji { font-size: 34px; line-height: 1.15; }
-.podium-id { font-family: "Jura", monospace; font-weight: 800; color: var(--ink); font-size: 14px; margin-top: 2px; }
+.podium-id { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight: 800; color: var(--ink); font-size: 14px; margin-top: 2px; }
 .podium-stat { font-weight: 800; color: var(--rc, var(--ink)); font-size: 15px; }
 .podium-1 .podium-stat { font-size: 18px; }
 .podium-sp { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1078,3 +1084,91 @@ svg.smt-pin-lines {
 [data-bs-theme="dark"] .qc-flag.warn { background: #352c12; color: #ecd28a; }
 [data-bs-theme="dark"] .qc-flag.info { background: #16263c; color: #a9c6e6; }
 [data-bs-theme="dark"] .qc-flag.clean { background: #163224; color: #9fd9b3; }
+
+/* Dark-theme interactive fills use dark ink on bright accents for WCAG contrast. */
+[data-bs-theme="dark"] .nav-tabs .nav-link:hover { color: #07131f !important; background: #5eead4; }
+[data-bs-theme="dark"] .nav-tabs .nav-link:hover .bi { color: #07131f !important; }
+[data-bs-theme="dark"] .btn-outline-dark:hover { background: #5eead4; color: #07131f; border-color: #5eead4; }
+[data-bs-theme="dark"] .custom-cta { background: #0f1b2e; color: #5eead4; border-color: #ffd24a; }
+[data-bs-theme="dark"] .custom-cta:hover { background: #ffd24a; color: #07131f; border-color: #ffd24a; }
+[data-bs-theme="dark"] .custom-cta:focus-visible { outline: 3px solid #5eead4; outline-offset: 3px; }
+
+/* Dark-theme overlays and transient states must not inherit the bright accent
+   token as a surface while retaining white text. */
+[data-bs-theme="dark"] .tab-head-text .info-dot:hover {
+  color: #5eead4; background: #22324a;
+}
+[data-bs-theme="dark"] .popover .popover-header,
+[data-bs-theme="dark"] .modal-header {
+  background: #1d4a8f !important; color: #fff !important;
+}
+[data-bs-theme="dark"] .tooltip-inner {
+  background: #07131f !important; color: #eaf2ff !important;
+}
+[data-bs-theme="dark"] .about-card code {
+  color: #cfe0f5; background: #22324a;
+}
+[data-bs-theme="dark"] table.dataTable tbody tr:hover {
+  background: rgba(67,184,232,.14) !important;
+}
+
+/* Complete dark-theme treatment for overlays, disclosures, and data tables. */
+[data-bs-theme="dark"] .info-dot { opacity: 1; }
+[data-bs-theme="dark"] .info-dot:focus-visible {
+  color: #07131f; background: #ffd24a; outline-color: #5eead4;
+}
+[data-bs-theme="dark"] .popover {
+  --bs-popover-bg: #0e1d40;
+  --bs-popover-border-color: rgba(255,255,255,.16);
+  --bs-popover-header-bg: #1d4a8f;
+  --bs-popover-header-color: #fff;
+  --bs-popover-body-color: #eaf2ff;
+}
+[data-bs-theme="dark"] .popover .popover-body b { color: #5eead4; }
+[data-bs-theme="dark"] .tooltip {
+  --bs-tooltip-bg: #07131f; --bs-tooltip-color: #eaf2ff; --bs-tooltip-opacity: 1;
+}
+[data-bs-theme="dark"] .modal-content {
+  background: #0e1d40; color: #eaf2ff; border-color: rgba(255,255,255,.16);
+}
+[data-bs-theme="dark"] .modal-body, [data-bs-theme="dark"] .modal-footer { color: #eaf2ff; }
+[data-bs-theme="dark"] .modal-footer { border-top-color: rgba(255,255,255,.12); }
+[data-bs-theme="dark"] .rank-modal-insight {
+  background: #2e2813; border-color: #ffd24a; color: #f5e5a5;
+}
+[data-bs-theme="dark"] .rank-row { border-bottom-color: rgba(255,255,255,.12); }
+[data-bs-theme="dark"] .rank-row:hover,
+[data-bs-theme="dark"] .rank-row.rank-click:hover { background: rgba(67,184,232,.14); }
+[data-bs-theme="dark"] .about-card .caveat,
+[data-bs-theme="dark"] .about-card a { color: #5eead4; }
+[data-bs-theme="dark"] table.dataTable td,
+[data-bs-theme="dark"] table.dataTable th { border-color: rgba(255,255,255,.12) !important; }
+[data-bs-theme="dark"] table.dataTable tbody tr.selected {
+  background: rgba(255,210,74,.14) !important; box-shadow: inset 3px 0 0 #ffd24a;
+}
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter input,
+[data-bs-theme="dark"] .dataTables_wrapper select {
+  background: #0f1b2e; color: #eaf2ff; border-color: rgba(255,255,255,.18);
+}
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter input:focus-visible,
+[data-bs-theme="dark"] .dataTables_wrapper select:focus-visible {
+  outline: 3px solid #43b8e8; outline-offset: 2px;
+}
+[data-bs-theme="dark"] .dataTables_wrapper .dataTables_empty { color: #cdd9ee !important; }
+[data-bs-theme="dark"] .driver-popover.driverjs-theme {
+  background: #0e1d40; color: #eaf2ff; border: 1px solid rgba(255,255,255,.16);
+}
+[data-bs-theme="dark"] .driver-popover.driverjs-theme .driver-popover-title { color: #5eead4; }
+[data-bs-theme="dark"] .driver-popover.driverjs-theme .driver-popover-description { color: #eaf2ff; }
+[data-bs-theme="dark"] .driver-popover.driverjs-theme button {
+  background: #5eead4; color: #07131f;
+}
+[data-bs-theme="dark"] .driver-popover.driverjs-theme button:hover {
+  background: #ffd24a; color: #07131f;
+}
+[data-bs-theme="dark"] .driver-popover.driverjs-theme button:focus-visible {
+  outline: 3px solid #ffd24a; outline-offset: 2px;
+}
+[data-bs-theme="dark"] .driver-popover.driverjs-theme .driver-popover-prev-btn {
+  background: #22324a; color: #eaf2ff; border: 1px solid rgba(255,255,255,.18);
+}

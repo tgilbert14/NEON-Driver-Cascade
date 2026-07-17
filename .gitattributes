@@ -1,0 +1,15 @@
+# Reproducible manifest hashes across Windows, CI, and Connect Cloud.
+* text=auto eol=lf
+
+*.R text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.csv text eol=lf
+*.json text eol=lf
+
+*.rds binary
+*.png binary
