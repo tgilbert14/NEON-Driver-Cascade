@@ -8,30 +8,68 @@ can continue safely without relying on chat history.
 
 ## Current handoff state
 
-**Release-validation state for the captured product/build state through
-`3700c34`: BLOCKED as of 2026-07-17.** PR #4 is open, red, and unmerged.
-Commits after the last accepted
-Windows generation changed the captured writer/policy/search-build surface, so the
-earlier build, determinism, manifest/live-root, writer-guard, browser, and final-state
-passes are historical evidence—not validation of current HEAD. Repository metadata,
-Pages deployment, and public cover/share-card verification remain pending.
+**Release-validation state through diagnostic cleanup head `4676233`: BLOCKED as of
+2026-07-17.** PR #4 is open, red, and unmerged. Repository metadata, Pages
+deployment, and public cover/share-card verification remain pending. The owner
+explicitly approved a temporary failed-run diagnostic upload. Commit `c3863b5`
+added the SHA-pinned, four-path, one-day upload; run
+[29622897425](https://github.com/tgilbert14/NEON-Driver-Cascade/actions/runs/29622897425)
+passed the complete nine-stage rebuild and uploaded the failed Linux candidates
+after the unchanged byte gate failed. The bundle was downloaded to isolated
+`C:\tmp`, hashed, and compared without replacing live inputs. Commit `4676233`
+removed the upload immediately; the branch workflow is back to its original form.
+Post-cleanup run
+[29623201989](https://github.com/tgilbert14/NEON-Driver-Cascade/actions/runs/29623201989)
+again passed the complete rebuild and failed only at the same exact-byte gate.
 
-The 2026-07-17 Ubuntu 24.04 / R 4.5.2 run at documentation head `e906497`
-completed the nine-stage rebuild and passed every source, science, manifest, boot,
-and smoke contract. It promoted the validated candidate inside the ephemeral CI
-workspace, then the committed-artifact byte gate reported all three RDS files
-(`cascade`, `search_index`, and `cascade_meta`) different; only the CSV
-codebook matched. The semantic-manifest comparison was not reached. Job cleanup
-removed the ephemeral candidate; none of its files were retained, exported, or committed.
+The byte-drift cause is established. Windows and Ubuntu both used R 4.5.2, XDR,
+and serialization version 3, but their RDS headers record native encoding `ASCII`
+and `UTF-8`, respectively. Strict recursive comparison found identical schemas,
+classes, attributes, character bytes/encoding marks, memberships, and key order.
+Only 221 `greenup_doy_additive` values (maximum absolute delta
+`1.8474111129762605e-13`), 22 `r_detrended` values (`4.4408920985006262e-16`),
+55 `r_outcome_alt` values (`3.8857805861880479e-15`), and six first-link
+`metafor` scalars (`4.4408920985006262e-16` maximum) differ. Those fields come
+from platform-sensitive OLS/QR, correlation, and REML/t calculations. Replacing
+only those known fields in comparison copies makes `cascade.rds` strictly
+identical; replacing their exact search projections plus `source_bundle_md5` makes
+`search_index.rds` strictly identical; replacing the six meta scalars plus the
+same embedded MD5 makes `cascade_meta.rds` strictly identical. The three binary
+diffs are therefore one root artifact drift plus deterministic downstream value
+and fingerprint propagation—not three independent scientific changes.
 
-A Windows R 4.5.2 rebuild against the exact seven pinned snapshots passed stages
-1–4, then failed closed at stage 5 with `partial standard CRAN provenance: DT`.
-Promotion did not begin; all five live files stayed unchanged; and no rebuild lock,
-pending/stage/backup state, or R process remained. Explicit collation did not solve
-the gate, the new meta difference means the cause is not established, and neither
-row ordering nor serialization is yet proven. Do not weaken exact-byte or
-provenance gates. Inspecting unmodified Linux outputs requires explicit owner
-approval for a temporary diagnostic artifact upload; that approval is not recorded.
+The Linux manifest is internally coherent: its 12 checksums map exactly to the
+three candidates plus nine unchanged deploy files, its 73 package versions and
+dependency projections equal the baseline, and it passes the current implemented
+policy and the exact local runtime-library check. It nevertheless exposes the
+unresolved written-policy conflict: all 73 baseline descriptions say `CRAN`, all
+73 Linux descriptions say `RSPM`, and Linux truthfully supplies the six explicit
+standard provenance fields including `RemotePkgPlatform`. The comparator therefore
+reports `files, packages`. The candidate also passes manifest fixtures, boot
+integrity, and app smoke on Windows, but the unchanged Windows raw-source oracle
+fails at the additive green-up exact-value comparison because Windows recomputes
+its own last bits. No gate was weakened and no rounding was introduced.
+
+No Linux candidate is accepted, staged, committed, or live. The four experimental
+worktree replacements were restored from immutable `HEAD`; the historical five
+working-byte SHA-256 values below were reverified exactly. A release-policy decision
+is required before implementation: either formally adopt the trusted Ubuntu
+24.04/R 4.5.2 family as the canonical release-byte platform while preserving
+cross-platform structural/scientific checks, or retain truly cross-platform byte
+identity and replace the platform-sensitive numerical implementation. Separately,
+the owner must reconcile `CRAN` versus trusted `RSPM`, the optional versus all-or-none
+`RemotePkgPlatform` rule, and the controlled locale normalization. Do not promote
+the candidate or alter these gates until that choice is explicit.
+
+### Diagnosed Ubuntu candidate (isolated evidence; not accepted)
+
+| Artifact | Bytes | MD5 | SHA-256 |
+|---|---:|---|---|
+| `data/cascade.rds` | 110113 | `6f67ef73a8ec1b478cf72eef5152dacb` | `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe` |
+| `data/search_index.rds` | 18319 | `b11a4be96d406131305de5f1885cdbc5` | `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e` |
+| `data/cascade_meta.rds` | 2482 | `84d2ee047fff438e9db3e8d5dce7760f` | `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de` |
+| `data/neon-cascade-codebook.csv` | 15080 | `9f970cd051b1743cc3b45b4bf61e5eb8` | `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3` |
+| `manifest.json` | 228559 | `b3d9fb8526e0e23ee90546745a718985` | `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79` |
 
 ### Historical validated five-file generation (not current HEAD evidence)
 
@@ -428,10 +466,10 @@ code change invalidates earlier build, determinism, browser, and manifest eviden
 | 1 | Worktree ownership | PASS | 2026-07-17 | Current documentation changes are owned; no rebuild process or conflicting editor remains; unrelated history is preserved. |
 | 2 | Static syntax | PASS | 2026-07-17 | 22 R files parsed as UTF-8; `node --check`; both Python files compiled in memory; Python fixtures passed. |
 | 3 | Workflow policy | PASS | 2026-07-17 | Both YAML files safe-loaded; all 13 `uses:` values are full lowercase 40-hex pins; receipt self-test passed. |
-| 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; no bytecode, lock, stage, backup, pending, temp config, credential, or scratch residue. |
-| 5 | Authoritative build | BLOCKED | 2026-07-17 | No accepted current-HEAD family: Ubuntu rebuilt but later failed exact bytes; Windows failed stage 5 before promotion. |
+| 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. The approved candidate remains isolated under `C:\tmp` pending the policy decision. |
+| 5 | Authoritative build | BLOCKED | 2026-07-17 | Ubuntu produced a fully validated candidate, but no family can be accepted until the release-byte platform and manifest policy are explicitly reconciled; Windows still fails stage 5 before promotion. |
 | 6 | Independent live-root checks | NOT RUN | 2026-07-17 | No complete independent live-root suite exists for a promoted current-HEAD family. |
-| 7 | Determinism | FAIL | 2026-07-17 | Latest Ubuntu exact-reproduction gate differs for all three RDS files; only the CSV codebook matches. Do not weaken the byte gate. |
+| 7 | Determinism | FAIL | 2026-07-17 | Root cause proven: cross-platform RDS header plus last-bit OLS/correlation/meta arithmetic, with search/meta fingerprint propagation. The unchanged Ubuntu-on-Ubuntu exact-byte rerun awaits an accepted Ubuntu baseline; do not weaken the byte gate. |
 | 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
 | 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
 | 10 | Writer capability guard | NOT RUN | 2026-07-17 | Search and manifest writers changed after the prior guard evidence; rerun against final current code. |
@@ -933,3 +971,59 @@ Rules:
   failed-run artifact upload, inspect the three RDS candidates against the committed
   family, remove the diagnostic step, and propose a focused fix without weakening
   any existing gate.
+
+### 2026-07-17 18:31 MST - approved Linux artifact diagnosis and policy stop / root, with two read-only audits
+
+- **Changed:** temporarily added the owner-approved SHA-pinned failed-run upload in
+  `c3863b5`, retrieved exactly three RDS files plus `manifest.json`, then restored
+  the original workflow in `4676233`. The final branch workflow is unchanged from
+  its pre-diagnostic form. No generated artifact remains changed, staged, committed,
+  or live. This handoff and the central suite loop alone record the new evidence.
+- **Learned:** the three RDS diffs are one causal chain. Ubuntu changes the RDS
+  native-encoding header and last bits from platform-sensitive OLS/QR, correlation,
+  and `metafor` arithmetic; search and meta then embed the changed cascade MD5.
+  Counting derived fingerprint carriers as independent drift exaggerates the failure.
+  A suite app must declare a canonical release-byte platform or prove cross-platform
+  bytes, while other-platform tests separately protect schema, keys, text, support,
+  signs, decisions, and bounded full-precision deltas. The Linux package graph is
+  version/dependency-equivalent but its truthful `RSPM`/platform provenance conflicts
+  with the older written `CRAN`-only/untouched-manifest contract.
+- **Test process:** GitHub run `29622897425` passed all nine build stages, source
+  locks, artifact/science contracts, manifest checks, malformed-generation tests,
+  and app smoke before the exact-byte gate failed; its diagnostic upload succeeded.
+  Run `29623201989` at cleanup head `4676233` reproduced that sequence without the
+  upload. Locally under R 4.5.2, complete SHA-256/MD5/size capture, `infoRDS`,
+  decompressed-payload comparison, strict recursive identity, same-process v2/v3
+  serialization, known-key sequence audits, character-byte/encoding-mark checks,
+  hexadecimal numeric deltas, and MD5-sentinel diagnosis isolated the exact fields
+  and counts in the current-state block. The Linux manifest passed current policy,
+  all 12 mapped checksums, all 73 exact runtime package versions, and manifest
+  fixtures. Candidate boot integrity passed 12 malformed/mutated fixtures and six
+  promotion cuts; app smoke passed with 510 annual rows and 12 associations. The
+  Windows raw-source suite passed through every preceding oracle, then failed only
+  when exact Windows recomputation reached the Ubuntu additive green-up values.
+- **Evidence invalidated:** the prior statement that the cause was unknown, that no
+  Linux candidate had been retained for inspection, and that owner approval was not
+  recorded. No historical scientific conclusion or local Windows hash receipt is
+  invalidated; they remain platform-specific evidence.
+- **Artifacts:** isolated Ubuntu SHA-256 values are cascade `47b98e48…`, search
+  `a11a072d…`, meta `00120c52…`, unchanged codebook `a79cc754…`, and manifest
+  `92b46277…`. The worktree was restored to cascade `5453e448…`, search
+  `1e3449cf…`, meta `7e1aef4f…`, codebook `a79cc754…`, and manifest `b1851e53…`.
+- **Failure/cleanup:** the temporary upload was removed and pushed; the artifact
+  expires after one day. The experimental live-root copy was restored from immutable
+  `HEAD` and all four restored SHA-256 values were asserted. Session-scoped Git
+  configuration was removed. No rebuild lock or R process remains. Bitdefender
+  blocked the normal patch helper, so exact assertion-guarded UTF-8/LF replacements
+  were used only after the helper failed.
+- **Residual risk:** PR #4 remains red and unmerged. Accepting Ubuntu bytes requires
+  an explicit release-platform decision and an atomic resolution of the manifest
+  contract (`CRAN`/trusted `RSPM`, optional platform metadata, locale normalization,
+  comparator fixtures, and cross-platform matrix meaning). Metadata, Pages, and
+  public cover verification remain pending.
+- **Next action:** obtain the owner's explicit policy choice. Recommended: designate
+  Ubuntu 24.04/R 4.5.2 plus the pinned Posit snapshot as the release-byte platform;
+  keep the exact Ubuntu byte gate; keep Windows structural/raw-source/decision tests
+  with diagnostic numeric deltas; formally validate and semantically normalize the
+  two trusted standard-CRAN provenance representations; then promote the already
+  validated Linux family, rerun unchanged CI, and merge only when green.

@@ -196,6 +196,10 @@ After the nine app passes, synthesize before coding. Driver v2 begins only when:
   results, headlines, and caveats are declared before rebuilding;
 - no sibling input is consumed from a moving branch or half-reviewed app state;
   Driver integration uses only pinned, green source commits;
+- each generated family names one canonical release-byte platform/toolchain or
+  proves exact cross-platform bytes; other-platform diagnosis separates RDS
+  headers/serialization, strict schema/key/text equality, hexadecimal numeric
+  deltas, and embedded upstream-fingerprint propagation before counting drift;
 - Windows/Linux portability is rechecked for locale ordering, justified numeric
   tolerances, line endings, manifest provenance, and immutable workflow pins; and
 - the full artifact, manifest, boot-integrity, browser, publication, and rollback
