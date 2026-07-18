@@ -29,7 +29,7 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 4 | **Height-field canopy** renderer + `build_lidar.py` pipeline; WREF canopy from a grid | DONE (synthetic) | #11 |
 | 5 | **Polish** — gradient sky + sun, canopy sway + head-bob, muted desert, **all 46 walkable** | DONE | #12 |
 | 4-real | **Real AOP LiDAR** — WREF, SCBI, HARV & GUAN canopies from actual NEON CHM scans | DONE | #13 |
-| 6 | **Science in-scene** — each site's honest headline driver shown in the 3D overlay | DONE | #14 |
+| 6 | **Science in-scene** — each site's honest headline driver shown in the 3D overlay | DONE | #15 |
 | 7+ | Optional — ambient sound; more sites on real LiDAR (token available) | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
