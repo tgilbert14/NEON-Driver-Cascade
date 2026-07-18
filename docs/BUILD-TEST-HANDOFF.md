@@ -1283,3 +1283,45 @@ Rules:
   Tracker) using the recorded one-app learning cycle. Do not reintegrate Driver v2
   until all nine pinned knowledge packages and the complementary-product decision
   are complete.
+
+### 2026-07-18 - complementary-app gap audit (planning / documentation-only) / root
+
+- **Changed:** added `docs/COMPLEMENTARY-APP-GAP-AUDIT.md` (the ranked pass-10
+  decision-support audit); updated `docs/NEON-SUITE-LEARNING-LOOP.md` pass-10
+  register row and appended 11 Driver-implication backlog rows. No code, artifact,
+  data bundle, manifest, scientific pin, or workflow changed.
+- **Learned:** the "add more apps?" question already has a suite gate (learning-loop
+  pass 10) and pre-named candidates (discharge/water-temp/periphyton/fish). A live
+  NEON Data Product Catalog sweep confirms the roadmap's four and adds a terrestrial
+  producer/ANPP candidate (litterfall `DP1.10033.001` + clip-harvest
+  `DP1.10023.001`) as the only non-aquatic complement that repairs the "atlas not
+  cascade" construct demotion on a system with data. Adversarial refutation deflated
+  several over-claims: discharge's marquee land-vs-water headline is unreachable on
+  arrival (SYCA≈1-site under `min_sites=3`); ticks are a conditional double-acquisition,
+  not "buildable now/46-46"; a met "climate-driver app", soil-moisture, and AOP
+  greenness do not survive as near-term builds (REJECT-framing/HOLD/CONTEXT). DPID
+  corrections captured: `DP1.20108.001` is a phantom (fish per-pass lives in
+  `DP1.20107.001`); `DP1.00044.001` is now primary precip; no NEON root-ingrowth
+  product; NEON does not band birds.
+- **Test process:** cwd `/home/user/NEON-Driver-Cascade`; branch
+  `claude/neon-suite-expansion-c0wl9k`. Research via a background workflow (29
+  subagents, 0 errors) fanning out the live neonscience.org catalog by domain +
+  repo-constraint synthesis, then per-candidate 6-question intake and adversarial
+  refutation. No build/test gate was run because no product or artifact changed;
+  documentation edits target `git diff --check` / UTF-8 / LF cleanliness only.
+- **Evidence invalidated:** none. All release/build/determinism/browser/manifest
+  gates from the 2026-07-18 closeout remain valid; this is additive documentation.
+- **Artifacts:** unchanged. Canonical SHA-256 family (cascade
+  `47b98e48…f3fe`, search `a11a072d…4f0e`, meta `00120c52…d14e`, codebook
+  `a79cc754…8ca3`, manifest `92b46277…441e`) is untouched; docs are not in the
+  runtime manifest allowlist and the app never sources them, so no rebuild is
+  required.
+- **Failure/cleanup:** none; no lock, stage, backup, pending, or credential residue.
+- **Residual risk:** the audit is a decision input, not a decision — the formal
+  `COMPLEMENT` build/defer call still requires the nine app passes and Driver v2
+  synthesis. Candidate join/overlap counts (gauged-stream×invert, grassland
+  clip×mammal, tick 46/46) are asserted from the roadmap and catalog and must be
+  measured before any build.
+- **Next action:** owner review of the ranked backlog; begin suite pass 1 (Small
+  Mammal Tracker). Re-run the 6-question intake with measured match rates when any
+  Tier-A candidate is actually scheduled.
