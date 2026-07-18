@@ -28,7 +28,7 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 3 | **Step inside** — first-person 3D, vegetation from real `veg_ba_ha` (Three.js inlined) | DONE | #10 |
 | 4 | **Height-field canopy** renderer + `build_lidar.py` pipeline; WREF canopy from a grid | DONE (synthetic) | #11 |
 | 5 | **Polish** — gradient sky + sun, canopy sway + head-bob, muted desert, **all 46 walkable** | DONE | #12 |
-| 4-real | **Real AOP LiDAR** — WREF canopy now from an actual NEON CHM scan | DONE | #13 |
+| 4-real | **Real AOP LiDAR** — WREF, SCBI, HARV & GUAN canopies from actual NEON CHM scans | DONE | #13 |
 | 6+ | Further polish — ambient sound; per-site facts in-scene; more sites on real LiDAR | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
@@ -61,9 +61,10 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   **15 of 18 sites, p = 0.004**. Single-site values are framed as *direction, never significance*
   (no short series can be significant); context-only measures are labelled "not counted in the network test".
 - The **year wheel is a per-biome schematic** (the bundle has annual, not monthly, data) — labelled as such.
-- The **3D vegetation is a procedural impression** from measured standing wood — **except Wind River**,
-  whose canopy is now a **real NEON AOP LiDAR scan** (DP3.30015.001). All 46 sites are walkable (the six
-  curated keep hand-authored scenes; the rest are generated from `bucket`+`veg_ba_ha`).
+- The **3D vegetation is a procedural impression** from measured standing wood — **except the four forest
+  sites WREF, SCBI, HARV, GUAN**, whose canopies are **real NEON AOP LiDAR scans** (DP3.30015.001; a site
+  gets a real canopy when a `lidar-<site>.json` grid exists, keyed by site code). All 46 sites are
+  walkable. To add another: `build_lidar.py <SITE> <CHM.tif>` → inline as `<script id="lidar<SITE>">`.
 - No R in the sandbox → `export_data.py` reads the RDS with the pure-Python `rdata` package
   (`pip install rdata`). A production build would use an R writer beside `scripts/build_search_index.R`.
 

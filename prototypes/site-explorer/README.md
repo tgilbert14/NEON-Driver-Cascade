@@ -52,12 +52,14 @@ with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay che
 are a **procedural impression** from measured standing wood. Because it inlines a 3D engine, it is a
 heavier page and is kept **separate** from the lightweight main explorer, linked rather than merged.
 
-**Wind River's canopy is a real NEON AOP LiDAR scan** — `build_lidar.py` reads an actual Canopy Height
-Model GeoTIFF (DP3.30015.001, tile `NEON_D16_WREF_DP3_580000_5075000`, 2023: a central 300 m window of
-1 m LiDAR downsampled to 3 m cells, real heights to ~68 m) into `lidar-wref.json`, inlined into
-`walk.html`. Only the derived grid is committed, not the raw multi-MB tile. To put another site on real
-LiDAR: `python3 build_lidar.py <SITE> <CHM.tif>`, then re-inline into that site's `<script id="lidar…">`
-block — no scene-code changes. (The `/api/v0/data/` route needs a NEON API token via `X-API-Token`.)
+**Four forest sites are rendered from real NEON AOP LiDAR scans** — Wind River (`~68 m` old-growth
+conifer), Smithsonian and Harvard (eastern deciduous), and Guánica (`~16 m` subtropical dry forest).
+`build_lidar.py` reads an actual Canopy Height Model GeoTIFF (DP3.30015.001, a central 300 m window of
+1 m LiDAR downsampled to 3 m cells) into `lidar-<site>.json`, inlined into `walk.html`; the scene uses a
+real scan whenever a `lidar-<site>.json` grid exists (keyed by site code), else the procedural build.
+Only the derived grids are committed, not the raw multi-MB tiles. To add another site:
+`python3 build_lidar.py <SITE> <CHM.tif>`, then inline as `<script id="lidar<SITE>">` — no scene-code
+changes. (The `/api/v0/data/` route needs a NEON API token via `X-API-Token`.)
 
 ## Travel map (Rung 2.5)
 
