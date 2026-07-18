@@ -151,7 +151,7 @@ Do not mark an app complete from memory or screenshots alone.
 
 | Pass | App | Status | Source/build evidence | Knowledge package | Driver disposition | Published verification |
 |---:|---|---|---|---|---|---|
-| 0 | Driver Response Atlas baseline | canonical policy approved; release validation in progress | see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu release contract captured | integration target | PR #4 CI/merge/Pages pending |
+| 0 | Driver Response Atlas baseline | policy approved; pinned-runtime determinism validation in progress | full science build passes; cross-run RDS byte gate fails; see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu contract now includes numeric-runtime identity | integration target | PR #4 CI/merge/Pages pending |
 | 1 | Small Mammal Tracker | pending | — | — | — | — |
 | 2 | Plant Diversity | pending | — | — | — | — |
 | 3 | Plant Phenology Explorer | pending | — | — | — | — |
@@ -176,7 +176,8 @@ work.
 | Driver baseline | plant richness as productivity | REJECT | composition is not productivity | keep context-only wording | evaluate periphyton/producer gap after aquatic passes |
 | Driver baseline | beetle activity as CPUE | CONTEXT | denominator is catch-event-conditioned | no inferential vote | revisit after beetle effort audit |
 | Driver baseline | aquatic climate bridge | COMPLEMENT | no direct terrestrial/aquatic site-code overlap | require explicit proxy or true aquatic driver | water chemistry + inverts passes, then gap audit |
-| Driver release platform | canonical Ubuntu bytes + strict Windows oracle + independently validated CRAN/RSPM manifest normalization | NONE | exact family hashes, dual policy fixtures, raw-source oracle, boot and smoke evidence in Driver handoff | no scientific Driver change | reuse this release/test split in each app pass; never round artifacts or normalize unvalidated provenance |
+| Driver release platform | canonical Ubuntu bytes + strict Windows oracle + independently validated CRAN/RSPM manifest normalization | NONE | candidate family hashes, dual policy fixtures, raw-source oracle, boot and smoke evidence in Driver handoff; cross-run bytes still under validation | no scientific Driver change | reuse this release/test split in each app pass; never round artifacts or normalize unvalidated provenance |
+| Driver release platform | fixed BLAS core and one-thread numeric runtime | NONE (suite-platform; validation pending) | two otherwise matched hosted Ubuntu runs changed QR/correlation/REML last bits and downstream fingerprints; exact gate caught it | include loaded BLAS core/thread assertions in CI and refresh, with no scientific rounding | retain/compare one pinned candidate, remove diagnostic upload, then require two independent exact-byte passes |
 
 ## Driver v2 reintegration gate
 
@@ -198,8 +199,9 @@ After the nine app passes, synthesize before coding. Driver v2 begins only when:
   results, headlines, and caveats are declared before rebuilding;
 - no sibling input is consumed from a moving branch or half-reviewed app state;
   Driver integration uses only pinned, green source commits;
-- each generated family names one canonical release-byte platform/toolchain or
-  proves exact cross-platform bytes; other-platform diagnosis separates RDS
+- each generated family names one canonical release-byte platform/toolchain,
+  including any dispatched BLAS core and thread contract, or proves exact
+  cross-platform bytes; other-platform diagnosis separates RDS
   headers/serialization, strict schema/key/text equality, hexadecimal numeric
   deltas, and embedded upstream-fingerprint propagation before counting drift;
 - Windows/Linux portability is rechecked for locale ordering, justified numeric

@@ -9,15 +9,16 @@ can continue safely without relying on chat history.
 ## Current handoff state
 
 **Release-validation state on the local release branch: POLICY APPROVED; LOCAL
-VALIDATION PASS; REMOTE CI PENDING as of 2026-07-17.** The owner approved Ubuntu
-24.04 with R 4.5.2 and the pinned 2026-07-15 Posit snapshot as the canonical
-release-byte platform. The unchanged Ubuntu CI byte gate remains authoritative.
-Windows remains a strict schema/class/attribute/key/text/source/support/decision
-oracle with only explicitly named bounded full-precision numeric diagnostics.
-No scientific value is rounded and no decision, support, checksum, or provenance
-gate is weakened.
+VALIDATION PASS; REMOTE CI FAIL-CLOSED ON CROSS-RUN BYTE DETERMINISM as of
+2026-07-17.** The owner approved Ubuntu 24.04 with R 4.5.2 and the pinned
+2026-07-15 Posit snapshot as the canonical release-byte platform. The exact Ubuntu
+byte gate remains authoritative, but the hosted-runner numeric runtime must now
+also pin and verify its OpenBLAS kernel and thread count. Windows remains a strict
+schema/class/attribute/key/text/source/support/decision oracle with only explicitly
+named bounded full-precision numeric diagnostics. No scientific value is rounded
+and no decision, support, checksum, or provenance gate is weakened.
 
-The validated Ubuntu family has been promoted locally as one unit, with
+The promoted Ubuntu candidate family was copied locally as one unit, with
 `manifest.json` copied last. Source and destination SHA-256 values match the table
 below; the codebook is unchanged. Local R/Python provenance fixtures, manifest
 verification (73 packages/12 files), the complete seven-repository raw-source
@@ -25,10 +26,18 @@ oracle, boot-integrity faults (12 malformed/mutated fixtures and six promotion
 cuts), app smoke (510 annual rows/12 associations), workflow receipt fixtures,
 JavaScript syntax, YAML/pin review, and whitespace checks pass.
 
-The prior remote head `33653cf` is still red at the expected old exact-byte gate.
-Fresh CI for this promoted family must pass both the exact artifact-byte gate and
-the independently validated semantic-manifest gate before merge. PR #4, repository
-metadata, Pages deployment, and final public cover/share-card QA remain pending.
+GitHub Actions run `29632690022` on head `5effe239` passed the complete nine-stage
+build, every raw-source/scientific contract, manifest verification, boot-integrity
+fixtures, and app smoke. It then failed the unchanged exact-byte gate because all
+three RDS files differed while the CSV codebook matched; semantic-manifest and
+whitespace gates correctly skipped. The earlier producer run and this run used the
+same runner image, R, OpenBLAS/LAPACK versions, package graph, sources, and writer
+code. The remaining unpinned dimension was OpenBLAS host-CPU kernel/thread choice.
+A fixed `Haswell` core and one thread are now a focused experiment, not yet passing
+evidence. PR #4 must not merge until the temporary candidate diagnostic is removed
+and two independent pinned-runtime builds pass exact bytes plus semantic manifest.
+Repository metadata, Pages deployment, and final public cover/share-card QA remain
+pending.
 
 The cross-platform diagnosis remains part of the audit record: one root family
 diff from RDS native-encoding headers plus last-bit OLS/QR, correlation, and
@@ -38,7 +47,7 @@ delta `1.8474111129762605e-13` under its sole `1e-12` diagnostic; the primary
 estimator and ten strict fields remain at `1e-15`, and all finite patterns, keys,
 support, signs, votes, tiers, sensitivities, and decisions remain exact.
 
-### Canonical Ubuntu release family (promoted locally; remote CI pending)
+### Promoted Ubuntu candidate family (scientifically validated; cross-run bytes unproved)
 
 | Artifact | Bytes | MD5 | SHA-256 |
 |---|---:|---|---|
@@ -430,11 +439,11 @@ code change invalidates earlier build, determinism, browser, and manifest eviden
 |---:|---|---|---|---|
 | 1 | Worktree ownership | PASS | 2026-07-17 | Current documentation changes are owned; no rebuild process or conflicting editor remains; unrelated history is preserved. |
 | 2 | Static syntax | PASS | 2026-07-17 | 22 R files parsed as UTF-8; `node --check`; both Python files compiled in memory; Python fixtures passed. |
-| 3 | Workflow policy | PASS | 2026-07-17 | Both YAML files safe-loaded; all 13 `uses:` values are full lowercase 40-hex pins; receipt self-test passed. |
+| 3 | Workflow policy | PASS | 2026-07-17 | Both YAML files safe-loaded; all 14 current `uses:` values are full lowercase 40-hex pins; receipt self-test passed. The fail-only upload is temporary and removal returns the release workflow set to 13. |
 | 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; canonical LF/no-BOM text; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. |
-| 5 | Authoritative build | LOCAL PASS / CI PENDING | 2026-07-17 | The complete Ubuntu nine-stage run produced the now-promoted hash-exact family. Fresh CI must rebuild it and pass the unchanged exact-byte and semantic-manifest gates. |
+| 5 | Authoritative build | LOCAL PASS / CI FAIL | 2026-07-17 | Run `29632690022` passed all nine build stages and contracts, then failed the unchanged exact-byte gate for all three RDS files; codebook matched. |
 | 6 | Independent live-root checks | PASS | 2026-07-17 | Promoted family passed the complete seven-source oracle, manifest verification/comparison, Python publisher fixtures, boot integrity, app smoke, and workflow receipt fixtures. |
-| 7 | Determinism | CI PENDING | 2026-07-17 | Canonical Ubuntu hashes are fixed and locally asserted. The authoritative Ubuntu-on-Ubuntu exact-byte rerun is the next GitHub gate; cross-platform diagnosis does not weaken it. |
+| 7 | Determinism | FAIL / PINNED-RUNTIME TEST PENDING | 2026-07-17 | Nominally identical hosted Ubuntu runs produced different RDS bytes. CI and refresh now pin/verify `Haswell` plus one OpenBLAS thread; two independent exact-byte passes are required. |
 | 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
 | 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
 | 10 | Writer capability guard | PASS | 2026-07-17 | All four direct writers rejected missing generation capability; SHA-256 for all five live release files remained unchanged. |
@@ -561,9 +570,10 @@ replace browser QA, and screenshots do not replace interaction/console checks.
 
 ## Residual risks currently carried
 
-- PR #4 still points to the old red head until this local family is committed and
-  pushed. Fresh Ubuntu CI, merge, repository metadata, Pages deployment, and public
-  cover/share-card verification remain pending.
+- PR #4 is red at run `29632690022`: the full scientific build passed, but separate
+  hosted Ubuntu runners did not reproduce the same three RDS byte streams. The
+  fixed-core/single-thread experiment, candidate comparison if needed, diagnostic
+  removal, and two independent green exact-byte runs remain required before merge.
 - The retained isolated diagnostic bundle under `C:\tmp` is non-authoritative after
   promotion; keep it only until fresh exact-byte CI is green, then remove it without
   touching the repository family.
@@ -1075,3 +1085,49 @@ Rules:
   generation ran; no lock, stage, backup, pending file, or artifact hash changed.
 - **Residual risk/next action:** push the exact-token correction and require a fresh
   unchanged Ubuntu run to pass stages 5-9 plus both final byte/manifest gates.
+
+### 2026-07-17 23:07 MST - hosted-runner numeric determinism diagnosis / root, with two read-only audits
+
+- **Changed:** kept the exact artifact gate unchanged; pinned `OPENBLAS_CORETYPE=Haswell`,
+  `OPENBLAS_NUM_THREADS=1`, and `OMP_NUM_THREADS=1` in both CI and refresh; added a
+  fail-closed standard-library `ctypes` check of the loaded OpenBLAS core and actual
+  thread count to CI plus both refresh R jobs; and temporarily restored the SHA-pinned
+  one-day fail-only upload of three RDS candidates plus manifest after an exact-byte
+  failure. No scientific code, comparator tolerance, generated artifact, or manifest
+  policy changed.
+- **Learned:** canonical OS, R, snapshot, package versions, source commits, and writer
+  code are not a complete byte platform when a DYNAMIC_ARCH BLAS selects kernels
+  from the physical hosted-runner CPU. The prior and current runs matched all those
+  declared inputs yet emitted different RDS bytes. Generation audit found no
+  wall-clock/temp metadata, nonzero gzip MTIME, RNG/order drift, or repeat-save
+  instability. Host-specific OpenBLAS kernel/thread selection is therefore the one
+  remaining focused causal hypothesis; it is not recorded as proved until fresh
+  runner evidence passes.
+- **Test process:** inspected failed GitHub run `29632690022` and compared it with
+  candidate-producing run `29622897425`; both used runner image
+  `ubuntu-24.04/20260714.240.1`, R 4.5.2, OpenBLAS 0.3.26/LAPACK 3.12.0, the same
+  package cache and seven source commits, and unchanged RDS-generating code. Upstream
+  OpenBLAS documentation confirmed `OPENBLAS_CORETYPE` kernel selection and one-thread
+  controls. Locally, both workflow files safe-loaded, all 14 temporary `uses:` entries
+  were full 40-hex pins, `git diff --check` passed, and the workflow receipt guard
+  passed after adding the documented Git `sha256sum` directory to `PATH`. Expected
+  remote result is either exact match or a retained pinned-runtime candidate; actual
+  remote result is not yet available.
+- **Evidence invalidated:** the claim that one promoted hosted-Ubuntu candidate family
+  alone proved reproducibility for the whole canonical platform. Its science,
+  provenance, boot, smoke, and Windows-oracle evidence remains valid.
+- **Artifacts:** no local generation or promotion ran. The five live SHA-256 values
+  remain cascade `47b98e48...`, search `a11a072d...`, meta `00120c52...`, codebook
+  `a79cc754...`, and manifest `92b46277...`.
+- **Failure/cleanup:** run `29632690022` failed only at exact artifact bytes after
+  complete validation and did not retain candidates. Semantic-manifest and whitespace
+  steps skipped by fail-fast. Locally no rebuild lock, stage, backup, pending file,
+  or artifact changed. Bitdefender blocked the patch helper; exact one-occurrence
+  UTF-8/LF/no-BOM replacements were used through the explicit system PowerShell.
+- **Residual risk:** `Haswell` is an upstream-documented override and is expected on
+  hosted x64 runners, but compatibility and byte stability are unproved here. The
+  temporary diagnostic must not survive release.
+- **Next action:** commit/push the focused experiment. If bytes differ, download and
+  compare the retained candidate family, promote only a fully validated pinned-runtime
+  family, remove the upload, and require two independent exact-byte plus semantic-
+  manifest passes before merge, metadata, Pages, and public QA.

@@ -16,6 +16,11 @@ concurrency:
 env:
   RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
   RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
+  # Hosted x64 runners can select different OpenBLAS kernels from their physical
+  # CPU. Pin both the kernel family and reduction width for release-byte builds.
+  OPENBLAS_CORETYPE: Haswell
+  OPENBLAS_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
 
 jobs:
   rebuild-contracts:
@@ -43,6 +48,25 @@ jobs:
           cache-version: cascade-ppm-2026-07-15-v1
           install-pandoc: 'false'
           install-quarto: 'false'
+
+      - name: Verify the deterministic OpenBLAS runtime
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ctypes
+
+          lib = ctypes.CDLL("libopenblas.so.0")
+          lib.openblas_get_corename.restype = ctypes.c_char_p
+          lib.openblas_get_config.restype = ctypes.c_char_p
+          core = lib.openblas_get_corename().decode("ascii")
+          threads = lib.openblas_get_num_threads()
+          config = lib.openblas_get_config().decode("ascii")
+          print(f"OpenBLAS core={core} threads={threads} config={config}")
+          if core.lower() != "haswell":
+              raise SystemExit(f"expected OpenBLAS Haswell core, got {core!r}")
+          if threads != 1:
+              raise SystemExit(f"expected one OpenBLAS thread, got {threads}")
+          PY
 
       # This must precede every sibling clone. It validates the deploy snapshot and
       # emits a seven-row, allowlisted origin/commit lock from committed provenance.
@@ -89,7 +113,24 @@ jobs:
         run: Rscript --vanilla scripts/rebuild_all.R
 
       - name: Require committed scientific artifacts to reproduce exactly
+        id: artifact_byte_gate
         run: git diff --exit-code -- data/cascade.rds data/search_index.rds data/cascade_meta.rds data/neon-cascade-codebook.csv
+
+      # Temporary fail-only diagnostic. Retain only long enough to compare one
+      # pinned-kernel candidate family, then remove this step and rerun unchanged.
+      - name: Upload failed deterministic Linux candidates for diagnosis
+        if: ${{ failure() && steps.artifact_byte_gate.outcome == 'failure' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: deterministic-linux-candidates-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            data/cascade.rds
+            data/search_index.rds
+            data/cascade_meta.rds
+            manifest.json
 
       - name: Require the deploy manifest to reproduce semantically
         run: Rscript --vanilla scripts/compare_manifests.R "$RUNNER_TEMP/manifest-baseline.json" manifest.json
