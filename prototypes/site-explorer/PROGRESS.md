@@ -28,15 +28,16 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 3 | **Step inside** — first-person 3D, vegetation from real `veg_ba_ha` (Three.js inlined) | DONE | #10 |
 | 4 | **Height-field canopy** renderer + `build_lidar.py` pipeline; WREF canopy from a grid | DONE (synthetic) | #11 |
 | 5 | **Polish** — gradient sky + sun, canopy sway + head-bob, muted desert, **all 46 walkable** | DONE | #12 |
-| 6+ | Further polish — ambient sound; real AOP LiDAR (needs a NEON token); per-site facts in-scene | PLANNED | — |
+| 4-real | **Real AOP LiDAR** — WREF, SCBI, HARV & GUAN canopies from actual NEON CHM scans | DONE | #13 |
+| 6+ | Further polish — ambient sound; per-site facts in-scene; more sites on real LiDAR | PLANNED | — |
 
-> **Rung 4 blocker (important):** the *renderer + pipeline* are done, but the canopy grid is a
-> **labelled SYNTHETIC stand-in**, not a real scan. NEON's `/api/v0/data/` route returns **403 Access
-> Denied** without an API token (confirmed for both AOP and TOS products; `/products` and `/sites`
-> still work). This sandbox has no NEON token. To make WREF real: get a NEON API token (or a CHM
-> GeoTIFF another way), run `python3 build_lidar.py WREF <NEON_..._CHM.tif>`, re-inline `lidar-wref.json`
-> into `walk.html`'s `<script id="lidarWREF">`, and republish. The scene code needs **no** changes —
-> only the grid bytes and the `source`/`note` fields flip from stand-in to real.
+> **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
+> **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
+> **real NEON AOP Canopy Height Model** (DP3.30015.001, tile `NEON_D16_WREF_DP3_580000_5075000`, 2023 —
+> a central 300 m window, 1 m LiDAR downsampled to 3 m cells; real heights to ~68 m). Only the derived
+> `lidar-wref.json` grid is committed; the raw multi-MB GeoTIFF is not. To do another site:
+> `python3 build_lidar.py <SITE> <CHM.tif>` → re-inline into the site's `<script id="lidar…">`. (The
+> token used for this pull should be regenerated on the NEON portal, since it passed through chat.)
 
 Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged).
 
@@ -60,8 +61,10 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   **15 of 18 sites, p = 0.004**. Single-site values are framed as *direction, never significance*
   (no short series can be significant); context-only measures are labelled "not counted in the network test".
 - The **year wheel is a per-biome schematic** (the bundle has annual, not monthly, data) — labelled as such.
-- The **3D vegetation is a procedural impression** from measured standing wood, **not** a LiDAR scan
-  (Rung 4 makes one site real). Six sites are walkable: WREF, SCBI, KONZ, SRER, JORN, TOOL.
+- The **3D vegetation is a procedural impression** from measured standing wood — **except the four forest
+  sites WREF, SCBI, HARV, GUAN**, whose canopies are **real NEON AOP LiDAR scans** (DP3.30015.001; a site
+  gets a real canopy when a `lidar-<site>.json` grid exists, keyed by site code). All 46 sites are
+  walkable. To add another: `build_lidar.py <SITE> <CHM.tif>` → inline as `<script id="lidar<SITE>">`.
 - No R in the sandbox → `export_data.py` reads the RDS with the pure-Python `rdata` package
   (`pip install rdata`). A production build would use an R writer beside `scripts/build_search_index.R`.
 
