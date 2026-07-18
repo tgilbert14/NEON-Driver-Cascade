@@ -1,4 +1,9 @@
-I have everything I need. All load-bearing claims are verified against the live code. Confirmed findings: branch=`master` (suite is `main`), manifest checksums stale for 4+ files, ladder uses one global `ci` counter against a flat palette (color-identity bug), bundle is 4-element (no `sites`/`pulses`), priors carry exact lags, scatter draws solid-gold fit line regardless of tier, year-text always-on, About link `href="#"`, stray `%d` file in root.
+> **Historical implementation plan; superseded.** This file records the state observed before the
+> current artifact schema, scientific audit, construct correction, and completed UI/backend work.
+> Its “confirmed” statements are not claims about the current app. Use the generated artifacts,
+> contract tests, README, and in-app About panel for current behavior.
+
+I have everything I need. All load-bearing claims are verified against the then-live code. Confirmed findings: branch=`master` (suite is `main`), manifest checksums stale for 4+ files, ladder uses one global `ci` counter against a flat palette (color-identity bug), bundle is 4-element (no `sites`/`pulses`), priors carry exact lags, scatter draws solid-gold fit line regardless of tier, year-text always-on, About link `href="#"`, stray `%d` file in root.
 
 Here is the consolidated, decision-ready build plan.
 
@@ -120,7 +125,7 @@ Do B1–B5 (§1) first. Then, in order of impact-per-effort:
 | P3-3 | **Cascade-completeness map** | Static `plotly` scattergeo (~46 points — keeps the package list lean; no leaflet dep) sized/colored by **testable-link count** (Alyssa verified this diverges sharply from layers-present), doubling as the site picker (click → `input$site`) and as an honest coverage statement. If leaflet is used instead, it MUST be a static `leafletOutput`, never inside `renderUI` (Connect Cloud htmlwidget re-bind race). | **M** | High — replaces the bare dropdown; makes data gaps a feature. |
 | P3-4 | **Downloadable site scorecard (PNG/PDF)** | One page: ladder thumbnail + link chips w/ verdicts+CIs + sign-match tally + QC summary + codebook footer + priors-vs-data table + "consistency not causation" caveat. **Server-side `cairo_pdf` `downloadHandler`** (per playbook §2d) — NOT the dead client html-to-image path in `app.js` which depends on CDN globals this app never loads. | **M** | High — the grad-student-pastes-into-lab-meeting artifact. |
 | P3-5 | **Cover/landing splash** | One-screen animated cascade explainer + the completeness map, leading into SCBI. Every sibling opens on a splash; the capstone has none. | **M** | Med-High |
-| P3-6 | **Export the priors table as a product** | The curated literature priors (from/to/sign/lag/citation) is the genuinely reusable asset. Ship as a citable "NEON bottom-up cascade priors" CSV/JSON with About-tab sources attached — the cleanest demonstration of the priors-not-dredge discipline. | **S** | Med |
+| P3-6 | **Export the link registry with selection status** | Export from/to/sign/lag/citation plus family version and the explicit fact that the current registry evolved during inspection of these data. A future confirmatory registry must be dated and frozen before genuinely held-out observations are analyzed. | **S** | Med |
 
 ---
 

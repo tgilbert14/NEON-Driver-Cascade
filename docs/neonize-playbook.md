@@ -23,7 +23,7 @@ Every NEONized app is judged on the same axes the flagship nails:
 | Dimension | What "flagship quality" means |
 |---|---|
 | **Flow** | A splash/site-picker → instant demo-on-startup → an Overview that leads with the answer → progressive tabs. One global "selected entity" reactive every tab reads. No dead ends; every empty state offers the next action. |
-| **UI** | DDL light "Girth Index" house style: warm paper bg, white cards w/ 3px colored top borders, Rubik, the navy/cardinal/gold triad. bslib `page_sidebar`. `info_pop()` ⓘ on every card. Mobile-first. Dark-mode via one toggle that every chart honors. |
+| **UI** | DDL light "Girth Index" house style: warm paper bg, white cards w/ 3px colored top borders, a system/local font stack (Rubik only when committed locally), and the navy/cardinal/gold triad. bslib `page_sidebar`. `info_pop()` ⓘ on every card. Mobile-first. Dark-mode via one toggle that every chart honors. |
 | **Statistics** | Defensible, cited methods (Hill/Chao1/rarefaction/Schnabel/etc.). Every headline number has an `insight_banner()` "answer up front". n-gates before reporting. De-pseudoreplication. The right effort/scale fixed before any comparison. |
 | **Creativity** | Playful framing with real science underneath — emoji, rarity tiers, celebratory confetti on standouts, a shareable "trading card", a signature interactive (the Size Lab pin-card scatter). Show-off, not gimmick. |
 | **QC** | The app is *useful to the people who collect the data*. Click-to-inspect flag→modal/record patterns. Honest outlier flags that are KEPT not deleted, phrased "verify, not wrong". A downloadable per-entity QC record. |
@@ -40,8 +40,8 @@ mammal/beetle apps — NOT a shared package; independent deploys must stay self-
 these from the flagship and adapt the data layer:
 
 ### 2a. Design system & chrome — copy verbatim
-- `global.R`: the `DDL` token list (navy `#0C234B`, navy2 `#16386e`, cardinal `#AB0520`, gold `#FFD200`, gold2 `#c9a300`, sky, green, ink, muted, bg, paper, line); `app_theme` (bslib bs5 + Rubik); `asset_url()` (mtime cache-bust); `spin()`, `info_pop()`, `insight_banner(icon, ..., tone)`, `glow_badge()`.
-- `ui.R`: `page_sidebar`, the `<head>` library block (Rubik, sweetalert2, canvas-confetti, driver.js, **html-to-image@1.11.11**, styles.css, app.js), the splash/national-site-picker (STATIC `leafletOutput`, never inside a `renderUI` — the Connect Cloud re-bind race), the loading overlay, the DDL business footer.
+- `global.R`: the `DDL` token list (navy `#0C234B`, navy2 `#16386e`, cardinal `#AB0520`, gold `#FFD200`, gold2 `#c9a300`, sky, green, ink, muted, bg, paper, line); `app_theme` (bslib bs5 + a system/local font stack); `asset_url()` (mtime cache-bust); `spin()`, `info_pop()`, `insight_banner(icon, ..., tone)`, `glow_badge()`.
+- `ui.R`: `page_sidebar`, a local-only `<head>` library block (committed/pinned sweetalert2, canvas-confetti, driver.js, **html-to-image@1.11.11**, styles.css, app.js), the splash/national-site-picker (STATIC `leafletOutput`, never inside a `renderUI` — the Connect Cloud re-bind race), the loading overlay, the DDL business footer.
 - `server.R`: `plotly_theme(p)` (theme-aware, the navy+gold hoverlabel, `displayModeBar=FALSE`), `note_plot()` empty-state, `ctx_anno()` (BUT see gotcha #5), the `is_dark()` reactive.
 - `www/styles.css` `:root` tokens + dark-theme block; `www/app.js` (count-up engine, confetti, loading overlay, the custom-message handlers).
 
@@ -110,14 +110,17 @@ This is exactly how the Size Lab and the plant-diversity sibling were built.
 
 **Phase 5 — Verify in the running app.** `preview_start`, load the demo (the `setInputValue('demoBtn', …, {priority:'event'})` trick), exercise every new surface headlessly (real interactions, not synthetic `.click()` lies — drive plotly via `gd.emit('plotly_click', …)` with a full point object incl. `data:{}` so the binding doesn't choke), screenshot proof, fix, repeat until zero server + console errors.
 
-**Phase 6 — Ship hygiene.** Memory entry (what it is + the gotchas). Manifest→republish. A landing/og card if public.
+**Phase 6 — Ship hygiene.** Update the app-local handoff, the central suite evidence
+register, and the Driver implication backlog with exact evidence. Promote reusable
+gotchas into this playbook. Then regenerate/verify the manifest, publish only when
+authorized and green, and verify the landing/OG card and direct URL when public.
 
 ---
 
 ## 4. The gotcha catalog (carry into every NEONize)
 
 - **R version:** R-4.5.2 runs the app but **crashes on `neonUtilities::loadByProduct`** (access violation). Pull/bundle data with **R-4.1.1**. Launch R via **PowerShell**, not git-bash (git-bash segfaults R here). Reference neonUtilities by a *computed* package name so the rsconnect scanner doesn't pin it into the manifest (the deploy is bundle-only + lean).
-- **Never set a bslib theme font via `font_google(...)` on Connect Cloud — it is a cold-start network landmine.** `font_google()` defaults to `local = TRUE`, which **downloads the font from Google's servers and compiles it into the theme AT APP STARTUP (server-side)**. Connect Cloud idles the worker after ~6 min and **wipes the cache on recycle**, so this live fetch runs on **every** cold start against an empty cache; when Google Fonts is slow/unreachable the Sass compile blocks/fails during boot -> black screen + "start-up error", and a manual republish only re-primes the cache until the next recycle (the classic "worked fine, spontaneously broke, republish fixes it, recurs" loop — confirmed in the Connect logs: `Downloading google font Rubik to local cache` immediately before `Stopping server...`). **Fix:** name web fonts as PLAIN CSS families via `bslib::font_collection("Rubik", "system-ui", ..., "sans-serif")` (a serif fallback stack — `"Fraunces","Georgia","Cambria","Times New Roman","serif"` — for Fraunces headings) so the theme compiles offline with ZERO network at boot, and deliver the real glyphs client-side via a non-blocking `tags$link(rel="stylesheet", ...fonts.googleapis.com... &display=swap)` in ui.R. Bit the WHOLE suite at once (SMT, Driver Cascade, Plant Diversity, Phenology, Veg Structure) because every app inherited the same `font_google` chrome — audit any new NEONize for it.
+- **Fonts and boot assets must be network-independent.** Runtime theme font helpers that fetch or compile remote fonts are a cold-start failure mode, and a client-side font stylesheet is still an external rendering dependency. Use a system stack, or commit licensed font files and verify their checksums. The Driver's proven default is `system-ui`/platform sans with local serif fallbacks. Audit startup and first render with network blocked; a manual republish that only warms a cache is not a fix.
 - **plotly re-render kills event handlers:** a Shiny+plotly re-render runs `Plotly.purge`+`newPlot` on the SAME div, silently wiping `gd.on()` listeners. **Never** gate binding on a persistent expando — re-attach `plotly_click` on every render (rAF-debounced MutationObserver scan). This was the Size Lab blocker.
 - **plotly pin anchors must be DATA coords**, recomputed via `gd._fullLayout.xaxis.l2p()+_offset` on `plotly_relayout` + a `ResizeObserver` — frozen pixels drift on resize/fullscreen/rotate. Anchor from the data point, not the click event (touch has no `clientX`).
 - **`ctx_anno()`/`add_annotations` accumulates** across reactive re-renders (the binding doesn't clear it) — fold the caption into the `layout(annotations=...)` list instead, so it's replaced wholesale. (Invisible when copies overlap, but real.)
@@ -170,28 +173,34 @@ This is now the standard; shinyapps.io (small-mammal reference) is legacy and sl
 - Required in-repo: a lean **`manifest.json`** (`rsconnect::writeManifest()`; bundle-only, keep
   `neonUtilities` OUT via the computed-package-name trick), the committed `data/` bundles, and a
   `docs/index.html` GitHub Pages showcase whose `APP_URL` points at the live Connect Cloud app.
+- Every generated family must name one canonical release-byte platform/toolchain or prove exact
+  byte identity everywhere. Keep that platform's exact-byte gate; use other platforms for strict
+  schema/key/text/source/decision checks and only explicitly named bounded numeric diagnostics.
+  Never round artifacts to force parity.
+- Treat ordinary CRAN and Posit/RSPM records as semantically equivalent only after each complete
+  manifest independently passes trusted-repository, version/ref/SHA, pinned-snapshot,
+  optional-platform, dependency, deploy-surface, and checksum validation.
 - Branch naming is split across the suite (`main` vs `master`) — each workflow must push to the
   branch its own Connect Cloud app watches. Standardize new repos on `main`.
 
-**Auto-refresh + self-deploy (`.github/workflows/refresh-data.yml`) — copy this shape:**
-- **Schedule (identical across the suite):** `cron: "0 6 * * 0"` (Sunday 06:00 UTC = Saturday 23:00
-  America/Phoenix, off-peak), with a **gate job** that proceeds only on the **first Saturday of the
-  month** (`dow=6 && day<=7`, `TZ=America/Phoenix`) — cron can't say "first Saturday", so fire weekly
-  and gate. `workflow_dispatch` with a `skip_download` input always proceeds (fast redeploy test).
-- **Flow:** gate → checkout → `setup-r` + deps → fetch raw + rebuild `data/sites/*.rds` (+ any
-  overlays) → **commit/push to the watched branch (= the deploy on Connect Cloud)** → optionally open
-  a data-refresh PR. Time-box + `continue-on-error` the heavy/optional steps so they can't block the
-  deploy. `NEON_TOKEN` is an optional secret (anonymous works, slower).
-- **Two deploy triggers seen in the wild — prefer auto-push:** (a) *auto* — push refreshed data
-  straight to the watched branch (mammal/bird/phe/plant). (b) *PR-merge* — open a PR a human merges
-  (veg) — this is NOT self-deploying; convert to auto-push unless a review gate is wanted.
+**Auto-refresh + self-deploy (`.github/workflows/refresh-data.yml`) — copy the trust shape,
+then choose the app's documented cadence:**
+- Product apps normally refresh on the first Saturday; derived/master apps run later (the Driver
+  uses the second Saturday) so upstream publication can settle. Keep `workflow_dispatch` for
+  controlled reruns, but do not pretend every app has the same dependency schedule.
+- Required download, build, contract, manifest, receipt, and publication gates fail closed.
+  `continue-on-error` is reserved for genuinely optional diagnostics that cannot affect published
+  bytes or the release decision.
+- Prefer an automatic push to the branch watched by Connect Cloud only after all required gates pass.
+  A review-PR flow is valid when intentionally chosen, but it is not self-deploying.
 
-**Derived/master apps (e.g. Driver Cascade):** their bundle is built FROM sibling repos' bundles, so
-CI must obtain them — `git clone --depth 1` each sibling repo (use the real slugs, not dir names:
-NEON-Small-Mammal-Tracker-App, NEON-Plant-Diversity, NEON-Breeding-Birds,
-NEON-Plant-Phenology-Explorer, NEON-Vegetation-Structure-Explorer, NEON-Ground-Beetle-Tracker),
-copy their `data/`, run the build script, commit the derived `.rds`. A master app needs a **GitHub
-remote + a Connect Cloud app** before any of this works.
+**Derived/master apps (e.g. Driver Cascade):** never build from moving shallow-clone heads or copy
+unverified sibling directories. Allowlist canonical origins, capture exact commits, verify the
+consumed scopes, materialize immutable Git-object snapshots, and build in a no-write producer job.
+Pass only the allowlisted artifact family plus a SHA-256 receipt to a fresh validator. Give write
+permission only to a restricted publisher that rechecks the receipt, stale-base condition, manifest
+policy, exact file allowlist, and final diff before pushing the watched branch. Include every actual
+input product (including mosquitoes for the current Driver), and keep the source lock durable.
 
 ## 7. Per-app readiness checklist (audit every app against this)
 
@@ -217,7 +226,7 @@ bird thresholds: memory `neonize-qc-flag-pattern`.
 a "Search" nav_panel that queries a SMALL precomputed `data/search_index.rds` (one row per searchable
 unit), loaded ONCE at boot like `site_index` and filtered in memory, so it stays instant with NO live
 fetch. Builder `scripts/build_search_index.R` READS the committed bundles (never fetches) and writes the
-index; add the index to `data/` so `write_manifest.R`'s `data/*.rds` glob bundles it (rerun the manifest:
+index; add the index to the app's explicit deploy-file allowlist so `write_manifest.R` bundles it (rerun the manifest:
 DT becomes a dependency). Two query modes via a radio/segmented control: **(a) Find-a-taxon/link** —
 a `selectizeInput` autocomplete of every unit in the index → a `DT` of every site where it occurs with
 the app's honest per-site MEASURE + years; **(b) a product-specific threshold query** → a `DT` of the
@@ -227,15 +236,38 @@ path everywhere). Show a **result count** ("12 of 46 sites"), an **empty state**
 caption** (the measure is a within-site index / space-for-time screen, not an absolute ranking; for short
 per-site series, keep the pooling caveat and point to the cross-site test). DT gotcha: wrap `DTOutput`
 in a plain `div(style="width:100%")` and do NOT `spin()` it (the bslib fill-container 0-width trap).
-*First built on the Driver Cascade* (DP-derived, no taxa): the searchable units are the per-site cascade
-LINK results (`cascade.rds$suite_links`) — "find every site where a driver→response prior is significant"
-+ "rank sites by how many expected links the data agrees with" — both labelled as underpowered within-site
-screens, deferring to the pooled binomial on Across NEON.
+*First built on the Driver Cascade / Response Atlas* (DP-derived, no taxa): the searchable units are the
+per-site direct-pair rows (`cascade.rds$suite_links`) — “find every site with data for a registered
+driver→response pairing” + “rank sites by descriptive direction agreement among vote-eligible rows.”
+Per-site rows are never called significant; context-only rows remain searchable but excluded from inference,
+and the Across NEON panel carries the exploratory cross-site summary and its sensitivities.
 
 **Sibling links + cover page:** maintain ONE registry of the suite (name · emoji · tagline · DPID ·
 github.io showcase URL · live Connect Cloud URL) and render it both in `docs/index.html` (the
 `.series-grid`) AND in-app (an "Explore the NEON series" block in About/footer). When a new app ships,
 add it to the registry so EVERY sibling links to it (Breeding Birds + Driver Cascade were missing).
+
+## 8. Suite learning and Driver feedback
+
+`docs/NEON-SUITE-LEARNING-LOOP.md` is the central source of truth for the planned
+nine one-at-a-time app passes and the later Driver v2 synthesis. Each pass must:
+
+1. update the app-local build/test handoff with exact commands, expected/actual
+   results, hashes, failures, cleanup, and invalidated evidence;
+2. emit the required Driver knowledge package, including unit, support,
+   opportunity/effort, zero/missing rules, joins, mechanisms, and claim limits;
+3. classify each learning as app-local, suite-platform, scientific-contract,
+   and/or Driver-impacting;
+4. update the central suite register and Driver backlog, including explicit
+   `REJECT` and `NONE` decisions; and
+5. back-propagate any Driver parity failure or missing audit field to the owning
+   app instead of hiding it in Driver adapter logic.
+
+Do not repeatedly rebuild Driver from half-reviewed sibling states. Finish and pin
+the nine app knowledge packages first, run the cross-product gap audit, decide
+whether a complementary product is justified, and then integrate only accepted,
+immutable inputs in one deliberate Driver v2 pass. Durable repository records—not
+chat-only memory—are what allow later sessions to build on earlier work.
 
 ---
 

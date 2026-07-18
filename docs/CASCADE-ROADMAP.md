@@ -1,17 +1,24 @@
-# Driver Cascade — Expansion Roadmap
+# Historical Driver Cascade Expansion Roadmap
 
-A living plan for growing the NEON Driver Cascade from today's terrestrial cascade into the
-bigger multi-system, multi-product picture, and a repeatable framework for adding every future
-NEON data product. Drafted 2026-06-23 (Cass synthesis + Cara/Aquatics/Brooke proposals). This is
-a roadmap, not a spec. Update it as products land and as the science in each app advances.
+> **July 2026 construct correction.** The shipped product is now framed as a cross-product response
+> atlas, not a demonstrated trophic cascade. Its current annual data do not contain a defensible
+> productivity/seed-resource rung or a mediation test. Any future return to “cascade” inference requires
+> coverage-standardized producer resources, valid effort-complete consumer responses, registered direct
+> links, and an explicit sequential/mediation design. Older “where we are” language below is roadmap
+> history, not a description of current inferential capability.
 
-How to read this: Sections 1-2 are where we are. Section 3 is the architecture. Section 4 is the
-build order. Section 5 is the add-a-product recipe. Section 6 is the science feedback loop. Section
-7 is the honesty line. Section 8 is the owner's decisions.
+A preserved design-history document for an earlier proposal to grow the app into a multi-system,
+multi-product cascade. Drafted 2026-06-23 (Cass synthesis + Cara/Aquatics/Brooke proposals). It is
+not a specification, current-status report, or source of current sample counts or results.
+
+How to read this: Sections 1–2 preserve the obsolete June 2026 baseline; their counts, coverage,
+methods, and “wired” status must not be cited as current. Sections 3–8 preserve proposed architecture,
+build order, add-a-product ideas, feedback loops, caveats, and owner decisions. For current behavior,
+use the root README, in-app About panel, downloadable codebook, and versioned bundle lineage.
 
 ---
 
-## 1. Where the cascade is today (the terrestrial axis)
+## 1. Obsolete June 2026 baseline (historical; not current behavior)
 
 `scripts/build_cascade.R` assembles a per-site ANNUAL signal table from the sibling bundles and
 draws one bottom-up TERRESTRIAL chain:
@@ -165,8 +172,10 @@ Priority by what unblocks the most:
    with the within-site-index caveat. An ABSOLUTE concentration (mg/L) pools on the within-site ANOMALY
    (z/rank), never raw magnitude. A slow STATE (veg basal area) is per-site context, not a ladder line.
 3. **What are the priors?** For EACH: stated SIGN + LAG + SEASON + literature citation + the stratum_class
-   where the mechanism is established. No prior may be a best-fitting lag; it is fixed before the data is
-   seen. If the literature carries no defensible directional prior (green-up -> birds is about SYNCHRONY not
+   where the mechanism is established. The legacy terrestrial family was co-developed while its data were
+   inspected and must remain labelled exploratory. For every future addition, register and date the choice
+   before examining genuinely held-out observations; never promote a best-fitting lag to confirmatory status.
+   If the literature carries no defensible directional prior (green-up -> birds is about SYNCHRONY not
    DOY; green-up -> inverts is undefined), POST NO PRIOR and let the signal ride descriptively. Refusing an
    unsupported prior is a feature.
 4. **Poolable, within what stratum?** Three conditions, all required: same thing, same way everywhere, prior

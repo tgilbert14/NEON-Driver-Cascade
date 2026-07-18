@@ -1,5 +1,11 @@
 # HK statistical review — NEON Driver Cascade (2026-06)
 
+> **Historical review; superseded by the July 2026 scientific audit.** This document predates the
+> composition-adjusted green-up index, context-only registry, trend/outcome/spatial sensitivities,
+> strict artifact lineage, and construct correction from “cascade test” to response atlas. Its old
+> counts and claims are not current results; use the versioned bundle, generated codebook, tests,
+> and in-app About panel as the authoritative contract.
+
 The HK statistics suite (Desert Data Labs) audited this app, **Cass signed off** on every
 inference-touching change, and the edits below were applied. **R could not be executed in
 the review environment**, so every change is reviewable-by-reading and needs the rebuild +

@@ -5,6 +5,10 @@
 .Ruserdata
 *.Rproj
 
+# Python validation caches
+__pycache__/
+*.py[cod]
+
 # secrets
 .neon_token
 
@@ -14,3 +18,6 @@ Thumbs.db
 
 # local dev (machine-specific preview launch config)
 .claude/
+
+# transient owner record for the single-writer artifact rebuild
+.cascade-rebuild.lock/

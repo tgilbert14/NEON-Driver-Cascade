@@ -1,0 +1,122 @@
+name: Validate cascade build
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cascade-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
+  RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
+  # Hosted x64 runners can select different OpenBLAS kernels from their physical
+  # CPU. Pin both the kernel family and reduction width for release-byte builds.
+  OPENBLAS_CORETYPE: Haswell
+  OPENBLAS_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+
+jobs:
+  rebuild-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout the immutable cascade revision
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: '4.5.2'
+          use-public-rspm: false
+
+      - name: Install build and runtime dependencies
+        uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          packages: shiny, bslib, bsicons, dplyr, plotly, htmltools, htmlwidgets, shinyjs, shinycssloaders, DT, tidyr, stringr, tibble, metafor, rsconnect, jsonlite, cpp11
+          pak-version: stable
+          dependencies: '"hard"'
+          cache-version: cascade-ppm-2026-07-15-v1
+          install-pandoc: 'false'
+          install-quarto: 'false'
+
+      - name: Verify the deterministic OpenBLAS runtime
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ctypes
+
+          lib = ctypes.CDLL("libopenblas.so.0")
+          lib.openblas_get_corename.restype = ctypes.c_char_p
+          lib.openblas_get_config.restype = ctypes.c_char_p
+          core = lib.openblas_get_corename().decode("ascii")
+          threads = lib.openblas_get_num_threads()
+          config = lib.openblas_get_config().decode("ascii")
+          print(f"OpenBLAS core={core} threads={threads} config={config}")
+          if core.lower() != "haswell":
+              raise SystemExit(f"expected OpenBLAS Haswell core, got {core!r}")
+          if threads != 1:
+              raise SystemExit(f"expected one OpenBLAS thread, got {threads}")
+          PY
+
+      # This must precede every sibling clone. It validates the deploy snapshot and
+      # emits a seven-row, allowlisted origin/commit lock from committed provenance.
+      - name: Validate committed snapshot and extract immutable source lock
+        env:
+          CASCADE_ROOT: ""
+        run: |
+          set -euo pipefail
+          Rscript --vanilla -e 'for (f in c("global.R","ui.R","server.R","R/cascade_helpers.R","R/site_metadata.R")) parse(f); source("global.R"); source("ui.R"); source("server.R")'
+          node --check www/cascade.js
+          PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
+          Rscript --vanilla scripts/workflow_guard.R self-test
+          Rscript --vanilla scripts/test_helpers.R
+          Rscript --vanilla scripts/verify_manifest.R
+          Rscript --vanilla scripts/test_manifest_compare.R
+          Rscript --vanilla scripts/workflow_guard.R source-lock data/cascade.rds "$RUNNER_TEMP/source-lock.tsv"
+          test "$(wc -l < "$RUNNER_TEMP/source-lock.tsv")" -eq 7
+
+      - name: Capture the validated baseline manifest
+        run: cp -- manifest.json "$RUNNER_TEMP/manifest-baseline.json"
+
+      - name: Fetch the seven recorded sibling commits detached
+        run: |
+          set -euo pipefail
+          ws="$RUNNER_TEMP/siblings"
+          mkdir -p "$ws"
+          while IFS=$'\t' read -r product directory origin commit; do
+            test -n "$product" && test -n "$directory"
+            test "${origin#github.com/tgilbert14/}" != "$origin"
+            repo="$ws/$directory"
+            git init -q "$repo"
+            git -C "$repo" remote add origin "https://${origin}.git"
+            git -C "$repo" fetch --quiet --no-tags --depth=1 origin "$commit"
+            test "$(git -C "$repo" rev-parse FETCH_HEAD)" = "$commit"
+            git -C "$repo" -c advice.detachedHead=false checkout --quiet --detach "$commit"
+            test "$(git -C "$repo" rev-parse HEAD)" = "$commit"
+            git -C "$repo" diff --quiet --ignore-space-at-eol -- .
+            git -C "$repo" diff --cached --quiet -- .
+          done < "$RUNNER_TEMP/source-lock.tsv"
+          test "$(find "$ws" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 7
+          echo "CASCADE_ROOT=$ws" >> "$GITHUB_ENV"
+
+      - name: Rebuild every artifact and run contracts
+        run: Rscript --vanilla scripts/rebuild_all.R
+
+      - name: Require committed scientific artifacts to reproduce exactly
+        run: git diff --exit-code -- data/cascade.rds data/search_index.rds data/cascade_meta.rds data/neon-cascade-codebook.csv
+
+      - name: Require the deploy manifest to reproduce semantically
+        run: Rscript --vanilla scripts/compare_manifests.R "$RUNNER_TEMP/manifest-baseline.json" manifest.json
+
+      - name: Reject whitespace errors
+        run: git diff --check
