@@ -96,10 +96,12 @@ green → reset the branch onto the new master → next increment. Branch: `clau
 ## Next up (Rung 8+ — further polish)
 
 Done since Rung 6: the **per-biome soundscape** (Rung 7, #16) and the site's **headline driver in-scene**
-(Rung 6, #15). Remaining nice-to-haves: more forest sites on **real AOP LiDAR** (token available —
-`build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json`; three more tiles for SCBI/HARV/GUAN are
-already downloaded in scratchpad), and optional **day/dusk lighting** (drive the sky shader's `sund`/sun
-colour off a time-of-day slider). No external data is required for either.
+(Rung 6, #15). Four forest sites already render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN (grids
+committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves:
+**more forest sites on real LiDAR** — pick a tall-canopy site (e.g. BART, TEAK, SOAP, GRSM), download its
+CHM tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad `.neon_token`), then
+`build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json`; and optional **day/dusk lighting** (drive
+the sky shader's `sund`/sun colour off a time-of-day slider — no external data needed).
 
 Rung 5 (done): all 46 sites are now walkable — the six curated ones keep hand-authored scenes; the rest
 are generated from `bucket` + `veg_ba_ha` in `walk-sites.json` via `paramsFor()`. Deep-link any with
