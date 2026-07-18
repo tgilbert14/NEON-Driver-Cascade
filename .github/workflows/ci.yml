@@ -113,24 +113,7 @@ jobs:
         run: Rscript --vanilla scripts/rebuild_all.R
 
       - name: Require committed scientific artifacts to reproduce exactly
-        id: artifact_byte_gate
         run: git diff --exit-code -- data/cascade.rds data/search_index.rds data/cascade_meta.rds data/neon-cascade-codebook.csv
-
-      # Temporary fail-only diagnostic. Retain only long enough to compare one
-      # pinned-kernel candidate family, then remove this step and rerun unchanged.
-      - name: Upload failed deterministic Linux candidates for diagnosis
-        if: ${{ failure() && steps.artifact_byte_gate.outcome == 'failure' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: deterministic-linux-candidates-${{ github.run_id }}-${{ github.run_attempt }}
-          retention-days: 1
-          if-no-files-found: error
-          compression-level: 0
-          path: |
-            data/cascade.rds
-            data/search_index.rds
-            data/cascade_meta.rds
-            manifest.json
 
       - name: Require the deploy manifest to reproduce semantically
         run: Rscript --vanilla scripts/compare_manifests.R "$RUNNER_TEMP/manifest-baseline.json" manifest.json

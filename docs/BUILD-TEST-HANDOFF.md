@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-07-17
+Last updated: 2026-07-18
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -9,14 +9,14 @@ can continue safely without relying on chat history.
 ## Current handoff state
 
 **Release-validation state on the local release branch: POLICY APPROVED; LOCAL
-VALIDATION PASS; REMOTE CI FAIL-CLOSED ON CROSS-RUN BYTE DETERMINISM as of
-2026-07-17.** The owner approved Ubuntu 24.04 with R 4.5.2 and the pinned
-2026-07-15 Posit snapshot as the canonical release-byte platform. The exact Ubuntu
-byte gate remains authoritative, but the hosted-runner numeric runtime must now
-also pin and verify its OpenBLAS kernel and thread count. Windows remains a strict
-schema/class/attribute/key/text/source/support/decision oracle with only explicitly
-named bounded full-precision numeric diagnostics. No scientific value is rounded
-and no decision, support, checksum, or provenance gate is weakened.
+VALIDATION PASS; PINNED-RUNTIME RUN 1 PASS; FINAL CLEAN-HEAD DOUBLE-RUN PENDING
+as of 2026-07-18.** The owner approved Ubuntu 24.04 with R 4.5.2, the pinned
+2026-07-15 Posit snapshot, OpenBLAS `Haswell`, and one BLAS/OpenMP thread as the
+canonical release-byte platform. The exact Ubuntu byte gate remains authoritative.
+Windows remains a strict schema/class/attribute/key/text/source/support/decision
+oracle with only explicitly named bounded full-precision numeric diagnostics. No
+scientific value is rounded and no decision, support, checksum, or provenance gate
+is weakened.
 
 The promoted Ubuntu candidate family was copied locally as one unit, with
 `manifest.json` copied last. Source and destination SHA-256 values match the table
@@ -33,11 +33,14 @@ three RDS files differed while the CSV codebook matched; semantic-manifest and
 whitespace gates correctly skipped. The earlier producer run and this run used the
 same runner image, R, OpenBLAS/LAPACK versions, package graph, sources, and writer
 code. The remaining unpinned dimension was OpenBLAS host-CPU kernel/thread choice.
-A fixed `Haswell` core and one thread are now a focused experiment, not yet passing
-evidence. PR #4 must not merge until the temporary candidate diagnostic is removed
-and two independent pinned-runtime builds pass exact bytes plus semantic manifest.
-Repository metadata, Pages deployment, and final public cover/share-card QA remain
-pending.
+GitHub Actions run `29644372306` on head `8ca35a2` then loaded
+`OpenBLAS core=Haswell threads=1` under DYNAMIC_ARCH, reproduced all four scientific
+artifacts exactly, and passed the semantic-manifest and whitespace gates after the
+complete build. The fail-only diagnostic correctly skipped and the run retained zero
+artifacts; that temporary upload is now removed. PR #4 must not merge until the
+final clean head passes twice on independent runners with the same loaded-runtime
+receipt. Repository metadata, Pages deployment, and final public cover/share-card
+QA remain pending.
 
 The cross-platform diagnosis remains part of the audit record: one root family
 diff from RDS native-encoding headers plus last-bit OLS/QR, correlation, and
@@ -47,7 +50,7 @@ delta `1.8474111129762605e-13` under its sole `1e-12` diagnostic; the primary
 estimator and ten strict fields remain at `1e-15`, and all finite patterns, keys,
 support, signs, votes, tiers, sensitivities, and decisions remain exact.
 
-### Promoted Ubuntu candidate family (scientifically validated; cross-run bytes unproved)
+### Promoted Ubuntu release family (pinned-runtime pass 1; final-head repeats pending)
 
 | Artifact | Bytes | MD5 | SHA-256 |
 |---|---:|---|---|
@@ -439,11 +442,11 @@ code change invalidates earlier build, determinism, browser, and manifest eviden
 |---:|---|---|---|---|
 | 1 | Worktree ownership | PASS | 2026-07-17 | Current documentation changes are owned; no rebuild process or conflicting editor remains; unrelated history is preserved. |
 | 2 | Static syntax | PASS | 2026-07-17 | 22 R files parsed as UTF-8; `node --check`; both Python files compiled in memory; Python fixtures passed. |
-| 3 | Workflow policy | PASS | 2026-07-17 | Both YAML files safe-loaded; all 14 current `uses:` values are full lowercase 40-hex pins; receipt self-test passed. The fail-only upload is temporary and removal returns the release workflow set to 13. |
+| 3 | Workflow policy | PASS | 2026-07-18 | Both YAML files safe-loaded; all 13 final `uses:` values are full lowercase 40-hex pins; receipt self-test passed; the temporary diagnostic upload is removed. |
 | 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; canonical LF/no-BOM text; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. |
-| 5 | Authoritative build | LOCAL PASS / CI FAIL | 2026-07-17 | Run `29632690022` passed all nine build stages and contracts, then failed the unchanged exact-byte gate for all three RDS files; codebook matched. |
+| 5 | Authoritative build | PINNED CI PASS / FINAL HEAD PENDING | 2026-07-18 | Run `29644372306` passed all nine stages, contracts, exact scientific bytes, semantic manifest, and whitespace with loaded Haswell/one-thread verification. |
 | 6 | Independent live-root checks | PASS | 2026-07-17 | Promoted family passed the complete seven-source oracle, manifest verification/comparison, Python publisher fixtures, boot integrity, app smoke, and workflow receipt fixtures. |
-| 7 | Determinism | FAIL / PINNED-RUNTIME TEST PENDING | 2026-07-17 | Nominally identical hosted Ubuntu runs produced different RDS bytes. CI and refresh now pin/verify `Haswell` plus one OpenBLAS thread; two independent exact-byte passes are required. |
+| 7 | Determinism | PINNED PASS 1 / FINAL DOUBLE-RUN PENDING | 2026-07-18 | Haswell/one-thread run `29644372306` reproduced the promoted family exactly. The diagnostic-free final head must pass twice on independent runners before merge. |
 | 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
 | 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
 | 10 | Writer capability guard | PASS | 2026-07-17 | All four direct writers rejected missing generation capability; SHA-256 for all five live release files remained unchanged. |
@@ -570,10 +573,9 @@ replace browser QA, and screenshots do not replace interaction/console checks.
 
 ## Residual risks currently carried
 
-- PR #4 is red at run `29632690022`: the full scientific build passed, but separate
-  hosted Ubuntu runners did not reproduce the same three RDS byte streams. The
-  fixed-core/single-thread experiment, candidate comparison if needed, diagnostic
-  removal, and two independent green exact-byte runs remain required before merge.
+- Pinned-runtime run `29644372306` is green and reproduced exact bytes, but it still
+  contained the skipped diagnostic step. That step is now removed; the final clean
+  head must pass twice on independent runners before PR #4 may merge.
 - The retained isolated diagnostic bundle under `C:\tmp` is non-authoritative after
   promotion; keep it only until fresh exact-byte CI is green, then remove it without
   touching the repository family.
@@ -1131,3 +1133,36 @@ Rules:
   compare the retained candidate family, promote only a fully validated pinned-runtime
   family, remove the upload, and require two independent exact-byte plus semantic-
   manifest passes before merge, metadata, Pages, and public QA.
+
+### 2026-07-18 05:36 MST - first pinned-runtime exact pass and diagnostic removal / root
+
+- **Changed:** removed the temporary fail-only candidate upload and its step ID after
+  the first pinned-runtime run passed, returning CI to 13 immutable action uses. Kept
+  the loaded OpenBLAS core/thread assertions in CI and both refresh R jobs. No science,
+  tolerance, generated artifact, manifest policy, or release hash changed.
+- **Learned:** the fixed numeric runtime reproduced the already-promoted family
+  exactly, while the immediately preceding unpinned runner did not. This converts
+  host-specific OpenBLAS dispatch/threading from the leading hypothesis into the
+  supported missing platform dimension. The runtime receipt, not environment text
+  alone, is the reusable fail-closed gate.
+- **Test process:** GitHub run `29644372306`, job `88080017215`, on exact head
+  `8ca35a22d28544fbd5686efd7588695b80465e88` reported
+  `OpenBLAS core=Haswell threads=1 config=OpenBLAS 0.3.26 NO_LAPACKE DYNAMIC_ARCH
+  NO_AFFINITY Haswell MAX_THREADS=64`. It passed setup, dependencies, source lock,
+  seven detached fetches, the complete nine-stage rebuild, all raw-source/scientific
+  contracts, exact committed artifact bytes, semantic manifest, and whitespace.
+  The diagnostic step skipped; GitHub reported zero run artifacts.
+- **Expected versus actual:** expected either an exact match or a retained candidate;
+  actual was an exact match, so no candidate transfer or promotion was needed.
+- **Evidence invalidated:** the prior statement that Haswell/one-thread had not yet
+  passed. Historical evidence about the unpinned failure remains factual.
+- **Artifacts:** unchanged at cascade `47b98e48...`, search `a11a072d...`, meta
+  `00120c52...`, codebook `a79cc754...`, and manifest `92b46277...`.
+- **Failure/cleanup:** no run artifact exists to expire or delete. The diagnostic
+  workflow block is removed locally. No rebuild lock, stage, backup, pending file,
+  or generated artifact changed.
+- **Residual risk:** one successful pinned run is not the final unchanged release
+  head and is not enough to prove repeatability across fresh runners.
+- **Next action:** commit/push the diagnostic-free workflow and updated durable
+  evidence, require that final head to pass all gates, rerun that same final head on
+  a second independent runner, then merge only if both are green.
