@@ -4671,9 +4671,8 @@
     if(player)player.resetIdle();
     drawDrivers(s);
     highlightMapDot(id);
-    var si=document.getElementById("stepIn");
-    if(WALKABLE[id]){si.style.display="inline-flex";si.href=WALK_URL+"?site="+id;}
-    else{si.style.display="none";}
+    var si=document.getElementById("stepIn");   // every site is walkable now (procedural from its biome + standing wood)
+    si.style.display="inline-flex"; si.href=WALK_URL+"?site="+id;
   }
 
   /* ---- year wheel (with year-in-motion) ---- */
