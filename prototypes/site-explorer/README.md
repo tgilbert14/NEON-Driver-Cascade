@@ -52,11 +52,12 @@ with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay che
 are a **procedural impression** from measured standing wood. Because it inlines a 3D engine, it is a
 heavier page and is kept **separate** from the lightweight main explorer, linked rather than merged.
 
-**Wind River is rendered from a canopy *height-field*** (`build_lidar.py` → `lidar-wref.json`), the exact
-pipeline a real NEON AOP Canopy Height Model (DP3.30015.001) would use. Here that grid is a **labelled
-SYNTHETIC stand-in** — NEON's `/api/v0/data/` route is 403 without an API token, which this sandbox lacks.
-To make it a real scan: `python3 build_lidar.py WREF <NEON_..._CHM.tif>`, then re-inline `lidar-wref.json`
-into `walk.html`'s `<script id="lidarWREF">` block. No scene-code changes are needed.
+**Wind River's canopy is a real NEON AOP LiDAR scan** — `build_lidar.py` reads an actual Canopy Height
+Model GeoTIFF (DP3.30015.001, tile `NEON_D16_WREF_DP3_580000_5075000`, 2023: a central 300 m window of
+1 m LiDAR downsampled to 3 m cells, real heights to ~68 m) into `lidar-wref.json`, inlined into
+`walk.html`. Only the derived grid is committed, not the raw multi-MB tile. To put another site on real
+LiDAR: `python3 build_lidar.py <SITE> <CHM.tif>`, then re-inline into that site's `<script id="lidar…">`
+block — no scene-code changes. (The `/api/v0/data/` route needs a NEON API token via `X-API-Token`.)
 
 ## Travel map (Rung 2.5)
 
