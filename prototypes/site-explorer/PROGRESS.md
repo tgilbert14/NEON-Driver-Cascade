@@ -30,7 +30,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 5 | **Polish** — gradient sky + sun, canopy sway + head-bob, muted desert, **all 46 walkable** | DONE | #12 |
 | 4-real | **Real AOP LiDAR** — WREF, SCBI, HARV & GUAN canopies from actual NEON CHM scans | DONE | #13 |
 | 6 | **Science in-scene** — each site's honest headline driver shown in the 3D overlay | DONE | #15 |
-| 7+ | Optional — ambient sound; more sites on real LiDAR (token available) | PLANNED | — |
+| 7 | **Soundscape** — per-biome procedural Web Audio ambience (wind/insects/birds), opt-in, retunes per site | DONE | #16 |
+| 8+ | Optional — more sites on real LiDAR (token available); day/dusk lighting | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -68,6 +69,12 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   walkable. To add another: `build_lidar.py <SITE> <CHM.tif>` → inline as `<script id="lidar<SITE>">`.
 - No R in the sandbox → `export_data.py` reads the RDS with the pure-Python `rdata` package
   (`pip install rdata`). A production build would use an R writer beside `scripts/build_search_index.R`.
+- The **soundscape is synthesized, not recorded** (Rung 7): a procedural Web Audio graph — filtered pink-noise
+  wind with slow LFO gusts, an AM insect shimmer, and sparse bird chirps — so nothing is streamed or fetched
+  (CSP-safe, no audio files). It's **off by default** and starts only on the user's tap (browsers require a
+  gesture to start audio). Each biome retunes the graph (`BIOME_SND`): forest = birds + soft wind, dryland =
+  bright wind + faint insects + no birds, tundra = low bare wind, etc. It's an **impression of the biome's
+  ambience, not a field recording** of any site.
 
 ## How to regenerate / verify
 
@@ -86,13 +93,15 @@ errors, correct rendering, and no 390 px mobile overflow before merge.
 Stage-by-stage: build an increment → verify headlessly → commit/push → open draft PR → merge when CI is
 green → reset the branch onto the new master → next increment. Branch: `claude/neon-suite-expansion-c0wl9k`.
 
-## Next up (Rung 6+ — further polish)
+## Next up (Rung 8+ — further polish)
 
-Remaining nice-to-haves (no external data needed): a per-biome ambient soundscape; a few real per-site
-facts surfaced in-scene (site name/biome already shown — could add the site's headline driver from
-`site-data.json`); optional day/dusk lighting. And, when a NEON token is available, unblock Rung 4 (see
-the blocker box above) to turn WREF's canopy from the synthetic stand-in into a real AOP-LiDAR scan
-(`build_lidar.py WREF <CHM.tif>` → re-inline `lidar-wref.json`).
+Done since Rung 6: the **per-biome soundscape** (Rung 7, #16) and the site's **headline driver in-scene**
+(Rung 6, #15). Four forest sites already render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN (grids
+committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves:
+**more forest sites on real LiDAR** — pick a tall-canopy site (e.g. BART, TEAK, SOAP, GRSM), download its
+CHM tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad `.neon_token`), then
+`build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json`; and optional **day/dusk lighting** (drive
+the sky shader's `sund`/sun colour off a time-of-day slider — no external data needed).
 
 Rung 5 (done): all 46 sites are now walkable — the six curated ones keep hand-authored scenes; the rest
 are generated from `bucket` + `veg_ba_ha` in `walk-sites.json` via `paramsFor()`. Deep-link any with
