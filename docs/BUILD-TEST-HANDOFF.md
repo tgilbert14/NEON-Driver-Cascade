@@ -1325,3 +1325,209 @@ Rules:
 - **Next action:** owner review of the ranked backlog; begin suite pass 1 (Small
   Mammal Tracker). Re-run the 6-question intake with measured match rates when any
   Tier-A candidate is actually scheduled.
+
+### 2026-07-18 07:24 MST - suite deep audit and executable revamp program / root
+
+- **Changed/classification:** added `docs/NEON-SUITE-REVAMP-PLAN.md`, updated the
+  suite register with the observed companion baseline and a Phase 0 release-health
+  gate, reordered Phenology before Plant Diversity for Driver leverage, and
+  modernized the playbook's authority, evidence loop, release permissions, registry,
+  and non-memory wording. Classification is `suite-platform`; ecological Driver
+  implication is explicitly `NONE`. No Driver app code, scientific definition,
+  source lock, workflow, generated artifact, or manifest changed.
+- **Starting state:** clean Driver `master` at
+  `b62b52998fb2`; all nine companion default branches cloned at their published
+  heads. Ground Beetle showed only a known checkout line-ending normalization in
+  `data-sample/beetle_demo.csv` (`git diff --ignore-space-at-eol --quiet` passed);
+  no companion content was edited.
+- **Repository/static audit:** all nine companions have `manifest.json`, a Pages
+  cover, and a bundled search index, but none has `AGENTS.md` or
+  `docs/BUILD-TEST-HANDOFF.md`. Birds, Plant Diversity, Phenology, and Vegetation
+  Structure each have one helper test; Mammals, Beetles, Mosquitoes, Water
+  Chemistry, and Inverts have none. Current tracked runtime files disagree with
+  manifest MD5 entries in Birds 8, Beetles 8, Mosquitoes 7, Inverts 9, Plant
+  Diversity 13, Phenology 8, Mammals 10, Vegetation Structure 8, and Water
+  Chemistry 3. Driver remained coherent at 12/12 files.
+- **Public browser result:** all ten GitHub Pages covers rendered their cohesive
+  constellation/mascot design without persistent desktop horizontal overflow.
+  Direct app startup succeeded for Driver, Plant Diversity, Phenology, Vegetation
+  Structure, Mosquitoes, Birds, Water Chemistry, and Inverts. Small Mammal Tracker
+  and Ground Beetle Tracker each rendered the Posit `Startup Error` page after
+  reload. Therefore the earlier 12/12 HTTP result is still factual for URLs but is
+  invalid as evidence that every hosted app is semantically healthy.
+- **Science/data review:** the new companion process is fundamentally sound: one
+  app at a time, pinned knowledge packages, gap audit, optional complementary app,
+  then Driver v2. The audit added the missing emergency release gate. It also found
+  a source/Driver parity failure: Mammal's current row-level effort shortcut does
+  not implement Driver's reviewed physical trap-event resolver. Beetle effort
+  remains catch-event-conditioned because zero-carabid opportunities are absent.
+  Existing review documents are not current-status records; Water Chemistry code
+  already implements several findings its review still describes as open.
+- **Cover/social review:** preserve the current visual identity rather than replace
+  it. Generate covers/in-app relationship panels from one versioned suite registry;
+  use product-specific habitat imagery only as an attributed/provenance-stamped
+  enhancement. Mosquitoes and Inverts reference an uncommitted `og-image.png`,
+  Water Chemistry lacks a Twitter image declaration, and Beetle's site-health copy
+  exceeds the product's supported claim.
+- **Test process/environment:** read the complete Driver handoff, suite loop,
+  playbook, roadmap, all companion inventories, current review/takeaway evidence,
+  workflows, manifest maps, and relevant helper/transform code; inspected public
+  covers and live startup state in the in-app browser; compared every tracked
+  companion manifest file checksum to current bytes; ran `git diff --check` after
+  the documentation edits. No local R runtime is installed (`Rscript` unavailable),
+  so no R unit, boot, bundle, or manifest-generation test is claimed.
+- **Expected versus actual:** expected a mostly finished visual suite with
+  app-specific scientific cleanup; actual visual cohesion is strong, but release
+  trust is materially behind Driver and two public apps are down. The one-app
+  learning loop remains the right architecture after inserting Phase 0 and moving
+  the strongest ecological hinge earlier.
+- **Evidence invalidated:** "public link returned HTTP 200" is no longer sufficient
+  public-app verification; a scheduled workflow that exits successfully after its
+  date gate is not fresh refresh evidence; expert-review prose alone does not state
+  current fix status; the Small Mammal app cannot currently be treated as the
+  unquestioned suite quality oracle.
+- **Artifacts/non-impact:** canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Failure/cleanup:** `jq` is not installed; the checksum audit was rerun read-only
+  with the bundled Node runtime. No rebuild, deploy, public write, workflow dispatch,
+  manifest rewrite, lock, stage, backup, pending file, or generated data occurred.
+- **Residual risk:** the companion audit is static/browser-level until each app runs
+  in a pinned R toolchain. The two startup errors have no public diagnostic log, and
+  a stale manifest is a release blocker but not proven to be the sole outage cause.
+  Companion workflows remain capable of unsafe publication until Phase 0 lands.
+- **Next action:** begin Small Mammal pass 1. Install the app-local governance and
+  handoff, capture the last-known-good release identity, add content-aware health and
+  manifest/boot gates, port/test the reviewed effort resolver, rebuild only in the
+  pinned runtime, restore the public app, and then close its knowledge package before
+  starting Phenology.
+
+### 2026-07-18 07:50 MST - Small Mammal pass-1 implementation checkpoint / root
+
+- **Changed/classification:** updated only the Driver suite evidence register and
+  implication backlog with the detailed Small Mammal working-tree checkpoint.
+  Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting`; the current Driver artifact implication is **NONE / HOLD
+  CURRENT BYTES**. No Driver estimator, app code, source lock, workflow, generated
+  artifact, or manifest changed.
+- **Sibling starting state:** Small Mammal `main` began clean at
+  `39dca56c69ef11188333effefd4b2d5bc28948ee` and remains based on that commit with
+  uncommitted current-session changes. Its public Connect URL still showed Posit
+  `Startup Error`; the committed manifest retained ten known runtime mismatches.
+- **Sibling implementation evidence:** installed app-local governance, handoff,
+  and Driver knowledge-package scaffolds; ported the Driver-reviewed exact physical
+  trap-event resolver; added adversarial pure-helper fixtures; corrected
+  outcome-conditioned species effort; made export/codebook grain and fields
+  explicit; added exact 46-site/load/schema/index/checksum/package-provenance gates;
+  froze CI/refresh R 4.5.2, jammy snapshot `2026-07-15`, Haswell/one thread, and
+  immutable official action commits; changed refresh to stage/validate an immutable
+  candidate and publish only a review branch/PR; added an app-specific ready marker
+  and semantic main-push health workflow.
+- **Static test process/result (PASS):** system Ruby 2.6 `YAML.safe_load` parsed all
+  three Small Mammal workflows; `bash -n scripts/post_deploy_smoke.sh` passed;
+  `git diff --check` passed. The initial unsupported `YAML.load_file(..., aliases:)`
+  invocation failed and was replaced by the compatible parser call. No R test is
+  included in this PASS.
+- **Runtime/publication result (BLOCKED):** the local environment has no R,
+  Docker, or Podman. GitHub CLI 2.96.0 is installed, but `gh auth status` reported
+  the saved active `tgilbert14` token invalid. Per the publication contract, no
+  branch, commit, push, draft PR, Actions run, manifest candidate, merge, refresh,
+  or deployment was created. Required recovery is `gh auth login -h github.com`.
+- **Expected versus actual:** expected a safe non-watched draft PR to supply the
+  missing pinned R evidence; actual static work completed but authentication
+  stopped publication before any external write. The public outage therefore
+  remains unresolved and the app pass remains open.
+- **Artifacts/non-impact:** no Driver generation ran. Canonical SHA-256 values remain
+  cascade `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Evidence invalidated:** the suite register's Small Mammal `PASS PENDING` and
+  `no executable tests` descriptions are superseded by `PASS IN PROGRESS` and
+  authored-but-unexecuted fixtures. The baseline outage, committed-manifest drift,
+  and lack of green runtime evidence remain factual.
+- **Failure/cleanup/ownership:** auth was checked before branch creation or staging;
+  nothing needed rollback. Driver documentation changes and Small Mammal code/docs
+  changes are owned by this `root` session, uncommitted, and unpublished. No lock,
+  stage, backup, pending artifact, production data, or public state changed.
+- **Residual risk:** Small Mammal R syntax, fixtures, 46-site raw parity, manifest
+  package availability, offline boot, UI funnels/accessibility/mobile behavior,
+  Connect build, and semantic health are all unverified. Its current outage cause
+  remains unisolated. Suite visual/retheme work intentionally waits behind release
+  recovery so design changes do not obscure the diagnostic boundary.
+- **Next action:** reauthenticate GitHub CLI, publish only the Small Mammal tranche
+  as a draft PR, inspect the pinned CI/manifest evidence, fix failures without
+  merging, restore and semantically verify production, complete the UI/cover pass,
+  then close its knowledge package before beginning Phenology.
+
+### 2026-07-18 15:36 MST - Small Mammal pass-1 production receipt vendored / root
+
+- **Changed/classification:** superseded the earlier Small Mammal working-tree
+  checkpoint with its complete app-local production receipt in the suite register,
+  implication backlog, revamp plan, and canonical playbook. Classification is
+  `suite-platform`, `scientific-contract`, and `Driver-impacting`; Driver implication
+  remains **NONE / HOLD CURRENT BYTES** and learning disposition is **CONTEXT**. This
+  documentation tranche does not run generation or change Driver app/data artifacts.
+- **Sibling release identity:** Small Mammal documentation closed on `main`
+  `957e56cc3af15d62387bfefbd37ee31623ae682b`; the exact Connect runtime remains
+  `1615ab4e74fd16a2698de8431acb862d6cc4cebf` because the later merge changed only
+  documentation. PR #77 head run `29663525911` passed, then final `main` validation
+  `29663599017`, semantic production run `29663599007`, and Pages run `29663598641`
+  all completed successfully.
+- **Pinned runtime evidence:** exact-head run `29663236510` (job `88129323716`),
+  final runtime-main validation `29663335706` (job `88129588478`), semantic run
+  `29663335708` (job `88129588525`), and Pages run `29663335341` passed. The
+  canonical deployable manifest is R 4.5.2, 91 packages, 117 files, SHA-256
+  `f6c4a5ff74053b95e22fac7394f1930d2fe2329663737031b1c32f7a1f70bc54`.
+- **Science/data result:** the source app now implements the exact reviewed physical
+  trap-event contract: six status tokens, canonical A-J x 1-10 coordinates,
+  multi-capture collapse, two exact double-trap markers, explicit placeholder
+  uncertainty, and fail-closed ambiguity. Species CPUE uses all reviewed opportunity;
+  the dormant `id_uncertain` path is fixed; Compare carries p-hat/mean N-hat and
+  suppresses unsupported raw winners; tidy event/capture and monthly
+  MNKA/CPUE/N-hat/p-hat exports plus codebook shipped. All 11 scientific fixtures,
+  46/46 site bundles, 46/604/604 indexes, and 145-species contract passed. Coverage
+  remains material: 49% of 8,200 bouts are single-night/index-only.
+- **Product/public result:** Connect Last deployed reported `1615ab4` at 15:23 MST.
+  A fresh public session served `ddl-app-ready=small-mammal-tracker-v1`, restored the
+  JORN flow (6,093 captures, 2,252 individuals, 21 species, 31,584 reviewed
+  trap-nights), exposed no Startup Error and no first-party console warning/error.
+  Pages served the reviewed 1200x630 habitat social card, launch/repository controls,
+  all nine companion links, and exact 46-site/145-species framing.
+- **Reusable learning promoted:** validate installed-package provenance separately
+  from Connect's absolute repository/network contract; remove only reviewed
+  non-semantic build clocks; treat merge, Connect Last deployed, and public semantic
+  health as separate identities; require one-argument Shiny custom-message handlers;
+  keep refresh publication behind immutable reviewed candidates; carry effort,
+  opportunity, detection, support, units, and NA conventions into UI and exports.
+  Small-mammal status weights, trap-coordinate rules, MNKA windows, and closed-capture
+  gates remain product-specific and must not be copied as generic suite science.
+- **Driver decision/non-impact:** physical-event contract parity is closed, so no
+  parity patch is needed in the current Driver. Exact current-source `siteID` x year
+  join/support remains **UNKNOWN / HELD**; monsoon precipitation -> next-year CPUE is
+  context only, not an inferential vote. No source pin, estimator, source lock,
+  generated file, manifest, or Driver artifact byte changed. The separate idea branch
+  remained untouched.
+- **Artifacts/non-impact:** canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Evidence invalidated:** the earlier auth block, unexecuted fixtures, ten-file
+  drift, outage, candidate-manifest, republish-pending, and first-party handler-error
+  states are superseded. Historical failures remain factual diagnostics.
+- **Failure/residual risk:** the production dependency failure on `wk 0.9.5` proved
+  that a locally truthful `Repository: CRAN` value was not a usable Connect URL; the
+  corrected top-level absolute CRAN lane passed real production resolution. Five
+  upstream bootstrap-datepicker language deprecations remain non-blocking. Mobile
+  visual QA is unclaimed, although static responsive, focus, reduced-motion, and
+  touch-target gates passed.
+- **Next action:** publish this documentation-only Driver tranche through review,
+  require final branch and `master` checks to pass with the artifact hashes unchanged,
+  and only then begin Plant Phenology pass 2. Do not rebuild Driver v2 before all nine
+  pinned packages and the complementary-product decision are complete.

@@ -1,18 +1,33 @@
 # The NEONize Playbook
 
-**How to build (or remake) a NEON data-product app to the Small Mammal Tracker quality bar.**
+**How to build or remake a trustworthy NEON data-product app.**
 
-"NEONize a product" = take any NEON data product and ship an R/Shiny app that is the
-small-mammal flagship's equal in **flow, UI, statistics, creativity, QC, and honesty** —
-but with insights *native to that product*, not a reskin. The flagship is the
-**NEON Small Mammal Tracker** (`App-NEON-Small-Mammal-Tracker/`, DP1.10072.001); the
-recruiting-analytics ancestor is the **Big 12 Girth Index**
-(`arizona-basketball-talent/`, see `docs/girth-index-patterns.md`).
+"NEONize a product" = take a NEON data product and ship an app that clears the
+suite's bar for **flow, UI, statistics, creativity, QC, release trust, and honesty**
+while keeping insights native to that product. Small Mammals supplied many early
+interaction patterns, but it is a reference implementation, not permanent proof of
+correctness and not a template to copy without revalidation.
+
+## Authority and current program state
+
+This file is the reusable pattern catalog. It is not the current release register.
+
+- `docs/NEON-SUITE-LEARNING-LOOP.md` owns pass order, evidence status, and Driver
+  decisions.
+- `docs/NEON-SUITE-REVAMP-PLAN.md` owns the 2026 suite target, Phase 0 recovery,
+  per-app briefs, cover system, and completion gates.
+- Each repository's `AGENTS.md` and complete `docs/BUILD-TEST-HANDOFF.md` own the
+  commands and evidence for that app.
+
+Historical examples below remain useful, but a named app, workflow, runtime, or
+metric is not current evidence unless its app-local handoff and release receipt say
+so. Finding documents must distinguish `OPEN`, `FIXED`, and `VERIFIED`; do not infer
+status from prose written before later commits.
 
 This doc is the contract. It has three layers:
 1. **The quality bar** — the dimensions every NEONized app must hit.
 2. **The reusable full stack** — what ports wholesale (design system, data bundling, shared helpers, the pin-card system, report PDF).
-3. **The NEONize procedure** — the agent-driven research → design → build → adversarially-verify → ship loop, run fresh per product.
+3. **The NEONize procedure** — the evidence-producing research → design → build → adversarially-verify → ship loop, run fresh per product.
 
 ---
 
@@ -22,8 +37,8 @@ Every NEONized app is judged on the same axes the flagship nails:
 
 | Dimension | What "flagship quality" means |
 |---|---|
-| **Flow** | A splash/site-picker → instant demo-on-startup → an Overview that leads with the answer → progressive tabs. One global "selected entity" reactive every tab reads. No dead ends; every empty state offers the next action. |
-| **UI** | DDL light "Girth Index" house style: warm paper bg, white cards w/ 3px colored top borders, a system/local font stack (Rubik only when committed locally), and the navy/cardinal/gold triad. bslib `page_sidebar`. `info_pop()` ⓘ on every card. Mobile-first. Dark-mode via one toggle that every chart honors. |
+| **Flow** | A site/entity picker → a fast primary story → progressively disclosed analysis. One global selected-entity state every view reads. No dead ends; every empty state offers the next action. Deep links and restored sessions must not skip honesty context. |
+| **UI** | Shared suite structure with product-specific visual tokens: a local/system font stack, accessible cards, responsive task-oriented navigation, consistent methods/QC/download actions, and app-native organism/habitat color. Light and dark modes are optional product choices but every chart must honor the active mode. |
 | **Statistics** | Defensible, cited methods (Hill/Chao1/rarefaction/Schnabel/etc.). Every headline number has an `insight_banner()` "answer up front". n-gates before reporting. De-pseudoreplication. The right effort/scale fixed before any comparison. |
 | **Creativity** | Playful framing with real science underneath — emoji, rarity tiers, celebratory confetti on standouts, a shareable "trading card", a signature interactive (the Size Lab pin-card scatter). Show-off, not gimmick. |
 | **QC** | The app is *useful to the people who collect the data*. Click-to-inspect flag→modal/record patterns. Honest outlier flags that are KEPT not deleted, phrased "verify, not wrong". A downloadable per-entity QC record. |
@@ -39,8 +54,11 @@ A NEONized app is a **lean independent sibling directory** (copy-with-attributio
 mammal/beetle apps — NOT a shared package; independent deploys must stay self-contained). Copy
 these from the flagship and adapt the data layer:
 
-### 2a. Design system & chrome — copy verbatim
-- `global.R`: the `DDL` token list (navy `#0C234B`, navy2 `#16386e`, cardinal `#AB0520`, gold `#FFD200`, gold2 `#c9a300`, sky, green, ink, muted, bg, paper, line); `app_theme` (bslib bs5 + a system/local font stack); `asset_url()` (mtime cache-bust); `spin()`, `info_pop()`, `insight_banner(icon, ..., tone)`, `glow_badge()`.
+### 2a. Design system & chrome — vendor a pinned version, then adapt
+- `global.R`: semantic tokens (`accent`, `signal`, `warning`, `ink`, `muted`,
+  `surface`, `line`) mapped to an app-specific palette; `app_theme` (bslib bs5 + a
+  system/local font stack); `asset_url()` (mtime cache-bust); and the validated
+  card/banner/loading helpers appropriate to the product.
 - `ui.R`: `page_sidebar`, a local-only `<head>` library block (committed/pinned sweetalert2, canvas-confetti, driver.js, **html-to-image@1.11.11**, styles.css, app.js), the splash/national-site-picker (STATIC `leafletOutput`, never inside a `renderUI` — the Connect Cloud re-bind race), the loading overlay, the DDL business footer.
 - `server.R`: `plotly_theme(p)` (theme-aware, the navy+gold hoverlabel, `displayModeBar=FALSE`), `note_plot()` empty-state, `ctx_anno()` (BUT see gotcha #5), the `is_dark()` reactive.
 - `www/styles.css` `:root` tokens + dark-theme block; `www/app.js` (count-up engine, confetti, loading overlay, the custom-message handlers).
@@ -54,7 +72,7 @@ these from the flagship and adapt the data layer:
 From `R/helpers.R`: `species_level_only()` (drop genus-only/morphospecies before any richness), `make_species_pal()` (one color per species across all charts), Hill numbers / `species_accum()` (rarefaction + Chao1 w/ CI), `mode_chr()`, `safe_*()` NA-safe reducers, the n-gate idioms. The diversity family ports to almost any taxon product.
 
 ### 2d. The interactive-downloadable-plot funnel — the signature every app gets
-The Size Lab (`www/pincards.js` + the plotly `customdata` pattern; see `size-lab-feature` memory) is
+The Size Lab (`www/pincards.js` + the plotly `customdata` pattern in Small Mammals) is
 the template for **the one interactive every NEONize app should ship**: a "position entities in a
 2-D space → pick one → inspect → take it with you" funnel. The full funnel, in order:
 
@@ -83,37 +101,62 @@ The **entire data model and its "unit of analysis."** For small mammals the unit
 age/lifespan, tag-identity QC, home-range/trap-grid, body-measurement outliers are all
 mark-recapture-specific and port to **nothing** without individuals. Before building, answer:
 **what is this product's unit, and what is its capture career analog?** (For count/cover products
-there are no individuals — the unit is the plot, the species, or the trap×bout. See the beetle
-app note in `revamp-design` memory and the plant-app research.)
+there are no individuals — the unit is the plot, the species, or the trap x bout.
+The app's current `DATA-TAKEAWAYS`, expert review, and knowledge package are the
+reference; chat or named memories are not.)
 
 ---
 
 ## 3. The NEONize procedure (run fresh per product)
 
-A repeatable loop, each phase an agent fan-out (Workflow), staying in the loop between phases.
-This is exactly how the Size Lab and the plant-diversity sibling were built.
+A repeatable, evidence-producing loop. Parallel review is optional; durable
+artifacts and independent verification are required. Follow the one-app cycle and
+decision vocabulary in `docs/NEON-SUITE-LEARNING-LOOP.md`.
 
-**Phase 0 — Understand the flagship + the ancestor.** Deep-read the reference apps so the port map is accurate (what's reusable vs product-specific).
+**Phase 0 — Freeze the app and its release.** Read the app-local instructions and
+complete handoff; record source/deployed commits, bundle/manifest hashes, public
+health, worktree ownership, and current tests. If the public app is down or the
+manifest is incoherent, recover release trust before redesign publication.
 
-**Phase 1 — Research the product (the gated step — REQUIRED EVERY TIME).** A workflow fanning out:
-- A **schema agent** (WebFetch the NEON product page + neonUtilities docs): exact tables, field names, sampling design, data volume, gotchas.
-- A **domain agent** (Jornada for plants/rangeland; Fauna for wildlife; Aquatics for water): the scientifically-meaningful, *cited* product-native insights + their honest caveats + what to AVOID over-claiming.
-- A **stats agent** (Quinn): the statistically-correct computation of each metric + the pseudoreplication/scale/effort traps + the analysis-ready export shape.
-- An **architecture agent** (Tim): the port map — reuse/adapt/skip/net-new, file-by-file.
-- An **innovation agent** (Sarah): the flagship interactive + the dossier/QC-card analog + one novel-but-grounded idea, evidence-based.
+**Phase 1 — Research the product (gated and required).** Produce evidence for five
+lenses, whether one person or several reviewers do the work:
 
-**Phase 2 — Design.** Synthesize the research. Lock: the unit of analysis; the tab structure; the flagship interactive; the "select an entity → profile + downloadable QC card" funnel; the data/bundling strategy (which demo site, the `keep` vector). Confirm the one genuine fork with the user if close; otherwise proceed.
+- schema/method: exact DPID, tables, fields, design, protocol eras, and data volume;
+- domain: cited product-native meaning, mechanisms, caveats, and forbidden claims;
+- statistics: estimand, sampling unit, effort/opportunity, zeros, missing/censoring,
+  uncertainty, pseudoreplication, support gates, and export grain;
+- architecture: reuse/adapt/skip/net-new map plus startup, bundle, manifest, and
+  deployment dependencies; and
+- product: primary user jobs, signature interaction, accessibility, visual identity,
+  and one grounded improvement worth the complexity.
 
-**Phase 3 — Build.** Scaffold the sibling directory. Reuse §2 wholesale; build the product-specific data layer (`helpers.R`), the renders (`server.R`), the tabs (`ui.R`), the interactive (`pincards.js` adaptation), the styles. Author the cohesive core yourself (tight coupling), parallelize only genuinely-independent pieces.
+**Phase 2 — Design.** Lock the unit of analysis; CAN/CANNOT/HELD claim list;
+task-oriented information architecture; primary interaction; data/bundling plan;
+codebook and QC contract; and expected Driver disposition. Register any hypothesis
+before viewing held-out results.
 
-**Phase 4 — Adversarially verify (the discipline that repeatedly pays).** A review workflow over the **git diff** with fresh eyes per lens (Wes/JS, Vera/chart, the domain+Quinn/honesty, Aaron/chaos-field-user, a pure R-correctness hunter). It WILL find real regressions you introduced — the Size Lab review caught a blocker (a dead-after-re-render scatter) the happy-path tests missed. Triage by severity, fix blocker+high+certain, run again.
+**Phase 3 — Build.** Vendor only pinned, relevant patterns from section 2. Build the
+product-specific transform, helpers, renders, navigation, interaction, styles,
+tests, codebook, cover, social card, handoff, and knowledge package. Keep app boot
+bundle-only and network-independent.
 
-**Phase 5 — Verify in the running app.** `preview_start`, load the demo (the `setInputValue('demoBtn', …, {priority:'event'})` trick), exercise every new surface headlessly (real interactions, not synthetic `.click()` lies — drive plotly via `gd.emit('plotly_click', …)` with a full point object incl. `data:{}` so the binding doesn't choke), screenshot proof, fix, repeat until zero server + console errors.
+**Phase 4 — Adversarially verify.** Review the **git diff** independently for R
+correctness, science/statistics, frontend lifecycle/accessibility, field/QC use,
+deployment/security, and data/manifest integrity. Triage by severity, fix supported
+blockers and high findings, and rerun the complete ordered gate set.
 
-**Phase 6 — Ship hygiene.** Update the app-local handoff, the central suite evidence
+**Phase 5 — Verify in the running app.** Start in the pinned runtime; exercise the
+three primary user funnels with real inputs, including empty/error states, deep
+links, keyboard paths, downloads, dark/light where applicable, reduced motion,
+desktop, tablet, and 390px mobile. Require zero unexplained server/console/network
+errors and stable geometry rather than screenshot-only proof.
+
+**Phase 6 — Publish and close.** Update the app-local handoff, the central suite evidence
 register, and the Driver implication backlog with exact evidence. Promote reusable
 gotchas into this playbook. Then regenerate/verify the manifest, publish only when
-authorized and green, and verify the landing/OG card and direct URL when public.
+authorized and green, and bind the green head, merge commit, deployed identity,
+manifest hash, landing/social assets, and content-aware public app check in one
+release receipt.
 
 ---
 
@@ -137,7 +180,10 @@ authorized and green, and verify the landing/OG card and direct URL when public.
 - **One fixed output id, not one-per-entity.** A `renderPlotly`/`renderUI` registered under a per-row id (`output[[paste0("spark_", id)]]`) accumulates a new binding for every entity the user opens (a slow leak). Use a single fixed output that reads the selected-entity reactive.
 - **Cover/percentage SHARES need a structural-zero denominator** (divide by all sampled units, not only where-present) — present-only means inflate patchy categories and distort the share. And a headline metric must use **one shared function** in the bundler and the app, or the picker and the hero will show different numbers for the same thing.
 - **dplyr `summarise()` sees earlier newly-created columns** — `richness = mean(richness)` then `sd = sd(richness)` makes sd operate on the scalar mean (→ NA). Compute the spread before the reassignment.
-- **Adversarially verify the DIFF with a fresh agent** every time — it has caught real regressions on every session it was run (incl. the plant app's year-pooling blocker and the Size Lab's dead-after-re-render blocker).
+- **Adversarially verify the diff with an independent pass** every time. A second
+  reviewer, a deliberately separate review pass, or both can provide independence;
+  named personas are not evidence. Record the findings and disposition in the
+  handoff.
 
 ---
 
@@ -163,13 +209,16 @@ invent the product-native ones the research surfaces.
 
 ## 6. Deployment & maintenance — the full lifecycle (dev → deploy → self-update)
 
-The suite has **migrated off shinyapps.io to Posit Connect Cloud with a GIT-BACKED deploy**.
-This is now the standard; shinyapps.io (small-mammal reference) is legacy and slated to follow.
+The suite standard is **Posit Connect Cloud with a Git-backed source**. Repository,
+Connect deployment, and public semantic health are separate release identities.
 
-**Deploy model (the new standard — Connect Cloud, git-backed):**
-- The app lives on Connect Cloud, pointed at the GitHub repo + its watched branch. **A push to the
-  watched branch IS the deploy** — Connect Cloud auto-republishes. So there are **no shinyapps.io
-  secrets, no `rsconnect/` dir, and no `deploy.R` step** (those are the legacy shinyapps path).
+**Deploy model (Connect Cloud, git-backed):**
+- The app lives on Connect Cloud, pointed at a GitHub repo and branch. A merge makes a
+  source revision available, but does not prove that Connect rebuilt or serves it.
+  Treat the merge as publication intent; inspect **Last deployed**, explicitly
+  republish when it lags, then require app-specific semantic health. Record the green
+  PR head, merge, Connect-deployed commit, and public receipt separately. There are no
+  shinyapps.io secrets, no `rsconnect/` directory, and no `deploy.R` step in this path.
 - Required in-repo: a lean **`manifest.json`** (`rsconnect::writeManifest()`; bundle-only, keep
   `neonUtilities` OUT via the computed-package-name trick), the committed `data/` bundles, and a
   `docs/index.html` GitHub Pages showcase whose `APP_URL` points at the live Connect Cloud app.
@@ -184,9 +233,20 @@ This is now the standard; shinyapps.io (small-mammal reference) is legacy and sl
   byte identity everywhere. Keep that platform's exact-byte gate; use other platforms for strict
   schema/key/text/source/decision checks and only explicitly named bounded numeric diagnostics.
   Never round artifacts to force parity.
+- Treat installed-package provenance and the deployment platform's network contract
+  as separate gates. For an exact direct-URL CRAN install, retain `RemoteType: url`
+  and the exact `RemotePkgRef`, but require deployable top-level `Source: CRAN` plus
+  an absolute repository URL when Connect needs to resolve current/archive paths.
+  Strip only explicitly reviewed non-semantic source-build clocks such as
+  `description.Built`; retain versions, origins, refs, compatibility, and checksums.
+  A real Connect dependency-install receipt is required before the pattern becomes
+  reusable.
 - Treat ordinary CRAN and Posit/RSPM records as semantically equivalent only after each complete
   manifest independently passes trusted-repository, version/ref/SHA, pinned-snapshot,
   optional-platform, dependency, deploy-surface, and checksum validation.
+- Inventory every Shiny custom-message registration and require each handler to take
+  exactly one payload argument, even when the payload is unused. Parse-only checks do
+  not catch the Shiny 1.14 registration failure caused by zero-argument handlers.
 - Branch naming is split across the suite (`main` vs `master`) — each workflow must push to the
   branch its own Connect Cloud app watches. Standardize new repos on `main`.
 
@@ -198,8 +258,10 @@ then choose the app's documented cadence:**
 - Required download, build, contract, manifest, receipt, and publication gates fail closed.
   `continue-on-error` is reserved for genuinely optional diagnostics that cannot affect published
   bytes or the release decision.
-- Prefer an automatic push to the branch watched by Connect Cloud only after all required gates pass.
-  A review-PR flow is valid when intentionally chosen, but it is not self-deploying.
+- Give write permission only to a restricted publisher after a read-only producer
+  and validator have passed. A review-PR flow or a restricted automatic publisher
+  can both be valid; neither is trusted without stale-base, manifest, exact-diff,
+  and release-receipt checks.
 
 **Derived/master apps (e.g. Driver Cascade):** never build from moving shallow-clone heads or copy
 unverified sibling directories. Allowlist canonical origins, capture exact commits, verify the
@@ -213,8 +275,9 @@ input product (including mosquitoes for the current Driver), and keep the source
 
 Data bundles: `data/sites/*.rds` present + valid (loadable, non-empty) · `data/site_index.rds`
 (picker) · `data-sample/demo.rds` (instant demo) · all git-tracked · refreshed within the cadence.
-Automation: `.github/workflows/refresh-data.yml` on the **standard schedule** · self-deploys via
-**auto-push** (not PR-merge) · `manifest.json` present · GitHub **remote** exists · `docs/index.html`
+Automation: `.github/workflows/refresh-data.yml` on the product's documented schedule · separates
+producer/validator/publisher authority · records calendar-gated work as skipped, not refreshed ·
+`manifest.json` coherent · GitHub **remote** exists · `docs/index.html`
 `APP_URL` is live. NEONization: cover/landing splash · **in-app sibling links** + `docs` cross-promo
 grid covering the WHOLE suite · mobile-responsive CSS (`@media`, prefers-reduced-motion) · **QC-flag
 system** (§ below) · metadata/codebook view · comprehensive downloads (CSV + card PNG + report PDF) ·
@@ -226,8 +289,9 @@ on the entity profile INSIDE the export node (PNG captures it); each flag **clic
 table** of offending rows + per-flag CSV; a full **QC-report CSV** (`<entity>_qc_report()`); clean
 path shows a green reassurance. Tune thresholds **data-derived + domain-grounded** (ask the domain
 agent) and validate on contrasting sites so it never cries wolf (target ~0 high on clean NEON data).
-CSS class convention: standardize on `.qc-flag-<level>` (not `.qc-flag.<level>`). Full recipe +
-bird thresholds: memory `neonize-qc-flag-pattern`.
+CSS class convention: standardize on `.qc-flag-<level>` (not `.qc-flag.<level>`).
+The current bird implementation is one concrete reference; each app still requires
+domain-grounded thresholds and fixture evidence.
 
 **Search the network (the bundled-index search tab — every app with a national footprint gets it):**
 a "Search" nav_panel that queries a SMALL precomputed `data/search_index.rds` (one row per searchable
@@ -249,10 +313,12 @@ driver→response pairing” + “rank sites by descriptive direction agreement 
 Per-site rows are never called significant; context-only rows remain searchable but excluded from inference,
 and the Across NEON panel carries the exploratory cross-site summary and its sensitivities.
 
-**Sibling links + cover page:** maintain ONE registry of the suite (name · emoji · tagline · DPID ·
-github.io showcase URL · live Connect Cloud URL) and render it both in `docs/index.html` (the
-`.series-grid`) AND in-app (an "Explore the NEON series" block in About/footer). When a new app ships,
-add it to the registry so EVERY sibling links to it (Breeding Birds + Driver Cascade were missing).
+**Sibling links + cover page:** Driver owns one versioned suite registry (app ID,
+name, role, mascot, palette, DPID, repository, showcase URL, live URL, release
+state, and Driver disposition). Generate the cover relationship nodes and in-app
+Suite panel from that registry, then vendor a pinned copy in every independent app.
+CI verifies the declared registry version so a new app or URL cannot drift across
+ten hand-edited copies.
 
 ## 8. Suite learning and Driver feedback
 
@@ -278,7 +344,7 @@ chat-only memory—are what allow later sessions to build on earlier work.
 
 ---
 
-*Living doc. Plant-diversity (DP1.10058.001) was the first full NEONize; birds/phenology/veg/cascade
-followed. §6–7 added from the suite-wide automation+bundle audit (the Connect-Cloud git-backed deploy
-migration, the shared off-peak schedule, the QC-flag generalization). Keep the **Cody** subagent
-(hosting/CI) and a future **neonize** subagent in sync with §6–7.*
+*Living pattern catalog. Plant Diversity, Birds, Phenology, Vegetation Structure,
+and Driver supplied many of the examples. Current pass status and verification live
+in the suite learning loop and app-local handoffs, not in named agents or chat-only
+memory.*
