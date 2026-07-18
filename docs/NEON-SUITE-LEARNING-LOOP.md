@@ -42,8 +42,16 @@ The default progression moves from the flagship and terrestrial foundation throu
 fast/slow consumers, then into the aquatic pair. The owner may change the order for
 readiness or scientific dependency, but each app remains a separate completed pass.
 
+The 2026-07-18 suite audit changed the working order: Small Mammals remains first as
+the companion release reference, but Phenology now precedes Plant Diversity because
+green-up timing is the suite's strongest supported hinge and establishes the timing
+contract that later producer/consumer passes must respect. The detailed baseline,
+per-app briefs, visual system, and completion gates are in
+`docs/NEON-SUITE-REVAMP-PLAN.md`.
+
 ```text
 Driver baseline
+  -> Phase 0 release-health stabilization
   -> nine one-at-a-time product passes
   -> cross-product synthesis and gap audit
   -> optional complementary app, only if it unlocks a material Driver advance
@@ -56,6 +64,27 @@ are discharge/streamflow, aquatic-site water temperature, or periphyton. This is
 decision after the nine app passes, not a commitment now. Build one only when the
 evidence register shows that it fills a shared-driver or missing-producer hinge that
 cannot be obtained honestly from the existing apps.
+
+## Phase 0 release-health stabilization
+
+The one-app scientific cycle does not excuse a broken or unsafe public release
+layer. Before any app is marked complete, repair the suite-wide prerequisites found
+in the 2026-07-18 audit:
+
+- Small Mammal Tracker and Ground Beetle Tracker currently render a Posit
+  `Startup Error` page and require recovery before redesign work can be published.
+- Every companion manifest disagrees with at least one tracked runtime file; exact
+  file/checksum and semantic-manifest validation is therefore a release blocker.
+- An HTTP 200 or cover prewarm is not app health. Post-deploy smoke must reject
+  host error pages and require an app-specific ready marker.
+- Moving action tags, moving package snapshots, combined write-enabled
+  build/validate/publish jobs, and date-gated six-second "successes" must be replaced
+  with the independently validated release shape proven in the Driver baseline.
+- Each companion receives an app-local `AGENTS.md`, complete build/test handoff, and
+  Driver knowledge-package scaffold as its pass begins.
+
+This is `suite-platform` work. It does not authorize bulk ecological edits or allow
+one app's pass to be closed from a cross-suite script alone.
 
 ## One-app learning cycle
 
@@ -156,15 +185,16 @@ Do not mark an app complete from memory or screenshots alone.
 | Pass | App | Status | Source/build evidence | Knowledge package | Driver disposition | Published verification |
 |---:|---|---|---|---|---|---|
 | 0 | Driver Response Atlas baseline | COMPLETE AND PUBLISHED | exact bytes + semantic manifest passed twice in run `29644970791`, final PR run `29646272806`, and master run `29646451583`; merge `430b0b0`; see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu/Haswell/one-thread and publication contracts captured | integration target; Driver v2 waits for passes 1-9 | Pages root/social card, desktop/mobile, console, metadata, and 12/12 public links verified 2026-07-18 |
-| 1 | Small Mammal Tracker | pending | — | — | — | — |
-| 2 | Plant Diversity | pending | — | — | — | — |
-| 3 | Plant Phenology Explorer | pending | — | — | — | — |
-| 4 | Vegetation Structure Explorer | pending | — | — | — | — |
-| 5 | Ground Beetle Tracker | pending | — | — | — | — |
-| 6 | Mosquito Pulse | pending | — | — | — | — |
-| 7 | Breeding Birds | pending | — | — | — | — |
-| 8 | Water Chemistry Analyte Viewer | pending | — | — | — | — |
-| 9 | My Little Inverts | pending | — | — | — | — |
+| 0A | Suite release-health preflight | IN PROGRESS — 1/2 OUTAGES RESTORED | 2026-07-18 baseline found drift in all nine companion manifests, moving release inputs, and five apps with no executable tests. Small Mammal then fully validated the first pinned read-only CI, restricted refresh-candidate, semantic-health, and exact-manifest template; Ground Beetle remains the open outage | revamp plan + first complete app-local governance, handoff, and knowledge package | `NONE` (suite-platform); reuse the validated release shape in later passes, but keep product science app-specific | Small Mammal production restored and verified; Beetle still fails semantic startup; other seven companions have startup-only evidence |
+| 1 | Small Mammal Tracker | PASS 1 COMPLETE / PRODUCTION VERIFIED | app closeout `main` `957e56c`; deployed runtime `1615ab4`; R 4.5.2, 91 packages, 117 files, Haswell/one thread, six-handler JS contract, 11 scientific fixtures, 46/46 site bundles, 46/604/604 indexes, 145 species, offline source, exact checksums, and semantic production health passed; manifest SHA-256 `f6c4a5ff74053b95e22fac7394f1930d2fe2329663737031b1c32f7a1f70bc54` | pinned package complete; exact physical-event effort, opportunity, detection, exports, limitations, release identities, and reusable learning recorded | `CONTEXT`; physical-event contract parity is closed, but exact current-source Driver join remains held; no Driver artifact byte change | Connect Last deployed `1615ab4`; fresh JORN flow, semantic marker, first-party console, and Pages passed; mobile visual QA remains unclaimed |
+| 2 | Plant Phenology Explorer | PASS PENDING | live start passed; 8 manifest file mismatches; one helper test | — | re-evaluate existing temperature -> green-up `ADOPT`; desert alternative separate | startup only, not a release receipt |
+| 3 | Plant Diversity | PASS PENDING | live start passed; 13 manifest file mismatches; one helper test | — | provisional `CONTEXT` for richness/invasion | startup only, not a release receipt |
+| 4 | Vegetation Structure Explorer | PASS PENDING | live start passed; 8 manifest file mismatches; one helper test | — | provisional `CONTEXT` slow state floor | startup only, not a release receipt |
+| 5 | Ground Beetle Tracker | P0 OUTAGE / PASS PENDING | live startup error; 8 manifest file mismatches; no executable tests | — | catch-conditioned effort remains `CONTEXT` | failed semantic startup check 2026-07-18 |
+| 6 | Mosquito Pulse | PASS PENDING | live start passed; 7 manifest file mismatches; no executable tests | — | provisional `HOLD` seasonal / otherwise `CONTEXT` | startup only, not a release receipt |
+| 7 | Breeding Birds | PASS PENDING | live start passed; 8 manifest file mismatches; one helper test | — | provisional `CONTEXT` | startup only, not a release receipt |
+| 8 | Water Chemistry Analyte Viewer | PASS PENDING | live start passed; 3 manifest file mismatches; no executable tests; current code ahead of review prose | — | provisional `CONTEXT` aquatic condition | startup only, not a release receipt |
+| 9 | My Little Inverts | PASS PENDING | live start passed; 9 manifest file mismatches; no executable tests; no expert review | — | provisional `CONTEXT` | startup only, not a release receipt |
 | 10 | Optional complementary product | decision-support audit COMPLETE; formal decision still after pass 9 | catalog swept against the live NEON Data Product Catalog 2026-07-18 (DPIDs verified; phantom/renamed products flagged) | [`docs/COMPLEMENTARY-APP-GAP-AUDIT.md`](COMPLEMENTARY-APP-GAP-AUDIT.md) — 11 candidates ranked through the 6-question intake + adversarial refutation; 29 dropped with reasons | ranked backlog recorded (see rows below); no build authorized — gate remains passes 1–9 | — |
 | 11 | Driver v2 reintegration | blocked on synthesis | — | nine packages + gap decision | integrate accepted set | — |
 
@@ -194,6 +224,7 @@ work.
 | Complementary-app gap audit | in-situ meteorology "climate-driver app" `DP1.000xx` | REJECT the app framing (keep 2 non-app moves) | terrestrial climate root already borrowed; adds 0 non-NA site-years | none as an app: register a `VPD→moisture-stress` HOLD prior; keep the labeled domain climate proxy | preserve reason — TIS (`DP1.000xx`) vs AIS (`DP1.200xx`) is 0/34; never silently key air-precip to aquatic sites |
 | Complementary-app gap audit | soil moisture + soil temp `DP1.00094.001` + `DP1.00041.001` | HOLD | direct plant-available water at desert-thin sites | descriptive within-site anomaly co-display; dated soil-temp prior on green-up | sharpens a driver for a test that does not exist (no coverage-standardized desert response rung; water-limited stratum ≈ SRER-only); breaks "no-refetch" architecture |
 | Complementary-app gap audit | AOP greenness NDVI/EVI/LAI/fPAR `DP3.30026/.30012/.30014` | CONTEXT descriptor; productivity-rung framing REJECT | only sensor-standardized cross-site greenness proxy | at most a within-site anomaly QC cross-check beside `veg_ba_ha` | ~3–4-yr flight cadence caps per-site n below the n≥6 gate permanently; cross-site NDVI magnitude = the rejected richness-as-productivity construct |
+| Small Mammal Tracker | physical-event trap effort, opportunity-complete species CPUE, and detection-qualified consumer context | CONTEXT / NO BYTE CHANGE | runtime `1615ab4` passed the exact six-status, canonical-coordinate, multi-capture, double-trap, placeholder, and fail-closed fixtures in pinned R; species denominators use all reviewed opportunity; Compare carries p-hat/mean N-hat and suppresses unsupported raw winners; 49% of 8,200 bouts are single-night/index-only | keep current Driver bytes and independent resolver; preserve the app package as descriptive consumer context, not an inferential vote | during suite synthesis, pin an eligible current source and measure exact site-year join/support before considering ingestion; retain monsoon precipitation -> next-year CPUE only as a registered contextual candidate |
 
 ## Driver v2 reintegration gate
 
