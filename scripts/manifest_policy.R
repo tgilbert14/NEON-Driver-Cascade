@@ -25,7 +25,7 @@ MANIFEST_ALLOWED_REMOTE_PKG_PLATFORMS <-
   "x86_64-pc-linux-gnu-ubuntu-24.04"
 MANIFEST_CANONICAL_RSPM_REPOSITORY <-
   "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15"
-MANIFEST_ALLOWED_SOURCE_LOCALES <- c("en_US", "C.UTF-8", "en_US.UTF-8")
+MANIFEST_ALLOWED_SOURCE_LOCALES <- c("en_US", "C")
 
 `%||%` <- function(x, y) if (is.null(x) || !length(x)) y else x
 

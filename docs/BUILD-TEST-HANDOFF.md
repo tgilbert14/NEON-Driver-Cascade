@@ -189,7 +189,7 @@ trusted standard-CRAN representations. `RemoteSha == Version` remains reference
 metadata, not an independent package-content digest.
 
 The sole permitted post-write change is the root manifest locale token. The writer
-accepts only `en_US`, `C.UTF-8`, or `en_US.UTF-8`, requires exactly one canonical
+accepts only the exact rsconnect output tokens `en_US` or `C`, requires one canonical
 root line, normalizes it to `en_US`, reparses, and proves every other parsed field
 is identical. It never rewrites package provenance. R comparator fixtures and the
 independent standard-library Python publisher fixtures enforce the same policy.
@@ -1049,3 +1049,29 @@ Rules:
 - **Next action:** commit and push this complete family, require fresh PR CI green,
   merge PR #4, synchronize `master`, patch repository description/homepage, wait for
   master CI and Pages, then verify the public cover and social asset.
+
+### 2026-07-17 22:39 MST - exact rsconnect locale-token correction / root
+
+- **Changed:** narrowed the manifest source-locale allowlist to exact rsconnect
+  output tokens `en_US` and `C`; updated positive/negative/nested locale fixtures
+  and canonical handoff wording. Artifact and manifest bytes are unchanged.
+- **Learned:** rsconnect 1.10.1 `detectLocale()` splits non-Windows `LC_CTYPE` at
+  the dot, so runner environment `C.UTF-8` is serialized as root token `C`. The
+  earlier ledger named the environment locale rather than the emitted JSON token.
+- **Test process:** GitHub run `29632368165` passed setup, dependency install,
+  committed-snapshot validation, source lock, all seven detached fetches, build
+  stages 1-4, and the complete raw-source/scientific contract suite; it failed
+  closed only at stage 5 with `generated manifest source locale is missing or
+  unapproved`. Inspected the installed rsconnect namespace to prove the exact
+  derivation, then reran pinned-R parsing, the complete R locale/provenance
+  adversarial matrix, and `git diff --check`; all passed.
+- **Expected versus actual:** expected strict normalization to expose any unmodeled
+  source token; actual did. The correction admits only the exact deterministic
+  token that rsconnect derives from the pinned runner locale.
+- **Evidence invalidated:** only the three-token source allowlist and the statement
+  that rsconnect serialized the full `C.UTF-8` string. All scientific, artifact,
+  provenance, package, checksum, boot, and local validation evidence remains valid.
+- **Failure/cleanup:** CI failed before manifest completion or promotion. No local
+  generation ran; no lock, stage, backup, pending file, or artifact hash changed.
+- **Residual risk/next action:** push the exact-token correction and require a fresh
+  unchanged Ubuntu run to pass stages 5-9 plus both final byte/manifest gates.

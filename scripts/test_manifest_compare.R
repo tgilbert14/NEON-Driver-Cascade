@@ -24,7 +24,7 @@ for (source_locale in MANIFEST_ALLOWED_SOURCE_LOCALES) {
     stop(sprintf("manifest locale normalization failed for %s", source_locale),
          call. = FALSE)
 }
-for (source_locale in c("C", "fr_FR", "")) {
+for (source_locale in c("POSIX", "fr_FR", "")) {
   source_text <- sub(canonical_locale_line,
                      sprintf('  "locale": "%s",', source_locale),
                      manifest_text, fixed = TRUE)
@@ -46,7 +46,7 @@ nested_locale <- sub(
   '"Type": "Package",',
   paste('"Type": "Package",', '        "locale": "preserve-me",', sep = "\n"),
   manifest_text, fixed = TRUE)
-nested_source <- sub(canonical_locale_line, '  "locale": "C.UTF-8",',
+nested_source <- sub(canonical_locale_line, '  "locale": "C",',
                      nested_locale, fixed = TRUE)
 if (!identical(charToRaw(normalize_rsconnect_manifest_locale(nested_source)),
                charToRaw(nested_locale)))
