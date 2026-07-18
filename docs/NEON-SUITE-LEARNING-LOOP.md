@@ -125,6 +125,7 @@ Every app pass ends with the following fields. `Unknown` is valid; omission is n
 
 Use these decision meanings consistently:
 
+- `NONE`: a reusable app/release lesson with no ecological Driver change.
 - `ADOPT`: the Driver can implement the exact signal/mechanism now.
 - `HOLD`: scientifically plausible but awaiting registered analysis, stronger support,
   or held-out observations.
@@ -150,7 +151,7 @@ Do not mark an app complete from memory or screenshots alone.
 
 | Pass | App | Status | Source/build evidence | Knowledge package | Driver disposition | Published verification |
 |---:|---|---|---|---|---|---|
-| 0 | Driver Response Atlas baseline | blocked on portability | see `BUILD-TEST-HANDOFF.md` | baseline captured | integration target | pending green PR #4/Pages |
+| 0 | Driver Response Atlas baseline | canonical policy approved; release validation in progress | see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu release contract captured | integration target | PR #4 CI/merge/Pages pending |
 | 1 | Small Mammal Tracker | pending | — | — | — | — |
 | 2 | Plant Diversity | pending | — | — | — | — |
 | 3 | Plant Phenology Explorer | pending | — | — | — | — |
@@ -175,6 +176,7 @@ work.
 | Driver baseline | plant richness as productivity | REJECT | composition is not productivity | keep context-only wording | evaluate periphyton/producer gap after aquatic passes |
 | Driver baseline | beetle activity as CPUE | CONTEXT | denominator is catch-event-conditioned | no inferential vote | revisit after beetle effort audit |
 | Driver baseline | aquatic climate bridge | COMPLEMENT | no direct terrestrial/aquatic site-code overlap | require explicit proxy or true aquatic driver | water chemistry + inverts passes, then gap audit |
+| Driver release platform | canonical Ubuntu bytes + strict Windows oracle + independently validated CRAN/RSPM manifest normalization | NONE | exact family hashes, dual policy fixtures, raw-source oracle, boot and smoke evidence in Driver handoff | no scientific Driver change | reuse this release/test split in each app pass; never round artifacts or normalize unvalidated provenance |
 
 ## Driver v2 reintegration gate
 

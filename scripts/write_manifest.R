@@ -23,11 +23,12 @@ if (length(missing))
 # before rsconnect hashes it; verification rejects any later CR/CRLF drift.
 canonicalize_deploy_text(DEPLOY_APP_FILES)
 rsconnect::writeManifest(appDir = ".", appFiles = DEPLOY_APP_FILES)
-# rsconnect derives this informational field from the host locale. The release
-# contract deliberately publishes the stable Connect locale token regardless of
-# whether a runner exposes en_US.UTF-8 or only C.UTF-8
+# rsconnect derives this informational field from the host locale. This is the
+# only permitted post-write normalization: the helper requires one canonical
+# root field, accepts only observed source locales, and proves every other parsed
+# field is unchanged before the stable Connect token is written.
 manifest_text <- readChar("manifest.json", file.info("manifest.json")$size, useBytes = TRUE)
-manifest_text <- sub('("locale"[[:space:]]*:[[:space:]]*")[^"]+(")', "\\1en_US\\2", manifest_text, perl = TRUE)
+manifest_text <- normalize_rsconnect_manifest_locale(manifest_text)
 writeBin(charToRaw(manifest_text), "manifest.json")
 manifest <- jsonlite::fromJSON("manifest.json", simplifyVector = FALSE)
 result <- validate_manifest_policy(manifest, DEPLOY_APP_FILES, check_checksums = TRUE)

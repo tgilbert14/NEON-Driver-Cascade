@@ -2223,12 +2223,23 @@ if (nzchar(source_root)) {
                  "phenology source/derived support-calendar parity")
   names(phe_expected)[match(phe_cols, names(phe_expected))] <- paste0(phe_cols, "_expected")
   observed <- merge(phe_derived, phe_expected, by = c("site", "year"), all = FALSE)
-  phe_exact <- vapply(phe_cols, function(key)
-    same_num(observed[[key]], observed[[paste0(key, "_expected")]], tolerance = 1e-15),
-    logical(1))
-  check(nrow(observed) > 0 && all(phe_exact),
+  phe_strict_cols <- setdiff(phe_cols, "greenup_doy_additive")
+  phe_strict <- vapply(phe_strict_cols, function(key)
+    same_num(observed[[key]], observed[[paste0(key, "_expected")]],
+             tolerance = 1e-15), logical(1))
+  additive_expected <- observed$greenup_doy_additive_expected
+  additive_pair <- is.finite(observed$greenup_doy_additive) &
+    is.finite(additive_expected)
+  additive_max_delta <- if (any(additive_pair))
+    max(abs(observed$greenup_doy_additive[additive_pair] -
+            additive_expected[additive_pair])) else 0
+  additive_match <- same_num(observed$greenup_doy_additive,
+                             additive_expected, tolerance = 1e-12)
+  check(nrow(observed) > 0 && all(phe_strict) && additive_match,
         "green-up primary/additive estimators and audit fields match raw-source recomputation",
-        sprintf("%d source site-years; %d exact fields", nrow(observed), length(phe_cols)))
+        sprintf(paste0("%d source site-years; %d strict fields at 1e-15; ",
+                       "additive max |delta| %.3e <= 1e-12"),
+                nrow(observed), length(phe_strict_cols), additive_max_delta))
 
   # Synthetic raw observations expose failure modes that can be rare in a
   # particular source snapshot: tied censoring, abundance-composition shifts,

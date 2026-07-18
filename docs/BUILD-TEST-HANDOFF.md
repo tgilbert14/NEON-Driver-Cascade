@@ -8,60 +8,37 @@ can continue safely without relying on chat history.
 
 ## Current handoff state
 
-**Release-validation state through diagnostic cleanup head `4676233`: BLOCKED as of
-2026-07-17.** PR #4 is open, red, and unmerged. Repository metadata, Pages
-deployment, and public cover/share-card verification remain pending. The owner
-explicitly approved a temporary failed-run diagnostic upload. Commit `c3863b5`
-added the SHA-pinned, four-path, one-day upload; run
-[29622897425](https://github.com/tgilbert14/NEON-Driver-Cascade/actions/runs/29622897425)
-passed the complete nine-stage rebuild and uploaded the failed Linux candidates
-after the unchanged byte gate failed. The bundle was downloaded to isolated
-`C:\tmp`, hashed, and compared without replacing live inputs. Commit `4676233`
-removed the upload immediately; the branch workflow is back to its original form.
-Post-cleanup run
-[29623201989](https://github.com/tgilbert14/NEON-Driver-Cascade/actions/runs/29623201989)
-again passed the complete rebuild and failed only at the same exact-byte gate.
+**Release-validation state on the local release branch: POLICY APPROVED; LOCAL
+VALIDATION PASS; REMOTE CI PENDING as of 2026-07-17.** The owner approved Ubuntu
+24.04 with R 4.5.2 and the pinned 2026-07-15 Posit snapshot as the canonical
+release-byte platform. The unchanged Ubuntu CI byte gate remains authoritative.
+Windows remains a strict schema/class/attribute/key/text/source/support/decision
+oracle with only explicitly named bounded full-precision numeric diagnostics.
+No scientific value is rounded and no decision, support, checksum, or provenance
+gate is weakened.
 
-The byte-drift cause is established. Windows and Ubuntu both used R 4.5.2, XDR,
-and serialization version 3, but their RDS headers record native encoding `ASCII`
-and `UTF-8`, respectively. Strict recursive comparison found identical schemas,
-classes, attributes, character bytes/encoding marks, memberships, and key order.
-Only 221 `greenup_doy_additive` values (maximum absolute delta
-`1.8474111129762605e-13`), 22 `r_detrended` values (`4.4408920985006262e-16`),
-55 `r_outcome_alt` values (`3.8857805861880479e-15`), and six first-link
-`metafor` scalars (`4.4408920985006262e-16` maximum) differ. Those fields come
-from platform-sensitive OLS/QR, correlation, and REML/t calculations. Replacing
-only those known fields in comparison copies makes `cascade.rds` strictly
-identical; replacing their exact search projections plus `source_bundle_md5` makes
-`search_index.rds` strictly identical; replacing the six meta scalars plus the
-same embedded MD5 makes `cascade_meta.rds` strictly identical. The three binary
-diffs are therefore one root artifact drift plus deterministic downstream value
-and fingerprint propagation—not three independent scientific changes.
+The validated Ubuntu family has been promoted locally as one unit, with
+`manifest.json` copied last. Source and destination SHA-256 values match the table
+below; the codebook is unchanged. Local R/Python provenance fixtures, manifest
+verification (73 packages/12 files), the complete seven-repository raw-source
+oracle, boot-integrity faults (12 malformed/mutated fixtures and six promotion
+cuts), app smoke (510 annual rows/12 associations), workflow receipt fixtures,
+JavaScript syntax, YAML/pin review, and whitespace checks pass.
 
-The Linux manifest is internally coherent: its 12 checksums map exactly to the
-three candidates plus nine unchanged deploy files, its 73 package versions and
-dependency projections equal the baseline, and it passes the current implemented
-policy and the exact local runtime-library check. It nevertheless exposes the
-unresolved written-policy conflict: all 73 baseline descriptions say `CRAN`, all
-73 Linux descriptions say `RSPM`, and Linux truthfully supplies the six explicit
-standard provenance fields including `RemotePkgPlatform`. The comparator therefore
-reports `files, packages`. The candidate also passes manifest fixtures, boot
-integrity, and app smoke on Windows, but the unchanged Windows raw-source oracle
-fails at the additive green-up exact-value comparison because Windows recomputes
-its own last bits. No gate was weakened and no rounding was introduced.
+The prior remote head `33653cf` is still red at the expected old exact-byte gate.
+Fresh CI for this promoted family must pass both the exact artifact-byte gate and
+the independently validated semantic-manifest gate before merge. PR #4, repository
+metadata, Pages deployment, and final public cover/share-card QA remain pending.
 
-No Linux candidate is accepted, staged, committed, or live. The four experimental
-worktree replacements were restored from immutable `HEAD`; the historical five
-working-byte SHA-256 values below were reverified exactly. A release-policy decision
-is required before implementation: either formally adopt the trusted Ubuntu
-24.04/R 4.5.2 family as the canonical release-byte platform while preserving
-cross-platform structural/scientific checks, or retain truly cross-platform byte
-identity and replace the platform-sensitive numerical implementation. Separately,
-the owner must reconcile `CRAN` versus trusted `RSPM`, the optional versus all-or-none
-`RemotePkgPlatform` rule, and the controlled locale normalization. Do not promote
-the candidate or alter these gates until that choice is explicit.
+The cross-platform diagnosis remains part of the audit record: one root family
+diff from RDS native-encoding headers plus last-bit OLS/QR, correlation, and
+REML/t arithmetic propagates through search/meta fingerprints. On the promoted
+family the Windows source oracle reports `greenup_doy_additive` maximum absolute
+delta `1.8474111129762605e-13` under its sole `1e-12` diagnostic; the primary
+estimator and ten strict fields remain at `1e-15`, and all finite patterns, keys,
+support, signs, votes, tiers, sensitivities, and decisions remain exact.
 
-### Diagnosed Ubuntu candidate (isolated evidence; not accepted)
+### Canonical Ubuntu release family (promoted locally; remote CI pending)
 
 | Artifact | Bytes | MD5 | SHA-256 |
 |---|---:|---|---|
@@ -82,10 +59,9 @@ the candidate or alter these gates until that choice is explicit.
 | `manifest.json` | 210836 | `7ada31ae9ff396e5e06a9c53c11daeb0` | `b1851e53d1796f4989a2f46b39df02577ae95bc92c9aeca5d67549dbc62c0150` |
 
 The two post-merge authoritative Windows rebuilds at 2026-07-17 13:59 MST
-produced these exact bytes for all five files. Current live files retain these
-bytes, but current writer/policy/search-builder code has not reproduced them
-through a passing cross-platform matrix. Treat this table and the dated passes
-below as audit history only. The builds used 364 archived RDS inputs from these
+produced these exact bytes for all five files. They are superseded by the
+canonical Ubuntu family above and remain audit history only, not current live or
+release-byte evidence. The builds used 364 archived RDS inputs from these
 immutable source commits:
 
 | Product | Commit |
@@ -190,49 +166,38 @@ That distinction remains a residual supply-chain risk.
 ### Manifest/network interpretation
 
 `rsconnect::writeManifest()` can require reachable CRAN/Posit repository metadata
-even when every package is already installed locally. The expected repository must
-be reachable during manifest generation.
+even when every package is installed locally. The approved dated repository must
+be reachable during generation.
 
-There are two distinct provenance layers; never conflate them:
+Every manifest is independently validated before any semantic normalization:
 
-- The outer package record's `Repository` is the trusted installation-repository
-  URL. If that value is null or untrusted, classify the result as a local
-  repository/network/cache metadata failure.
-- Inside `description`, `Repository` must be exactly `CRAN`. The five standard CRAN
-  fields `RemoteType`, `RemoteRepos`, `RemotePkgRef`, `RemoteRef`, and `RemoteSha`
-  may be either all absent (the official implicit standard-CRAN form emitted by
-  `rsconnect` 1.10.1) or all present with canonical values. Partial sets,
-  explicitly named null fields, and rogue remote fields fail closed.
+- the outer package-record `Repository` must be a scalar HTTPS URL on the trusted
+  host allowlist;
+- `description.Repository` must be scalar `CRAN` or `RSPM`;
+- the five core fields `RemoteType`, `RemoteRepos`, `RemotePkgRef`, `RemoteRef`,
+  and `RemoteSha` are all absent or all present with exact standard values;
+- an `RSPM` description requires all five core fields and exact
+  `RemoteRepos=https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15`;
+- `RemotePkgPlatform` is optional, but only beside the complete core and only as
+  `x86_64-pc-linux-gnu-ubuntu-24.04`; named null, partial, malformed, near-miss,
+  wrong-OS, or rogue provenance fields fail closed; and
+- package graph, versions, R compatibility, deploy surface, and checksums remain
+  exact policy gates.
 
-The manifest must remain untouched output from `rsconnect::writeManifest()`; policy
-validation must not invent or rewrite provenance. Semantic comparison may normalize
-the two valid standard-CRAN forms only after each manifest passes policy on its own.
-In the explicit form, `RemoteSha` equal to `Version` is reference metadata, not an
-independent package-content digest.
+After both records pass independently, the comparator may normalize the two
+trusted standard-CRAN representations. `RemoteSha == Version` remains reference
+metadata, not an independent package-content digest.
 
-### Unresolved current-HEAD manifest-policy conflict
-
-The canonical contract above and current implementation disagree in three observed
-ways:
-
-1. `scripts/write_manifest.R` rewrites locale after
-   `rsconnect::writeManifest()`, despite the untouched-output rule;
-2. `scripts/manifest_policy.R` accepts `description.Repository` in
-   `{CRAN, RSPM}`, despite the exactly-CRAN rule; and
-3. `MANIFEST_STANDARD_REMOTE_FIELDS` includes `RemotePkgPlatform`, making it a
-   sixth all-or-none field although the 15:18 ledger calls it optional.
-
-The third conflict caused the Windows stage-5 DT failure; Linux required platform
-metadata to advance. This is release-blocking. Do not weaken, normalize, or relabel
-either contract merely to clear CI, and do not copy this unresolved behavior into
-the other suite apps. Obtain an owner policy decision, then update canonical text,
-writer, validator, comparator fixtures, and workflow atomically and rerun the full
-unchanged matrix on both platforms.
+The sole permitted post-write change is the root manifest locale token. The writer
+accepts only `en_US`, `C.UTF-8`, or `en_US.UTF-8`, requires exactly one canonical
+root line, normalizes it to `en_US`, reparses, and proves every other parsed field
+is identical. It never rewrites package provenance. R comparator fixtures and the
+independent standard-library Python publisher fixtures enforce the same policy.
 
 An outer `Repository: null` is **not** permission to:
 
 - accept a null or untrusted outer repository value;
-- relax `scripts/manifest_policy.R` or the CRAN-only policy;
+- relax `scripts/manifest_policy.R` or the trusted standard-CRAN policy;
 - hand-edit `manifest.json`;
 - omit manifest verification; or
 - claim that installed package files alone prove reproducibility.
@@ -466,15 +431,15 @@ code change invalidates earlier build, determinism, browser, and manifest eviden
 | 1 | Worktree ownership | PASS | 2026-07-17 | Current documentation changes are owned; no rebuild process or conflicting editor remains; unrelated history is preserved. |
 | 2 | Static syntax | PASS | 2026-07-17 | 22 R files parsed as UTF-8; `node --check`; both Python files compiled in memory; Python fixtures passed. |
 | 3 | Workflow policy | PASS | 2026-07-17 | Both YAML files safe-loaded; all 13 `uses:` values are full lowercase 40-hex pins; receipt self-test passed. |
-| 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. The approved candidate remains isolated under `C:\tmp` pending the policy decision. |
-| 5 | Authoritative build | BLOCKED | 2026-07-17 | Ubuntu produced a fully validated candidate, but no family can be accepted until the release-byte platform and manifest policy are explicitly reconciled; Windows still fails stage 5 before promotion. |
-| 6 | Independent live-root checks | NOT RUN | 2026-07-17 | No complete independent live-root suite exists for a promoted current-HEAD family. |
-| 7 | Determinism | FAIL | 2026-07-17 | Root cause proven: cross-platform RDS header plus last-bit OLS/correlation/meta arithmetic, with search/meta fingerprint propagation. The unchanged Ubuntu-on-Ubuntu exact-byte rerun awaits an accepted Ubuntu baseline; do not weaken the byte gate. |
+| 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; canonical LF/no-BOM text; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. |
+| 5 | Authoritative build | LOCAL PASS / CI PENDING | 2026-07-17 | The complete Ubuntu nine-stage run produced the now-promoted hash-exact family. Fresh CI must rebuild it and pass the unchanged exact-byte and semantic-manifest gates. |
+| 6 | Independent live-root checks | PASS | 2026-07-17 | Promoted family passed the complete seven-source oracle, manifest verification/comparison, Python publisher fixtures, boot integrity, app smoke, and workflow receipt fixtures. |
+| 7 | Determinism | CI PENDING | 2026-07-17 | Canonical Ubuntu hashes are fixed and locally asserted. The authoritative Ubuntu-on-Ubuntu exact-byte rerun is the next GitHub gate; cross-platform diagnosis does not weaken it. |
 | 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
 | 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
-| 10 | Writer capability guard | NOT RUN | 2026-07-17 | Search and manifest writers changed after the prior guard evidence; rerun against final current code. |
-| 11 | Browser QA | NOT RUN | 2026-07-17 | Historical desktop/mobile pass predates the current captured build surface and accepted current-head generation. |
-| 12 | Final state | BLOCKED | 2026-07-17 | PR/merge/metadata/Pages/public verification and the release gates above remain pending. |
+| 10 | Writer capability guard | PASS | 2026-07-17 | All four direct writers rejected missing generation capability; SHA-256 for all five live release files remained unchanged. |
+| 11 | Browser QA | PENDING | 2026-07-17 | Local smoke passes; final public desktop/mobile, console/network, cover, and share-card QA follows merge and Pages deployment. |
+| 12 | Final state | IN PROGRESS | 2026-07-17 | Fresh CI, merge, metadata, Pages deployment, and public verification remain pending. |
 
 ### Static and focused commands
 
@@ -586,32 +551,33 @@ replace browser QA, and screenshots do not replace interaction/console checks.
 | build code inventory/bytes changed | Concurrent edit occurred. Let the editor finish, then restart the entire rebuild from a stable state. |
 | WOOD returns unsupported/`NA` with exact pins | Valid fail-closed scientific result; no imputation or partial estimate. |
 | outer package-record `Repository: null` or untrusted | Environment/network/repository metadata failure; repair it and rerun, without policy relaxation or manifest rewriting. |
-| all five standard CRAN `description.Remote*` fields absent | Valid implicit form from untouched `rsconnect` output, provided outer repository, `description.Repository`, package graph, version, and all other policy checks pass. Partial/null-named/rogue remote fields still fail. |
+| all five core `description.Remote*` fields absent | Valid only for independently trusted `description.Repository=CRAN`; `RSPM` requires the complete exact core and pinned snapshot. Partial/null-named/rogue fields always fail. |
 | staged contract, manifest, boot, or smoke stage fails | No promotion should occur. Prove live hashes unchanged and record the exact stage/message. |
 | ordinary promotion fails | Rollback should restore all five prior files. Prove exact hashes and cleanup; stop if any mismatch remains. |
 | power loss/hard kill during promotion | Treat live family as suspect even if files exist. Runtime guard should refuse mixed bytes. Rerun the full rebuild before use. |
 | direct artifact writer refuses to run | Expected generation-capability protection; use `rebuild_all.R`. |
 | post-rebuild generated-file diff | Current release fails exact reproducibility even if staged science/boot checks pass. Do not weaken the gate or promote ad hoc; compare candidate semantics/serialization only through an explicitly approved diagnostic transfer, fix the cause, then rerun. |
-| `partial standard CRAN provenance: DT` | The current all-or-none field policy differs across Windows/Linux records. Stop at the manifest-policy conflict above; do not omit, synthesize, or make fields optional merely to pass. |
+| `partial standard CRAN provenance: DT` | A core provenance field is missing or malformed. Keep the five-field all-or-none rule; `RemotePkgPlatform` alone is optional only beside a complete valid core. Repair generation/environment metadata and rerun. |
 
 ## Residual risks currently carried
 
-- Branch changes are committed and pushed and PR #4 is open, but current CI is red.
-  Merge, repository metadata, Pages deployment, and public URL/share-card
-  verification are pending; Linux candidate bytes were not retained for inspection.
-- Locale rewriting, CRAN-versus-RSPM labeling, and the all-or-none
-  `RemotePkgPlatform` rule are unresolved cross-platform manifest-policy conflicts.
-- The dated Posit Package Manager URL and strict CRAN identity policy do not archive
-  or independently content-hash every upstream package tarball.
+- PR #4 still points to the old red head until this local family is committed and
+  pushed. Fresh Ubuntu CI, merge, repository metadata, Pages deployment, and public
+  cover/share-card verification remain pending.
+- The retained isolated diagnostic bundle under `C:\tmp` is non-authoritative after
+  promotion; keep it only until fresh exact-byte CI is green, then remove it without
+  touching the repository family.
+- The dated Posit Package Manager URL and strict provenance validation do not
+  archive or independently content-hash every upstream package tarball.
 - Five separate filesystem entries cannot be indivisibly atomic across hard power
   loss. Manifest-last promotion and the 12-file boot checksum guard make a mixed
   generation refuse to boot; recovery is still a complete rebuild.
 - The process starts with invalid `C.UTF-8` environment settings on this Windows
   host. Runtime activation of `English_United States.utf8` is tested and required,
   but bypassing the supported runtime/helper path can reintroduce corruption.
-- Browser coverage is finite. Historical QA covered the principal desktop/mobile,
-  interaction, plot, Unicode, and accessibility paths, but current HEAD still needs
-  browser/publication verification after a passing generated family exists.
+- Browser coverage is finite. Historical app QA covered the principal desktop/mobile,
+  interaction, plot, Unicode, and accessibility paths; the current release still
+  needs final public Pages/cover/share-card and console/network verification.
 - The user Sass cache is not writable in this sandbox; Shiny safely falls back to a
   temporary cache. Some installed R packages report that they were built under R
   4.5.3 while tests run under R 4.5.2. Neither warning changed validated output,
@@ -1027,3 +993,59 @@ Rules:
   with diagnostic numeric deltas; formally validate and semantically normalize the
   two trusted standard-CRAN provenance representations; then promote the already
   validated Linux family, rerun unchanged CI, and merge only when green.
+
+### 2026-07-17 22:24 MST - canonical Ubuntu release implementation / root
+
+- **Changed:** adopted Ubuntu 24.04/R 4.5.2 with the pinned 2026-07-15
+  Posit snapshot as the release-byte authority; promoted the validated three-RDS
+  family plus its manifest as one hash-checked unit with manifest last; split the
+  five core provenance fields from optional exact `RemotePkgPlatform`; required
+  pinned explicit RSPM provenance; normalized CRAN/RSPM only after independent
+  validation; hardened locale normalization to one allowlisted root field; mirrored
+  policy and adversarial fixtures in the independent Python publisher; limited the
+  Windows raw-source diagnostic to `greenup_doy_additive <= 1e-12`; and aligned
+  monthly refresh dependencies/cleanliness with CI. Updated README, DEPLOY, suite
+  learning, and the reusable playbook, including removal of moving-head,
+  `continue-on-error`, and implicit manifest-glob guidance.
+- **Learned:** the release contract must separate canonical byte reproducibility
+  from strict cross-platform scientific portability. Manifest labels are never
+  normalized as a shortcut: canonical RSPM requires the exact dated repository and
+  optional platform tuple, and the R and Python trust boundaries must move together.
+  This is a reusable suite-platform pattern with Driver implication `NONE`.
+- **Test process:** under pinned R 4.5.2 and `R_LIBS=C:/tmp/cascade-r-lib`,
+  `verify_manifest.R` passed 73 packages/12 files; R comparator and Python publisher
+  adversarial fixtures passed; the complete seven-repository `test_helpers.R` oracle
+  passed 510 annual rows/46 sites/552 links and all raw-product overlays. The formerly
+  failing phenology check passed 345 site-years with ten strict fields at `1e-15`
+  and additive maximum delta `1.847e-13 <= 1e-12`. Boot integrity passed 12 malformed/
+  mutated fixtures and six promotion cuts; app smoke passed 510 rows/12 associations;
+  receipt fixtures, both workflow YAML/pin reviews, JavaScript syntax, R/Python
+  parse checks, and `git diff --check` passed. All four direct writers rejected a
+  missing generation capability with all five live SHA-256 values unchanged.
+  Three independent read-only reviews found no release-blocking implementation,
+  workflow, publisher, or Pages defect.
+- **Artifacts:** current canonical SHA-256 values are cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, unchanged
+  codebook `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Expected versus actual:** expected the approved Ubuntu family to preserve every
+  schema, source, support, key, text, sign, sensitivity, and decision contract while
+  passing bounded Windows diagnosis; actual matched. No rounding or scientific gate
+  relaxation occurred.
+- **Evidence invalidated:** the canonical sections that called the platform/provenance
+  choice unresolved, the Linux family unaccepted, and the Windows family current are
+  superseded. Historical dated diagnostic and Windows-build records remain factual.
+- **Failure/cleanup:** Bitdefender repeatedly blocked the normal patch helper and one
+  read-only launcher approval stalled for roughly two hours; exact one-occurrence
+  UTF-8/LF/no-BOM replacements were used only after helper failure. Session-owned Git
+  config/ignore files were removed; no rebuild lock, R process, stage, backup, pending
+  file, bytecode, or credential residue remains.
+- **Residual risk:** the remote PR still points to old red head `33653cf`. Fresh
+  canonical Ubuntu CI must pass the unchanged exact-byte and semantic-manifest gates
+  before merge. Master CI, repository metadata, Pages deployment, and final public
+  desktop/mobile console/network/share-card QA remain pending.
+- **Next action:** commit and push this complete family, require fresh PR CI green,
+  merge PR #4, synchronize `master`, patch repository description/homepage, wait for
+  master CI and Pages, then verify the public cover and social asset.

@@ -15,9 +15,17 @@ MANIFEST_BASE_PACKAGES <- c(
 MANIFEST_ALLOWED_REPOSITORY_HOSTS <- c(
   "cloud.r-project.org", "cran.r-project.org", "cran.rstudio.com",
   "packagemanager.posit.co")
+MANIFEST_STANDARD_REMOTE_CORE_FIELDS <- c(
+  "RemoteType", "RemoteRepos", "RemotePkgRef", "RemoteRef", "RemoteSha")
+MANIFEST_STANDARD_REMOTE_OPTIONAL_FIELDS <- "RemotePkgPlatform"
 MANIFEST_STANDARD_REMOTE_FIELDS <- c(
-  "RemoteType", "RemoteRepos", "RemotePkgRef", "RemoteRef", "RemoteSha",
-  "RemotePkgPlatform")
+  MANIFEST_STANDARD_REMOTE_CORE_FIELDS,
+  MANIFEST_STANDARD_REMOTE_OPTIONAL_FIELDS)
+MANIFEST_ALLOWED_REMOTE_PKG_PLATFORMS <-
+  "x86_64-pc-linux-gnu-ubuntu-24.04"
+MANIFEST_CANONICAL_RSPM_REPOSITORY <-
+  "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15"
+MANIFEST_ALLOWED_SOURCE_LOCALES <- c("en_US", "C.UTF-8", "en_US.UTF-8")
 
 `%||%` <- function(x, y) if (is.null(x) || !length(x)) y else x
 
@@ -30,6 +38,45 @@ MANIFEST_STANDARD_REMOTE_FIELDS <- c(
 .exact_names <- function(x, expected)
   is.list(x) && !is.null(names(x)) && !anyDuplicated(names(x)) &&
     setequal(names(x), expected) && length(names(x)) == length(expected)
+
+normalize_rsconnect_manifest_locale <- function(manifest_text) {
+  if (!.scalar_character(manifest_text))
+    .manifest_fail("generated manifest text must be one nonempty string")
+  if (!validUTF8(manifest_text))
+    .manifest_fail("generated manifest text must be valid UTF-8")
+  Encoding(manifest_text) <- "UTF-8"
+  if (!requireNamespace("jsonlite", quietly = TRUE))
+    .manifest_fail("jsonlite is required to normalize manifest locale")
+
+  source_manifest <- tryCatch(
+    jsonlite::fromJSON(manifest_text, simplifyVector = FALSE),
+    error = function(error)
+      .manifest_fail("cannot parse generated manifest before locale normalization: %s",
+                     conditionMessage(error)))
+  if (!.exact_names(source_manifest, MANIFEST_ROOT_FIELDS) ||
+      !.scalar_character(source_manifest$locale) ||
+      !(source_manifest$locale %in% MANIFEST_ALLOWED_SOURCE_LOCALES))
+    .manifest_fail("generated manifest source locale is missing or unapproved")
+
+  source_line <- sprintf('  "locale": "%s",', source_manifest$locale)
+  matches <- gregexpr(source_line, manifest_text, fixed = TRUE)[[1L]]
+  count <- if (length(matches) == 1L && identical(matches[[1L]], -1L)) 0L else length(matches)
+  if (count != 1L)
+    .manifest_fail("generated manifest must contain exactly one canonical root locale line")
+
+  normalized_text <- sub(source_line, '  "locale": "en_US",',
+                         manifest_text, fixed = TRUE)
+  normalized_manifest <- tryCatch(
+    jsonlite::fromJSON(normalized_text, simplifyVector = FALSE),
+    error = function(error)
+      .manifest_fail("cannot parse generated manifest after locale normalization: %s",
+                     conditionMessage(error)))
+  expected_manifest <- source_manifest
+  expected_manifest$locale <- "en_US"
+  if (!identical(normalized_manifest, expected_manifest))
+    .manifest_fail("manifest locale normalization changed another field")
+  normalized_text
+}
 
 .read_raw_file <- function(path) {
   info <- file.info(path)
@@ -157,7 +204,8 @@ manifest_direct_packages <- function(files) {
   .repository_host(url) %in% MANIFEST_ALLOWED_REPOSITORY_HOSTS
 
 .validate_standard_cran_provenance <- function(description, package) {
-  present <- MANIFEST_STANDARD_REMOTE_FIELDS %in% names(description)
+  core_present <- MANIFEST_STANDARD_REMOTE_CORE_FIELDS %in% names(description)
+  platform_present <- MANIFEST_STANDARD_REMOTE_OPTIONAL_FIELDS %in% names(description)
   provenance_names <- names(description)[grepl(
     "^(Remote|Github|GitLab|Bitbucket)", names(description),
     ignore.case = TRUE, perl = TRUE)]
@@ -165,16 +213,30 @@ manifest_direct_packages <- function(files) {
   if (length(unexpected))
     .manifest_fail("unexpected package provenance field(s) for %s: %s",
                    package, paste(unexpected, collapse = ", "))
-  if (any(present) && !all(present))
+  if (any(core_present) && !all(core_present))
     .manifest_fail("partial standard CRAN provenance: %s", package)
-  if (all(present) &&
+  if (isTRUE(platform_present) && !all(core_present))
+    .manifest_fail("RemotePkgPlatform requires explicit standard CRAN provenance: %s",
+                   package)
+  if (all(core_present) &&
       (!identical(description$RemoteType, "standard") ||
        !identical(description$RemotePkgRef, package) ||
        !identical(description$RemoteRef, package) ||
        !identical(description$RemoteSha, description$Version) ||
        !.trusted_repository(description$RemoteRepos)))
     .manifest_fail("explicit standard CRAN provenance is invalid: %s", package)
-  invisible(if (all(present)) "explicit" else "implicit")
+  if (isTRUE(platform_present) &&
+      (!.scalar_character(description$RemotePkgPlatform) ||
+       !(description$RemotePkgPlatform %in%
+         MANIFEST_ALLOWED_REMOTE_PKG_PLATFORMS)))
+    .manifest_fail("RemotePkgPlatform is invalid or untrusted: %s", package)
+  if (identical(description$Repository, "RSPM") &&
+      (!all(core_present) ||
+       !identical(description$RemoteRepos,
+                  MANIFEST_CANONICAL_RSPM_REPOSITORY)))
+    .manifest_fail("RSPM provenance is not the canonical pinned snapshot: %s",
+                   package)
+  invisible(if (all(core_present)) "explicit" else "implicit")
 }
 
 .built_r_compatible <- function(built) {
@@ -308,6 +370,7 @@ validate_manifest_policy <- function(manifest, deploy_files, check_checksums = T
         !identical(description$Package, package) ||
         !.scalar_character(description$Version) ||
         !grepl("^[0-9]+(?:[.-][A-Za-z0-9]+)*$", description$Version, perl = TRUE) ||
+        !.scalar_character(description$Repository) ||
         !(description$Repository %in% c("CRAN", "RSPM")) ||
         !.built_r_compatible(description$Built))
       .manifest_fail("manifest package record is incomplete or untrusted: %s", package)
@@ -397,7 +460,9 @@ manifest_reproducibility_projection <- function(manifest) {
       source = record$Source,
       package = record$description$Package,
       version = record$description$Version,
-      repository = record$description$Repository,
+      # CRAN and RSPM are equivalent labels only after the complete record has
+      # independently passed the strict standard-CRAN provenance policy above.
+      repository = "standard-CRAN",
       remote_type = "standard",
       remote_package = package,
       remote_ref = package,

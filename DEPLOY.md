@@ -28,9 +28,18 @@ payloads, install those four files, refresh checksums in the already-reviewed ma
 and push the four data files plus `manifest.json` to `master` (= the deploy). Run it any time from the
 **Actions** tab (`workflow_dispatch`).
 
-Workflow Actions are pinned to full commit SHAs. R 4.5.2 and the recursive package graph are resolved
-from a dated Posit Package Manager snapshot; this freezes repository state, although it is not a
-content-hash lock of every package tarball.
+Workflow Actions are pinned to full commit SHAs. Ubuntu 24.04, R 4.5.2, and the
+dated 2026-07-15 Posit Package Manager snapshot are the canonical release-byte
+environment; the Linux CI gate still requires exact artifact bytes. Windows is a
+strict portability/oracle environment for schemas, classes, attributes, keys,
+text, support, scientific decisions, and explicitly named bounded last-bit
+diagnostics, not a second artifact-byte authority. No release value is rounded.
+
+A manifest may represent a standard CRAN install as `CRAN` or `RSPM` only after
+the complete record independently passes trusted-repository, exact
+package/version/ref/SHA, pinned-snapshot, optional-platform, dependency-graph,
+deploy-surface, and checksum policies. Semantic normalization never substitutes
+for those validations.
 
 ## Rebuild locally
 ```powershell

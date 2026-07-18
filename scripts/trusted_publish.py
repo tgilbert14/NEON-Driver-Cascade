@@ -42,9 +42,15 @@ ALLOWED_REPOSITORY_HOSTS = {
     "cran.rstudio.com",
     "packagemanager.posit.co",
 }
-STANDARD_REMOTE_FIELDS = {
+STANDARD_REMOTE_CORE_FIELDS = {
     "RemoteType", "RemoteRepos", "RemotePkgRef", "RemoteRef", "RemoteSha",
 }
+STANDARD_REMOTE_OPTIONAL_FIELDS = {"RemotePkgPlatform"}
+STANDARD_REMOTE_FIELDS = STANDARD_REMOTE_CORE_FIELDS | STANDARD_REMOTE_OPTIONAL_FIELDS
+ALLOWED_REMOTE_PKG_PLATFORMS = {"x86_64-pc-linux-gnu-ubuntu-24.04"}
+CANONICAL_RSPM_REPOSITORY = (
+    "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15"
+)
 PROVENANCE_FIELD = re.compile(r"^(Remote|Github|GitLab|Bitbucket)", re.IGNORECASE)
 FATAL_PACKAGES = {"neonutilities", "arrow"}
 BASE_PACKAGES = {
@@ -238,20 +244,26 @@ def validate_manifest(manifest: dict, root: Path, check_checksums: bool) -> None
             or description["Package"] != name
             or not isinstance(version, str)
             or not PACKAGE_VERSION.fullmatch(version)
-            or description["Repository"] != "CRAN"
+            or not isinstance(description["Repository"], str)
+            or description["Repository"] not in {"CRAN", "RSPM"}
             or built_match is None
             or built_match.groups() != ("4", "5")
         ):
             fail(f"package record is incomplete, untrusted, or R-incompatible: {name}")
 
-        present = {field for field in STANDARD_REMOTE_FIELDS if field in description}
+        core_present = {
+            field for field in STANDARD_REMOTE_CORE_FIELDS if field in description
+        }
+        platform_present = "RemotePkgPlatform" in description
         provenance_names = {field for field in description if PROVENANCE_FIELD.match(field)}
         unexpected = sorted(provenance_names - STANDARD_REMOTE_FIELDS)
         if unexpected:
             fail(f"unexpected package provenance field(s) for {name}: {', '.join(unexpected)}")
-        if present and present != STANDARD_REMOTE_FIELDS:
+        if core_present and core_present != STANDARD_REMOTE_CORE_FIELDS:
             fail(f"partial standard CRAN provenance: {name}")
-        if present and (
+        if platform_present and core_present != STANDARD_REMOTE_CORE_FIELDS:
+            fail(f"RemotePkgPlatform requires explicit standard CRAN provenance: {name}")
+        if core_present and (
             description["RemoteType"] != "standard"
             or description["RemotePkgRef"] != name
             or description["RemoteRef"] != name
@@ -259,6 +271,16 @@ def validate_manifest(manifest: dict, root: Path, check_checksums: bool) -> None
             or not trusted_repository(description["RemoteRepos"])
         ):
             fail(f"explicit standard CRAN provenance is invalid: {name}")
+        if platform_present and (
+            not isinstance(description["RemotePkgPlatform"], str)
+            or description["RemotePkgPlatform"] not in ALLOWED_REMOTE_PKG_PLATFORMS
+        ):
+            fail(f"RemotePkgPlatform is invalid or untrusted: {name}")
+        if description["Repository"] == "RSPM" and (
+            core_present != STANDARD_REMOTE_CORE_FIELDS
+            or description["RemoteRepos"] != CANONICAL_RSPM_REPOSITORY
+        ):
+            fail(f"RSPM provenance is not the canonical pinned snapshot: {name}")
         dependency_map[name] = mandatory_dependencies(name, description)
 
     package_by_lower = {name.lower(): name for name in packages}

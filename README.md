@@ -3,9 +3,11 @@
 > **Explore:** [Launch the hosted atlas](https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/) · [Project home](https://tgilbert14.github.io/NEON-Driver-Cascade/) · [Repository](https://github.com/tgilbert14/NEON-Driver-Cascade)
 
 The **capstone** of the NEONize family — an exploratory cross-product atlas of direct weather–response associations.
-Where each sibling app (small mammals, breeding birds, plant diversity, vegetation
-structure, plant phenology, mosquitoes, ground beetles) dives into one NEON product, this one **lines them up** at shared
-field sites on a common annual calendar.
+The suite has nine product apps. This current baseline consumes seven of them
+(small mammals, breeding birds, plant diversity, vegetation structure, plant
+phenology, mosquitoes, and ground beetles); water chemistry and aquatic
+invertebrates remain future review inputs. The atlas **lines those seven inputs
+up** at shared field sites on a common annual calendar.
 
 > **Construct warning:** the current measurements do not supply a defensible annual production/seed-resource rung or
 > a mediated-path test. The layered display is a co-display of candidate bottom-up pathways, **not a tested trophic cascade**.
@@ -140,8 +142,14 @@ and applies Holm adjustment over the two-row family. It remains an exploratory s
 
 ## Reproducible rebuilds
 
-Run only `Rscript scripts/rebuild_all.R`. Set `CASCADE_ROOT` to the directory containing all seven sibling
-repositories. Each repository must be at its canonical origin; the archived `data/sites` scope (plus mammal `data/env`) must be clean and all consumed inputs tracked. Unrelated editor metadata outside those inert data roots cannot affect the build. The builder
+Run only `Rscript scripts/rebuild_all.R`. Set `CASCADE_ROOT` to the directory
+containing all seven current input repositories.
+
+Ubuntu 24.04 with R 4.5.2 and the dated Posit snapshot is the canonical
+release-byte environment, and CI requires its scientific artifacts to reproduce
+exactly. Windows keeps strict schema, class, attribute, key, text, support, and
+scientific-decision checks plus only explicitly named bounded full-precision
+diagnostics; artifacts are never rounded to manufacture cross-platform identity. Each repository must be at its canonical origin; the archived `data/sites` scope (plus mammal `data/env`) must be clean and all consumed inputs tracked. Unrelated editor metadata outside those inert data roots cannot affect the build. The builder
 records the exact commits and input hashes, creates an immutable `git archive` snapshot of each recorded
 commit, verifies the extracted inputs against that inventory, and reads only those snapshots. A final live-source
 check detects ordinary source changes during the run.

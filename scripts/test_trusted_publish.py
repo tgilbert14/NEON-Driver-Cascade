@@ -53,23 +53,43 @@ def exercise_manifest_policy() -> None:
         for record in implicit["packages"].values():
             for field in guard.STANDARD_REMOTE_FIELDS:
                 record["description"].pop(field, None)
+            record["description"]["Repository"] = "CRAN"
         guard.validate_manifest(implicit, root, check_checksums=True)
 
-        explicit = copy.deepcopy(implicit)
-        for name, record in explicit["packages"].items():
+        explicit_cran = copy.deepcopy(implicit)
+        for name, record in explicit_cran["packages"].items():
             description = record["description"]
             description.update({
                 "RemoteType": "standard",
-                "RemoteRepos": record["Repository"],
+                "RemoteRepos": "https://cran.r-project.org",
                 "RemotePkgRef": name,
                 "RemoteRef": name,
                 "RemoteSha": description["Version"],
             })
-        guard.validate_manifest(explicit, root, check_checksums=True)
+        guard.validate_manifest(explicit_cran, root, check_checksums=True)
 
-        package = next(iter(explicit["packages"]))
-        for field in guard.STANDARD_REMOTE_FIELDS:
-            partial = copy.deepcopy(explicit)
+        approved_platform = next(iter(guard.ALLOWED_REMOTE_PKG_PLATFORMS))
+        explicit_rspm = copy.deepcopy(explicit_cran)
+        for record in explicit_rspm["packages"].values():
+            record["Repository"] = guard.CANONICAL_RSPM_REPOSITORY
+            description = record["description"]
+            description["Repository"] = "RSPM"
+            description["RemoteRepos"] = guard.CANONICAL_RSPM_REPOSITORY
+            description["RemotePkgPlatform"] = approved_platform
+            description["Built"] = (
+                "R 4.5.9; x86_64-pc-linux-gnu; "
+                "2030-01-01 00:00:00 UTC; unix"
+            )
+        guard.validate_manifest(explicit_rspm, root, check_checksums=True)
+
+        rspm_without_platform = copy.deepcopy(explicit_rspm)
+        for record in rspm_without_platform["packages"].values():
+            record["description"].pop("RemotePkgPlatform")
+        guard.validate_manifest(rspm_without_platform, root, check_checksums=True)
+
+        package = next(iter(explicit_cran["packages"]))
+        for field in guard.STANDARD_REMOTE_CORE_FIELDS:
+            partial = copy.deepcopy(explicit_cran)
             partial["packages"][package]["description"].pop(field)
             expect_rejection(
                 lambda candidate=partial: guard.validate_manifest(
@@ -79,7 +99,7 @@ def exercise_manifest_policy() -> None:
             )
             singleton = copy.deepcopy(implicit)
             singleton["packages"][package]["description"][field] = (
-                explicit["packages"][package]["description"][field]
+                explicit_cran["packages"][package]["description"][field]
             )
             expect_rejection(
                 lambda candidate=singleton: guard.validate_manifest(
@@ -88,13 +108,43 @@ def exercise_manifest_policy() -> None:
                 f"singleton provenance field {field}",
             )
 
-        null_field = copy.deepcopy(explicit)
+        platform_only = copy.deepcopy(implicit)
+        platform_only["packages"][package]["description"]["RemotePkgPlatform"] = (
+            approved_platform
+        )
+        expect_rejection(
+            lambda: guard.validate_manifest(platform_only, root, check_checksums=True),
+            "platform metadata without core provenance",
+        )
+        null_platform = copy.deepcopy(explicit_rspm)
+        null_platform["packages"][package]["description"]["RemotePkgPlatform"] = None
+        expect_rejection(
+            lambda: guard.validate_manifest(null_platform, root, check_checksums=True),
+            "a named null platform field",
+        )
+        invalid_platforms = {
+            "empty": "",
+            "list": [approved_platform],
+            "wrong OS": "aarch64-apple-darwin20",
+            "near miss": "x86_64-pc-linux-gnu-ubuntu-24.04.1",
+            "whitespace": "x86_64-pc-linux-gnu-ubuntu-24.04 ",
+        }
+        for label, value in invalid_platforms.items():
+            invalid = copy.deepcopy(explicit_rspm)
+            invalid["packages"][package]["description"]["RemotePkgPlatform"] = value
+            expect_rejection(
+                lambda candidate=invalid: guard.validate_manifest(
+                    candidate, root, check_checksums=True
+                ),
+                f"invalid platform value {label}",
+            )
+
+        null_field = copy.deepcopy(explicit_cran)
         null_field["packages"][package]["description"]["RemoteType"] = None
         expect_rejection(
             lambda: guard.validate_manifest(null_field, root, check_checksums=True),
             "a named null provenance field",
         )
-
         invalid_values = {
             "RemoteType": "github",
             "RemoteRepos": "https://example.invalid/cran",
@@ -103,7 +153,7 @@ def exercise_manifest_policy() -> None:
             "RemoteSha": "999.0.0",
         }
         for field, value in invalid_values.items():
-            invalid = copy.deepcopy(explicit)
+            invalid = copy.deepcopy(explicit_cran)
             invalid["packages"][package]["description"][field] = value
             expect_rejection(
                 lambda candidate=invalid: guard.validate_manifest(
@@ -117,7 +167,7 @@ def exercise_manifest_policy() -> None:
             "https://cran.r-project.org/path with space",
             "https://cran.r-project.org/path\ncontrol",
         ):
-            invalid = copy.deepcopy(explicit)
+            invalid = copy.deepcopy(explicit_cran)
             invalid["packages"][package]["description"]["RemoteRepos"] = url
             expect_rejection(
                 lambda candidate=invalid: guard.validate_manifest(
@@ -131,7 +181,7 @@ def exercise_manifest_policy() -> None:
             "BitbucketRepo", "Remotes", "remotetype",
         )
         for field in rogue_fields:
-            for base in (implicit, explicit):
+            for base in (implicit, explicit_cran, explicit_rspm):
                 rogue = copy.deepcopy(base)
                 rogue["packages"][package]["description"][field] = "attacker-controlled"
                 expect_rejection(
@@ -153,17 +203,35 @@ def exercise_manifest_policy() -> None:
             lambda: guard.validate_manifest(core_drift, root, check_checksums=True),
             "an untrusted outer repository",
         )
-        core_drift = copy.deepcopy(implicit)
-        core_drift["packages"][package]["description"]["Repository"] = "OTHER"
-        expect_rejection(
-            lambda: guard.validate_manifest(core_drift, root, check_checksums=True),
-            "a non-CRAN DESCRIPTION repository",
-        )
+        for value in ("OTHER", "", None, ["CRAN", "RSPM"]):
+            core_drift = copy.deepcopy(implicit)
+            core_drift["packages"][package]["description"]["Repository"] = value
+            expect_rejection(
+                lambda candidate=core_drift: guard.validate_manifest(
+                    candidate, root, check_checksums=True
+                ),
+                "an invalid DESCRIPTION repository",
+            )
         core_drift = copy.deepcopy(implicit)
         core_drift["packages"][package]["description"]["Package"] = "wrong-package"
         expect_rejection(
             lambda: guard.validate_manifest(core_drift, root, check_checksums=True),
             "a package key/DESCRIPTION mismatch",
+        )
+
+        rspm_implicit = copy.deepcopy(implicit)
+        rspm_implicit["packages"][package]["description"]["Repository"] = "RSPM"
+        expect_rejection(
+            lambda: guard.validate_manifest(rspm_implicit, root, check_checksums=True),
+            "implicit RSPM provenance",
+        )
+        rspm_latest = copy.deepcopy(explicit_rspm)
+        rspm_latest["packages"][package]["description"]["RemoteRepos"] = (
+            "https://packagemanager.posit.co/cran/latest"
+        )
+        expect_rejection(
+            lambda: guard.validate_manifest(rspm_latest, root, check_checksums=True),
+            "an unpinned RSPM record",
         )
 
         stored = copy.deepcopy(manifest)

@@ -46,7 +46,9 @@ is never the only copy of a reusable lesson or test process.
    the generation guard, source snapshot, validation stages, manifest-last
    promotion, or rollback path.
 4. Do not weaken scientific fail-closed behavior, source provenance checks,
-   manifest policy, CRAN-only package provenance, checksum enforcement, workflow
+   manifest policy, strict trusted standard-CRAN provenance (including only
+   independently validated canonical CRAN/RSPM representations), checksum
+   enforcement, workflow
    SHA pins, or runtime boot-integrity checks to make a failing environment pass.
 5. Never declare the repository, build, release, deployment, or artifact family
    "done" unless every applicable row in the handoff's completion matrix has dated

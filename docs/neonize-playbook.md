@@ -173,28 +173,34 @@ This is now the standard; shinyapps.io (small-mammal reference) is legacy and sl
 - Required in-repo: a lean **`manifest.json`** (`rsconnect::writeManifest()`; bundle-only, keep
   `neonUtilities` OUT via the computed-package-name trick), the committed `data/` bundles, and a
   `docs/index.html` GitHub Pages showcase whose `APP_URL` points at the live Connect Cloud app.
+- Every generated family must name one canonical release-byte platform/toolchain or prove exact
+  byte identity everywhere. Keep that platform's exact-byte gate; use other platforms for strict
+  schema/key/text/source/decision checks and only explicitly named bounded numeric diagnostics.
+  Never round artifacts to force parity.
+- Treat ordinary CRAN and Posit/RSPM records as semantically equivalent only after each complete
+  manifest independently passes trusted-repository, version/ref/SHA, pinned-snapshot,
+  optional-platform, dependency, deploy-surface, and checksum validation.
 - Branch naming is split across the suite (`main` vs `master`) — each workflow must push to the
   branch its own Connect Cloud app watches. Standardize new repos on `main`.
 
-**Auto-refresh + self-deploy (`.github/workflows/refresh-data.yml`) — copy this shape:**
-- **Schedule (identical across the suite):** `cron: "0 6 * * 0"` (Sunday 06:00 UTC = Saturday 23:00
-  America/Phoenix, off-peak), with a **gate job** that proceeds only on the **first Saturday of the
-  month** (`dow=6 && day<=7`, `TZ=America/Phoenix`) — cron can't say "first Saturday", so fire weekly
-  and gate. `workflow_dispatch` with a `skip_download` input always proceeds (fast redeploy test).
-- **Flow:** gate → checkout → `setup-r` + deps → fetch raw + rebuild `data/sites/*.rds` (+ any
-  overlays) → **commit/push to the watched branch (= the deploy on Connect Cloud)** → optionally open
-  a data-refresh PR. Time-box + `continue-on-error` the heavy/optional steps so they can't block the
-  deploy. `NEON_TOKEN` is an optional secret (anonymous works, slower).
-- **Two deploy triggers seen in the wild — prefer auto-push:** (a) *auto* — push refreshed data
-  straight to the watched branch (mammal/bird/phe/plant). (b) *PR-merge* — open a PR a human merges
-  (veg) — this is NOT self-deploying; convert to auto-push unless a review gate is wanted.
+**Auto-refresh + self-deploy (`.github/workflows/refresh-data.yml`) — copy the trust shape,
+then choose the app's documented cadence:**
+- Product apps normally refresh on the first Saturday; derived/master apps run later (the Driver
+  uses the second Saturday) so upstream publication can settle. Keep `workflow_dispatch` for
+  controlled reruns, but do not pretend every app has the same dependency schedule.
+- Required download, build, contract, manifest, receipt, and publication gates fail closed.
+  `continue-on-error` is reserved for genuinely optional diagnostics that cannot affect published
+  bytes or the release decision.
+- Prefer an automatic push to the branch watched by Connect Cloud only after all required gates pass.
+  A review-PR flow is valid when intentionally chosen, but it is not self-deploying.
 
-**Derived/master apps (e.g. Driver Cascade):** their bundle is built FROM sibling repos' bundles, so
-CI must obtain them — `git clone --depth 1` each sibling repo (use the real slugs, not dir names:
-NEON-Small-Mammal-Tracker-App, NEON-Plant-Diversity, NEON-Breeding-Birds,
-NEON-Plant-Phenology-Explorer, NEON-Vegetation-Structure-Explorer, NEON-Ground-Beetle-Tracker),
-copy their `data/`, run the build script, commit the derived `.rds`. A master app needs a **GitHub
-remote + a Connect Cloud app** before any of this works.
+**Derived/master apps (e.g. Driver Cascade):** never build from moving shallow-clone heads or copy
+unverified sibling directories. Allowlist canonical origins, capture exact commits, verify the
+consumed scopes, materialize immutable Git-object snapshots, and build in a no-write producer job.
+Pass only the allowlisted artifact family plus a SHA-256 receipt to a fresh validator. Give write
+permission only to a restricted publisher that rechecks the receipt, stale-base condition, manifest
+policy, exact file allowlist, and final diff before pushing the watched branch. Include every actual
+input product (including mosquitoes for the current Driver), and keep the source lock durable.
 
 ## 7. Per-app readiness checklist (audit every app against this)
 
@@ -220,7 +226,7 @@ bird thresholds: memory `neonize-qc-flag-pattern`.
 a "Search" nav_panel that queries a SMALL precomputed `data/search_index.rds` (one row per searchable
 unit), loaded ONCE at boot like `site_index` and filtered in memory, so it stays instant with NO live
 fetch. Builder `scripts/build_search_index.R` READS the committed bundles (never fetches) and writes the
-index; add the index to `data/` so `write_manifest.R`'s `data/*.rds` glob bundles it (rerun the manifest:
+index; add the index to the app's explicit deploy-file allowlist so `write_manifest.R` bundles it (rerun the manifest:
 DT becomes a dependency). Two query modes via a radio/segmented control: **(a) Find-a-taxon/link** —
 a `selectizeInput` autocomplete of every unit in the index → a `DT` of every site where it occurs with
 the app's honest per-site MEASURE + years; **(b) a product-specific threshold query** → a `DT` of the
