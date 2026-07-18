@@ -9,8 +9,8 @@ can continue safely without relying on chat history.
 ## Current handoff state
 
 **Release-validation state on the local release branch: POLICY APPROVED; LOCAL
-VALIDATION PASS; PINNED-RUNTIME RUN 1 PASS; FINAL CLEAN-HEAD DOUBLE-RUN PENDING
-as of 2026-07-18.** The owner approved Ubuntu 24.04 with R 4.5.2, the pinned
+VALIDATION PASS; PINNED-RUNTIME DETERMINISM PASS; FINAL EVIDENCE-ONLY HEAD CI
+PENDING as of 2026-07-18.** The owner approved Ubuntu 24.04 with R 4.5.2, the pinned
 2026-07-15 Posit snapshot, OpenBLAS `Haswell`, and one BLAS/OpenMP thread as the
 canonical release-byte platform. The exact Ubuntu byte gate remains authoritative.
 Windows remains a strict schema/class/attribute/key/text/source/support/decision
@@ -37,10 +37,19 @@ GitHub Actions run `29644372306` on head `8ca35a2` then loaded
 `OpenBLAS core=Haswell threads=1` under DYNAMIC_ARCH, reproduced all four scientific
 artifacts exactly, and passed the semantic-manifest and whitespace gates after the
 complete build. The fail-only diagnostic correctly skipped and the run retained zero
-artifacts; that temporary upload is now removed. PR #4 must not merge until the
-final clean head passes twice on independent runners with the same loaded-runtime
-receipt. Repository metadata, Pages deployment, and final public cover/share-card
-QA remain pending.
+artifacts; that temporary upload is now removed.
+
+The diagnostic-free code/workflow head `526dd3bb2b9f6ad7170bd0af54bf25753ed6e3dd`
+then passed GitHub Actions run `29644970791` twice on independent fresh runner
+attempts (jobs `88081588746` and `88083964830`). Both attempts passed the loaded
+Haswell/one-thread guard, all nine build stages, every source/scientific contract,
+the unchanged exact-byte gate, semantic manifest comparison, and whitespace. The
+second receipt was `OpenBLAS core=Haswell threads=1 config=OpenBLAS 0.3.26
+NO_LAPACKE DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64`; the run retained zero
+artifacts. This completes the required two-run deterministic release proof. The
+evidence-only documentation head still requires one green CI run before merge;
+repository metadata, Pages deployment, and final public cover/share-card QA remain
+pending.
 
 The cross-platform diagnosis remains part of the audit record: one root family
 diff from RDS native-encoding headers plus last-bit OLS/QR, correlation, and
@@ -50,7 +59,7 @@ delta `1.8474111129762605e-13` under its sole `1e-12` diagnostic; the primary
 estimator and ten strict fields remain at `1e-15`, and all finite patterns, keys,
 support, signs, votes, tiers, sensitivities, and decisions remain exact.
 
-### Promoted Ubuntu release family (pinned-runtime pass 1; final-head repeats pending)
+### Canonical Ubuntu release family (two clean pinned-runtime passes)
 
 | Artifact | Bytes | MD5 | SHA-256 |
 |---|---:|---|---|
@@ -444,14 +453,14 @@ code change invalidates earlier build, determinism, browser, and manifest eviden
 | 2 | Static syntax | PASS | 2026-07-17 | 22 R files parsed as UTF-8; `node --check`; both Python files compiled in memory; Python fixtures passed. |
 | 3 | Workflow policy | PASS | 2026-07-18 | Both YAML files safe-loaded; all 13 final `uses:` values are full lowercase 40-hex pins; receipt self-test passed; the temporary diagnostic upload is removed. |
 | 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; canonical LF/no-BOM text; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. |
-| 5 | Authoritative build | PINNED CI PASS / FINAL HEAD PENDING | 2026-07-18 | Run `29644372306` passed all nine stages, contracts, exact scientific bytes, semantic manifest, and whitespace with loaded Haswell/one-thread verification. |
+| 5 | Authoritative build | PASS | 2026-07-18 | Diagnostic-free head `526dd3b` passed all nine stages, contracts, exact scientific bytes, semantic manifest, and whitespace in run `29644970791` attempts 1 and 2 (jobs `88081588746`, `88083964830`). |
 | 6 | Independent live-root checks | PASS | 2026-07-17 | Promoted family passed the complete seven-source oracle, manifest verification/comparison, Python publisher fixtures, boot integrity, app smoke, and workflow receipt fixtures. |
-| 7 | Determinism | PINNED PASS 1 / FINAL DOUBLE-RUN PENDING | 2026-07-18 | Haswell/one-thread run `29644372306` reproduced the promoted family exactly. The diagnostic-free final head must pass twice on independent runners before merge. |
+| 7 | Determinism | PASS | 2026-07-18 | Two independent fresh attempts of run `29644970791` on unchanged head `526dd3b` loaded the pinned Haswell/one-thread runtime and reproduced exact artifact bytes plus manifest semantics. |
 | 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
 | 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
 | 10 | Writer capability guard | PASS | 2026-07-17 | All four direct writers rejected missing generation capability; SHA-256 for all five live release files remained unchanged. |
 | 11 | Browser QA | PENDING | 2026-07-17 | Local smoke passes; final public desktop/mobile, console/network, cover, and share-card QA follows merge and Pages deployment. |
-| 12 | Final state | IN PROGRESS | 2026-07-17 | Fresh CI, merge, metadata, Pages deployment, and public verification remain pending. |
+| 12 | Final state | IN PROGRESS | 2026-07-18 | Deterministic code/workflow proof is complete; evidence-only head CI, merge, metadata, Pages deployment, and public verification remain pending. |
 
 ### Static and focused commands
 
@@ -573,12 +582,13 @@ replace browser QA, and screenshots do not replace interaction/console checks.
 
 ## Residual risks currently carried
 
-- Pinned-runtime run `29644372306` is green and reproduced exact bytes, but it still
-  contained the skipped diagnostic step. That step is now removed; the final clean
-  head must pass twice on independent runners before PR #4 may merge.
-- The retained isolated diagnostic bundle under `C:\tmp` is non-authoritative after
-  promotion; keep it only until fresh exact-byte CI is green, then remove it without
-  touching the repository family.
+- Diagnostic-free code/workflow head `526dd3b` has two independent fresh-run proofs
+  of the loaded Haswell/one-thread contract, exact artifact bytes, and semantic
+  manifest. The evidence-only documentation head still requires one green CI run
+  before PR #4 may merge.
+- The retained isolated diagnostic bundle under `C:\tmp` is non-authoritative and
+  outside the repository. It is no longer needed for scientific evidence and may be
+  removed after release without touching the canonical repository family.
 - The dated Posit Package Manager URL and strict provenance validation do not
   archive or independently content-hash every upstream package tarball.
 - Five separate filesystem entries cannot be indivisibly atomic across hard power
@@ -1166,3 +1176,45 @@ Rules:
 - **Next action:** commit/push the diagnostic-free workflow and updated durable
   evidence, require that final head to pass all gates, rerun that same final head on
   a second independent runner, then merge only if both are green.
+
+### 2026-07-18 06:25 MST - two clean pinned-runtime passes complete / root
+
+- **Changed/classification:** documentation only. Recorded the completed deterministic
+  proof in the handoff and suite register. Classification is `suite-platform`;
+  Driver implication is explicitly `NONE`. No product definition, estimator, data
+  contract, QC rule, science, workflow, generated artifact, or manifest changed.
+- **Learned:** reproducible RDS bytes require the effective numeric runtime to be
+  part of the release platform. Pinning the BLAS core and thread count and then
+  verifying the loaded library state fail-closed is sufficient here: two fresh
+  runners reproduced the same canonical family without rounding or relaxed gates.
+- **Test process/environment:** GitHub Actions run `29644970791` on exact PR head
+  `526dd3bb2b9f6ad7170bd0af54bf25753ed6e3dd` passed attempt 1/job `88081588746`
+  and attempt 2/job `88083964830`. Both used Ubuntu 24.04, R 4.5.2, the pinned
+  2026-07-15 Posit snapshot, OpenBLAS 0.3.26 with loaded Haswell core and one
+  thread, all seven detached pinned sources, and the supported nine-stage rebuild.
+  Both passed source locks, every raw-source/scientific contract, manifest
+  verification (73 packages/12 files), runtime integrity (12 malformed/mutated
+  fixtures and six promotion cuts), app smoke (510 rows/12 associations), exact
+  committed scientific bytes, semantic manifest comparison, and whitespace. The
+  second exact runtime receipt was `OpenBLAS core=Haswell threads=1 config=OpenBLAS
+  0.3.26 NO_LAPACKE DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64`.
+- **Expected versus actual:** expected two independent diagnostic-free runs on the
+  unchanged code/workflow head to reproduce exact bytes and manifest semantics;
+  both did. GitHub reports zero retained artifacts.
+- **Evidence invalidated:** the prior `pass 1` and `double-run pending` status is
+  superseded. The historical unpinned failure and first pinned experiment remain
+  factual diagnostic evidence.
+- **Artifacts/non-impact:** unchanged at cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Failure/cleanup:** neither clean attempt failed or retained a diagnostic artifact;
+  no rebuild lock, stage, backup, pending file, or generated artifact changed.
+- **Residual risk:** the evidence-only final PR head still needs one green CI run;
+  merge, repository metadata, Pages deployment, and public desktop/mobile
+  cover/share-card plus console/network QA remain pending.
+- **Next action:** commit and push this evidence-only update, require its full CI to
+  pass, merge PR #4, update repository metadata, then verify the deployed Pages
+  root and social image in desktop/mobile browser sessions.

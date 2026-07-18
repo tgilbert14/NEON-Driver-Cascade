@@ -151,7 +151,7 @@ Do not mark an app complete from memory or screenshots alone.
 
 | Pass | App | Status | Source/build evidence | Knowledge package | Driver disposition | Published verification |
 |---:|---|---|---|---|---|---|
-| 0 | Driver Response Atlas baseline | pinned-runtime pass 1 green; final clean-head double-run pending | exact bytes + semantic manifest passed in run `29644372306`; see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu/Haswell/one-thread contract captured | integration target | PR #4 final CI/merge/Pages pending |
+| 0 | Driver Response Atlas baseline | two clean pinned-runtime passes complete; evidence-only head CI/merge pending | exact bytes + semantic manifest passed twice in run `29644970791` on unchanged head `526dd3b`; see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu/Haswell/one-thread contract captured | integration target | PR #4 evidence CI/merge/Pages pending |
 | 1 | Small Mammal Tracker | pending | — | — | — | — |
 | 2 | Plant Diversity | pending | — | — | — | — |
 | 3 | Plant Phenology Explorer | pending | — | — | — | — |
@@ -176,8 +176,8 @@ work.
 | Driver baseline | plant richness as productivity | REJECT | composition is not productivity | keep context-only wording | evaluate periphyton/producer gap after aquatic passes |
 | Driver baseline | beetle activity as CPUE | CONTEXT | denominator is catch-event-conditioned | no inferential vote | revisit after beetle effort audit |
 | Driver baseline | aquatic climate bridge | COMPLEMENT | no direct terrestrial/aquatic site-code overlap | require explicit proxy or true aquatic driver | water chemistry + inverts passes, then gap audit |
-| Driver release platform | canonical Ubuntu bytes + strict Windows oracle + independently validated CRAN/RSPM manifest normalization | NONE | family hashes, dual policy fixtures, raw-source oracle, boot/smoke evidence, and first pinned-runtime exact pass in Driver handoff | no scientific Driver change | reuse this release/test split in each app pass; never round artifacts or normalize unvalidated provenance |
-| Driver release platform | fixed BLAS core and one-thread numeric runtime | NONE (suite-platform; pass 1 green) | unpinned run drifted; run `29644372306` loaded Haswell/one thread and reproduced exact bytes plus semantic manifest | keep loaded core/thread assertions in CI and refresh, with no scientific rounding | diagnostic removed; require two green runs on the final clean head |
+| Driver release platform | canonical Ubuntu bytes + strict Windows oracle + independently validated CRAN/RSPM manifest normalization | NONE (suite-platform; validated) | family hashes, dual policy fixtures, raw-source oracle, boot/smoke evidence, and two clean exact-byte/semantic-manifest passes in Driver handoff | no scientific Driver change | reuse this release/test split in each app pass; never round artifacts or normalize unvalidated provenance |
+| Driver release platform | fixed BLAS core and one-thread numeric runtime | NONE (suite-platform; validated) | unpinned run drifted; run `29644970791` attempts 1 and 2 loaded Haswell/one thread and reproduced exact bytes plus semantic manifest on unchanged head `526dd3b` | keep loaded core/thread assertions in CI and refresh, with no scientific rounding | reuse the exact loaded-runtime guard and two-run proof in each sibling app that publishes numeric artifacts |
 
 ## Driver v2 reintegration gate
 
