@@ -34,6 +34,15 @@ The page reads **real per-site direction screens from the committed atlas bundle
   other 43 load with a biome-appropriate world and their real place data (e.g. WREF shows
   `standing wood 56.3 m²/ha`).
 
+## Travel map (Rung 2.5)
+
+A **"Travel the network"** map opens the explorer: all 46 sites as dots on a US map (with Alaska and
+Puerto Rico insets), coloured by biome. Hover a dot for its name and state; tap one to drop into that
+place (and the selected site stays ringed). `build_map.py` projects a public-domain US-states GeoJSON
+outline + each site's lon/lat into screen coordinates (Albers for the lower 48; equirectangular insets
+for Alaska and Puerto Rico) and writes `map-data.json`, inlined into the page so there is no runtime
+projection library and no map tiles. The outline is a low-poly schematic, not a precise basemap.
+
 ## Year in motion (Rung 2)
 
 The year-wheel plays: a **Play the year** control sweeps a "now" pointer around the twelve months,
@@ -50,7 +59,8 @@ holds annual signals, not measured monthly data — the wheel is labeled as such
 ```bash
 pip install rdata
 python3 prototypes/site-explorer/export_data.py     # reads data/cascade.rds + neon-site-names.json -> site-data.json
-# then inline site-data.json into index.html's <script id="siteData"> block
+python3 prototypes/site-explorer/build_map.py us.json  # projects a US-states GeoJSON -> map-data.json
+# then inline site-data.json and map-data.json into index.html's <script id="siteData"> / <script id="mapData"> blocks
 ```
 
 `export_data.py` only **reads** the committed bundle (it never rebuilds it) and merges the committed
@@ -65,9 +75,10 @@ Open `index.html` in a browser, or view the hosted Artifact. It is intentionally
 
 ## Verified
 
-Driven headlessly in Chromium: 0 console errors / 0 page errors; the solid-result banner and every
-driver card render real bundle numbers; all 46 sites load with real names/states (featured +
-directory search by name/state); the year-in-motion Play/scrub advances the pointer and captions;
-driver peel-backs work; dark theme is legible; no horizontal overflow at 390 px.
+Driven headlessly in Chromium: 0 console errors / 0 page errors; the travel map renders all 46 dots
+(39 lower-48 + 5 Alaska + 2 Puerto Rico) with hover names and click-to-travel + selection highlight;
+the solid-result banner and every driver card render real bundle numbers; all 46 sites load with real
+names/states (featured + directory search by name/state); the year-in-motion Play/scrub advances the
+pointer and captions; driver peel-backs work; dark theme is legible; no horizontal overflow at 390 px.
 
 Built by Desert Data Labs. Not affiliated with NEON / Battelle / NSF.
