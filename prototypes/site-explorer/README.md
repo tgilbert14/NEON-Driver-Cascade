@@ -43,10 +43,15 @@ tundra at Toolik. Drag to look, `WASD` (or the **Walk** button) to move; a switc
 sites, and the hero's **"Step inside this place →"** deep-links here (`walk.html?site=CODE`).
 
 It uses [Three.js](https://threejs.org) r128, **inlined** into the page (the Artifact CSP blocks CDNs),
-with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay cheap. It is a **procedural
-impression, not a LiDAR scan** — the honest next step is to drape real AOP LiDAR canopy-height points over
-the same scene. Because it inlines a 3D engine, it is a heavier ~620 KB page and is kept **separate** from
-the lightweight main explorer, linked rather than merged.
+with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay cheap. Five of the six sites
+are a **procedural impression** from measured standing wood. Because it inlines a 3D engine, it is a
+heavier page and is kept **separate** from the lightweight main explorer, linked rather than merged.
+
+**Wind River is rendered from a canopy *height-field*** (`build_lidar.py` → `lidar-wref.json`), the exact
+pipeline a real NEON AOP Canopy Height Model (DP3.30015.001) would use. Here that grid is a **labelled
+SYNTHETIC stand-in** — NEON's `/api/v0/data/` route is 403 without an API token, which this sandbox lacks.
+To make it a real scan: `python3 build_lidar.py WREF <NEON_..._CHM.tif>`, then re-inline `lidar-wref.json`
+into `walk.html`'s `<script id="lidarWREF">` block. No scene-code changes are needed.
 
 ## Travel map (Rung 2.5)
 
