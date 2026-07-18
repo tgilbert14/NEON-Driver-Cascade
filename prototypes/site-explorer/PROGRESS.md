@@ -26,8 +26,16 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 2 | Year in motion (play/scrub the wheel) + real NEON site **names/states/coords** (NEON API) | DONE | #8 |
 | 2.5 | **Travel map** — 46 sites as biome-coloured dots on a US map (+ AK/PR insets), click to travel | DONE | #9 |
 | 3 | **Step inside** — first-person 3D, vegetation from real `veg_ba_ha` (Three.js inlined) | DONE | #10 |
-| 4 | **Real AOP LiDAR canopy** — swap procedural canopy for actual CHM (DP3.30015.001) heights | IN PROGRESS | — |
-| 5+ | Polish — ambient sound, sky gradient/sun, smoother desert tone, more of the 46 walkable | PLANNED | — |
+| 4 | **Height-field canopy** renderer + `build_lidar.py` pipeline; WREF canopy from a grid | DONE (synthetic) | #11 |
+| 5+ | Polish — ambient sound, sky gradient/sun, smoother desert tone, more of the 46 walkable | NEXT | — |
+
+> **Rung 4 blocker (important):** the *renderer + pipeline* are done, but the canopy grid is a
+> **labelled SYNTHETIC stand-in**, not a real scan. NEON's `/api/v0/data/` route returns **403 Access
+> Denied** without an API token (confirmed for both AOP and TOS products; `/products` and `/sites`
+> still work). This sandbox has no NEON token. To make WREF real: get a NEON API token (or a CHM
+> GeoTIFF another way), run `python3 build_lidar.py WREF <NEON_..._CHM.tif>`, re-inline `lidar-wref.json`
+> into `walk.html`'s `<script id="lidarWREF">`, and republish. The scene code needs **no** changes —
+> only the grid bytes and the `source`/`note` fields flip from stand-in to real.
 
 Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged).
 
@@ -37,7 +45,8 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 - `walk.html` — the 3D scene (Three.js r128 inlined; ~620 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
-- `site-data.json` / `map-data.json` / `neon-site-names.json` — generated/fetched data.
+- `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
+- `site-data.json` / `map-data.json` / `neon-site-names.json` / `lidar-wref.json` — generated/fetched data.
 - `README.md` — what it is, per-rung detail, how to regenerate.
 
 **Nothing here touches the R/Shiny app**: `prototypes/` is outside `manifest.json`'s allowlist and the
@@ -72,13 +81,12 @@ errors, correct rendering, and no 390 px mobile overflow before merge.
 Stage-by-stage: build an increment → verify headlessly → commit/push → open draft PR → merge when CI is
 green → reset the branch onto the new master → next increment. Branch: `claude/neon-suite-expansion-c0wl9k`.
 
-## Next up (Rung 4 — real AOP LiDAR)
+## Next up (Rung 5 — polish)
 
-Goal: at one forest site (candidate: **WREF** or **SCBI**), replace procedural trees with canopy placed
-from the **real Canopy Height Model** (DP3.30015.001, 1 m GeoTIFF). Plan: query the NEON API for a CHM
-tile (`/api/v0/data/DP3.30015.001/<site>/<yearMonth>`), read the GeoTIFF raster (pure-Python `tifffile`),
-downsample to a compact height grid, inline it, and place instanced canopy by real height. Label it
-"Real AOP LiDAR canopy heights, <site> <year>." CHM is available for WREF, SCBI, HARV, TALL, SRER
-(≈7–9 flight-years each).
+Real, fully-doable improvements (no external data needed): a gradient sky + visible sun/sky sphere,
+ambient soundscape per biome, a smoother/less-saturated desert ground tone, gentle canopy sway, and
+making more of the 46 sites walkable (drive vegetation params from each site's `bucket` + `veg_ba_ha`
+in `site-data.json` instead of the hand-tuned six). Then, when a NEON token is available, unblock Rung 4
+(see the blocker box above) to make WREF a real scan.
 
 Built by Desert Data Labs. Not affiliated with NEON / Battelle / NSF.
