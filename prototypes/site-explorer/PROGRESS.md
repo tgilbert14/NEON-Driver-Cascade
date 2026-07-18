@@ -27,7 +27,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 2.5 | **Travel map** — 46 sites as biome-coloured dots on a US map (+ AK/PR insets), click to travel | DONE | #9 |
 | 3 | **Step inside** — first-person 3D, vegetation from real `veg_ba_ha` (Three.js inlined) | DONE | #10 |
 | 4 | **Height-field canopy** renderer + `build_lidar.py` pipeline; WREF canopy from a grid | DONE (synthetic) | #11 |
-| 5+ | Polish — ambient sound, sky gradient/sun, smoother desert tone, more of the 46 walkable | NEXT | — |
+| 5 | **Polish** — gradient sky + sun, canopy sway + head-bob, muted desert, **all 46 walkable** | DONE | #12 |
+| 6+ | Further polish — ambient sound; real AOP LiDAR (needs a NEON token); per-site facts in-scene | PLANNED | — |
 
 > **Rung 4 blocker (important):** the *renderer + pipeline* are done, but the canopy grid is a
 > **labelled SYNTHETIC stand-in**, not a real scan. NEON's `/api/v0/data/` route returns **403 Access
@@ -81,12 +82,16 @@ errors, correct rendering, and no 390 px mobile overflow before merge.
 Stage-by-stage: build an increment → verify headlessly → commit/push → open draft PR → merge when CI is
 green → reset the branch onto the new master → next increment. Branch: `claude/neon-suite-expansion-c0wl9k`.
 
-## Next up (Rung 5 — polish)
+## Next up (Rung 6+ — further polish)
 
-Real, fully-doable improvements (no external data needed): a gradient sky + visible sun/sky sphere,
-ambient soundscape per biome, a smoother/less-saturated desert ground tone, gentle canopy sway, and
-making more of the 46 sites walkable (drive vegetation params from each site's `bucket` + `veg_ba_ha`
-in `site-data.json` instead of the hand-tuned six). Then, when a NEON token is available, unblock Rung 4
-(see the blocker box above) to make WREF a real scan.
+Remaining nice-to-haves (no external data needed): a per-biome ambient soundscape; a few real per-site
+facts surfaced in-scene (site name/biome already shown — could add the site's headline driver from
+`site-data.json`); optional day/dusk lighting. And, when a NEON token is available, unblock Rung 4 (see
+the blocker box above) to turn WREF's canopy from the synthetic stand-in into a real AOP-LiDAR scan
+(`build_lidar.py WREF <CHM.tif>` → re-inline `lidar-wref.json`).
+
+Rung 5 (done): all 46 sites are now walkable — the six curated ones keep hand-authored scenes; the rest
+are generated from `bucket` + `veg_ba_ha` in `walk-sites.json` via `paramsFor()`. Deep-link any with
+`walk.html?site=CODE`; the explorer's hero "Step inside" now appears for every site.
 
 Built by Desert Data Labs. Not affiliated with NEON / Battelle / NSF.

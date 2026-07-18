@@ -39,8 +39,13 @@ The page reads **real per-site direction screens from the committed atlas bundle
 `walk.html` is a first-person procedural scene: you stand in a NEON site and look around. The
 **vegetation is built from the site's real measured standing wood** (`veg_ba_ha`) and biome — from Wind
 River's 56 m²/ha old-growth conifer, through the open Sonoran and Chihuahuan deserts, to treeless Arctic
-tundra at Toolik. Drag to look, `WASD` (or the **Walk** button) to move; a switcher jumps between six
-sites, and the hero's **"Step inside this place →"** deep-links here (`walk.html?site=CODE`).
+tundra at Toolik. Drag to look, `WASD` (or the **Walk** button) to move; a switcher spans ten
+biome-diverse sites, and the hero's **"Step inside this place →"** deep-links here (`walk.html?site=CODE`).
+
+**All 46 sites are walkable** (Rung 5): the six curated ones keep hand-authored scenes; the rest are
+generated from each site's `bucket` + `veg_ba_ha` (`walk-sites.json` → `paramsFor()`). Rung 5 also adds
+a gradient sky with a soft sun, a gentle canopy sway + walking head-bob (both reduced-motion aware), and
+a muted desert-ground tone.
 
 It uses [Three.js](https://threejs.org) r128, **inlined** into the page (the Artifact CSP blocks CDNs),
 with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay cheap. Five of the six sites
