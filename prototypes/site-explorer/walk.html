@@ -59,6 +59,7 @@
   <div class="bottom">
     <div class="row">
       <button class="walk" id="walkBtn" type="button">&#9654; Walk</button>
+      <button class="sbtn" id="soundBtn" type="button" aria-pressed="false"><i id="soundDot" style="background:#8a8a8a"></i>Sound</button>
       <span class="hint">drag to look &middot; W A S D to move</span>
     </div>
     <div class="sites" id="siteBtns"></div>
@@ -271,6 +272,69 @@
     world.add(VEG);
   }
 
+  // ---- procedural soundscape (Web Audio API; no audio files) ----
+  var AUDIO=null, soundOn=false, curBucket="forest";
+  function pinkNoise(ctx,secs){
+    var len=Math.floor(ctx.sampleRate*secs),buf=ctx.createBuffer(1,len,ctx.sampleRate),d=buf.getChannelData(0),b0=0,b1=0,b2=0;
+    for(var i=0;i<len;i++){var w=Math.random()*2-1;
+      b0=0.99765*b0+w*0.0990460;b1=0.96300*b1+w*0.2965164;b2=0.57000*b2+w*1.0526913;
+      d[i]=(b0+b1+b2+w*0.1848)*0.05;}
+    return buf;
+  }
+  function ensureAudio(){
+    if(AUDIO)return AUDIO;
+    var Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx)return null;
+    var ctx=new Ctx(), master=ctx.createGain(); master.gain.value=0; master.connect(ctx.destination);
+    var wind=ctx.createBufferSource(); wind.buffer=pinkNoise(ctx,3); wind.loop=true;
+    var wf=ctx.createBiquadFilter(); wf.type="lowpass"; wf.frequency.value=600; wf.Q.value=0.6;
+    var wg=ctx.createGain(); wg.gain.value=0.42;
+    wind.connect(wf); wf.connect(wg); wg.connect(master); wind.start();
+    var lfo=ctx.createOscillator(); lfo.frequency.value=0.07; var lg=ctx.createGain(); lg.gain.value=220;
+    lfo.connect(lg); lg.connect(wf.frequency); lfo.start();                       // slow gusts
+    var ins=ctx.createOscillator(); ins.type="sawtooth"; ins.frequency.value=5200;
+    var ibp=ctx.createBiquadFilter(); ibp.type="bandpass"; ibp.frequency.value=5200; ibp.Q.value=8;
+    var ig=ctx.createGain(); ig.gain.value=0; ins.connect(ibp); ibp.connect(ig); ig.connect(master);
+    var il=ctx.createOscillator(); il.frequency.value=13; var ilg=ctx.createGain(); ilg.gain.value=0.012;
+    il.connect(ilg); ilg.connect(ig.gain); ins.start(); il.start();               // insect shimmer (AM)
+    AUDIO={ctx:ctx,master:master,wf:wf,wg:wg,ig:ig,birds:false,chirpT:null};
+    scheduleChirp();
+    return AUDIO;
+  }
+  function chirp(){
+    if(!AUDIO||!soundOn||!AUDIO.birds)return;
+    var ctx=AUDIO.ctx,t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain(),f0=1800+Math.random()*1800;
+    o.type="sine"; o.frequency.setValueAtTime(f0,t);
+    o.frequency.exponentialRampToValueAtTime(f0*(1.2+Math.random()*0.5),t+0.06);
+    o.frequency.exponentialRampToValueAtTime(f0*0.82,t+0.14);
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.06,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0008,t+0.18);
+    o.connect(g); g.connect(AUDIO.master); o.start(t); o.stop(t+0.22);
+  }
+  function scheduleChirp(){
+    if(!AUDIO)return;
+    var delay=(AUDIO.birds?1300:6000)+Math.random()*(AUDIO.birds?3200:7000);
+    AUDIO.chirpT=setTimeout(function(){chirp(); scheduleChirp();},delay);
+  }
+  var BIOME_SND={forest:{wf:620,wg:0.42,birds:true,ins:0},grassland:{wf:1000,wg:0.34,birds:true,ins:0.02},
+    dryland:{wf:1500,wg:0.24,birds:false,ins:0.012},tundra:{wf:360,wg:0.5,birds:false,ins:0},other:{wf:820,wg:0.35,birds:true,ins:0.01}};
+  function setBiomeSound(bucket){
+    if(!AUDIO)return; var s=BIOME_SND[bucket]||BIOME_SND.other,t=AUDIO.ctx.currentTime;
+    AUDIO.wf.frequency.setTargetAtTime(s.wf,t,0.6); AUDIO.wg.gain.setTargetAtTime(s.wg,t,0.6);
+    AUDIO.ig.gain.setTargetAtTime(s.ins,t,0.9); AUDIO.birds=s.birds;
+  }
+  function toggleSound(){
+    soundOn=!soundOn;
+    var dot=document.getElementById("soundDot");
+    document.getElementById("soundBtn").setAttribute("aria-pressed",soundOn?"true":"false");
+    if(soundOn){
+      var a=ensureAudio(); if(!a){soundOn=false;return;}
+      if(a.ctx.state==="suspended")a.ctx.resume();
+      setBiomeSound(curBucket); a.master.gain.setTargetAtTime(0.5,a.ctx.currentTime,0.5);
+      dot.style.background="#6cc38a";
+    }else if(AUDIO){ AUDIO.master.gain.setTargetAtTime(0,AUDIO.ctx.currentTime,0.3); dot.style.background="#8a8a8a"; }
+  }
+  document.getElementById("soundBtn").addEventListener("click",toggleSound);
+
   // ---- controls ----
   var keys={},yaw=0,pitch=-0.05,px=0,pz=0,walking=false,drag=false,lx=0,ly=0;
   window.addEventListener("keydown",function(e){keys[e.code]=true;});
@@ -311,6 +375,7 @@
     document.getElementById("siteSub").textContent=site.sub;
     var sc=SCIENCE[site.code]||{line:"",tone:"none"};
     var sci=document.getElementById("sciLine"); sci.className="sci "+(sc.tone||"none"); sci.textContent=sc.line;
+    curBucket=(ALL[site.code]&&ALL[site.code].bucket)||"forest"; if(soundOn)setBiomeSound(curBucket);
     document.getElementById("note").innerHTML=document.getElementById("lidar"+site.code)?LIDAR_NOTE:site.note;
     Array.prototype.forEach.call(btnHost.children,function(b){b.setAttribute("aria-pressed",b.dataset.code===site.code?"true":"false");});
   }

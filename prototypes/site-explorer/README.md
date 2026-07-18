@@ -47,6 +47,18 @@ generated from each site's `bucket` + `veg_ba_ha` (`walk-sites.json` → `params
 a gradient sky with a soft sun, a gentle canopy sway + walking head-bob (both reduced-motion aware), and
 a muted desert-ground tone.
 
+### Soundscape (Rung 7)
+
+An optional **per-biome ambient soundscape**, off by default. Tap **Sound** and a procedural
+[Web Audio](https://developer.mozilla.org/docs/Web/API/Web_Audio_API) graph fades in — filtered
+pink-noise wind with slow gusts, a faint insect shimmer, and sparse bird chirps — retuning as you travel
+between biomes (a closed forest gets birds and a soft canopy wind; the desert gets a brighter, drier wind
+with a few insects and no birds; the tundra a low, bare wind). It is **synthesized in the browser, not a
+field recording** — nothing is streamed or fetched (so it stays within the Artifact CSP, like the inlined
+3D engine), and it's an *impression* of the biome's ambience, not the sound of any real site. It starts
+only on your tap because browsers require a gesture before audio can play, and it honours the system's
+"reduce motion" preference elsewhere in the scene.
+
 It uses [Three.js](https://threejs.org) r128, **inlined** into the page (the Artifact CSP blocks CDNs),
 with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay cheap. Five of the six sites
 are a **procedural impression** from measured standing wood. Because it inlines a 3D engine, it is a
@@ -107,5 +119,12 @@ Driven headlessly in Chromium: 0 console errors / 0 page errors; the travel map 
 the solid-result banner and every driver card render real bundle numbers; all 46 sites load with real
 names/states (featured + directory search by name/state); the year-in-motion Play/scrub advances the
 pointer and captions; driver peel-backs work; dark theme is legible; no horizontal overflow at 390 px.
+
+For the 3D walk: the **Sound** toggle builds its Web Audio graph only on the click (an `AudioContext` and
+its ~12 nodes appear after the tap, never before — no autoplay), the button's pressed-state and indicator
+flip both ways, and travelling between biomes while sound is on retunes without error; all nine bucket-diverse
+sites (forest / grassland / dryland / tundra / mixed) render with 0 console/page errors and no 390 px
+overflow. *Audio quality itself can't be verified headlessly (no audio device) — only correct graph creation
+and error-free toggling/retuning are checked.*
 
 Built by Desert Data Labs. Not affiliated with NEON / Battelle / NSF.
