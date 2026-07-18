@@ -120,6 +120,16 @@
   .legend .lg b{font-family:var(--sans);font-weight:650}
   .legend .lg span{color:var(--muted);font-size:.92rem;display:block}
   .rhythm{margin-top:.6rem;font-family:var(--serif);font-style:italic;color:var(--text);font-size:1.05rem;max-width:44ch}
+  .playbar{display:flex;align-items:center;gap:.7rem;margin-top:1rem;flex-wrap:wrap}
+  .playbtn{font:inherit;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.42rem .95rem;color:var(--text);
+    transition:border-color .15s ease,background .15s ease}
+  .playbtn:hover{border-color:var(--a1)}
+  .playbtn:focus-visible{outline:2px solid var(--a1);outline-offset:2px}
+  .playbtn .pi{color:var(--a1);font-size:.72rem;line-height:1}
+  .scrub{flex:1;min-width:7rem;max-width:15rem;accent-color:var(--a1);cursor:pointer}
+  .scrub:focus-visible{outline:2px solid var(--a1);outline-offset:3px}
+  .scrubm{font-family:var(--mono);font-size:.78rem;color:var(--muted);min-width:2.4rem;font-variant-numeric:tabular-nums}
   .schematic{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;color:var(--muted);margin-top:.6rem}
 
   .drivers{display:grid;gap:.9rem;margin-top:1.3rem}
@@ -203,6 +213,12 @@
           <div><b>Animals</b><span>the mice, bugs and birds responding</span></div></div>
       </div>
       <div class="rhythm" id="rhythm"></div>
+      <div class="playbar">
+        <button id="playBtn" class="playbtn" type="button" aria-label="Play the year in motion">
+          <span class="pi" aria-hidden="true">&#9654;</span><span id="playLbl">Play the year</span></button>
+        <input id="scrub" class="scrub" type="range" min="0" max="11" step="1" value="0" aria-label="Scrub through the months">
+        <span id="scrubM" class="scrubm">Jan</span>
+      </div>
       <div class="schematic" id="schematic"></div>
     </div>
   </div>
@@ -381,6 +397,11 @@
   {
    "site": "KONZ",
    "domain": "D06",
+   "name": "Konza Prairie Biological Station",
+   "state": "Kansas",
+   "lat": 39.100774,
+   "lon": -96.563075,
+   "domain_name": "Prairie Peninsula",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -494,6 +515,11 @@
   {
    "site": "SCBI",
    "domain": "D02",
+   "name": "Smithsonian Conservation Biology Institute",
+   "state": "Virginia",
+   "lat": 38.892925,
+   "lon": -78.139494,
+   "domain_name": "Mid-Atlantic",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -607,6 +633,11 @@
   {
    "site": "SRER",
    "domain": "D14",
+   "name": "Santa Rita Experimental Range",
+   "state": "Arizona",
+   "lat": 31.91068,
+   "lon": -110.83549,
+   "domain_name": "Desert Southwest",
    "biome_label": "Sonoran desert",
    "biome_class": "water-limited",
    "bucket": "dryland",
@@ -720,6 +751,11 @@
   {
    "site": "CPER",
    "domain": "D10",
+   "name": "Central Plains Experimental Range",
+   "state": "Colorado",
+   "lat": 40.815536,
+   "lon": -104.745591,
+   "domain_name": "Central Plains",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -833,6 +869,11 @@
   {
    "site": "OSBS",
    "domain": "D03",
+   "name": "Ordway-Swisher Biological Station",
+   "state": "Florida",
+   "lat": 29.689282,
+   "lon": -81.993431,
+   "domain_name": "Southeast",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -946,6 +987,11 @@
   {
    "site": "CLBJ",
    "domain": "D11",
+   "name": "Lyndon B. Johnson National Grassland",
+   "state": "Texas",
+   "lat": 33.40123,
+   "lon": -97.57,
+   "domain_name": "Southern Plains",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -1059,6 +1105,11 @@
   {
    "site": "HARV",
    "domain": "D01",
+   "name": "Harvard Forest & Quabbin Watershed",
+   "state": "Massachusetts",
+   "lat": 42.53691,
+   "lon": -72.17265,
+   "domain_name": "Northeast",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -1172,6 +1223,11 @@
   {
    "site": "WOOD",
    "domain": "D09",
+   "name": "Chase Lake National Wildlife Refuge",
+   "state": "North Dakota",
+   "lat": 47.1282,
+   "lon": -99.241334,
+   "domain_name": "Northern Plains",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -1285,6 +1341,11 @@
   {
    "site": "WREF",
    "domain": "D16",
+   "name": "Wind River Experimental Forest",
+   "state": "Washington",
+   "lat": 45.82049,
+   "lon": -121.95191,
+   "domain_name": "Pacific Northwest",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -1398,6 +1459,11 @@
   {
    "site": "ORNL",
    "domain": "D07",
+   "name": "Oak Ridge",
+   "state": "Tennessee",
+   "lat": 35.964128,
+   "lon": -84.282588,
+   "domain_name": "Appalachians and Cumberland Plateau",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -1511,6 +1577,11 @@
   {
    "site": "UNDE",
    "domain": "D05",
+   "name": "University of Notre Dame Environmental Research Center",
+   "state": "Michigan",
+   "lat": 46.23391,
+   "lon": -89.537254,
+   "domain_name": "Great Lakes",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -1624,6 +1695,11 @@
   {
    "site": "ABBY",
    "domain": "D16",
+   "name": "Abby Road",
+   "state": "Washington",
+   "lat": 45.762439,
+   "lon": -122.330317,
+   "domain_name": "Pacific Northwest",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -1737,6 +1813,11 @@
   {
    "site": "BLAN",
    "domain": "D02",
+   "name": "Blandy Experimental Farm",
+   "state": "Virginia",
+   "lat": 39.033698,
+   "lon": -78.041788,
+   "domain_name": "Mid-Atlantic",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -1850,6 +1931,11 @@
   {
    "site": "DSNY",
    "domain": "D03",
+   "name": "Disney Wilderness Preserve",
+   "state": "Florida",
+   "lat": 28.12505,
+   "lon": -81.43619,
+   "domain_name": "Southeast",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -1963,6 +2049,11 @@
   {
    "site": "GRSM",
    "domain": "D07",
+   "name": "Great Smoky Mountains National Park",
+   "state": "Tennessee",
+   "lat": 35.68896,
+   "lon": -83.50195,
+   "domain_name": "Appalachians and Cumberland Plateau",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -2076,6 +2167,11 @@
   {
    "site": "JERC",
    "domain": "D03",
+   "name": "The Jones Center At Ichauway",
+   "state": "Georgia",
+   "lat": 31.194839,
+   "lon": -84.468623,
+   "domain_name": "Southeast",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -2189,6 +2285,11 @@
   {
    "site": "LENO",
    "domain": "D08",
+   "name": "Lenoir Landing",
+   "state": "Alabama",
+   "lat": 31.853861,
+   "lon": -88.161181,
+   "domain_name": "Ozarks Complex",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -2302,6 +2403,11 @@
   {
    "site": "MLBS",
    "domain": "D07",
+   "name": "Mountain Lake Biological Station",
+   "state": "Virginia",
+   "lat": 37.378314,
+   "lon": -80.524847,
+   "domain_name": "Appalachians and Cumberland Plateau",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -2415,6 +2521,11 @@
   {
    "site": "OAES",
    "domain": "D11",
+   "name": "Marvin Klemme Range Research Station",
+   "state": "Oklahoma",
+   "lat": 35.410599,
+   "lon": -99.058779,
+   "domain_name": "Southern Plains",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -2528,6 +2639,11 @@
   {
    "site": "SERC",
    "domain": "D02",
+   "name": "Smithsonian Environmental Research Center",
+   "state": "Maryland",
+   "lat": 38.890131,
+   "lon": -76.560014,
+   "domain_name": "Mid-Atlantic",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -2641,6 +2757,11 @@
   {
    "site": "TALL",
    "domain": "D08",
+   "name": "Talladega National Forest",
+   "state": "Alabama",
+   "lat": 32.95047,
+   "lon": -87.393259,
+   "domain_name": "Ozarks Complex",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -2754,6 +2875,11 @@
   {
    "site": "TOOL",
    "domain": "D18",
+   "name": "Toolik Field Station",
+   "state": "Alaska",
+   "lat": 68.66109,
+   "lon": -149.37047,
+   "domain_name": "Tundra",
    "biome_label": "tundra / alpine",
    "biome_class": "temperature-limited",
    "bucket": "tundra",
@@ -2867,6 +2993,11 @@
   {
    "site": "UKFS",
    "domain": "D06",
+   "name": "KU Field Station",
+   "state": "Kansas",
+   "lat": 39.040431,
+   "lon": -95.19215,
+   "domain_name": "Prairie Peninsula",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -2980,6 +3111,11 @@
   {
    "site": "BONA",
    "domain": "D19",
+   "name": "Caribou-Poker Creeks Research Watershed",
+   "state": "Alaska",
+   "lat": 65.15401,
+   "lon": -147.50258,
+   "domain_name": "Taiga",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -3073,6 +3209,11 @@
   {
    "site": "GUAN",
    "domain": "D04",
+   "name": "Guánica Forest",
+   "state": "Puerto Rico",
+   "lat": 17.96955,
+   "lon": -66.8687,
+   "domain_name": "Atlantic Neotropical",
    "biome_label": "subtropical dry forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -3166,6 +3307,11 @@
   {
    "site": "ONAQ",
    "domain": "D15",
+   "name": "Onaqui",
+   "state": "Utah",
+   "lat": 40.177599,
+   "lon": -112.452452,
+   "domain_name": "Great Basin",
    "biome_label": "Great Basin shrub-steppe",
    "biome_class": "water-limited",
    "bucket": "dryland",
@@ -3259,6 +3405,11 @@
   {
    "site": "SJER",
    "domain": "D17",
+   "name": "San Joaquin Experimental Range",
+   "state": "California",
+   "lat": 37.10878,
+   "lon": -119.73228,
+   "domain_name": "Pacific Southwest",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -3352,6 +3503,11 @@
   {
    "site": "KONA",
    "domain": "D06",
+   "name": "Konza Prairie Agroecosystem",
+   "state": "Kansas",
+   "lat": 39.110446,
+   "lon": -96.612935,
+   "domain_name": "Prairie Peninsula",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -3425,6 +3581,11 @@
   {
    "site": "MOAB",
    "domain": "D13",
+   "name": "Moab",
+   "state": "Utah",
+   "lat": 38.248283,
+   "lon": -109.388273,
+   "domain_name": "Southern Rockies and Colorado Plateau",
    "biome_label": "cold-desert shrubland",
    "biome_class": "water-limited",
    "bucket": "dryland",
@@ -3498,6 +3659,11 @@
   {
    "site": "RMNP",
    "domain": "D10",
+   "name": "Rocky Mountains",
+   "state": "Colorado",
+   "lat": 40.275903,
+   "lon": -105.545955,
+   "domain_name": "Central Plains",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -3571,6 +3737,11 @@
   {
    "site": "STER",
    "domain": "D10",
+   "name": "North Sterling",
+   "state": "Colorado",
+   "lat": 40.461894,
+   "lon": -103.02929,
+   "domain_name": "Central Plains",
    "biome_label": "mixed ecosystem",
    "biome_class": "temperature-limited",
    "bucket": "other",
@@ -3644,6 +3815,11 @@
   {
    "site": "JORN",
    "domain": "D14",
+   "name": "Jornada Experimental Range",
+   "state": "New Mexico",
+   "lat": 32.590694,
+   "lon": -106.842542,
+   "domain_name": "Desert Southwest",
    "biome_label": "Chihuahuan desert",
    "biome_class": "water-limited",
    "bucket": "dryland",
@@ -3697,6 +3873,11 @@
   {
    "site": "LAJA",
    "domain": "D04",
+   "name": "Lajas Experimental Station",
+   "state": "Puerto Rico",
+   "lat": 18.021261,
+   "lon": -67.076889,
+   "domain_name": "Atlantic Neotropical",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -3750,6 +3931,11 @@
   {
    "site": "NIWO",
    "domain": "D13",
+   "name": "Niwot Ridge",
+   "state": "Colorado",
+   "lat": 40.05425,
+   "lon": -105.58237,
+   "domain_name": "Southern Rockies and Colorado Plateau",
    "biome_label": "tundra / alpine",
    "biome_class": "temperature-limited",
    "bucket": "tundra",
@@ -3803,6 +3989,11 @@
   {
    "site": "NOGP",
    "domain": "D09",
+   "name": "Northern Great Plains Research Laboratory",
+   "state": "North Dakota",
+   "lat": 46.76972,
+   "lon": -100.91535,
+   "domain_name": "Northern Plains",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -3856,6 +4047,11 @@
   {
    "site": "YELL",
    "domain": "D12",
+   "name": "Yellowstone National Park",
+   "state": "Wyoming",
+   "lat": 44.95348,
+   "lon": -110.53914,
+   "domain_name": "Northern Rockies",
    "biome_label": "Great Basin shrub-steppe",
    "biome_class": "water-limited",
    "bucket": "dryland",
@@ -3909,6 +4105,11 @@
   {
    "site": "BARR",
    "domain": "D18",
+   "name": "Utqiaġvik",
+   "state": "Alaska",
+   "lat": 71.28241,
+   "lon": -156.61936,
+   "domain_name": "Tundra",
    "biome_label": "tundra / alpine",
    "biome_class": "temperature-limited",
    "bucket": "tundra",
@@ -3942,6 +4143,11 @@
   {
    "site": "BART",
    "domain": "D01",
+   "name": "Bartlett Experimental Forest",
+   "state": "New Hampshire",
+   "lat": 44.063889,
+   "lon": -71.287375,
+   "domain_name": "Northeast",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -3975,6 +4181,11 @@
   {
    "site": "DCFS",
    "domain": "D09",
+   "name": "Dakota Coteau Field Site",
+   "state": "North Dakota",
+   "lat": 47.16165,
+   "lon": -99.10656,
+   "domain_name": "Northern Plains",
    "biome_label": "grassland / prairie",
    "biome_class": "temperature-limited",
    "bucket": "grassland",
@@ -4008,6 +4219,11 @@
   {
    "site": "DEJU",
    "domain": "D19",
+   "name": "Delta Junction",
+   "state": "Alaska",
+   "lat": 63.88112,
+   "lon": -145.75136,
+   "domain_name": "Taiga",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -4041,6 +4257,11 @@
   {
    "site": "DELA",
    "domain": "D08",
+   "name": "Dead Lake",
+   "state": "Alabama",
+   "lat": 32.541727,
+   "lon": -87.803877,
+   "domain_name": "Ozarks Complex",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -4074,6 +4295,11 @@
   {
    "site": "HEAL",
    "domain": "D19",
+   "name": "Healy",
+   "state": "Alaska",
+   "lat": 63.875798,
+   "lon": -149.213347,
+   "domain_name": "Taiga",
    "biome_label": "tundra / alpine",
    "biome_class": "temperature-limited",
    "bucket": "tundra",
@@ -4107,6 +4333,11 @@
   {
    "site": "SOAP",
    "domain": "D17",
+   "name": "Soaproot Saddle",
+   "state": "California",
+   "lat": 37.03337,
+   "lon": -119.26219,
+   "domain_name": "Pacific Southwest",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -4140,6 +4371,11 @@
   {
    "site": "STEI",
    "domain": "D05",
+   "name": "Steigerwaldt-Chequamegon",
+   "state": "Wisconsin",
+   "lat": 45.50894,
+   "lon": -89.58637,
+   "domain_name": "Great Lakes",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -4173,6 +4409,11 @@
   {
    "site": "TREE",
    "domain": "D05",
+   "name": "Treehaven",
+   "state": "Wisconsin",
+   "lat": 45.49369,
+   "lon": -89.58571,
+   "domain_name": "Great Lakes",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -4206,6 +4447,11 @@
   {
    "site": "TEAK",
    "domain": "D17",
+   "name": "Lower Teakettle",
+   "state": "California",
+   "lat": 37.00583,
+   "lon": -119.00602,
+   "domain_name": "Pacific Southwest",
    "biome_label": "temperate/boreal forest",
    "biome_class": "temperature-limited",
    "bucket": "forest",
@@ -4303,12 +4549,13 @@
     listEl.innerHTML="";
     DATA.sites.filter(function(s){
       if(!filter)return true;
-      return s.site.toLowerCase().indexOf(filter)>=0||(s.biome_label||"").toLowerCase().indexOf(filter)>=0;
+      return s.site.toLowerCase().indexOf(filter)>=0||(s.biome_label||"").toLowerCase().indexOf(filter)>=0||
+        (s.name||"").toLowerCase().indexOf(filter)>=0||(s.state||"").toLowerCase().indexOf(filter)>=0;
     }).forEach(function(s){
       var b=document.createElement("button");
       b.className="site-row";b.type="button";b.dataset.id=s.site;
-      b.innerHTML='<span class="code">'+s.site+'</span><span class="rb">'+titleCase(s.biome_label||"—")+
-        '</span><span class="nt">'+s.n_testable+' tested</span>';
+      b.innerHTML='<span class="code">'+s.site+'</span><span class="rb">'+(s.name||titleCase(s.biome_label||"—"))+
+        (s.state?" · "+s.state:"")+'</span><span class="nt">'+s.n_testable+' tested</span>';
       b.addEventListener("click",function(){select(s.site);
         document.getElementById("hero").scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});});
       listEl.appendChild(b);
@@ -4329,19 +4576,22 @@
     rr.setProperty("--sky-1",world.sky1);rr.setProperty("--sky-2",world.sky2);rr.setProperty("--land",world.land);
     Array.prototype.forEach.call(picker.children,function(btn){btn.setAttribute("aria-pressed",btn.dataset.id===id?"true":"false");});
 
-    document.getElementById("heroKicker").textContent=f?f.kicker:(titleCase(s.biome_label)+" · "+s.domain);
-    document.getElementById("heroName").textContent=f?f.name:("Site "+s.site);
+    var locale=(s.state||s.domain)+(s.domain_name?" · "+s.domain_name+" domain":"");
+    document.getElementById("heroKicker").textContent=f?f.kicker:(titleCase(s.biome_label)+" · "+(s.state||s.domain));
+    document.getElementById("heroName").textContent=f?f.name:(s.name||("Site "+s.site));
     document.getElementById("heroThesis").textContent=f?f.thesis:bi.thesis;
     document.getElementById("heroPlace").textContent=f?f.place:
-      ("NEON site "+s.site+" · "+titleCase(s.biome_label)+(s.veg_ba_ha!=null?" · standing wood "+s.veg_ba_ha.toFixed(1)+" m²/ha ("+(s.veg_type||"—")+")":""));
+      ("NEON site "+s.site+" · "+locale+(s.veg_ba_ha!=null?" · standing wood "+s.veg_ba_ha.toFixed(1)+" m²/ha":""));
     document.getElementById("rhythm").textContent=f?f.rhythmText:bi.thesis;
     document.getElementById("schematic").textContent=f?"Rhythm sketch for this site.":"Rhythm sketch — typical for a "+titleCase(s.biome_label)+" (schematic, not measured monthly data).";
 
     drawWheel(f||bi);
+    if(player)player.resetIdle();
     drawDrivers(s);
   }
 
-  /* ---- year wheel ---- */
+  /* ---- year wheel (with year-in-motion) ---- */
+  var WHEEL=null, player=null;
   function polar(cx,cy,rad,deg){var a=(deg-90)*Math.PI/180;return[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];}
   function drawWheel(src){
     var box=document.getElementById("wheelbox"),SZ=320,cx=SZ/2,cy=SZ/2,step=30;
@@ -4360,27 +4610,53 @@
       var lp=polar(cx,cy,166,(a0+a1)/2);
       svg+='<text x="'+lp[0]+'" y="'+lp[1]+'" font-family="var(--mono)" font-size="8" fill="var(--muted)" text-anchor="middle" dominant-baseline="middle">'+M[m][0]+'</text></g>';
     }
+    svg+='<g id="nowPointer" style="opacity:0;transition:opacity .3s ease">'+
+      '<line x1="'+cx+'" y1="'+(cy-44)+'" x2="'+cx+'" y2="'+(cy-155)+'" stroke="var(--a1)" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<circle cx="'+cx+'" cy="'+(cy-155)+'" r="4.2" fill="var(--a1)"/></g>';
     svg+='<g class="wheel-center"><text class="m" x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" id="wcM"></text><text class="cap" x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" id="wcC"></text></g></svg>';
     box.innerHTML=svg;
-    var mEl=box.querySelector("#wcM"),cEl=box.querySelector("#wcC"),caps=src.caps||{};
-    function show(m){
+    var mEl=box.querySelector("#wcM"),cEl=box.querySelector("#wcC"),caps=src.caps||{},
+        ptr=box.querySelector("#nowPointer"),segs=box.querySelectorAll(".month-seg");
+    function caption(m){
       mEl.textContent=M[m];cEl.textContent="";
-      var cap=caps[m]||"";
-      if(cap){var words=cap.split(" "),line="";
-        words.forEach(function(wd){if((line+" "+wd).trim().length>22){addT(line);line=wd;}else line=(line?line+" ":"")+wd;});addT(line);}
+      var cap=caps[m]||"a quieter month here";var words=cap.split(" "),line="";
+      words.forEach(function(wd){if((line+" "+wd).trim().length>22){addT(line);line=wd;}else line=(line?line+" ":"")+wd;});addT(line);
       function addT(t){var ts=document.createElementNS("http://www.w3.org/2000/svg","tspan");ts.setAttribute("x",cx);ts.setAttribute("dy",cEl.childNodes.length?"1.1em":"0");ts.textContent=t;cEl.appendChild(ts);}
     }
-    function clear(){mEl.textContent="12 months";cEl.textContent="hover a month";}
-    clear();
-    Array.prototype.forEach.call(box.querySelectorAll(".month-seg"),function(g){
-      var m=+g.dataset.m;
-      g.addEventListener("mouseenter",function(){show(m);});g.addEventListener("focus",function(){show(m);});
-      g.addEventListener("mouseleave",clear);g.addEventListener("blur",clear);
-    });
-    if(!reduce){box.querySelectorAll(".month-seg .seg-hit").forEach(function(pth,i){
-      pth.style.transition="fill .25s ease";
-      setTimeout(function(){pth.style.fill="color-mix(in srgb,var(--a1) 22%,transparent)";setTimeout(function(){pth.style.fill="transparent";},260);},120+i*45);});}
+    function emphasize(m){Array.prototype.forEach.call(segs,function(g){
+      var hit=g.querySelector(".seg-hit");hit.style.transition="fill .25s ease";
+      hit.style.fill=(+g.dataset.m===m)?"color-mix(in srgb,var(--a1) 20%,transparent)":"transparent";});}
+    WHEEL={rest:0,
+      setMonth:function(m){caption(m);emphasize(m);ptr.style.opacity="1";
+        ptr.setAttribute("transform","rotate("+(m*30+15)+" "+cx+" "+cy+")");
+        var sc=document.getElementById("scrub"),sm=document.getElementById("scrubM");
+        if(sc)sc.value=m; if(sm)sm.textContent=M[m];}
+    };
+    Array.prototype.forEach.call(segs,function(g){var m=+g.dataset.m;
+      g.addEventListener("mouseenter",function(){if(player)player.pause();WHEEL.setMonth(m);});
+      g.addEventListener("focus",function(){if(player)player.pause();WHEEL.setMonth(m);});});
+    var rest=Object.keys(caps).map(Number).sort(function(a,b){return a-b;})[0];
+    WHEEL.rest=(rest==null?0:rest); WHEEL.setMonth(WHEEL.rest);   // rest on the site's signature month
   }
+
+  /* ---- year-in-motion player (wired once) ---- */
+  (function(){
+    var playBtn=document.getElementById("playBtn"),
+        playLbl=document.getElementById("playLbl"),
+        playIcon=playBtn.querySelector(".pi"),
+        scrub=document.getElementById("scrub");
+    var st={month:0,playing:false,timer:null};
+    function setBtn(){playIcon.innerHTML=st.playing?"&#10074;&#10074;":"&#9654;";
+      playLbl.textContent=st.playing?"Pause":(reduce?"Step a month":"Play the year");}
+    function go(m){st.month=((m%12)+12)%12; if(WHEEL)WHEEL.setMonth(st.month);}
+    function pause(){st.playing=false; if(st.timer){clearInterval(st.timer);st.timer=null;} setBtn();}
+    function play(){ if(reduce){go(st.month+1);return;}
+      st.playing=true; setBtn(); go(st.month); st.timer=setInterval(function(){go(st.month+1);},820);}
+    playBtn.addEventListener("click",function(){st.playing?pause():play();});
+    scrub.addEventListener("input",function(e){pause();go(+e.target.value);});
+    player={pause:pause,resetIdle:function(){pause();st.month=(WHEEL&&WHEEL.rest!=null)?WHEEL.rest:0;scrub.value=st.month;}};
+    setBtn();
+  })();
 
   /* ---- driver cards (real bundle values) ---- */
   function noteFor(d){

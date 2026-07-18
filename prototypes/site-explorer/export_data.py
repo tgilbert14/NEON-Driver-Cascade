@@ -12,9 +12,24 @@ import json, math, warnings, os
 warnings.filterwarnings("ignore")
 import rdata
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(HERE))
 BUNDLE = os.path.join(ROOT, "data", "cascade.rds")
-OUT = os.path.join(ROOT, "prototypes", "site-explorer", "site-data.json")
+OUT = os.path.join(HERE, "site-data.json")
+NAMES = os.path.join(HERE, "neon-site-names.json")
+
+# real NEON site names / states / coordinates, fetched once from the NEON API
+# (https://data.neonscience.org/api/v0/sites) and committed for offline reproducibility.
+try:
+    with open(NAMES, encoding="utf-8") as f:
+        SITE_NAMES = json.load(f)
+except FileNotFoundError:
+    SITE_NAMES = {}
+
+def clean_name(nm):
+    if not nm:
+        return None
+    return nm[:-5].rstrip() if nm.endswith(" NEON") else nm
 
 p = rdata.read_rds(BUNDLE)
 signals = p["signals"]; site_meta = p["site_meta"]; sl = p["suite_links"]; pooled = p["pooled"]
@@ -122,8 +137,11 @@ for _, sm in site_meta.iterrows():
     trank = {"consistent": 0, "apparent": 1, "counter": 2, "": 3, None: 3}
     drivers.sort(key=lambda d: (0 if d["pooled_rung"] and d["expected"] else 1,
                                 trank.get(d["tier"], 3), -abs(d["r"] or 0)))
+    nm = SITE_NAMES.get(code, {})
     sites_out.append({
         "site": code, "domain": s(sm["domain"]),
+        "name": clean_name(nm.get("name")), "state": nm.get("state"),
+        "lat": nm.get("lat"), "lon": nm.get("lon"), "domain_name": nm.get("domainName"),
         "biome_label": label, "biome_class": s(sm["biome_class"]),
         "bucket": biome_bucket(label),
         "veg_ba_ha": num(sm["veg_ba_ha"]), "veg_type": s(sm["veg_type"]),

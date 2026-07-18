@@ -1,0 +1,370 @@
+{
+ "ABBY": {
+  "domainName": "Pacific Northwest",
+  "lat": 45.762439,
+  "lon": -122.330317,
+  "name": "Abby Road NEON",
+  "siteType": "GRADIENT",
+  "state": "Washington"
+ },
+ "BARR": {
+  "domainName": "Tundra",
+  "lat": 71.28241,
+  "lon": -156.61936,
+  "name": "Utqiaġvik NEON",
+  "siteType": "GRADIENT",
+  "state": "Alaska"
+ },
+ "BART": {
+  "domainName": "Northeast",
+  "lat": 44.063889,
+  "lon": -71.287375,
+  "name": "Bartlett Experimental Forest NEON",
+  "siteType": "GRADIENT",
+  "state": "New Hampshire"
+ },
+ "BLAN": {
+  "domainName": "Mid-Atlantic",
+  "lat": 39.033698,
+  "lon": -78.041788,
+  "name": "Blandy Experimental Farm NEON",
+  "siteType": "GRADIENT",
+  "state": "Virginia"
+ },
+ "BONA": {
+  "domainName": "Taiga",
+  "lat": 65.15401,
+  "lon": -147.50258,
+  "name": "Caribou-Poker Creeks Research Watershed NEON",
+  "siteType": "CORE",
+  "state": "Alaska"
+ },
+ "CLBJ": {
+  "domainName": "Southern Plains",
+  "lat": 33.40123,
+  "lon": -97.57,
+  "name": "Lyndon B. Johnson National Grassland NEON",
+  "siteType": "CORE",
+  "state": "Texas"
+ },
+ "CPER": {
+  "domainName": "Central Plains",
+  "lat": 40.815536,
+  "lon": -104.745591,
+  "name": "Central Plains Experimental Range NEON",
+  "siteType": "CORE",
+  "state": "Colorado"
+ },
+ "DCFS": {
+  "domainName": "Northern Plains",
+  "lat": 47.16165,
+  "lon": -99.10656,
+  "name": "Dakota Coteau Field Site NEON",
+  "siteType": "GRADIENT",
+  "state": "North Dakota"
+ },
+ "DEJU": {
+  "domainName": "Taiga",
+  "lat": 63.88112,
+  "lon": -145.75136,
+  "name": "Delta Junction NEON",
+  "siteType": "GRADIENT",
+  "state": "Alaska"
+ },
+ "DELA": {
+  "domainName": "Ozarks Complex",
+  "lat": 32.541727,
+  "lon": -87.803877,
+  "name": "Dead Lake NEON",
+  "siteType": "GRADIENT",
+  "state": "Alabama"
+ },
+ "DSNY": {
+  "domainName": "Southeast",
+  "lat": 28.12505,
+  "lon": -81.43619,
+  "name": "Disney Wilderness Preserve NEON",
+  "siteType": "GRADIENT",
+  "state": "Florida"
+ },
+ "GRSM": {
+  "domainName": "Appalachians and Cumberland Plateau",
+  "lat": 35.68896,
+  "lon": -83.50195,
+  "name": "Great Smoky Mountains National Park NEON",
+  "siteType": "GRADIENT",
+  "state": "Tennessee"
+ },
+ "GUAN": {
+  "domainName": "Atlantic Neotropical",
+  "lat": 17.96955,
+  "lon": -66.8687,
+  "name": "Guánica Forest NEON",
+  "siteType": "CORE",
+  "state": "Puerto Rico"
+ },
+ "HARV": {
+  "domainName": "Northeast",
+  "lat": 42.53691,
+  "lon": -72.17265,
+  "name": "Harvard Forest & Quabbin Watershed NEON",
+  "siteType": "CORE",
+  "state": "Massachusetts"
+ },
+ "HEAL": {
+  "domainName": "Taiga",
+  "lat": 63.875798,
+  "lon": -149.213347,
+  "name": "Healy NEON",
+  "siteType": "GRADIENT",
+  "state": "Alaska"
+ },
+ "JERC": {
+  "domainName": "Southeast",
+  "lat": 31.194839,
+  "lon": -84.468623,
+  "name": "The Jones Center At Ichauway NEON",
+  "siteType": "GRADIENT",
+  "state": "Georgia"
+ },
+ "JORN": {
+  "domainName": "Desert Southwest",
+  "lat": 32.590694,
+  "lon": -106.842542,
+  "name": "Jornada Experimental Range NEON",
+  "siteType": "GRADIENT",
+  "state": "New Mexico"
+ },
+ "KONA": {
+  "domainName": "Prairie Peninsula",
+  "lat": 39.110446,
+  "lon": -96.612935,
+  "name": "Konza Prairie Agroecosystem NEON",
+  "siteType": "GRADIENT",
+  "state": "Kansas"
+ },
+ "KONZ": {
+  "domainName": "Prairie Peninsula",
+  "lat": 39.100774,
+  "lon": -96.563075,
+  "name": "Konza Prairie Biological Station NEON",
+  "siteType": "CORE",
+  "state": "Kansas"
+ },
+ "LAJA": {
+  "domainName": "Atlantic Neotropical",
+  "lat": 18.021261,
+  "lon": -67.076889,
+  "name": "Lajas Experimental Station NEON",
+  "siteType": "GRADIENT",
+  "state": "Puerto Rico"
+ },
+ "LENO": {
+  "domainName": "Ozarks Complex",
+  "lat": 31.853861,
+  "lon": -88.161181,
+  "name": "Lenoir Landing NEON",
+  "siteType": "GRADIENT",
+  "state": "Alabama"
+ },
+ "MLBS": {
+  "domainName": "Appalachians and Cumberland Plateau",
+  "lat": 37.378314,
+  "lon": -80.524847,
+  "name": "Mountain Lake Biological Station NEON",
+  "siteType": "GRADIENT",
+  "state": "Virginia"
+ },
+ "MOAB": {
+  "domainName": "Southern Rockies and Colorado Plateau",
+  "lat": 38.248283,
+  "lon": -109.388273,
+  "name": "Moab NEON",
+  "siteType": "GRADIENT",
+  "state": "Utah"
+ },
+ "NIWO": {
+  "domainName": "Southern Rockies and Colorado Plateau",
+  "lat": 40.05425,
+  "lon": -105.58237,
+  "name": "Niwot Ridge NEON",
+  "siteType": "CORE",
+  "state": "Colorado"
+ },
+ "NOGP": {
+  "domainName": "Northern Plains",
+  "lat": 46.76972,
+  "lon": -100.91535,
+  "name": "Northern Great Plains Research Laboratory NEON",
+  "siteType": "GRADIENT",
+  "state": "North Dakota"
+ },
+ "OAES": {
+  "domainName": "Southern Plains",
+  "lat": 35.410599,
+  "lon": -99.058779,
+  "name": "Marvin Klemme Range Research Station NEON",
+  "siteType": "GRADIENT",
+  "state": "Oklahoma"
+ },
+ "ONAQ": {
+  "domainName": "Great Basin",
+  "lat": 40.177599,
+  "lon": -112.452452,
+  "name": "Onaqui NEON",
+  "siteType": "CORE",
+  "state": "Utah"
+ },
+ "ORNL": {
+  "domainName": "Appalachians and Cumberland Plateau",
+  "lat": 35.964128,
+  "lon": -84.282588,
+  "name": "Oak Ridge NEON",
+  "siteType": "CORE",
+  "state": "Tennessee"
+ },
+ "OSBS": {
+  "domainName": "Southeast",
+  "lat": 29.689282,
+  "lon": -81.993431,
+  "name": "Ordway-Swisher Biological Station NEON",
+  "siteType": "CORE",
+  "state": "Florida"
+ },
+ "RMNP": {
+  "domainName": "Central Plains",
+  "lat": 40.275903,
+  "lon": -105.545955,
+  "name": "Rocky Mountains NEON",
+  "siteType": "GRADIENT",
+  "state": "Colorado"
+ },
+ "SCBI": {
+  "domainName": "Mid-Atlantic",
+  "lat": 38.892925,
+  "lon": -78.139494,
+  "name": "Smithsonian Conservation Biology Institute NEON",
+  "siteType": "CORE",
+  "state": "Virginia"
+ },
+ "SERC": {
+  "domainName": "Mid-Atlantic",
+  "lat": 38.890131,
+  "lon": -76.560014,
+  "name": "Smithsonian Environmental Research Center NEON",
+  "siteType": "GRADIENT",
+  "state": "Maryland"
+ },
+ "SJER": {
+  "domainName": "Pacific Southwest",
+  "lat": 37.10878,
+  "lon": -119.73228,
+  "name": "San Joaquin Experimental Range NEON",
+  "siteType": "CORE",
+  "state": "California"
+ },
+ "SOAP": {
+  "domainName": "Pacific Southwest",
+  "lat": 37.03337,
+  "lon": -119.26219,
+  "name": "Soaproot Saddle NEON",
+  "siteType": "GRADIENT",
+  "state": "California"
+ },
+ "SRER": {
+  "domainName": "Desert Southwest",
+  "lat": 31.91068,
+  "lon": -110.83549,
+  "name": "Santa Rita Experimental Range NEON",
+  "siteType": "CORE",
+  "state": "Arizona"
+ },
+ "STEI": {
+  "domainName": "Great Lakes",
+  "lat": 45.50894,
+  "lon": -89.58637,
+  "name": "Steigerwaldt-Chequamegon NEON",
+  "siteType": "GRADIENT",
+  "state": "Wisconsin"
+ },
+ "STER": {
+  "domainName": "Central Plains",
+  "lat": 40.461894,
+  "lon": -103.02929,
+  "name": "North Sterling NEON",
+  "siteType": "GRADIENT",
+  "state": "Colorado"
+ },
+ "TALL": {
+  "domainName": "Ozarks Complex",
+  "lat": 32.95047,
+  "lon": -87.393259,
+  "name": "Talladega National Forest NEON",
+  "siteType": "CORE",
+  "state": "Alabama"
+ },
+ "TEAK": {
+  "domainName": "Pacific Southwest",
+  "lat": 37.00583,
+  "lon": -119.00602,
+  "name": "Lower Teakettle NEON",
+  "siteType": "GRADIENT",
+  "state": "California"
+ },
+ "TOOL": {
+  "domainName": "Tundra",
+  "lat": 68.66109,
+  "lon": -149.37047,
+  "name": "Toolik Field Station NEON",
+  "siteType": "CORE",
+  "state": "Alaska"
+ },
+ "TREE": {
+  "domainName": "Great Lakes",
+  "lat": 45.49369,
+  "lon": -89.58571,
+  "name": "Treehaven NEON",
+  "siteType": "GRADIENT",
+  "state": "Wisconsin"
+ },
+ "UKFS": {
+  "domainName": "Prairie Peninsula",
+  "lat": 39.040431,
+  "lon": -95.19215,
+  "name": "KU Field Station NEON",
+  "siteType": "GRADIENT",
+  "state": "Kansas"
+ },
+ "UNDE": {
+  "domainName": "Great Lakes",
+  "lat": 46.23391,
+  "lon": -89.537254,
+  "name": "University of Notre Dame Environmental Research Center NEON",
+  "siteType": "CORE",
+  "state": "Michigan"
+ },
+ "WOOD": {
+  "domainName": "Northern Plains",
+  "lat": 47.1282,
+  "lon": -99.241334,
+  "name": "Chase Lake National Wildlife Refuge NEON",
+  "siteType": "CORE",
+  "state": "North Dakota"
+ },
+ "WREF": {
+  "domainName": "Pacific Northwest",
+  "lat": 45.82049,
+  "lon": -121.95191,
+  "name": "Wind River Experimental Forest NEON",
+  "siteType": "CORE",
+  "state": "Washington"
+ },
+ "YELL": {
+  "domainName": "Northern Rockies",
+  "lat": 44.95348,
+  "lon": -110.53914,
+  "name": "Yellowstone National Park NEON",
+  "siteType": "CORE",
+  "state": "Wyoming"
+ }
+}
