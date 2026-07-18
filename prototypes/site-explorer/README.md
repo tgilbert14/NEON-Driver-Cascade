@@ -34,6 +34,20 @@ The page reads **real per-site direction screens from the committed atlas bundle
   other 43 load with a biome-appropriate world and their real place data (e.g. WREF shows
   `standing wood 56.3 m²/ha`).
 
+## Step inside — first-person 3D (Rung 3)
+
+`walk.html` is a first-person procedural scene: you stand in a NEON site and look around. The
+**vegetation is built from the site's real measured standing wood** (`veg_ba_ha`) and biome — from Wind
+River's 56 m²/ha old-growth conifer, through the open Sonoran and Chihuahuan deserts, to treeless Arctic
+tundra at Toolik. Drag to look, `WASD` (or the **Walk** button) to move; a switcher jumps between six
+sites, and the hero's **"Step inside this place →"** deep-links here (`walk.html?site=CODE`).
+
+It uses [Three.js](https://threejs.org) r128, **inlined** into the page (the Artifact CSP blocks CDNs),
+with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay cheap. It is a **procedural
+impression, not a LiDAR scan** — the honest next step is to drape real AOP LiDAR canopy-height points over
+the same scene. Because it inlines a 3D engine, it is a heavier ~620 KB page and is kept **separate** from
+the lightweight main explorer, linked rather than merged.
+
 ## Travel map (Rung 2.5)
 
 A **"Travel the network"** map opens the explorer: all 46 sites as dots on a US map (with Alaska and

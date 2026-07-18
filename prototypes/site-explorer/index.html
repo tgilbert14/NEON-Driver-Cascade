@@ -117,6 +117,11 @@
   .hero .thesis{font-family:var(--serif);font-style:italic;font-size:clamp(1.15rem,3vw,1.6rem);
     max-width:28ch;color:#fdf8ee;text-shadow:0 1px 12px #0006;margin:.1rem 0 .2rem}
   .hero .place{font-size:.95rem;color:#fbf6ecd0;max-width:46ch}
+  .stepin{align-self:flex-start;margin-top:.55rem;font-family:var(--sans);font-size:.9rem;font-weight:600;
+    text-decoration:none;color:#fff;background:#ffffff26;border:1px solid #ffffff59;border-radius:999px;
+    padding:.45rem .95rem;backdrop-filter:blur(4px);transition:background .15s ease,border-color .15s ease}
+  .stepin:hover{background:#ffffff3d;border-color:#fff}
+  .stepin:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
   section.blk{padding:clamp(1.8rem,5vw,3rem) 0 .6rem}
   .blk h3{font-family:var(--serif);font-weight:600;font-size:clamp(1.3rem,3vw,1.7rem);margin:.3rem 0 .2rem;text-wrap:balance}
@@ -225,6 +230,7 @@
       <h2 id="heroName"></h2>
       <div class="thesis" id="heroThesis"></div>
       <div class="place" id="heroPlace"></div>
+      <a class="stepin" id="stepIn" href="#" style="display:none">Step inside this place &rarr;</a>
     </div>
   </div>
 </div>
@@ -4506,6 +4512,8 @@
   var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---- travel map ---- */
+  var WALK_URL="https://claude.ai/code/artifact/93dc3028-3d44-4e50-88dd-5ce9b9985918";
+  var WALKABLE={WREF:1,SCBI:1,KONZ:1,SRER:1,JORN:1,TOOL:1};
   var MAP=JSON.parse(document.getElementById("mapData").textContent);
   var BUCKET_COLOR={forest:"#3f7a4b",grassland:"#c99a3c",dryland:"#d98a3d",tundra:"#6fa8c9",other:"#2f8f7a"};
   var BUCKET_NAME={forest:"Forest",grassland:"Grassland",dryland:"Dryland / desert",tundra:"Tundra / alpine",other:"Other"};
@@ -4663,6 +4671,9 @@
     if(player)player.resetIdle();
     drawDrivers(s);
     highlightMapDot(id);
+    var si=document.getElementById("stepIn");
+    if(WALKABLE[id]){si.style.display="inline-flex";si.href=WALK_URL+"?site="+id;}
+    else{si.style.display="none";}
   }
 
   /* ---- year wheel (with year-in-motion) ---- */
