@@ -173,6 +173,13 @@ This is now the standard; shinyapps.io (small-mammal reference) is legacy and sl
 - Required in-repo: a lean **`manifest.json`** (`rsconnect::writeManifest()`; bundle-only, keep
   `neonUtilities` OUT via the computed-package-name trick), the committed `data/` bundles, and a
   `docs/index.html` GitHub Pages showcase whose `APP_URL` points at the live Connect Cloud app.
+- Close publication with one receipt tying together the green PR head, merge commit, and exact
+  Pages-deployed commit; also update and verify the repository description and homepage.
+- Test the live showcase at desktop and 390x844 mobile after layout stabilizes or a reload:
+  require zero persistent horizontal overflow, correct canonical/OG/Twitter metadata, the social
+  image's natural dimensions, an empty unexpected console/network failure set, and successful
+  responses for every app/sibling/license link. An immediate viewport-transition frame is not
+  release evidence; remeasure it, but treat persistent overflow as a blocker.
 - Every generated family must name one canonical release-byte platform/toolchain or prove exact
   byte identity everywhere. Keep that platform's exact-byte gate; use other platforms for strict
   schema/key/text/source/decision checks and only explicitly named bounded numeric diagnostics.

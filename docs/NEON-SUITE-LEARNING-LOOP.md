@@ -104,6 +104,10 @@ Run this cycle to completion before beginning the next app.
 - Record failed attempts and cleanup with the same care as passing evidence.
 - Record exact commands, environment, expected result, actual result, and
   `PASS`/`FAIL`/`BLOCKED`/`N/A`; a screenshot or remembered outcome is not a gate.
+- After publication, bind the green PR head, merge commit, and deployed Pages
+  commit in one receipt. Verify stable desktop/mobile geometry after reload or
+  remeasurement, canonical/social metadata, natural social-image dimensions,
+  console/network health, and every public link; persistent overflow blocks release.
 
 ### 5. Produce the Driver knowledge package
 
@@ -151,7 +155,7 @@ Do not mark an app complete from memory or screenshots alone.
 
 | Pass | App | Status | Source/build evidence | Knowledge package | Driver disposition | Published verification |
 |---:|---|---|---|---|---|---|
-| 0 | Driver Response Atlas baseline | two clean pinned-runtime passes complete; evidence-only head CI/merge pending | exact bytes + semantic manifest passed twice in run `29644970791` on unchanged head `526dd3b`; see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu/Haswell/one-thread contract captured | integration target | PR #4 evidence CI/merge/Pages pending |
+| 0 | Driver Response Atlas baseline | COMPLETE AND PUBLISHED | exact bytes + semantic manifest passed twice in run `29644970791`, final PR run `29646272806`, and master run `29646451583`; merge `430b0b0`; see `BUILD-TEST-HANDOFF.md` | baseline + canonical Ubuntu/Haswell/one-thread and publication contracts captured | integration target; Driver v2 waits for passes 1-9 | Pages root/social card, desktop/mobile, console, metadata, and 12/12 public links verified 2026-07-18 |
 | 1 | Small Mammal Tracker | pending | — | — | — | — |
 | 2 | Plant Diversity | pending | — | — | — | — |
 | 3 | Plant Phenology Explorer | pending | — | — | — | — |
@@ -178,6 +182,7 @@ work.
 | Driver baseline | aquatic climate bridge | COMPLEMENT | no direct terrestrial/aquatic site-code overlap | require explicit proxy or true aquatic driver | water chemistry + inverts passes, then gap audit |
 | Driver release platform | canonical Ubuntu bytes + strict Windows oracle + independently validated CRAN/RSPM manifest normalization | NONE (suite-platform; validated) | family hashes, dual policy fixtures, raw-source oracle, boot/smoke evidence, and two clean exact-byte/semantic-manifest passes in Driver handoff | no scientific Driver change | reuse this release/test split in each app pass; never round artifacts or normalize unvalidated provenance |
 | Driver release platform | fixed BLAS core and one-thread numeric runtime | NONE (suite-platform; validated) | unpinned run drifted; run `29644970791` attempts 1 and 2 loaded Haswell/one thread and reproduced exact bytes plus semantic manifest on unchanged head `526dd3b` | keep loaded core/thread assertions in CI and refresh, with no scientific rounding | reuse the exact loaded-runtime guard and two-run proof in each sibling app that publishes numeric artifacts |
+| Driver release platform | PR/merge/Pages identity plus stable public browser receipt | NONE (suite-platform; validated) | final PR and master CI green; Pages built merge `430b0b0`; desktop/mobile, metadata, 1734x907 social asset, empty console, and 12/12 public links passed | no scientific Driver change | reuse the three-identity publication receipt; remeasure after viewport transitions and reject persistent overflow |
 
 ## Driver v2 reintegration gate
 

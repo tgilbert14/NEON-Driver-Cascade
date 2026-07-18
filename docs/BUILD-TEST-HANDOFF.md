@@ -8,9 +8,8 @@ can continue safely without relying on chat history.
 
 ## Current handoff state
 
-**Release-validation state on the local release branch: POLICY APPROVED; LOCAL
-VALIDATION PASS; PINNED-RUNTIME DETERMINISM PASS; FINAL EVIDENCE-ONLY HEAD CI
-PENDING as of 2026-07-18.** The owner approved Ubuntu 24.04 with R 4.5.2, the pinned
+**Release-validation state on `master`: RELEASED AND PUBLICLY VERIFIED as of
+2026-07-18.** The owner approved Ubuntu 24.04 with R 4.5.2, the pinned
 2026-07-15 Posit snapshot, OpenBLAS `Haswell`, and one BLAS/OpenMP thread as the
 canonical release-byte platform. The exact Ubuntu byte gate remains authoritative.
 Windows remains a strict schema/class/attribute/key/text/source/support/decision
@@ -46,10 +45,17 @@ Haswell/one-thread guard, all nine build stages, every source/scientific contrac
 the unchanged exact-byte gate, semantic manifest comparison, and whitespace. The
 second receipt was `OpenBLAS core=Haswell threads=1 config=OpenBLAS 0.3.26
 NO_LAPACKE DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64`; the run retained zero
-artifacts. This completes the required two-run deterministic release proof. The
-evidence-only documentation head still requires one green CI run before merge;
-repository metadata, Pages deployment, and final public cover/share-card QA remain
-pending.
+artifacts. This completes the required two-run deterministic release proof.
+
+The evidence-only PR head `080673257edcc320c8a811d4bd481eb17279ebfe` passed
+run `29646272806` (job `88084946603`) before PR #4 merged into `master` as
+`430b0b03642fb9aa42e71de5118b460094d5a20a`. Post-merge master run
+`29646451583` (job `88085414025`) passed the same loaded-runtime, nine-stage,
+exact-byte, semantic-manifest, and whitespace gates. GitHub Pages reported status
+`built` for that exact merge commit, the repository description/homepage now point
+to the Response Atlas and its Pages URL, and the live cover, social image,
+desktop/mobile layout, console, and all 12 unique public HTTP links passed final
+verification.
 
 The cross-platform diagnosis remains part of the audit record: one root family
 diff from RDS native-encoding headers plus last-bit OLS/QR, correlation, and
@@ -449,18 +455,18 @@ code change invalidates earlier build, determinism, browser, and manifest eviden
 
 | Order | Gate | Status | Date | Generation / evidence |
 |---:|---|---|---|---|
-| 1 | Worktree ownership | PASS | 2026-07-17 | Current documentation changes are owned; no rebuild process or conflicting editor remains; unrelated history is preserved. |
+| 1 | Worktree ownership | PASS | 2026-07-18 | Clean synchronized `master`; PR release branch deleted remotely; no rebuild process, conflicting editor, or unrelated worktree change remains. |
 | 2 | Static syntax | PASS | 2026-07-17 | 22 R files parsed as UTF-8; `node --check`; both Python files compiled in memory; Python fixtures passed. |
 | 3 | Workflow policy | PASS | 2026-07-18 | Both YAML files safe-loaded; all 13 final `uses:` values are full lowercase 40-hex pins; receipt self-test passed; the temporary diagnostic upload is removed. |
-| 4 | Text hygiene | PASS | 2026-07-17 | `git diff --check`; canonical LF/no-BOM text; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. |
-| 5 | Authoritative build | PASS | 2026-07-18 | Diagnostic-free head `526dd3b` passed all nine stages, contracts, exact scientific bytes, semantic manifest, and whitespace in run `29644970791` attempts 1 and 2 (jobs `88081588746`, `88083964830`). |
+| 4 | Text hygiene | PASS | 2026-07-18 | Release and closeout documentation pass `git diff --check` plus strict UTF-8/LF/no-BOM checks; no repository bytecode, lock, stage, backup, pending, temp config, or credential residue. |
+| 5 | Authoritative build | PASS | 2026-07-18 | Diagnostic-free head `526dd3b` passed twice in run `29644970791`; final PR head `0806732` passed run `29646272806`; merged master `430b0b0` passed run `29646451583`, including all nine stages, exact scientific bytes, semantic manifest, and whitespace. |
 | 6 | Independent live-root checks | PASS | 2026-07-17 | Promoted family passed the complete seven-source oracle, manifest verification/comparison, Python publisher fixtures, boot integrity, app smoke, and workflow receipt fixtures. |
 | 7 | Determinism | PASS | 2026-07-18 | Two independent fresh attempts of run `29644970791` on unchanged head `526dd3b` loaded the pinned Haswell/one-thread runtime and reproduced exact artifact bytes plus manifest semantics. |
 | 8 | Pre-promotion failure safety | PASS | 2026-07-17 | Historical controller test passed; current Windows stage-5 failure also began no promotion and left all five hashes unchanged. |
 | 9 | Promotion rollback safety | PASS | 2026-07-17 | Historical controller test restored exact prior bytes/hashes 5/5; promotion controller code has not changed. |
 | 10 | Writer capability guard | PASS | 2026-07-17 | All four direct writers rejected missing generation capability; SHA-256 for all five live release files remained unchanged. |
-| 11 | Browser QA | PENDING | 2026-07-17 | Local smoke passes; final public desktop/mobile, console/network, cover, and share-card QA follows merge and Pages deployment. |
-| 12 | Final state | IN PROGRESS | 2026-07-18 | Deterministic code/workflow proof is complete; evidence-only head CI, merge, metadata, Pages deployment, and public verification remain pending. |
+| 11 | Browser QA | PASS | 2026-07-18 | Historical interactive app QA remains valid; deployed Pages cover passed at desktop 1265x720 and mobile 390x844 with stable zero overflow, correct canonical/OG/Twitter data, 1734x907 social asset, no console warning/error, and 12/12 unique public HTTP links returning 200. |
+| 12 | Final state | PASS | 2026-07-18 | PR #4 merged as `430b0b0`; master CI and Pages build passed; repository description/homepage and the public cover/share card are live and verified. |
 
 ### Static and focused commands
 
@@ -582,10 +588,6 @@ replace browser QA, and screenshots do not replace interaction/console checks.
 
 ## Residual risks currently carried
 
-- Diagnostic-free code/workflow head `526dd3b` has two independent fresh-run proofs
-  of the loaded Haswell/one-thread contract, exact artifact bytes, and semantic
-  manifest. The evidence-only documentation head still requires one green CI run
-  before PR #4 may merge.
 - The retained isolated diagnostic bundle under `C:\tmp` is non-authoritative and
   outside the repository. It is no longer needed for scientific evidence and may be
   removed after release without touching the canonical repository family.
@@ -598,8 +600,9 @@ replace browser QA, and screenshots do not replace interaction/console checks.
   host. Runtime activation of `English_United States.utf8` is tested and required,
   but bypassing the supported runtime/helper path can reintroduce corruption.
 - Browser coverage is finite. Historical app QA covered the principal desktop/mobile,
-  interaction, plot, Unicode, and accessibility paths; the current release still
-  needs final public Pages/cover/share-card and console/network verification.
+  interaction, plot, Unicode, and accessibility paths; the public Pages cover and
+  share card now also have deployed desktop/mobile, console, asset, and link evidence.
+  Future browser/host changes still require a fresh stable-state check.
 - The user Sass cache is not writable in this sandbox; Shiny safely falls back to a
   temporary cache. Some installed R packages report that they were built under R
   4.5.3 while tests run under R 4.5.2. Neither warning changed validated output,
@@ -1218,3 +1221,65 @@ Rules:
 - **Next action:** commit and push this evidence-only update, require its full CI to
   pass, merge PR #4, update repository metadata, then verify the deployed Pages
   root and social image in desktop/mobile browser sessions.
+
+### 2026-07-18 06:43 MST - merged release and public baseline closeout / root
+
+- **Changed/classification:** merged fully green PR #4 into `master` as
+  `430b0b03642fb9aa42e71de5118b460094d5a20a`, deleted the remote release branch,
+  updated the GitHub description and homepage, and verified the deployed Pages
+  cover/share card. This closeout changes only documentation. Classification is
+  `suite-platform`; ecological Driver implication is explicitly `NONE`.
+- **Learned:** publication has three identities that must agree: the green PR head,
+  the merge commit, and the Pages-deployed commit. Record and verify all three.
+  Responsive automation must also distinguish the immediate viewport-transition
+  frame from steady state: reload or remeasure, require stable geometry, and block
+  release on persistent overflow rather than accepting either a transient pass or
+  a transient failure. Reuse this deployment/browser receipt for all nine apps.
+- **Test process/environment:** final PR head
+  `080673257edcc320c8a811d4bd481eb17279ebfe` passed GitHub Actions run
+  `29646272806`, job `88084946603`; post-merge master
+  `430b0b03642fb9aa42e71de5118b460094d5a20a` passed run `29646451583`, job
+  `88085414025`. Each loaded OpenBLAS 0.3.26 Haswell with one thread and passed
+  all seven detached source fetches, the nine-stage build, source/scientific
+  contracts, 73-package/12-file manifest verification, 12 malformed/mutated boot
+  fixtures, six promotion cuts, 510-row/12-association app smoke, exact committed
+  scientific bytes, semantic manifest comparison, and whitespace. Pages API
+  reported `built` for `430b0b0`; deployment workflow `29646450942` targeted that
+  same commit.
+- **Public browser/network result:** the live root
+  `https://tgilbert14.github.io/NEON-Driver-Cascade/` rendered the expected title,
+  accessible hierarchy, launch/GitHub controls, nine-sibling suite registry,
+  canonical URL, Open Graph fields, and Twitter large-image fields. Desktop
+  1265x720 and mobile 390x844 stable-state layouts had no horizontal overflow and
+  no console warning/error. The social image loaded at 1734x907 and matched local
+  SHA-256 `8bef6bd8462b9606c7de1c718ca6c1778f7ce84fc57f72c2c9ed741135a6fee1`.
+  The hosted app, repository, nine sibling pages, and CC license were 12/12 HTTP
+  200 responses.
+- **Expected versus actual:** expected the final evidence head, merge commit,
+  master build, Pages commit, metadata, public cover, social asset, and all links
+  to agree; actual matched.
+- **Evidence invalidated:** all prior `merge/metadata/Pages/public QA pending`
+  statements are superseded. Historical failed-run diagnostics remain factual.
+- **Artifacts/non-impact:** no generation ran in this closeout. The canonical
+  SHA-256 family remains cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Failure/cleanup:** Bitdefender continued to deny the sandboxed WindowsApps
+  launcher and image helper; the already-approved explicit system PowerShell path
+  completed all repository/GitHub work. The browser backend did not support a
+  `networkidle` wait, so the supported `load` state was used. The first immediate
+  mobile viewport sample reported transitional 608-pixel scroll width; repeated
+  root/body geometry plus a full mobile reload produced stable 375/375 width,
+  correct screenshots, and zero overflow. No repository artifact, lock, stage,
+  backup, pending file, credential, or diagnostic run artifact changed.
+- **Residual risk:** upstream package tarballs remain unarchived, five-file hard
+  power-loss atomicity is impossible, browser coverage remains finite, and the
+  isolated `C:\tmp` diagnostic bundle is optional non-authoritative cleanup.
+- **Next action:** publish this documentation-only closeout and require its
+  no-product-impact CI/Pages update to pass, then begin suite pass 1 (Small Mammal
+  Tracker) using the recorded one-app learning cycle. Do not reintegrate Driver v2
+  until all nine pinned knowledge packages and the complementary-product decision
+  are complete.
