@@ -31,7 +31,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 4-real | **Real AOP LiDAR** — WREF, SCBI, HARV & GUAN canopies from actual NEON CHM scans | DONE | #13 |
 | 6 | **Science in-scene** — each site's honest headline driver shown in the 3D overlay | DONE | #15 |
 | 7 | **Soundscape** — per-biome procedural Web Audio ambience (wind/insects/birds), opt-in, retunes per site | DONE | #16 |
-| 8+ | Optional — more sites on real LiDAR (token available); day/dusk lighting | PLANNED | — |
+| 8 | **Day-to-night lighting** — a time-of-day slider drives sky/sun/hemi/fog (dawn → midday → dusk → night) | DONE | #17 |
+| 9+ | Optional — more sites on real LiDAR (token available); TOD-linked soundscape (dawn birds / night insects) | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -46,7 +47,7 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~620 KB; deep-linkable via `?site=CODE`).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~865 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
@@ -75,6 +76,12 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   gesture to start audio). Each biome retunes the graph (`BIOME_SND`): forest = birds + soft wind, dryland =
   bright wind + faint insects + no birds, tundra = low bare wind, etc. It's an **impression of the biome's
   ambience, not a field recording** of any site.
+- The **day-to-night lighting is illustrative** (Rung 8): a time-of-day slider (`TOD` keyframes → `applyTOD()`)
+  blends the sky-shader colours, arcs the sun's direction/colour/intensity, and dims the hemisphere light and
+  fog from dawn → midday → dusk → night. The **midday stop (0.40) uses each site's own daytime palette and the
+  original sun defaults, so the default load looks identical to before** (no regression); the other stops blend
+  a universal sky over the biome. It's a **mood/lighting illustration, not a modelled solar position** for any
+  site's latitude or date.
 
 ## How to regenerate / verify
 
@@ -95,13 +102,14 @@ green → reset the branch onto the new master → next increment. Branch: `clau
 
 ## Next up (Rung 8+ — further polish)
 
-Done since Rung 6: the **per-biome soundscape** (Rung 7, #16) and the site's **headline driver in-scene**
-(Rung 6, #15). Four forest sites already render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN (grids
-committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves:
-**more forest sites on real LiDAR** — pick a tall-canopy site (e.g. BART, TEAK, SOAP, GRSM), download its
-CHM tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad `.neon_token`), then
-`build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json`; and optional **day/dusk lighting** (drive
-the sky shader's `sund`/sun colour off a time-of-day slider — no external data needed).
+Done since Rung 6: the **headline driver in-scene** (Rung 6, #15), the **per-biome soundscape** (Rung 7, #16),
+and the **day-to-night lighting** (Rung 8, #17). Four forest sites already render from **real AOP LiDAR** —
+WREF, SCBI, HARV, GUAN (grids committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`).
+Remaining nice-to-haves: **more forest sites on real LiDAR** — pick a tall-canopy site (e.g. BART, TEAK,
+SOAP, GRSM), download its CHM tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad
+`.neon_token`), then `build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json`; and a **TOD-linked
+soundscape** (louder dawn birds, night insects — wire `todVal` into `BIOME_SND`/`scheduleChirp`). No external
+data is needed for the audio tie-in.
 
 Rung 5 (done): all 46 sites are now walkable — the six curated ones keep hand-authored scenes; the rest
 are generated from `bucket` + `veg_ba_ha` in `walk-sites.json` via `paramsFor()`. Deep-link any with

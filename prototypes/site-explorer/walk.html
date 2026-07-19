@@ -40,6 +40,16 @@
     padding:.45rem 1rem;font-weight:650}
   .walk:focus-visible,.sbtn:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .hint{font-family:var(--mono);font-size:.68rem;color:#ffffff99;text-shadow:0 1px 6px #000a}
+  .tod{display:inline-flex;align-items:center;gap:.5rem;background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:.35rem .75rem;backdrop-filter:blur(6px);pointer-events:auto;color:var(--ink)}
+  .tod input[type=range]{-webkit-appearance:none;appearance:none;width:92px;height:4px;border-radius:999px;
+    background:linear-gradient(90deg,#2b3a5e,#8fb0cf,#ffe0a8,#e58a4b,#141a2e);outline:none;cursor:pointer;margin:0}
+  .tod input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+    background:#f4efe3;border:1px solid #00000066;cursor:pointer}
+  .tod input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#f4efe3;
+    border:1px solid #00000066;cursor:pointer}
+  .tod #todLabel{font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;color:#ffffffcc;min-width:8ch}
+  .tod #todIcon{font-size:.9rem;width:1.1em;text-align:center}
   .backlink{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
     font-family:var(--mono);font-size:.7rem;color:#f4efe3cc;text-decoration:none;background:var(--panel);
     border:1px solid var(--line);border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(6px)}
@@ -60,6 +70,7 @@
     <div class="row">
       <button class="walk" id="walkBtn" type="button">&#9654; Walk</button>
       <button class="sbtn" id="soundBtn" type="button" aria-pressed="false"><i id="soundDot" style="background:#8a8a8a"></i>Sound</button>
+      <label class="tod"><span id="todIcon">&#9728;</span><input id="todRange" type="range" min="0" max="1" step="0.01" value="0.4" aria-label="Time of day"><span id="todLabel">Midday</span></label>
       <span class="hint">drag to look &middot; W A S D to move</span>
     </div>
     <div class="sites" id="siteBtns"></div>
@@ -162,6 +173,39 @@
       "vec3 c=mix(botc,topc,smoothstep(0.0,0.75,h));float s=max(0.0,dot(d,sund));"+
       "c+=vec3(1.0,0.93,0.75)*pow(s,430.0);c+=vec3(1.0,0.86,0.62)*pow(s,10.0)*0.13;gl_FragColor=vec4(c,1.0);}"})));
 
+  // ---- time of day ----  a slider drives sky/sun/hemi/fog from dawn -> night.
+  // top/bot === null means "use this site's own daytime palette", so the default (0.40 = Midday)
+  // reproduces the original look exactly; other stops blend a universal sky over the biome.
+  var TOD=[
+    {t:0.00,top:"#243a5e",bot:"#5b6b82",grd:0.42,sun:"#ffae63",si:0.35,hi:0.55,dir:[0.80,0.12,0.30]}, // dawn
+    {t:0.18,top:"#6f93c4",bot:"#cad8e6",grd:0.82,sun:"#ffe6bf",si:0.92,hi:0.95,dir:[0.58,0.46,0.30]}, // morning
+    {t:0.40,top:null,     bot:null,     grd:1.00,sun:"#fff2dd",si:1.00,hi:1.02,dir:[0.44,0.87,0.22]}, // midday (site palette)
+    {t:0.62,top:"#89a4c4",bot:"#ecd8b2",grd:0.92,sun:"#ffdca0",si:0.90,hi:0.92,dir:[-0.55,0.46,0.26]},// afternoon
+    {t:0.80,top:"#3d3556",bot:"#e58a4b",grd:0.66,sun:"#ff8330",si:0.55,hi:0.66,dir:[-0.84,0.10,0.22]},// dusk
+    {t:1.00,top:"#0c1122",bot:"#1b2540",grd:0.28,sun:"#9fb2dc",si:0.10,hi:0.34,dir:[-0.45,-0.12,0.20]}// night
+  ];
+  var todVal=0.40, baseSky0=new THREE.Color("#8fb0cf"), baseSky1=new THREE.Color("#d6e2ea"),
+    baseGround=new THREE.Color("#5a6a3a"), _sd=new THREE.Vector3();
+  function _kfCol(hex){return hex===null?null:new THREE.Color(hex);}
+  function applyTOD(){
+    var v=todVal,i=0; while(i<TOD.length-1 && v>TOD[i+1].t)i++;
+    var a=TOD[i],b=TOD[Math.min(i+1,TOD.length-1)],span=(b.t-a.t)||1,f=Math.max(0,Math.min(1,(v-a.t)/span));
+    var at=a.top===null?baseSky0:_kfCol(a.top), ab=a.bot===null?baseSky1:_kfCol(a.bot),
+        bt=b.top===null?baseSky0:_kfCol(b.top), bb=b.bot===null?baseSky1:_kfCol(b.bot);
+    var top=at.clone().lerp(bt,f), bot=ab.clone().lerp(bb,f),
+        grd=a.grd+(b.grd-a.grd)*f, si=a.si+(b.si-a.si)*f, hi=a.hi+(b.hi-a.hi)*f,
+        sc=new THREE.Color(a.sun).lerp(new THREE.Color(b.sun),f);
+    skyUni.topc.value.copy(top); skyUni.botc.value.copy(bot);
+    _sd.set(a.dir[0]+(b.dir[0]-a.dir[0])*f,a.dir[1]+(b.dir[1]-a.dir[1])*f,a.dir[2]+(b.dir[2]-a.dir[2])*f).normalize();
+    skyUni.sund.value.copy(_sd); sun.position.copy(_sd).multiplyScalar(150);
+    sun.color.copy(sc); sun.intensity=si; hemi.intensity=hi; hemi.color.copy(baseSky0);
+    hemi.groundColor.copy(baseGround).multiplyScalar(0.55+0.45*grd);
+    if(scene.fog)scene.fog.color.copy(bot);
+  }
+  var TOD_PHASE=[[0.09,"Dawn","&#127749;"],[0.29,"Morning","&#9728;"],[0.51,"Midday","&#9728;"],
+    [0.71,"Afternoon","&#9728;"],[0.90,"Dusk","&#127751;"],[1.01,"Night","&#9790;"]];
+  function todPhase(v){for(var i=0;i<TOD_PHASE.length;i++)if(v<TOD_PHASE[i][0])return TOD_PHASE[i];return TOD_PHASE[5];}
+
   function resize(){var w=host.clientWidth||window.innerWidth,h=host.clientHeight||window.innerHeight;
     renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
   window.addEventListener("resize",resize); resize();
@@ -211,9 +255,9 @@
     scene.remove(world);
     world.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose&&o.material.dispose();});
     world=new THREE.Group(); scene.add(world);
-    scene.background=null; var horizon=new THREE.Color(site.sky[1]); scene.fog=new THREE.Fog(horizon,42,150);
-    skyUni.topc.value.set(site.sky[0]); skyUni.botc.value.set(site.sky[1]);
-    hemi.color=new THREE.Color(site.sky[0]); hemi.groundColor=new THREE.Color(site.ground);
+    scene.background=null; scene.fog=new THREE.Fog(new THREE.Color(site.sky[1]),42,150);
+    baseSky0.set(site.sky[0]); baseSky1.set(site.sky[1]); baseGround.set(site.ground);
+    applyTOD();   // sky/sun/hemi/fog from the current time-of-day over this site's palette
     world.add(groundMesh(site.ground));
     var lidarEl=document.getElementById("lidar"+site.code);   // any site with a real CHM grid uses it
     if(lidarEl){
@@ -334,6 +378,13 @@
     }else if(AUDIO){ AUDIO.master.gain.setTargetAtTime(0,AUDIO.ctx.currentTime,0.3); dot.style.background="#8a8a8a"; }
   }
   document.getElementById("soundBtn").addEventListener("click",toggleSound);
+
+  // time-of-day slider
+  var todRange=document.getElementById("todRange"),todLabel=document.getElementById("todLabel"),
+    todIcon=document.getElementById("todIcon");
+  function onTOD(){todVal=parseFloat(todRange.value); applyTOD();
+    var p=todPhase(todVal); todLabel.textContent=p[1]; todIcon.innerHTML=p[2];}
+  todRange.addEventListener("input",onTOD);
 
   // ---- controls ----
   var keys={},yaw=0,pitch=-0.05,px=0,pz=0,walking=false,drag=false,lx=0,ly=0;
