@@ -39,7 +39,7 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 13 | **Drifting clouds** — a procedural fbm cloud layer in the sky shader, sun-lit and dimming into night | DONE | #22 |
 | 14 | **SOAP on real AOP LiDAR** — Soaproot Saddle, an open Sierra foothill woodland (seventh real scan) | DONE | #23 |
 | 15 | **Audit & polish** — biome-varied cloud cover; idle chirp timer stops when muted; doc accuracy | DONE | #24 |
-| 16 | **Visual overhaul (stage 1)** — soft sun shadows, key-dominant warm light, distant horizon hills | DONE | #25 |
+| 16 | **Visual overhaul (stage 1)** — soft sun shadows, key-dominant warm light, distant horizon hills | DONE | #26 |
 | 17+ | Optional — visual stage 2 (generated textures/skybox); more real-LiDAR forests; richer voices | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
