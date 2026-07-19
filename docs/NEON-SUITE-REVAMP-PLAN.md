@@ -5,9 +5,10 @@ Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
-Progress: Driver baseline, Small Mammal Pass 1, and Plant Phenology Pass 2 are
-complete and published. Ground Beetle remains the Phase 0 outage; Plant Diversity
-is next after the Pass 2 closeout receipts merge green.
+Progress: Driver baseline, Small Mammal Pass 1, Plant Phenology Pass 2, and Plant
+Diversity Pass 3 are complete and production-verified. Ground Beetle remains the
+Phase 0 outage. Vegetation Structure is the next scientific pass, but its cover
+work waits for owner approval of the new artistic-poster direction.
 
 ## 1. Outcome
 
@@ -35,18 +36,19 @@ The program has five non-negotiable outcomes:
 
 ## 2. Audit baseline and immediate risks
 
-The public cover system is already cohesive and visually strong: dark habitat
-gradients, constellation links, code-native mascots, distinct accent palettes, and
-clear launch controls. The revamp should preserve that recognition and improve its
-information architecture, provenance, responsiveness, and maintainability.
+The 2026-07-18 public-cover baseline used dark habitat gradients, constellation
+links, code-native mascots, distinct accent palettes, and clear launch controls.
+That history is factual but is no longer the target: owner review found the covers
+too repetitive and information-heavy. The current direction is the brief artistic
+poster system in section 6, pending approval from real cover review.
 
 The release layer is not at the same quality bar.
 
 | App | Public app on 2026-07-18 | Manifest/runtime-file drift | Executable helper tests | Immediate scientific or product risk |
 |---|---|---:|---:|---|
 | Small Mammal Tracker | **Startup Error -> restored in Pass 1** | 10 -> 0 files | 0 -> 11 fixtures + JS handler gate | physical-event parity and opportunity denominator repaired; exact current-source Driver join remains held |
-| Plant Phenology Explorer | available | 8 files | 1 | desert green-up opportunity and visit-cadence comparability must remain explicit |
-| Plant Diversity | available | 13 files | 1 | documents and current code disagree about which review findings are resolved |
+| Plant Phenology Explorer | **Startup Error -> restored in Pass 2** | 8 -> 0 files | 1 -> registered science/build/handler/semantic suite | desert green-up opportunity, interval censoring, and visit-cadence comparability are explicit; exact current-source Driver join remains held |
+| Plant Diversity | **production verified in Pass 3** | 13 -> 0 files | 1 -> registered science/build/handler/cover/semantic suite | nested grain, opportunity, recurrent panels, Chao2, unknown nativity, reference scope, and `legacy-partial` source limits are release-verified; Driver remains context only |
 | Vegetation Structure Explorer | available | 8 files | 1 | shared `stand_site()` contract can drift from Driver; state must not be presented as annual flux |
 | Ground Beetle Tracker | **Startup Error** | 8 files | 0 | catch-conditioned effort omits zero-carabid bouts; cover copy overstates ecosystem-health meaning |
 | Mosquito Pulse | available | 7 files | 0 | expansion, zero-catch effort, day/night support, and seasonal aggregation need fixture coverage |
@@ -57,26 +59,31 @@ The release layer is not at the same quality bar.
 At baseline, all nine companion manifests disagreed with at least one currently
 tracked runtime file. Small Mammal Pass 1 has now closed its drift and independently
 validated R 4.5.2 / 91-package / 117-file release family. Plant Phenology Pass 2
-then closed its drift with a pinned R 4.5.2 / 92-package / 60-runtime-file release;
-the other seven remain at their baseline state. A future companion deploy can otherwise publish a different
+then closed its drift with a pinned R 4.5.2 / 92-package / 60-runtime-file release.
+Plant Diversity Pass 3 closed its drift with R 4.5.2 / 91 packages / 150 manifest
+files and exact runtime, source-limit, export, responsive, and semantic receipts;
+the other six companions remain at their baseline state. A future companion deploy can otherwise publish a different
 app than the repository appears to describe, or fail at startup.
 
-Additional suite-wide findings (baseline unless a Pass 1 update is stated):
+Additional suite-wide findings (baseline unless a later pass update is stated):
 
 - At baseline, only the Driver repository had `AGENTS.md` and a durable
-  `docs/BUILD-TEST-HANDOFF.md`. Small Mammal now has app-local governance, handoff,
-  and Driver knowledge-package artifacts; the other eight companions still lack
-  them.
+  `docs/BUILD-TEST-HANDOFF.md`. Small Mammal, Phenology, and Plant Diversity now
+  have app-local governance, handoff, and Driver knowledge-package artifacts; the
+  other six companions still lack them.
 - At baseline, four companions had one helper test script and five had none. Small
-  Mammal now runs 11 scientific fixtures plus a JavaScript handler-contract gate.
+  Mammal, Phenology, and Plant Diversity now run product-specific science,
+  portability, client-handler, exact-release, and semantic-health gates; the other
+  six retain their baseline test debt.
 - Most companion workflows use moving action tags and a moving package snapshot,
   combine build/validation/publish in one write-enabled job, and do not reproduce
   the Driver's loaded BLAS/thread receipt.
 - Weekly scheduled runs can finish successfully in seconds because a date gate
   skipped the work. That is a skip, not fresh release-health evidence.
-- Baseline post-deploy checks were not content-aware. Small Mammal now requires an
-  app-specific semantic marker and rejects Posit error pages; the pattern remains to
-  be ported to the other eight companions.
+- Baseline post-deploy checks were not content-aware. Small Mammal, Phenology, and
+  Plant Diversity now require app-specific semantic markers and exact release
+  receipts while rejecting Posit error pages; the pattern remains to be ported to
+  the other six companions.
 - The suite registry and relationship copy are duplicated in each static cover,
   creating ten sources of truth.
 - Mosquito Pulse and My Little Inverts reference `og-image.png` without committing
@@ -125,7 +132,7 @@ The pass order is intentionally not alphabetical:
 |---:|---|---|
 | 1 | Small Mammal Tracker | **COMPLETE / PRODUCTION VERIFIED**; restored the outage, established the companion release template, and closed physical-event contract parity without changing Driver bytes |
 | 2 | Plant Phenology Explorer | **COMPLETE / PRODUCTION VERIFIED**; corrected plant-year opportunity, onset unavailability/censoring, deterministic derived artifacts, and release trust without changing Driver bytes |
-| 3 | Plant Diversity | separates composition, invasion, richness, cover, and productivity before producer synthesis |
+| 3 | Plant Diversity | **COMPLETE / PRODUCTION VERIFIED**; separated composition, invasion, richness, cover, and productivity; closed nested-grain/opportunity/panel/source-limit contracts without changing Driver bytes |
 | 4 | Vegetation Structure Explorer | supplies the slow standing-stock floor and the shared `stand_site()` contract |
 | 5 | Ground Beetle Tracker | currently unavailable; effort-complete zero-catch support determines whether activity-density can leave context-only status |
 | 6 | Mosquito Pulse | strongest seasonal consumer candidate; requires opportunity-complete trap effort and biome-aware temperature/precipitation framing |
@@ -236,9 +243,9 @@ Do not create a shared runtime R package that can break all apps at once. Instea
 keep the apps independent and vendor generated, versioned suite artifacts:
 
 - `suite-registry.json`: app ID, public name, role, DPID, repository, cover, app URL,
-  palette, icon/mascot, status, and Driver disposition;
+  palette, field motif/art direction, status, and Driver disposition;
 - `suite-copy.json`: one canonical short description and role statement per app;
-- generated cover relationship nodes and in-app Suite panel;
+- generated below-fold cover destinations and in-app Suite panel;
 - `suite-release-status.json`: last verified commit, manifest hash, public-health
   time, and release state;
 - a cover/social validator; and
@@ -260,46 +267,58 @@ Use roles, not decorative causal arrows:
 | Aquatic condition and consumers | Water Chemistry, My Little Inverts | chemistry is condition/context; invertebrates are method- and water-type-stratified consumers |
 | Candidate hinge | HydroPulse or Aquatic Producers | added only if the gap audit supports it |
 
-Every cover and About panel should answer: `What is this app?`, `What role does it
-play in the suite?`, and `How can it inform Driver?` The third answer may be
-`context only`.
+Every cover page as a whole and every About panel should answer: `What is this
+app?`, `What role does it play in the suite?`, and `How can it inform Driver?` The
+poster face does not need to answer all three; those answers can sit below the fold.
+The third answer may be `context only`.
 
 ## 6. Visual and cover system
 
-### Preserve
+### Working direction — pending owner approval
 
-- constellation/connected-suite metaphor;
-- friendly code-native organism mascots;
-- dark habitat atmosphere and app-specific accent colors;
-- plain-language hero copy and two clear launch paths; and
-- reduced-motion support.
+The cover face is an artistic poster for a curious non-scientist, not a compressed
+methods page. Above the fold, use only:
 
-### Revamp
+1. one dominant app-native object or field motif;
+2. one 3–7 word hook;
+3. one 6–12 word plain-language promise; and
+4. one primary CTA.
 
-Each cover uses one versioned shell with app-specific tokens and content:
+Do not place metric bands, methods summaries, CAN/CANNOT detail, provenance blocks,
+release receipts, relationship maps, or secondary actions on the poster face. Put
+those trust and science surfaces below the fold, where they remain easy to find and
+screenshot-safe at the point of interpretation. The final direction is not locked
+until the owner approves a real suite cover review.
 
-1. suite eyebrow plus app role chip;
-2. short outcome-led title and one-sentence honest promise;
-3. primary `Open the app` and secondary `See methods & data` actions;
-4. three verified facts stamped with data vintage;
-5. a concise can/cannot claim pair;
-6. a simplified, accessible suite relationship map;
-7. availability language that does not claim an app is healthy before a semantic
-   check; and
-8. repository, DPID, data license, project license, and release receipt links.
+### Family cohesion without repetition
 
-Use imagery when it improves recognition or context:
+- Cohesion comes from a subtle suite mark, typography, art language, app-specific
+  palette, related field-motif families, the versioned registry, and the in-app
+  Suite panel—not identical hero shells, a forced star map, or a mascot on every app.
+- Each companion gets one product-native visual idea strong enough to recognize at
+  a glance. Plant may use nested quadrat/flower motifs; Phenology a bud/seasonal arc;
+  Mammals a trap or track rendered as art rather than fake field documentation.
+- Driver is the master poster and suite ambassador: companion field motifs converge
+  into one cascade/integration gesture. This is a visual relationship, not a causal
+  claim.
+- Historical Small Mammal documentary V4 and Phenology/Plant generated-art releases
+  remain factual release baselines, but all are subject to the new poster review
+  before suite-wide art is standardized.
+- Compose and validate a separate 1200×630 social image; never treat a hero crop as
+  the social design by default.
 
-- keep charts, maps, icons, and relationship diagrams code-native;
-- use a coherent low-poly or cut-paper habitat illustration as an optional hero
-  layer, generated specifically for the product rather than using generic stock;
-- create a validated 1200x630 social card for every app from the same design tokens;
-- include the organism or habitat, app title, role, and Desert Data Labs mark, but no
-  tiny chart labels or unsupported headline numbers;
-- store the prompt/source, dimensions, checksum, alt text, and generation date with
-  every raster asset; and
-- never let decorative imagery imply data precision, ecosystem health, or causal
-  linkage.
+### Trust, access, and provenance
+
+- Keep imagery local, responsive, accessible, and explicit about whether it is
+  documentary, illustrative, generated, or code-native.
+- Store source/prompt, dimensions, checksum, alt text, license, and generation date
+  for every raster asset. Never let art imply data precision, ecosystem health,
+  causal linkage, or field documentation it does not possess.
+- Preserve semantic headings, visible focus, keyboard access, 44 px controls,
+  contrast, reduced-motion behavior, and a meaningful text alternative.
+- Below the fold, retain accurate availability, DPID, source/data and project
+  licenses, CAN/CANNOT, methods, provenance, release receipt, repository, and suite
+  navigation generated from the canonical registry.
 
 Suggested palette families remain distinct but related:
 
@@ -333,7 +352,7 @@ Suggested palette families remain distinct but related:
   restricted refresh candidates, and semantic outage issue open/close behavior.
 - Shipped tidy event/capture and monthly MNKA/CPUE/N-hat/p-hat exports with a
   codebook, exact 46-site/145-species framing, accessibility contracts, all-suite
-  About navigation, and a versioned 1200x630 habitat social card.
+  About navigation, and a versioned 1200×630 habitat social card.
 - Validated the canonical R 4.5.2 / 91-package / 117-file manifest, including the
   distinction between installed URL-package provenance and Connect's absolute-CRAN
   network contract. Final SHA-256 is
@@ -384,18 +403,33 @@ Suggested palette families remain distinct but related:
   requires the exact eligible site-year join, support/censoring gates, and a
   registered analysis during suite synthesis.
 
-### Plant Diversity — third pass
+### Plant Diversity — third pass COMPLETE / production verified
 
-- Reconcile expert-review text with current p-gating, codebook, provenance, and
-  reference-flora code.
-- Keep nested grain, latest-snapshot discipline, Chao2 support, unknown nativity,
-  and cover-as-relative-index language.
-- Make codebooks derive from actual exported frames and fail on undocumented
-  columns.
-- Lead with species-area, composition, and invasion pressure; never equate richness
-  with productivity or ecosystem health.
-- Keep per-site environment screens exploratory and pooled/registered if promoted.
-- Driver disposition: richness/invasion `CONTEXT`; no productivity vote.
+- Registered and verified the 1/10/100/400 m² nested grains, one deterministic
+  current bout per plot, one bout per plot-year, recurrent panels, scale-specific
+  support, incidence-based finite-sample bias-corrected Chao2 lower bound, relative
+  ocular cover, and exclusive Native/Introduced/Unknown handling.
+- Kept sampled-empty 1 m² opportunity unavailable rather than invented; scoped the
+  one-point NRCS reference honestly; kept short annual/environment screens
+  descriptive and non-causal; preserved richness ≠ productivity/health/management.
+- Reconciled Data Takeaways, Expert Review, Science Contract, strict export
+  dictionary, source receipts, governance, and Driver knowledge package. The exact
+  46-plant + 46-environment + 34-reference family remains `legacy-partial`: its
+  content hash proves bytes, not upstream build/release/cutoff.
+- Final code merge `d6c4862` passed PR run `29695040575`, master run
+  `29695179837`, Pages `29695179559`, exact post-republish semantic attempt 2
+  `29695179854`, R 4.5.2 / 91 packages / 150 manifest files, deterministic search
+  and manifest builds, offline source, exact bundle/receipt equality, and public
+  SRER desktop + 390/375/361/360/320 QA.
+- Production runtime is `sha256:0765d8951843cf6fea09a295b260bfb53f1eb6708370748905a4a3941c85d2cb`;
+  manifest SHA-256 is `12ffe3496ac54a6504a04656236604abc64f4638d1ae92bfe103565c0d15cd51`;
+  cover/social receipt remains `sha256:de6718b3b4e3557fdc395911cd98ce55be29db4d2a9b9038f1903814ed00413c`.
+- The released stylized plant art remains a verified baseline, not the final suite
+  answer. Future cover changes wait for approval of the artistic-poster system and
+  must not disturb the production science/release identity silently.
+- Driver disposition: `CONTEXT / NO DRIVER BYTE CHANGE`. Current-source ingestion
+  requires a complete matching future receipt, sampled-opportunity ledger, and
+  measured eligible site-year join; no productivity vote or per-site climate edge.
 
 ### Vegetation Structure Explorer — fourth pass
 
@@ -488,10 +522,10 @@ No app pass is complete without evidence in all applicable rows.
 | Manifest | exact file checksum audit, package/provenance policy, semantic compare, no runtime-irrelevant files |
 | Boot | clean offline start plus malformed/missing/mutated fixture failures |
 | UI | primary funnel, deep link, map/sidebar sync, empty state, keyboard path, download, dark/light, reduced motion |
-| Responsive | stable desktop, tablet, and 390px mobile geometry with no persistent overflow or clipped controls |
+| Responsive | stable desktop, tablet, 390px, and 320px geometry plus both sides of every app-specific breakpoint seam; no persistent overflow, clipped status, or sub-44px control |
 | Accessibility | automated scan plus keyboard and screen-reader-name checks; color is not the only channel |
 | Publish | green PR head, merge commit, deployed identity, content-aware app-ready marker, console/network health |
-| Social/cover | canonical metadata, 1200x630 card, asset checksum, alt text, every suite link, accurate availability copy |
+| Social/cover | canonical metadata, separately composed 1200×630 card, asset checksum, alt text, every suite link, accurate availability copy |
 | Driver | pinned knowledge package, measured joins, disposition, and explicit implication or `NONE` |
 
 The current execution environment has no local R runtime, so this audit does not
