@@ -90,8 +90,28 @@ Alignment is approximate, not surveyed: NEON stem mapping is ~sub-metre, and the
 postdates the 2016 tags for many plants (some grew or died), so treat the overlay as "our plot on
 its real ground", not a pixel-perfect per-plant registration.
 
+## Per-individual variation
+
+Beyond the accurate per-*species* base models, each **measured** individual (104 of 179 — the woody
+plants; cacti have no VST apparent record) is shaped by its own record, pulled into the JSON by
+`build_plot.py`:
+
+These plants are **multi-stem**: an individual has one crown/height row plus many per-stem rows, each with a
+`basalStemDiameter` and its own `plantStatus`. `build_plot.py` aggregates across the stems:
+
+- **`stems`** — real stem count (median 10, up to 45).
+- **`dead`** — how many of those stems are standing dead. A plant is only `status: "dead"` when **every** stem
+  is dead (SRER_048: 5 fully dead, 80 partially-dead, 23 all-live — *not* the 28 a per-stem read implied).
+- **`bd`** — mean `basalStemDiameter` (cm) → stem/trunk thickness.
+- **`cr90`** — `ninetyCrownDiameter` (m) → the crown is drawn **elliptical** (`maxCrownDiameter` × `cr90`).
+- **`shape`** — recorded canopy shape → foliage vertical profile. **`canopy`** = `canopyPosition`,
+  **`dmg`** = any live stem is insect/physically damaged.
+
+Creosote renders its real stem count with the dead fraction as bare grey stems among green live ones; the card
+reads e.g. "16 stems · mean ⌀ 2.8 cm … live · 7 of 16 stems standing dead · some damage". Positions are
+untouched, so the AOP georeference stays valid. The surveyed extent is marked in-scene by an amber boundary.
+
 ## Planned expansions (see chat brainstorm)
 
-Per-individual variation (stem diameter/count, measured height, elliptical crown, canopy position),
-plant diversity (% cover → ground/understory), phenology (animate leaf-out/flower/senescence through
+Plant diversity (% cover → ground/understory), phenology (animate leaf-out/flower/senescence through
 the year per individual), a link from the travel-map/desert walk into the plot, and more plots.
