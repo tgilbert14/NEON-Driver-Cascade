@@ -44,7 +44,8 @@
   <div class="bottom">
     <div class="row">
       <button class="walk" id="walkBtn" type="button">&#9654; Walk</button>
-      <span class="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
+      <button class="walk" id="skyBtn" type="button" style="background:#26231d;color:#f4efe3">&#9723; Sky view</button>
+      <span class="hint" id="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
     </div>
     <div class="legend" id="legend"></div>
   </div>
@@ -82,6 +83,15 @@ sun.shadow.camera.near=1; sun.shadow.camera.far=140;
 sun.shadow.camera.left=-32; sun.shadow.camera.right=32; sun.shadow.camera.top=32; sun.shadow.camera.bottom=-32;
 sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.5; scene.add(sun); scene.add(sun.target);
 scene.fog=new THREE.Fog(new THREE.Color("#dcd2ba"),40,150);
+
+// sky-cam: an orthographic top-down camera framing the whole plot (toggled at runtime)
+var SKYFOG=scene.fog;
+var ortho=new THREE.OrthographicCamera(-1,1,1,-1,0.1,600); ortho.up.set(0,0,-1);
+var sky={x:0,z:0,half:(DATA.ey||40)/2+3};
+function sizeOrtho(){var w=host.clientWidth||innerWidth,hh=host.clientHeight||innerHeight,asp=(w/hh)||1,hy=sky.half,hx=hy*asp;
+  ortho.left=-hx;ortho.right=hx;ortho.top=hy;ortho.bottom=-hy;
+  ortho.position.set(sky.x,120,sky.z); ortho.lookAt(sky.x,0,sky.z); ortho.updateProjectionMatrix();}
+sizeOrtho();
 
 // gradient sky dome
 var skyU={top:{value:new THREE.Color("#a9bcc6")},bot:{value:new THREE.Color("#dcd2ba")},sun:{value:sun.position.clone().normalize()}};
@@ -250,6 +260,10 @@ function buildPlant(p,seed){
   // transparent pick proxy so every plant — even thin cacti — is reliably clickable
   var pr=Math.max(0.28,cr*0.5), ph=Math.max(0.35,h);
   var proxy=new THREE.Mesh(new THREE.CylinderGeometry(pr,pr,ph,6),PROXYMAT); proxy.position.y=ph/2; g.add(proxy);
+  // ground marker — species-coloured dot; reads as a survey dot-map from the sky cam
+  var mk=new THREE.Mesh(new THREE.CircleGeometry(Math.max(0.3,cr*0.46),14),
+    new THREE.MeshBasicMaterial({color:new THREE.Color(fol),transparent:true,opacity:0.62,depthWrite:false}));
+  mk.rotation.x=-Math.PI/2; mk.position.y=0.04; g.add(mk);
   g.userData={p:p,foliage:foliage};
   if(!dead&&soft)CANOPY.push(foliage);       // only soft-tissue plants sway
   return g;
@@ -258,26 +272,38 @@ function buildPlant(p,seed){
 var plants=[], seedbase=1;
 DATA.plants.forEach(function(p){var g=buildPlant(p,seedbase++); scene.add(g); plants.push(g);});
 
-// ---- controls ----
-var keys={},yaw=0.0,pitch=-0.05,px=0,pz=((DATA.ey||40)/2+4),walking=false,drag=false,lx=0,ly=0,moved=0;
+// ---- controls (first-person walk + top-down sky cam) ----
+var MODE="walk";
+var keys={},yaw=0.0,pitch=-0.05,px=0,pz=((DATA.ey||40)/2+4),walking=false,drag=false,lx=0,ly=0,moved=0,downx=0,downy=0;
 window.addEventListener("keydown",function(e){keys[e.code]=true;});
 window.addEventListener("keyup",function(e){keys[e.code]=false;});
 var cv=renderer.domElement;
 cv.addEventListener("pointerdown",function(e){drag=true;moved=0;lx=e.clientX;ly=e.clientY;downx=e.clientX;downy=e.clientY;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
 cv.addEventListener("pointerup",function(e){drag=false; if(moved<6)pick(e);});
 cv.addEventListener("pointercancel",function(){drag=false;});
-var downx=0,downy=0;
-cv.addEventListener("pointermove",function(e){if(!drag)return;moved+=Math.abs(e.clientX-lx)+Math.abs(e.clientY-ly);
-  yaw-=(e.clientX-lx)*0.004;pitch-=(e.clientY-ly)*0.004;pitch=Math.max(-1.2,Math.min(0.5,pitch));lx=e.clientX;ly=e.clientY;});
-var walkBtn=document.getElementById("walkBtn");
+cv.addEventListener("pointermove",function(e){if(!drag)return;var dx=e.clientX-lx,dy=e.clientY-ly;moved+=Math.abs(dx)+Math.abs(dy);
+  if(MODE==="sky"){var r=cv.getBoundingClientRect(),wpp=(ortho.right-ortho.left)/r.width;
+    sky.x=Math.max(-70,Math.min(70,sky.x-dx*wpp)); sky.z=Math.max(-70,Math.min(70,sky.z-dy*wpp)); sizeOrtho();}
+  else{yaw-=dx*0.004;pitch-=dy*0.004;pitch=Math.max(-1.2,Math.min(0.5,pitch));}
+  lx=e.clientX;ly=e.clientY;});
+cv.addEventListener("wheel",function(e){if(MODE!=="sky")return;e.preventDefault();
+  sky.half=Math.max(4,Math.min(60,sky.half*(1+(e.deltaY>0?1:-1)*0.12))); sizeOrtho();},{passive:false});
+var walkBtn=document.getElementById("walkBtn"), skyBtn=document.getElementById("skyBtn"), hintEl=document.getElementById("hint");
 walkBtn.addEventListener("click",function(){walking=!walking;walkBtn.innerHTML=walking?"&#10074;&#10074; Stop":"&#9654; Walk";});
+function setMode(mode){MODE=mode;walking=false;walkBtn.innerHTML="&#9654; Walk";
+  if(mode==="sky"){scene.fog=null;sky.x=0;sky.z=0;sky.half=(DATA.ey||40)/2+3;sizeOrtho();
+    skyBtn.innerHTML="&#9654; Enter the plot";walkBtn.style.display="none";
+    hintEl.innerHTML="top-down &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
+  else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Sky view";walkBtn.style.display="";
+    hintEl.innerHTML="drag to look &middot; W A S D to move &middot; click a plant to read its tag";}}
+skyBtn.addEventListener("click",function(){setMode(MODE==="sky"?"walk":"sky");});
 
 // ---- pick / inspect ----
 var ray=new THREE.Raycaster(), card=document.getElementById("card"), reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 function pick(e){
   var r=cv.getBoundingClientRect();
   var nx=((e.clientX-r.left)/r.width)*2-1, ny=-((e.clientY-r.top)/r.height)*2+1;
-  ray.setFromCamera({x:nx,y:ny},camera);
+  ray.setFromCamera({x:nx,y:ny},MODE==="sky"?ortho:camera);
   var hit=ray.intersectObjects(plants,true)[0];
   if(!hit){card.style.display="none";return;}
   var o=hit.object; while(o&&!(o.userData&&o.userData.p))o=o.parent;
@@ -299,11 +325,17 @@ DATA.legend.slice(0,9).forEach(function(l){var d=document.createElement("span");
   d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].fol)||"#6f7a52")+'"></i>'+(l.common||l.tx)+' ×'+l.n;lg.appendChild(d);});
 
 // ---- loop ----
-function resize(){var w=host.clientWidth||innerWidth,h=host.clientHeight||innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){var w=host.clientWidth||innerWidth,h=host.clientHeight||innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();sizeOrtho();}
 addEventListener("resize",resize);resize();
 var last=0;
 function loop(t){requestAnimationFrame(loop);
   var dt=Math.min(0.05,((t-last)/1000)||0);last=t;
+  if(!reduce){var gz=Math.sin(t*0.0006)*0.02+Math.sin(t*0.0013)*0.01;
+    for(var i=0;i<CANOPY.length;i++)CANOPY[i].rotation.z=gz;}
+  if(MODE==="sky"){
+    sun.position.set(sky.x+28,60,sky.z+16); sun.target.position.set(sky.x,0,sky.z); sun.target.updateMatrixWorld();
+    renderer.render(scene,ortho); return;
+  }
   var spd=9*dt,mf=0,ms=0;
   if(keys.KeyW||keys.ArrowUp)mf+=1;if(keys.KeyS||keys.ArrowDown)mf-=1;
   if(keys.KeyA||keys.ArrowLeft)ms-=1;if(keys.KeyD||keys.ArrowRight)ms+=1;
@@ -314,8 +346,6 @@ function loop(t){requestAnimationFrame(loop);
   var bob=(!reduce&&(mf||ms))?Math.sin(t*0.009)*0.04:0;
   camera.position.set(px,1.6+bob,pz); camera.rotation.set(pitch,yaw,0);
   sun.position.set(px+28,44,pz+16); sun.target.position.set(px,0,pz); sun.target.updateMatrixWorld();
-  if(!reduce){var g=Math.sin(t*0.0006)*0.02+Math.sin(t*0.0013)*0.01;
-    for(var i=0;i<CANOPY.length;i++)CANOPY[i].rotation.z=g;}
   renderer.render(scene,camera);
 }
 requestAnimationFrame(loop);

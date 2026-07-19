@@ -76,8 +76,18 @@ fruit ring, Graham's pincushion frosted globe + pink halo, longleaf jointfir for
 silver cushion, saguaro fluted column (juvenile here; arms if tall). CAGI10 identified/named = Saguaro.
 Every plant carries a transparent pick-proxy so even thin cacti are clickable; dead woody plants render as
 bare skeletons. Rebuild with scratchpad `assemble_plot.py` (reuses Three.js + ground texture from the
-existing `plot.html`). **Next (owner, "maybe"):** per-individual variation from the data — basalStemDiameter
-(stem thickness/count), measured height, elliptical crown (ninetyCrownDiameter), canopyPosition, status.
+existing `plot.html`).
+
+**Sky cam (done):** a top-down orthographic mode (toggle "Sky view" / "Enter the plot") framing the whole
+surveyed strip — drag to pan, scroll to zoom, click any plant to read its tag from above. Each plant has a
+species-coloured ground disc so the overhead view reads as a NEON crown/survey dot-map. Fixes the "hard to
+navigate" first-person complaint.
+
+**Next (owner, "maybe"):** (a) drape a real georeferenced aerial image over the plot and mark plants against
+it — use **NEON AOP** (10 cm RGB orthophoto DP3.30010.001 and/or CHM DP3.30015.001) over SRER, which shares
+our UTM grid (Google Maps tiles aren't redistributable and the artifact CSP blocks live embeds, so AOP is the
+correct source); (b) per-individual variation from the data — basalStemDiameter (stem thickness/count),
+measured height, elliptical crown (ninetyCrownDiameter), canopyPosition, status.
 **Deferred:** plant diversity (% cover → ground), phenology (animate the year), link from the desert walk,
 more plots.
 
