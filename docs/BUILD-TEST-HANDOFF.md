@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-07-18
+Last updated: 2026-07-19
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -1531,3 +1531,132 @@ Rules:
   require final branch and `master` checks to pass with the artifact hashes unchanged,
   and only then begin Plant Phenology pass 2. Do not rebuild Driver v2 before all nine
   pinned packages and the complementary-product decision are complete.
+
+### 2026-07-19 10:06 MST - Phenology pass-2 and Plant Diversity pass-3 continuity closeout / root
+
+- **Changed/classification:** reconciled the central suite ledger with the completed
+  Phenology and Plant Diversity passes; promoted their science, source, responsive,
+  release, and production lessons into the learning loop, revamp plan, and playbook;
+  and replaced the superseded cover prescription with an owner-reviewable artistic
+  poster brief. Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting`. Both sibling decisions are **HOLD/CONTEXT / NO DRIVER BYTE
+  CHANGE**. This tranche changes Driver documentation only; it does not run Driver
+  generation or edit Driver app, source, derived-data, manifest, or release bytes.
+- **Phenology continuity receipt:** Pass 2 release head `cc0151d` passed workflow
+  `29669603912`; merge/Pages/Connect commit `29c0ed1` passed the 46-bundle, 60-file
+  runtime, R 4.5.2 / 92-package, Haswell/one-thread, exact-manifest, deterministic-index,
+  offline-source, client-handler, science-fixture, and public semantic contracts.
+  Manifest SHA-256 is
+  `cc5e2a464b2c96772c6e2b441b55a4eabb603f36311c08d4342e4ed0f59a5325`;
+  semantic production run `29670192516` and fresh HARV desktop/390/320 flows passed.
+  Green-up onset, leaf-active duration, and coverage remain **HOLD / NO DRIVER BYTE
+  CHANGE** until an exact eligible site-year join, censoring/support audit, registered
+  temperature/onset model, and warm-desert alternative are reviewed. This compact
+  receipt closes the chronological gap left by the prior Small Mammal handoff; it
+  does not rewrite that historical entry.
+- **Plant release identity:** the exact production code merge is
+  `d6c48625f8268873bcd42d86285becaadbd57b4c`. Exact PR-head validation
+  `29695040575` (job `88214223755`) passed on promoted artifact head
+  `d51291bf570963c475595ab1cb9a9d41eba1bd59`; master validation `29695179837`
+  (job `88214587699`), Pages `29695179559` (deploy job `88214620774`), and exact
+  post-republish semantic attempt 2 in `29695179854` (job `88216101765`) passed.
+  Governance-only closeout PR #10 head
+  `52b0b6e61025af0e995b731e99bb1bc43f72bc5d` passed `29695932625` (job
+  `88216579937`) and merged as `894893029582077c2677eece6351e2e4ffbcadf3`;
+  docs-only master validation `29696162868` (job `88217192873`), semantic health
+  `29696162847` (job `88217192767`), and Pages `29696162583` (deploy job
+  `88217232845`) then passed. That later documentation merge does not replace the
+  deployed app identity.
+- **Plant exact receipts:** Connect request
+  `00bdcf5f-babc-4a33-8307-144a221517f6` reports Last deployed `d6c4862` on Connect
+  2026.06.1 with R 4.5.2 / 91 packages. Runtime token is
+  `sha256:0765d8951843cf6fea09a295b260bfb53f1eb6708370748905a4a3941c85d2cb`
+  and runtime-receipt file SHA-256 is
+  `8c60432c053d45f033fe84d15d0a9a20db5c9f88040c35051af72cb816795768`.
+  Manifest SHA-256 is
+  `12ffe3496ac54a6504a04656236604abc64f4638d1ae92bfe103565c0d15cd51`;
+  search-index SHA-256 is
+  `889764559d21f4de9b0f71f1f7e9140f63f73015352063cf3b4ff720acdefd1b`.
+  Cover token is
+  `sha256:de6718b3b4e3557fdc395911cd98ce55be29db4d2a9b9038f1903814ed00413c`
+  and cover-receipt file SHA-256 is
+  `c52ff4e6198aae3174af2174699caaea95c9f39cddd5d76c16063da34ed2061d`.
+  The validated family contains 46 plant bundles, 46 environment bundles, 34
+  reference files, and 150 manifest files. Canonical master artifact `8444800158`
+  has digest
+  `sha256:a23b2f6ce8df2172626d83d683473bc2da53861f0d2f36580bcfeab6869f386a`.
+- **Plant science/data result:** registered gates now require sampled opportunity
+  before metrics, one deterministic bout per plot-year, recurrent panels for annual
+  comparisons, a common 400 m² grain for cross-site richness, explicit support,
+  Chao2 as an incidence lower bound rather than a generic effort correction,
+  visible Unknown nativity, and spatially scoped references. The source family is
+  exact and frozen but remains `legacy-partial`: original `builtAt`, NEON release,
+  source cutoff, query receipt, raw digest, and sampled-empty 1 m² opportunity are
+  unavailable. Repository dates, mtimes, manifests, and content hashes do not repair
+  that missing upstream provenance. Short annual screens remain descriptive context.
+- **Plant product/public result:** a fresh SRER flow showed 203 species, 33 plots,
+  and 22.2% introduced relative cover; on-screen context, CSV export, and PDF report
+  paths passed. Public desktop plus 390/375/361/360/320 px checks showed the full
+  `SRER ready` state, a 44 × 44 Help target, no root overflow, disconnect, or output
+  error, and the exact cover/social receipt. The production URL is
+  `https://019ee109-30ae-006e-cb3b-143afeac57e3.share.connect.posit.cloud/`.
+- **Failure caught and closed:** the first post-PR #8 production check found the
+  Help control 94 px tall at 360/320 because Shiny `actionButton()` leaves its label
+  as a text node inside `.action-label`; the sibling selector used by the first fix
+  could not hide it. PR #9 zeroed inherited visual font size while preserving the
+  accessible DOM label and restoring the icon. Candidate run `29694888946` (job
+  `88213835069`) then failed only the intentional exact-byte gate, uploaded artifact
+  `8444715871` with digest
+  `sha256:be763c5432e20950bbfa2e72f61ea53da27deb3cae93047f92708693d3cb9855`,
+  and was promoted exactly before the green validation and production QA above.
+- **Reusable learning promoted:** define the observational opportunity before the
+  estimator; preserve unit, denominator, support, censoring, unknown classification,
+  spatial scope, and upstream-receipt limits from UI through exports; treat a hash as
+  exact-byte evidence rather than source-vintage evidence; and test framework markup
+  at both sides of every responsive seam. The Plant prevention matrix is
+  390/375/361/360/320 because its status/help/theme grid changes at 360 px.
+- **Cover-direction decision:** the prior identical dark-shell/constellation/mascot
+  prescription and dense eight-part above-fold formula are superseded pending owner
+  approval. The working face is a creative, intentionally art-directed poster for a
+  non-scientist: one dominant app-native object or moment, one 3–7 word human hook,
+  one 6–12 word plain-language promise, and one CTA. Methods, metrics, CAN/CANNOT,
+  provenance, receipts, routes, and suite relationships move below the fold. Suite
+  cohesion comes from the mark, typography, art language, motif family, registry,
+  and in-app Suite panel, not cloned hero layouts. Documentary images require clear
+  provenance; generated art must be visibly stylized rather than pseudo-documentary.
+  A separate validated 1200 × 630 social composition remains required.
+- **Driver decision/non-impact:** Plant common-grain richness,
+  native/introduced/unknown cover, cross-scale occurrence, reference completeness,
+  and support are **CONTEXT / NO DRIVER BYTE CHANGE**. Composition is not phenology
+  or standing stock, and richness is not productivity. Reconsider ingestion only
+  after one complete matching future receipt across all 46 bundles plus
+  `site_index.rds`, an explicit sampled-opportunity ledger, recurrent/common-grain
+  support, and a measured eligible Driver site-year join. Phenology remains held as
+  stated above. No Driver v2 inference or build is authorized by either pass.
+- **Artifacts/non-impact:** canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Evidence invalidated:** the central ledger's Plant `PASS PENDING`, 13-mismatch,
+  single-test, and startup-only state is superseded by the exact release above. The
+  earlier conclusion to preserve the suite's constellation/mascot/dense cover shell
+  is superseded by owner review and the pending artistic-poster brief. Historical
+  release failures remain factual. No Driver build or release evidence is invalidated.
+- **Validation/cleanup:** Driver documentation received Markdown/static consistency
+  review and exact artifact rehashing; Driver R/build tests are N/A because no app,
+  R, source, generated, or manifest input changed. No rebuild process or
+  `.cascade-rebuild.lock` exists, and no backup, pending artifact, or temporary data
+  was created. The first local UTF-8/fence loop used scalar syntax that zsh treated
+  as one filename; it made no change and the array-form rerun passed. Plant
+  code/release and governance merges are cleanly separated so the public app remains
+  pinned to `d6c4862` while documentation closes on `8948930`.
+- **Residual risk/next action:** Plant's exact bytes still cannot answer the missing
+  upstream vintage or sampled-empty opportunity questions; its released generated
+  cover is only a baseline subject to the new suite poster review. Merge this
+  Driver documentation tranche with all five Driver hashes unchanged. Then pause
+  before Vegetation Structure cover implementation until the owner approves the
+  artistic direction; once approved, run the full one-app learning loop and do not
+  begin another app until Vegetation is production-verified and its lessons are
+  vendored back here.

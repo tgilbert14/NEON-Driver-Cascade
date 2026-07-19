@@ -40,7 +40,7 @@ Every NEONized app is judged on the same axes the flagship nails:
 | **Flow** | A site/entity picker → a fast primary story → progressively disclosed analysis. One global selected-entity state every view reads. No dead ends; every empty state offers the next action. Deep links and restored sessions must not skip honesty context. |
 | **UI** | Shared suite structure with product-specific visual tokens: a local/system font stack, accessible cards, responsive task-oriented navigation, consistent methods/QC/download actions, and app-native organism/habitat color. Light and dark modes are optional product choices but every chart must honor the active mode. |
 | **Statistics** | Defensible, cited methods (Hill/Chao1/rarefaction/Schnabel/etc.). Every headline number has an `insight_banner()` "answer up front". n-gates before reporting. De-pseudoreplication. The right effort/scale fixed before any comparison. |
-| **Creativity** | Playful framing with real science underneath — emoji, rarity tiers, celebratory confetti on standouts, a shareable "trading card", a signature interactive (the Size Lab pin-card scatter). Show-off, not gimmick. |
+| **Creativity** | One product-native signature idea in the art or interaction that makes the app memorable and useful. Delight may include motion, play, illustration, or a take-away object when it fits the user job; no mascot, confetti, card, or interaction pattern is mandatory. |
 | **QC** | The app is *useful to the people who collect the data*. Click-to-inspect flag→modal/record patterns. Honest outlier flags that are KEPT not deleted, phrased "verify, not wrong". A downloadable per-entity QC record. |
 | **Honesty** | The non-negotiable. Every claim is stated where it lives (on the chart, screenshot-safe). Caveats for what the method can't say. No false precision. "Not detected ≠ absent." Match rates published for joins. Deliberately-omitted analyses stay omitted (e.g. SMI). |
 
@@ -55,12 +55,14 @@ mammal/beetle apps — NOT a shared package; independent deploys must stay self-
 these from the flagship and adapt the data layer:
 
 ### 2a. Design system & chrome — vendor a pinned version, then adapt
-- `docs/index.html`: lead with one memorable, product-native question or promise,
-  then map 2-4 real user questions directly to app routes. Prefer a licensed,
-  provenance-tracked documentary image when field realism earns trust; use an
+- `docs/index.html`: build the above-fold face as an artistic poster for a curious
+  non-scientist—one dominant app-native object, one 3–7 word hook, one 6–12 word
+  plain-language promise, and one CTA. Put routes, role, facts, CAN/CANNOT, methods,
+  provenance, receipts, and suite relationships below the fold. Prefer a licensed,
+  provenance-tracked documentary image only when field realism earns trust; use an
   explicitly stylized illustration when abstraction is the point. Cohesion comes
-  from shared navigation, claim boundaries, release receipts, and suite registry —
-  not identical hero layouts or paragraphs of generic suite prose.
+  from suite mark, typography, art language, motif family, registry, and in-app
+  Suite panel—not identical heroes, forced constellations/mascots, or generic prose.
 - `global.R`: semantic tokens (`accent`, `signal`, `warning`, `ink`, `muted`,
   `surface`, `line`) mapped to an app-specific palette; `app_theme` (bslib bs5 + a
   system/local font stack); `asset_url()` (mtime cache-bust); and the validated
@@ -77,10 +79,11 @@ these from the flagship and adapt the data layer:
 ### 2c. Shared analysis helpers — port the defensible ones
 From `R/helpers.R`: `species_level_only()` (drop genus-only/morphospecies before any richness), `make_species_pal()` (one color per species across all charts), Hill numbers / `species_accum()` (rarefaction + Chao1 w/ CI), `mode_chr()`, `safe_*()` NA-safe reducers, the n-gate idioms. The diversity family ports to almost any taxon product.
 
-### 2d. The interactive-downloadable-plot funnel — the signature every app gets
+### 2d. The interactive-downloadable-plot funnel — one proven signature pattern
 The Size Lab (`www/pincards.js` + the plotly `customdata` pattern in Small Mammals) is
-the template for **the one interactive every NEONize app should ship**: a "position entities in a
-2-D space → pick one → inspect → take it with you" funnel. The full funnel, in order:
+a proven option when the product honestly has positionable entities. It is not a
+mandatory suite gesture. First design the product-native signature interaction; use
+this "position → inspect → take it with you" funnel only when its unit and user job fit:
 
 1. **Position** every entity (individual / plot / species / taxon — the product's unit) on one chart,
    coloured by a meaningful class, with **a filter (species/site/etc.) and an honest, gated overlay**
@@ -93,9 +96,11 @@ the template for **the one interactive every NEONize app should ship**: a "posit
 4. **Download the works:** the chart with pins baked in (html-to-image PNG), the profile/QC card
    (PNG), and the raw per-entity record as **analysis-ready CSV metadata** (`downloadHandler`).
 
-**It is plotly, not ggiraph** (the apps are already plotly; no second rendering stack). This funnel —
-click-for-profile, QC checks, downloadable plot + card + metadata — is a **default deliverable**, not a
-one-off; map it to each product's unit. Carry the hard-won gotchas (§4).
+When this funnel is selected, keep it in the app's existing Plotly stack rather than
+adding a second renderer. Click-for-profile, QC, downloadable plot/card, and metadata
+then travel together. When the product lacks honest entity coordinates or profiles,
+ship a different signature and preserve the same inspectability/export standard.
+Carry the relevant hard-won gotchas (§4), not the visual trope itself.
 
 ### 2e. Report PDF — `R/report_pdf.R`
 Base `grid`/`grDevices` `cairo_pdf` (no LaTeX/Chrome), streamed by a `downloadHandler`. Re-theme
@@ -203,6 +208,26 @@ release receipt.
   reviewer, a deliberately separate review pass, or both can provide independence;
   named personas are not evidence. Record the findings and disposition in the
   handoff.
+- **Register opportunity before the metric.** Plant Diversity proved that occurrence
+  rows cannot invent sampled-empty quadrats, one deterministic bout must be selected
+  per plot-year, annual comparisons need recurrent panels, and cross-site richness
+  needs a common grain. Chao2 is an incidence lower bound, not a generic effort or
+  coverage correction.
+- **Unknown classifications and spatially narrow references stay visible.** Resolve
+  contradictory nativity to Unknown/review, and never turn one reference coordinate
+  into plot- or site-wide truth. Short per-site annual screens remain descriptive
+  context even after multiple-test handling; they do not become Driver edges.
+- **A content hash proves exact bytes, not upstream vintage.** Repository import
+  dates, file mtimes, manifest hashes, runtime receipts, and derived checksums cannot
+  fill unknown `builtAt`, `neonRelease`, `sourceCutoff`, query receipt, or raw-source
+  digest fields. Preserve explicit `NA` until a complete reviewed source receipt
+  exists across the expected family and index.
+- **Test framework markup at both sides of every responsive seam.** Shiny
+  `actionButton()` places its label in a text node inside `.action-label`, so a
+  sibling selector cannot hide it. Preserve the DOM name, zero only the inherited
+  visual font size, restore the icon size, and prove a 44 × 44 target. Plant's
+  prevention matrix is 390/375/361/360/320 px because the status/help/theme grid
+  begins at 360.
 
 ---
 
@@ -333,11 +358,13 @@ Per-site rows are never called significant; context-only rows remain searchable 
 and the Across NEON panel carries the exploratory cross-site summary and its sensitivities.
 
 **Sibling links + cover page:** Driver owns one versioned suite registry (app ID,
-name, role, mascot, palette, DPID, repository, showcase URL, live URL, release
-state, and Driver disposition). Generate the cover relationship nodes and in-app
-Suite panel from that registry, then vendor a pinned copy in every independent app.
-CI verifies the declared registry version so a new app or URL cannot drift across
-ten hand-edited copies.
+name, role, field motif/art direction, palette, DPID, repository, showcase URL,
+live URL, release state, and Driver disposition). Generate below-fold suite
+destinations, metadata, release state, and the in-app Suite panel from that registry,
+then vendor a pinned copy in every independent app. The registry does not force a
+relationship map, constellation, or mascot onto the artistic poster face. CI verifies
+the declared registry version so a new app or URL cannot drift across ten hand-edited
+copies.
 
 ## 8. Suite learning and Driver feedback
 
