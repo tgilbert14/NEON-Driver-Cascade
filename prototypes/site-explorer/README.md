@@ -77,9 +77,10 @@ with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay che
 are a **procedural impression** from measured standing wood. Because it inlines a 3D engine, it is a
 heavier page and is kept **separate** from the lightweight main explorer, linked rather than merged.
 
-**Five forest sites are rendered from real NEON AOP LiDAR scans** — Wind River (`~68 m` old-growth
-conifer), Lower Teakettle (`~59 m` Sierra Nevada conifer), Smithsonian and Harvard (eastern deciduous),
-and Guánica (`~16 m` subtropical dry forest).
+**Six forest sites are rendered from real NEON AOP LiDAR scans** — Wind River (`~68 m` old-growth
+conifer), Lower Teakettle (`~59 m` Sierra Nevada conifer), Great Smoky Mountains (`~46 m` dense
+southern-Appalachian canopy), Smithsonian and Harvard (eastern deciduous), and Guánica (`~16 m`
+subtropical dry forest).
 `build_lidar.py` reads an actual Canopy Height Model GeoTIFF (DP3.30015.001, a central 300 m window of
 1 m LiDAR downsampled to 3 m cells) into `lidar-<site>.json`, inlined into `walk.html`; the scene uses a
 real scan whenever a `lidar-<site>.json` grid exists (keyed by site code), else the procedural build.
