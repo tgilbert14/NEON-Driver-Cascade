@@ -39,7 +39,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 13 | **Drifting clouds** — a procedural fbm cloud layer in the sky shader, sun-lit and dimming into night | DONE | #22 |
 | 14 | **SOAP on real AOP LiDAR** — Soaproot Saddle, an open Sierra foothill woodland (seventh real scan) | DONE | #23 |
 | 15 | **Audit & polish** — biome-varied cloud cover; idle chirp timer stops when muted; doc accuracy | DONE | #24 |
-| 16+ | Optional — still more sites on real LiDAR; richer bird/insect voices; distant terrain relief | PLANNED | — |
+| 16 | **Visual overhaul (stage 1)** — soft sun shadows, key-dominant warm light, distant horizon hills | DONE | #25 |
+| 17+ | Optional — visual stage 2 (generated textures/skybox); more real-LiDAR forests; richer voices | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -54,7 +55,7 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~1018 KB; deep-linkable via `?site=CODE`).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~1020 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
@@ -100,6 +101,14 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   (Rung 15) via a `cloudAmt` uniform (`CLOUD_AMT` by bucket, set in `build()`): deserts read clearer (~0.34),
   humid forests cloudier (~0.82). It's a **procedural sky, not a
   weather feed** — no real cloud data.
+- **Visual overhaul, stage 1** (Rung 16): the render pipeline now has **soft sun shadows** (PCFSoft; the sun
+  and its shadow frustum follow the walker; canopy/trunks/shrubs/cactus cast, ground receives; shadows only
+  while the sun is above the horizon, so dawn/dusk get long shadows and night none), a **key-dominant warm
+  light** (in `applyTOD`, `sun.intensity*1.35` / `hemi.intensity*0.66`, so shadows actually read and forests
+  get dappled light), and **distant horizon hills** (a camera-following ridge ring, `RIDGE_AMP` by biome,
+  tinted to the horizon colour and dimming into night — a hazy silhouette, `MeshBasicMaterial` with `fog:false`).
+  Stage 2 (planned): generated PBR textures / a stylised skybox to go further ("go all out"). Everything stays
+  reduced-motion-aware (with a static camera, frames are byte-identical under reduced motion).
 - **Wind is shown, not just heard** (Rung 12): the canopy gusts on the same ~14 s cycle (0.07 Hz) as the audio
   wind LFO — the flexible foliage (crowns, grass, shrubs, tufts) leans downwind and flutters harder during
   gusts, while **trunks, cactus and rocks are rigid** (tagged `userData.rigid`, kept in `world` not the sway
