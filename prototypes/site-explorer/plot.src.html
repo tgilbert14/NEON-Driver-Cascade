@@ -11,6 +11,12 @@
   .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:#ffffffb0;text-shadow:0 1px 6px #000a}
   .ttl{font-family:var(--serif);font-weight:600;font-size:clamp(1.5rem,4.5vw,2.4rem);line-height:1.05;margin:.15rem 0;text-shadow:0 2px 16px #000b}
   .sub{font-size:.9rem;color:#fdf8eecc;max-width:44ch;text-shadow:0 1px 10px #000a}
+  .geocredit{display:none;margin-top:.5rem;max-width:48ch;font-family:var(--mono);font-size:.62rem;line-height:1.5;
+    color:#f4efe3cc;text-shadow:0 1px 6px #000a}
+  .geocredit b{color:#e6c78a;font-weight:600}
+  #compass{position:fixed;right:clamp(.8rem,3vw,1.6rem);top:clamp(3.4rem,11vw,4.8rem);z-index:3;pointer-events:none;display:none;
+    font-family:var(--mono);font-size:.66rem;color:#f4efe3;text-align:center;text-shadow:0 1px 6px #000b;line-height:1}
+  #compass .ar{font-size:1.15rem;display:block}
   .top{max-width:52ch}
   .bottom{display:flex;flex-direction:column;gap:.6rem}
   .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;pointer-events:auto}
@@ -40,6 +46,7 @@
     <div class="eyebrow">The plot &middot; a real-data reconstruction</div>
     <div class="ttl">SRER_048 &mdash; plant by plant</div>
     <div class="sub" id="sub"></div>
+    <div class="geocredit" id="geoCredit"></div>
   </div>
   <div class="bottom">
     <div class="row">
@@ -52,6 +59,7 @@
   </div>
 </div>
 <div id="card"></div>
+<div id="compass"><span class="ar">&#8593;</span>N</div>
 <a class="backlink" href="./index.html">&larr; back to the map</a>
 <script>__THREE__</script>
 <script id="plotData" type="application/json">__PLOTDATA__</script>
@@ -82,7 +90,7 @@ scene.fog=new THREE.Fog(new THREE.Color("#dcd2ba"),40,150);
 
 // sky-cam: an orthographic top-down camera framing the whole plot (toggled at runtime)
 var SKYFOG=scene.fog;
-var ortho=new THREE.OrthographicCamera(-1,1,1,-1,0.1,600); ortho.up.set(0,0,-1);
+var ortho=new THREE.OrthographicCamera(-1,1,1,-1,0.1,600); ortho.up.set(0,0,-1); // top-down, north up (scene north = -Z)
 var sky={x:0,z:0,half:(DATA.ey||40)/2+3};
 function sizeOrtho(){var w=host.clientWidth||innerWidth,hh=host.clientHeight||innerHeight,asp=(w/hh)||1,hy=sky.half,hx=hy*asp;
   ortho.left=-hx;ortho.right=hx;ortho.top=hy;ortho.bottom=-hy;
@@ -109,14 +117,19 @@ var GEO=null; try{GEO=JSON.parse(document.getElementById("geoLayers").textConten
 var LAYER=0, drapes=[];   // 0 = stylized · 1 = aerial photo · 2 = canopy height
 if(GEO&&GEO.ortho){
   var hw=GEO.hw||32, dg=new THREE.PlaneGeometry(hw*2,hw*2); dg.rotateX(-Math.PI/2);
-  var drape=function(src){var tx=new THREE.TextureLoader().load(src); tx.flipY=false;  // crop is north-up/east-right
+  var drape=function(src){var tx=new THREE.TextureLoader().load(src); tx.flipY=true;  // crop north-up/east-right onto scene where north=-Z
     if("anisotropy" in tx)tx.anisotropy=4; if("sRGBEncoding" in THREE)tx.encoding=THREE.sRGBEncoding;
     var mm=new THREE.MeshStandardMaterial({map:tx,roughness:1});
     var me=new THREE.Mesh(dg,mm); me.position.y=0.03; me.receiveShadow=true; me.visible=false; scene.add(me); return me;};
   drapes=[drape(GEO.ortho), drape(GEO.chm)];
 }
+var CREDIT={
+ 1:"Ground: <b>NEON AOP aerial orthophoto</b> (DP3.30010.001), Santa Rita 2021 flight. Plants are placed at their NEON stem-map coordinates (≈ sub-metre precision) and many were tagged in 2016, so the overlay shows our plot on its real ground — alignment is approximate, not a surveyed per-plant registration.",
+ 2:"Ground: <b>NEON AOP LiDAR canopy height</b> (DP3.30015.001), Santa Rita 2021. The 1 m grid barely resolves sub-metre desert shrubs, so it reads mostly as bare ground vs taller woody canopy."};
 function setLayer(n){LAYER=n; if(drapes.length){drapes[0].visible=(n===1); drapes[1].visible=(n===2);}
-  layerBtn.innerHTML="Ground: "+(n===0?"stylized":n===1?"aerial photo":"canopy height");}
+  layerBtn.innerHTML="Ground: "+(n===0?"stylized":n===1?"aerial photo":"canopy height");
+  var gc=document.getElementById("geoCredit");
+  if(CREDIT[n]){gc.innerHTML=CREDIT[n];gc.style.display="block";}else{gc.style.display="none";}}
 
 // plot boundary (40x40 outline, subtle)
 var DX=(DATA.ex||40)/2, DY=(DATA.ey||40)/2;
@@ -155,7 +168,7 @@ var PROXYMAT=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:
 
 var CANOPY=[];  // swayable foliage groups (soft-tissue plants only)
 function buildPlant(p,seed){
-  var g=new THREE.Group(); g.position.set(p.x,0,p.y);
+  var g=new THREE.Group(); g.position.set(p.x,0,-p.y);   // scene north = -Z (so top-down reads north-up/east-right)
   var R=rnd(seed), dead=p.status==="dead", tx=p.tx;
   var h=Math.max(0.1,p.h||0.5), cr=Math.max(0.2,p.cr||0.6);
   var fol=dead?DEADCOL:spCol(p,"fol"), bark=dead?DEADCOL:spCol(p,"bark");
@@ -292,8 +305,8 @@ cv.addEventListener("pointerdown",function(e){drag=true;moved=0;lx=e.clientX;ly=
 cv.addEventListener("pointerup",function(e){drag=false; if(moved<6)pick(e);});
 cv.addEventListener("pointercancel",function(){drag=false;});
 cv.addEventListener("pointermove",function(e){if(!drag)return;var dx=e.clientX-lx,dy=e.clientY-ly;moved+=Math.abs(dx)+Math.abs(dy);
-  if(MODE==="sky"){var r=cv.getBoundingClientRect(),wpp=(ortho.right-ortho.left)/r.width;
-    sky.x=Math.max(-70,Math.min(70,sky.x-dx*wpp)); sky.z=Math.max(-70,Math.min(70,sky.z-dy*wpp)); sizeOrtho();}
+  if(MODE==="sky"){var r=cv.getBoundingClientRect(),wpp=(ortho.right-ortho.left)/r.width;  // grab-drag pan (north-up/east-right)
+    sky.x=Math.max(-70,Math.min(70,sky.x-dx*wpp)); sky.z=Math.max(-70,Math.min(70,sky.z+dy*wpp)); sizeOrtho();}
   else{yaw-=dx*0.004;pitch-=dy*0.004;pitch=Math.max(-1.2,Math.min(0.5,pitch));}
   lx=e.clientX;ly=e.clientY;});
 cv.addEventListener("wheel",function(e){if(MODE!=="sky")return;e.preventDefault();
@@ -302,10 +315,11 @@ var walkBtn=document.getElementById("walkBtn"), skyBtn=document.getElementById("
 walkBtn.addEventListener("click",function(){walking=!walking;walkBtn.innerHTML=walking?"&#10074;&#10074; Stop":"&#9654; Walk";});
 if(GEO&&GEO.ortho){layerBtn.addEventListener("click",function(){setLayer((LAYER+1)%3);});}else{layerBtn.style.display="none";}
 function setMode(mode){MODE=mode;walking=false;walkBtn.innerHTML="&#9654; Walk";
+  var comp=document.getElementById("compass");
   if(mode==="sky"){scene.fog=null;sky.x=0;sky.z=0;sky.half=(DATA.ey||40)/2+3;sizeOrtho();
-    skyBtn.innerHTML="&#9654; Enter the plot";walkBtn.style.display="none";
-    hintEl.innerHTML="top-down &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
-  else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Sky view";walkBtn.style.display="";
+    skyBtn.innerHTML="&#9654; Enter the plot";walkBtn.style.display="none";comp.style.display="block";
+    hintEl.innerHTML="top-down &middot; north up &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
+  else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Sky view";walkBtn.style.display="";comp.style.display="none";
     hintEl.innerHTML="drag to look &middot; W A S D to move &middot; click a plant to read its tag";}}
 skyBtn.addEventListener("click",function(){setMode(MODE==="sky"?"walk":"sky");});
 
