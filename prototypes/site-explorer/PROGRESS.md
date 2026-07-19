@@ -83,10 +83,18 @@ surveyed strip — drag to pan, scroll to zoom, click any plant to read its tag 
 species-coloured ground disc so the overhead view reads as a NEON crown/survey dot-map. Fixes the "hard to
 navigate" first-person complaint.
 
-**Next (owner, "maybe"):** (a) drape a real georeferenced aerial image over the plot and mark plants against
-it — use **NEON AOP** (10 cm RGB orthophoto DP3.30010.001 and/or CHM DP3.30015.001) over SRER, which shares
-our UTM grid (Google Maps tiles aren't redistributable and the artifact CSP blocks live embeds, so AOP is the
-correct source); (b) per-individual variation from the data — basalStemDiameter (stem thickness/count),
+**Real-world ground layers (done):** a "Ground" toggle cycles stylized → **real NEON AOP aerial photo** →
+**colorized LiDAR canopy-height**, both georeferenced and draped over the plot so our tagged plants sit on the
+actual desert. Source: NEON AOP **2021-09** SRER (ortho DP3.30010.001 10 cm `2021_SRER_4_515000_3530000_image.tif`;
+CHM DP3.30015.001 1 m `NEON_D14_SRER_DP3_515000_3530000_CHM.tif`). Georeference: scene origin (0,0) = surveyed
+cloud bbox-centre UTM **E=515527.413, N=3530802.807** (zone 12N); crop a 64 m square, north-up/east-right, drape
+on a `PlaneGeometry(64,64)` with `tex.flipY=false`. Validated: plants land on dark shrubs in the photo (mean
+brightness 57 under plants vs 115 overall) and the dry wash sits on the east side. Built by scratchpad
+`geo_plot.py` (needs raw CSVs + token + downloaded tiles, not committed); both layers embedded as inline
+data-URIs (CSP-safe). Google Maps tiles were rejected (not redistributable + CSP blocks live embeds) — NEON
+AOP shares our UTM grid and is the correct, openly-licensed source.
+
+**Next (owner, "maybe"):** per-individual variation from the data — basalStemDiameter (stem thickness/count),
 measured height, elliptical crown (ninetyCrownDiameter), canopyPosition, status.
 **Deferred:** plant diversity (% cover → ground), phenology (animate the year), link from the desert walk,
 more plots.
