@@ -55,6 +55,12 @@ mammal/beetle apps — NOT a shared package; independent deploys must stay self-
 these from the flagship and adapt the data layer:
 
 ### 2a. Design system & chrome — vendor a pinned version, then adapt
+- `docs/index.html`: lead with one memorable, product-native question or promise,
+  then map 2-4 real user questions directly to app routes. Prefer a licensed,
+  provenance-tracked documentary image when field realism earns trust; use an
+  explicitly stylized illustration when abstraction is the point. Cohesion comes
+  from shared navigation, claim boundaries, release receipts, and suite registry —
+  not identical hero layouts or paragraphs of generic suite prose.
 - `global.R`: semantic tokens (`accent`, `signal`, `warning`, `ink`, `muted`,
   `surface`, `line`) mapped to an app-specific palette; `app_theme` (bslib bs5 + a
   system/local font stack); `asset_url()` (mtime cache-bust); and the validated
@@ -164,6 +170,19 @@ release receipt.
 
 - **R version:** R-4.5.2 runs the app but **crashes on `neonUtilities::loadByProduct`** (access violation). Pull/bundle data with **R-4.1.1**. Launch R via **PowerShell**, not git-bash (git-bash segfaults R here). Reference neonUtilities by a *computed* package name so the rsconnect scanner doesn't pin it into the manifest (the deploy is bundle-only + lean).
 - **Fonts and boot assets must be network-independent.** Runtime theme font helpers that fetch or compile remote fonts are a cold-start failure mode, and a client-side font stylesheet is still an external rendering dependency. Use a system stack, or commit licensed font files and verify their checksums. The Driver's proven default is `system-ui`/platform sans with local serif fallbacks. Audit startup and first render with network blocked; a manual republish that only warms a cache is not a fix.
+- **A 320px viewport may have only 305px of usable layout width.** Desktop test
+  browsers can reserve 15px for the vertical scrollbar, so `body { min-width:
+  320px }` and edge-to-edge `100vw` carousels create page-level horizontal drift
+  even when the screenshot looks plausible. Use parent-relative sizing for local
+  scrollers, allow the body below 320px, and require
+  `documentElement.scrollWidth === documentElement.clientWidth` at both 390 and
+  320 CSS pixels. A carousel's own larger `scrollWidth` is valid only while the
+  root stays fixed.
+- **In an R list, `$field <- NULL` deletes the field.** If a bundle schema requires
+  a named field whose honest unavailable value is `NULL`, preserve it with
+  `bundle["field"] <- list(NULL)`. Normalize filtered zero-row derived frames to
+  that representation, verify the required name and container type, execute every
+  migration twice, and require identical all-bundle hashes on the second pass.
 - **plotly re-render kills event handlers:** a Shiny+plotly re-render runs `Plotly.purge`+`newPlot` on the SAME div, silently wiping `gd.on()` listeners. **Never** gate binding on a persistent expando — re-attach `plotly_click` on every render (rAF-debounced MutationObserver scan). This was the Size Lab blocker.
 - **plotly pin anchors must be DATA coords**, recomputed via `gd._fullLayout.xaxis.l2p()+_offset` on `plotly_relayout` + a `ResizeObserver` — frozen pixels drift on resize/fullscreen/rotate. Anchor from the data point, not the click event (touch has no `clientX`).
 - **`ctx_anno()`/`add_annotations` accumulates** across reactive re-renders (the binding doesn't clear it) — fold the caption into the `layout(annotations=...)` list instead, so it's replaced wholesale. (Invisible when copies overlap, but real.)

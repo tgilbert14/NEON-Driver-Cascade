@@ -5,9 +5,9 @@ Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
-Progress: Driver baseline and Small Mammal Pass 1 are complete and published;
-Ground Beetle remains the Phase 0 outage; Plant Phenology is the next learning pass
-after the central Small Mammal receipt merges green.
+Progress: Driver baseline, Small Mammal Pass 1, and Plant Phenology Pass 2 are
+complete and published. Ground Beetle remains the Phase 0 outage; Plant Diversity
+is next after the Pass 2 closeout receipts merge green.
 
 ## 1. Outcome
 
@@ -56,8 +56,9 @@ The release layer is not at the same quality bar.
 
 At baseline, all nine companion manifests disagreed with at least one currently
 tracked runtime file. Small Mammal Pass 1 has now closed its drift and independently
-validated R 4.5.2 / 91-package / 117-file release family; the other eight remain at
-their baseline state. A future companion deploy can otherwise publish a different
+validated R 4.5.2 / 91-package / 117-file release family. Plant Phenology Pass 2
+then closed its drift with a pinned R 4.5.2 / 92-package / 60-runtime-file release;
+the other seven remain at their baseline state. A future companion deploy can otherwise publish a different
 app than the repository appears to describe, or fail at startup.
 
 Additional suite-wide findings (baseline unless a Pass 1 update is stated):
@@ -123,7 +124,7 @@ The pass order is intentionally not alphabetical:
 | Pass | App | Why this position |
 |---:|---|---|
 | 1 | Small Mammal Tracker | **COMPLETE / PRODUCTION VERIFIED**; restored the outage, established the companion release template, and closed physical-event contract parity without changing Driver bytes |
-| 2 | Plant Phenology Explorer | produces the suite's strongest supported hinge: temperature to green-up timing |
+| 2 | Plant Phenology Explorer | **COMPLETE / PRODUCTION VERIFIED**; corrected plant-year opportunity, onset unavailability/censoring, deterministic derived artifacts, and release trust without changing Driver bytes |
 | 3 | Plant Diversity | separates composition, invasion, richness, cover, and productivity before producer synthesis |
 | 4 | Vegetation Structure Explorer | supplies the slow standing-stock floor and the shared `stand_site()` contract |
 | 5 | Ground Beetle Tracker | currently unavailable; effort-complete zero-catch support determines whether activity-density can leave context-only status |
@@ -339,26 +340,49 @@ Suggested palette families remain distinct but related:
   `f6c4a5ff74053b95e22fac7394f1930d2fe2329663737031b1c32f7a1f70bc54`.
 - Driver disposition is `CONTEXT / NO BYTE CHANGE`: contract parity is closed, but
   exact eligible-source site-year join/support remains held for suite synthesis.
-- Residual: mobile visual QA is still unclaimed; static responsive, reduced-motion,
-  focus, and touch-target gates passed. Phenology is the next app only after this
-  central Driver receipt merges green.
+- Cover V4 replaced the generic generated habitat scene with a provenance-tracked
+  USGS public-domain field photograph of a Pacific pocket mouse emerging from a
+  Sherman trap. Its question-led routes, concise method/claim boundary, release
+  receipt, and complete suite navigation make documentary credibility and user
+  intent lead the story rather than decorative product prose.
+- Final Pages/browser QA passed desktop, 390 x 844, and 320 x 800 with no page-level
+  overflow, local image and social-card assets loaded, stable navigation/touch
+  targets, and all suite destinations present. Repository closeout is `b05cecc`;
+  the scientific Connect runtime remains the separately verified `1615ab4`.
 
-### Plant Phenology Explorer — second pass
+### Plant Phenology Explorer — second pass COMPLETE / production verified
 
-- Protect interval-censored onset and CI-or-silence behavior.
-- Verify the current desert default and coverage badge with executable fixtures.
-- Use green-up only where opportunity is adequate; default to leaf-active or a
-  registered first-leaf metric in warm-desert strata.
-- Relabel the clock denominator if it is observation-weighted rather than a unique
-  plant share.
-- Surface visit cadence and guard cross-site comparisons with coarse observation
-  intervals.
-- Lead cross-site interpretation with within-species evidence and uncertainty;
-  keep the across-network slope as a species-mix-confounded echo.
-- Evaluate GDD and PhenoCam linkage as registered future analyses, not automatic
-  replacements.
-- Driver disposition: `ADOPT` for the validated temperature-to-green-up family;
-  register desert alternatives separately.
+- Corrected the Clock opportunity to one scored plant x phenophase x year x week;
+  repeated visits collapse within a week while years remain separate. Executable
+  fixtures now cover repeat visits, independent years, uncertain status,
+  suppression, interval/left censoring, trend de-pseudoreplication, multi-flush
+  leaf-active duration, desert green-up coverage, and within-species support.
+- Normalized fully suppressed trend results to honest `NULL` values and preserved
+  the required R-list field with `bundle["trend"] <- list(NULL)`. A two-pass,
+  all-bundle hash gate proves the migration is idempotent; deterministic indexes
+  likewise rebuild twice to exact bytes without wall-clock inputs.
+- Shipped the pinned R 4.5.2 / 92-package / 60-runtime-file manifest with absolute
+  `wk 0.9.5` CRAN provenance, 46 verified site bundles, exact manifest and index
+  checks, five-handler client contract, bundle-only offline source, and separately
+  authorized refresh candidates.
+- The app now exposes green-up coverage, visit cadence, left censoring, and the
+  warm-desert leaf-active alternative. Clock labels/exports use the corrected
+  opportunity; unsupported estimates render unavailable rather than empty.
+- Across Sites leads with a gated within-species slope and CI, identifies coarse
+  cadence, treats the network-wide slope as composition-confounded context, and
+  explicitly rejects a causal temperature interpretation.
+- Rebuilt the cover around “Read the seasons” with responsive, provenance-tracked
+  stylized seasonal art, CAN/CANNOT and suite-role boundaries, a release receipt,
+  exact social metadata, and all ten suite destinations. Public desktop, 390, and
+  320 browser QA passed with no root overflow.
+- Release PR head `cc0151d` passed run `29669603912`; merge, Pages, and Connect Last
+  deployed are `29c0ed1`; semantic production run `29670192516` and fresh HARV
+  Overview/Clock/Onset/Across-Sites interactions passed.
+- Driver disposition: `HOLD / NO DRIVER BYTE CHANGE`. Corrected onset,
+  leaf-active, and coverage signals are trusted app-local candidates, but the
+  existing temperature-to-green-up family is not re-adopted from a UI result. It
+  requires the exact eligible site-year join, support/censoring gates, and a
+  registered analysis during suite synthesis.
 
 ### Plant Diversity — third pass
 
