@@ -34,7 +34,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 8 | **Day-to-night lighting** — a time-of-day slider drives sky/sun/hemi/fog (dawn → midday → dusk → night) | DONE | #17 |
 | 9 | **TEAK on real AOP LiDAR** — Lower Teakettle (Sierra Nevada), the tallest real canopy in the set (~59 m) | DONE | #18 |
 | 10 | **Living soundscape** — the day-cycle drives the audio too: dawn chorus, quiet midday, night crickets | DONE | #19 |
-| 11+ | Optional — still more sites on real LiDAR; richer bird/insect voices; weather (wind gusts you can see) | PLANNED | — |
+| 11 | **GRSM on real AOP LiDAR** — Great Smoky Mountains, a dense southern-Appalachian canopy (sixth real scan) | DONE | #20 |
+| 12+ | Optional — still more sites on real LiDAR; richer bird/insect voices; weather (wind gusts you can see) | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -49,12 +50,12 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~903 KB; deep-linkable via `?site=CODE`).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~964 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
 - `site-data.json` / `map-data.json` / `neon-site-names.json` — generated/fetched data.
-- `lidar-{wref,scbi,harv,guan,teak}.json` — real NEON AOP CHM height grids (derived; raw tiles never committed).
+- `lidar-{wref,scbi,harv,guan,teak,grsm}.json` — real NEON AOP CHM height grids (derived; raw tiles never committed).
 - `README.md` — what it is, per-rung detail, how to regenerate.
 
 **Nothing here touches the R/Shiny app**: `prototypes/` is outside `manifest.json`'s allowlist and the
@@ -67,12 +68,13 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   **15 of 18 sites, p = 0.004**. Single-site values are framed as *direction, never significance*
   (no short series can be significant); context-only measures are labelled "not counted in the network test".
 - The **year wheel is a per-biome schematic** (the bundle has annual, not monthly, data) — labelled as such.
-- The **3D vegetation is a procedural impression** from measured standing wood — **except the five forest
-  sites WREF, SCBI, HARV, GUAN, TEAK**, whose canopies are **real NEON AOP LiDAR scans** (DP3.30015.001; a site
-  gets a real canopy when a `lidar-<site>.json` grid exists, keyed by site code). TEAK (Lower Teakettle,
-  Sierra Nevada) is the tallest — real heights to ~59 m from tile `NEON_D17_TEAK_DP3_321000_4097000` (2024,
-  the 1 km tile over the tower). All 46 sites are walkable. To add another: `build_lidar.py <SITE> <CHM.tif>`
-  → inline as `<script id="lidar<SITE>">`.
+- The **3D vegetation is a procedural impression** from measured standing wood — **except the six forest
+  sites WREF, SCBI, HARV, GUAN, TEAK, GRSM**, whose canopies are **real NEON AOP LiDAR scans** (DP3.30015.001;
+  a site gets a real canopy when a `lidar-<site>.json` grid exists, keyed by site code). TEAK (Lower Teakettle,
+  Sierra Nevada) is the tallest — real heights to ~59 m (tile `NEON_D17_TEAK_DP3_321000_4097000`, 2024); GRSM
+  (Great Smoky Mountains) is a dense closed-canopy stand to ~46 m (tile `NEON_D07_GRSM_DP3_273000_3952000`,
+  2022). All 46 sites are walkable. To add another: `build_lidar.py <SITE> <CHM.tif>` → inline as
+  `<script id="lidar<SITE>">`.
 - No R in the sandbox → `export_data.py` reads the RDS with the pure-Python `rdata` package
   (`pip install rdata`). A production build would use an R writer beside `scripts/build_search_index.R`.
 - The **soundscape is synthesized, not recorded** (Rung 7): a procedural Web Audio graph — filtered pink-noise
@@ -114,13 +116,13 @@ green → reset the branch onto the new master → next increment. Branch: `clau
 
 Done since Rung 6: the **headline driver in-scene** (Rung 6, #15), the **per-biome soundscape** (Rung 7, #16),
 the **day-to-night lighting** (Rung 8, #17), **TEAK on real AOP LiDAR** (Rung 9, #18), and the **living
-(time-of-day-linked) soundscape** (Rung 10, #19). Five forest sites now render from **real AOP LiDAR** — WREF,
-SCBI, HARV, GUAN, TEAK (grids committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`).
-Remaining nice-to-haves: **still more forest sites on real LiDAR** — pick another tall-canopy site (e.g. BART,
-SOAP, GRSM), download its CHM tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad
-`.neon_token`), then `build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json` (recipe above); richer
-bird/insect voices; or visible weather (wind gusts that move the canopy). No external data is needed for the
-last two.
+(time-of-day-linked) soundscape** (Rung 10, #19), and **GRSM on real AOP LiDAR** (Rung 11, #20). Six forest
+sites now render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN, TEAK, GRSM (grids committed as
+`lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves: **still more forest
+sites on real LiDAR** — pick another tall-canopy site (e.g. BART, SOAP), download its CHM tile via the NEON
+API (`X-API-Token`; the token is stashed at scratchpad `.neon_token`), then `build_lidar.py <SITE> <CHM.tif>`
+→ inline `lidar-<SITE>.json` (recipe above); richer bird/insect voices; or visible weather (wind gusts that
+move the canopy). No external data is needed for the last two.
 
 **Reusable recipe for a new real-LiDAR site** (proven for TEAK): `TOKEN=$(cat scratchpad/.neon_token)`;
 GET `/api/v0/locations/<SITE>` for the tower UTM easting/northing → floor each to the 1 km grid for the tile's
