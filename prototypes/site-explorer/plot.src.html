@@ -11,6 +11,12 @@
   .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:#ffffffb0;text-shadow:0 1px 6px #000a}
   .ttl{font-family:var(--serif);font-weight:600;font-size:clamp(1.5rem,4.5vw,2.4rem);line-height:1.05;margin:.15rem 0;text-shadow:0 2px 16px #000b}
   .sub{font-size:.9rem;color:#fdf8eecc;max-width:44ch;text-shadow:0 1px 10px #000a}
+  .geocredit{display:none;margin-top:.5rem;max-width:48ch;font-family:var(--mono);font-size:.62rem;line-height:1.5;
+    color:#f4efe3cc;text-shadow:0 1px 6px #000a}
+  .geocredit b{color:#e6c78a;font-weight:600}
+  #compass{position:fixed;right:clamp(.8rem,3vw,1.6rem);top:clamp(3.4rem,11vw,4.8rem);z-index:3;pointer-events:none;display:none;
+    font-family:var(--mono);font-size:.66rem;color:#f4efe3;text-align:center;text-shadow:0 1px 6px #000b;line-height:1}
+  #compass .ar{font-size:1.15rem;display:block}
   .top{max-width:52ch}
   .bottom{display:flex;flex-direction:column;gap:.6rem}
   .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;pointer-events:auto}
@@ -40,20 +46,25 @@
     <div class="eyebrow">The plot &middot; a real-data reconstruction</div>
     <div class="ttl">SRER_048 &mdash; plant by plant</div>
     <div class="sub" id="sub"></div>
+    <div class="geocredit" id="geoCredit"></div>
   </div>
   <div class="bottom">
     <div class="row">
       <button class="walk" id="walkBtn" type="button">&#9654; Walk</button>
-      <span class="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
+      <button class="walk" id="skyBtn" type="button" style="background:#26231d;color:#f4efe3">&#9723; Sky view</button>
+      <button class="walk" id="layerBtn" type="button" style="background:#3a352b;color:#f4efe3">Ground: stylized</button>
+      <span class="hint" id="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
     </div>
     <div class="legend" id="legend"></div>
   </div>
 </div>
 <div id="card"></div>
+<div id="compass"><span class="ar">&#8593;</span>N</div>
 <a class="backlink" href="./index.html">&larr; back to the map</a>
 <script>__THREE__</script>
 <script id="plotData" type="application/json">__PLOTDATA__</script>
 <script id="groundTex" type="application/json">__GROUNDTEX__</script>
+<script id="geoLayers" type="application/json">__GEOLAYERS__</script>
 <script>
 (function(){
 "use strict";
@@ -77,6 +88,15 @@ sun.shadow.camera.left=-32; sun.shadow.camera.right=32; sun.shadow.camera.top=32
 sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.5; scene.add(sun); scene.add(sun.target);
 scene.fog=new THREE.Fog(new THREE.Color("#dcd2ba"),40,150);
 
+// sky-cam: an orthographic top-down camera framing the whole plot (toggled at runtime)
+var SKYFOG=scene.fog;
+var ortho=new THREE.OrthographicCamera(-1,1,1,-1,0.1,600); ortho.up.set(0,0,-1); // top-down, north up (scene north = -Z)
+var sky={x:0,z:0,half:(DATA.ey||40)/2+3};
+function sizeOrtho(){var w=host.clientWidth||innerWidth,hh=host.clientHeight||innerHeight,asp=(w/hh)||1,hy=sky.half,hx=hy*asp;
+  ortho.left=-hx;ortho.right=hx;ortho.top=hy;ortho.bottom=-hy;
+  ortho.position.set(sky.x,120,sky.z); ortho.lookAt(sky.x,0,sky.z); ortho.updateProjectionMatrix();}
+sizeOrtho();
+
 // gradient sky dome
 var skyU={top:{value:new THREE.Color("#a9bcc6")},bot:{value:new THREE.Color("#dcd2ba")},sun:{value:sun.position.clone().normalize()}};
 scene.add(new THREE.Mesh(new THREE.SphereGeometry(320,24,14),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:skyU,
@@ -92,6 +112,25 @@ if(GTEX){var gt=new THREE.TextureLoader().load(GTEX); gt.wrapS=gt.wrapT=THREE.Re
 var gg=new THREE.PlaneGeometry(300,300,40,40); gg.rotateX(-Math.PI/2);
 var gmesh=new THREE.Mesh(gg,groundMat); gmesh.receiveShadow=true; scene.add(gmesh);
 
+// ---- real-world ground layers: NEON AOP aerial photo + LiDAR canopy-height, georeferenced over the plot ----
+var GEO=null; try{GEO=JSON.parse(document.getElementById("geoLayers").textContent);}catch(e){}
+var LAYER=0, drapes=[];   // 0 = stylized · 1 = aerial photo · 2 = canopy height
+if(GEO&&GEO.ortho){
+  var hw=GEO.hw||32, dg=new THREE.PlaneGeometry(hw*2,hw*2); dg.rotateX(-Math.PI/2);
+  var drape=function(src){var tx=new THREE.TextureLoader().load(src); tx.flipY=true;  // crop north-up/east-right onto scene where north=-Z
+    if("anisotropy" in tx)tx.anisotropy=4; if("sRGBEncoding" in THREE)tx.encoding=THREE.sRGBEncoding;
+    var mm=new THREE.MeshStandardMaterial({map:tx,roughness:1});
+    var me=new THREE.Mesh(dg,mm); me.position.y=0.03; me.receiveShadow=true; me.visible=false; scene.add(me); return me;};
+  drapes=[drape(GEO.ortho), drape(GEO.chm)];
+}
+var CREDIT={
+ 1:"Ground: <b>NEON AOP aerial orthophoto</b> (DP3.30010.001), Santa Rita 2021 flight. Plants are placed at their NEON stem-map coordinates (≈ sub-metre precision) and many were tagged in 2016, so the overlay shows our plot on its real ground — alignment is approximate, not a surveyed per-plant registration.",
+ 2:"Ground: <b>NEON AOP LiDAR canopy height</b> (DP3.30015.001), Santa Rita 2021. The 1 m grid barely resolves sub-metre desert shrubs, so it reads mostly as bare ground vs taller woody canopy."};
+function setLayer(n){LAYER=n; if(drapes.length){drapes[0].visible=(n===1); drapes[1].visible=(n===2);}
+  layerBtn.innerHTML="Ground: "+(n===0?"stylized":n===1?"aerial photo":"canopy height");
+  var gc=document.getElementById("geoCredit");
+  if(CREDIT[n]){gc.innerHTML=CREDIT[n];gc.style.display="block";}else{gc.style.display="none";}}
+
 // plot boundary (40x40 outline, subtle)
 var DX=(DATA.ex||40)/2, DY=(DATA.ey||40)/2;
 var bl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(DATA.ex+2,0.02,DATA.ey+2)),
@@ -103,87 +142,193 @@ var postM=new THREE.MeshStandardMaterial({color:0xdad2c0,roughness:1});
 [[-DX-1,-DY-1],[DX+1,-DY-1],[-DX-1,DY+1],[DX+1,DY+1]].forEach(function(c){var p=new THREE.Mesh(postG,postM);p.position.set(c[0],0,c[1]);p.castShadow=true;scene.add(p);});
 
 // ---- plant palette + model builders ----
-var COL={creosote:"#3f5a2b",pricklypear:"#4e7a3e",cholla:"#8a9a4e",tree:"#5a6b3a",acacia:"#6a7a42",
-  ephedra:"#7f9a4a",barrel:"#3f6b39",pincushion:"#3f6b39",smallshrub:"#6f7a52"};
+// Per-species colours + geometry, keyed on the real NEON taxonID. Each model is
+// built from a botanical spec (growth form, size, branching, colour) so it reads
+// as that actual plant. See build_plot.md for the sourced spec per species.
+var SP={
+  LATR2 :{fol:"#5f7030",bark:"#8a8579",soft:1},   // creosote — open olive vase
+  CYLE8 :{fol:"#7c8a5e",fruit:"#c1272d",soft:1},   // Christmas cholla — thin wiry tangle
+  PRVE  :{fol:"#9caf88",bark:"#5a4632",soft:1},    // velvet mesquite — feathery umbrella
+  OPEN3 :{fol:"#7f9e6d"},                           // Engelmann prickly pear — flat pads
+  FEWI  :{fol:"#5f8560",apex:"#d8cdae",fruit:"#f2c53d",spine:"#9c3b2a"}, // fishhook barrel
+  MAGR9 :{fol:"#6f9e5f",frost:"#c7d2b4",flower:"#cf4b97"},               // Graham's pincushion
+  EPTR  :{fol:"#8a9a52",bark:"#6b5a3c",soft:1},    // longleaf jointfir — green broom
+  PAIN2 :{fol:"#aeb398",soft:1},                   // mariola — silver cushion
+  CAGI10:{fol:"#4f6f43",flower:"#f2f0e6"}          // saguaro — fluted green column
+};
 var DEADCOL="#8a7d64";
-var dummy=new THREE.Object3D();
+function spCol(p,key){var s=SP[p.tx]||{};return s[key]||"#6f7a52";}
 function mat(hex){return new THREE.MeshStandardMaterial({color:new THREE.Color(hex),roughness:1,flatShading:true});}
+function matR(hex,rough){return new THREE.MeshStandardMaterial({color:new THREE.Color(hex),roughness:rough,flatShading:true});}
 function ico(r){return new THREE.IcosahedronGeometry(r,0);}
+// a thin tapered stem: cylinder with its base at y=0
+function stemGeo(rTop,rBot,len,seg){var gm=new THREE.CylinderGeometry(rTop,rBot,len,seg||6);gm.translate(0,len/2,0);return gm;}
 function rnd(seed){var a=seed>>>0;return function(){a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+var PROXYMAT=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,colorWrite:false});
 
-var CANOPY=[];  // swayable foliage groups
+var CANOPY=[];  // swayable foliage groups (soft-tissue plants only)
 function buildPlant(p,seed){
-  var g=new THREE.Group(); g.position.set(p.x,0,p.y);
-  var R=rnd(seed), dead=p.status==="dead";
-  var col=dead?DEADCOL:(COL[p.form]||"#6f7a52"), h=Math.max(0.1,p.h||0.5), cr=Math.max(0.2,p.cr||0.6);
-  var m=mat(col), foliage=new THREE.Group();
-  if(p.form==="creosote"){                                   // airy multi-stem shrub of small blobs
-    var stems=3+Math.floor(R()*3);
-    for(var i=0;i<stems;i++){var a=R()*6.28,rr=cr*0.22*(0.4+R());
-      var blob=new THREE.Mesh(ico(cr*(0.16+R()*0.12)),m);
-      blob.position.set(Math.cos(a)*rr,h*(0.5+R()*0.5),Math.sin(a)*rr);blob.scale.y=1.3;
-      blob.castShadow=true;foliage.add(blob);}
-  }else if(p.form==="cholla"){                               // branching cylindrical segments
-    var seg=new THREE.CylinderGeometry(0.06,0.09,1,6); seg.translate(0,0.5,0);
-    var br=3+Math.floor(R()*4);
-    for(var i=0;i<br;i++){var a=R()*6.28,tilt=(R()-0.5)*0.7,len=h*(0.4+R()*0.6);
-      var c=new THREE.Mesh(seg,m); c.position.set(Math.cos(a)*cr*0.18,0,Math.sin(a)*cr*0.18);
-      c.rotation.set(tilt,a,tilt*0.6); c.scale.set(1,len,1); c.castShadow=true; foliage.add(c);
-      var c2=new THREE.Mesh(seg,m); c2.position.set(Math.cos(a)*cr*0.18+Math.cos(a+1)*len*0.3,len*0.55,Math.sin(a)*cr*0.18+Math.sin(a+1)*len*0.3);
-      c2.rotation.set(tilt+0.5,a+1,0);c2.scale.set(0.8,len*0.6,0.8);c2.castShadow=true;foliage.add(c2);}
-  }else if(p.form==="tree"||p.form==="acacia"){              // trunk + feathery canopy
-    var trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.06+h*0.02,0.09+h*0.03,1,6),mat(dead?"#6b5f4a":"#5a4327"));
-    trunk.geometry.translate(0,0.5,0);trunk.scale.set(1,h*0.55,1);trunk.castShadow=true;g.add(trunk);
-    var blobs=3+Math.floor(R()*3);
-    for(var i=0;i<blobs;i++){var a=R()*6.28,rr=cr*0.28*R();
-      var bl=new THREE.Mesh(ico(cr*(0.28+R()*0.16)),m);
-      bl.position.set(Math.cos(a)*rr,h*(0.6+R()*0.35),Math.sin(a)*rr);bl.scale.set(1,0.8,1);bl.castShadow=true;foliage.add(bl);}
-  }else if(p.form==="pricklypear"){                          // cluster of flat pads
-    var pads=3+Math.floor(R()*4),pg=ico(1);
-    for(var i=0;i<pads;i++){var a=R()*6.28,rr=cr*0.22*R();
-      var pad=new THREE.Mesh(pg,m); pad.position.set(Math.cos(a)*rr,h*(0.35+R()*0.5),Math.sin(a)*rr);
-      pad.scale.set(cr*0.34,cr*0.42,cr*0.09); pad.rotation.set(0,a,(R()-0.5)*0.6); pad.castShadow=true; foliage.add(pad);}
-  }else if(p.form==="barrel"){                               // squat ribbed barrel
-    var b=new THREE.Mesh(new THREE.CylinderGeometry(cr*0.5,cr*0.42,h,10),m);
-    b.geometry.translate(0,0.5,0);b.scale.y=1;b.position.y=0;b.castShadow=true;foliage.add(b);
-  }else if(p.form==="pincushion"){                           // tiny ball
-    var b=new THREE.Mesh(ico(Math.max(0.08,cr*0.5)),m);b.position.y=cr*0.4;b.scale.y=0.8;b.castShadow=true;foliage.add(b);
-  }else if(p.form==="ephedra"){                              // green broom clump
-    var st=new THREE.CylinderGeometry(0.015,0.03,1,5);st.translate(0,0.5,0);
-    var n=8+Math.floor(R()*8);
-    for(var i=0;i<n;i++){var a=R()*6.28,rr=cr*0.2*R();var s=new THREE.Mesh(st,m);
-      s.position.set(Math.cos(a)*rr,0,Math.sin(a)*rr);s.rotation.set((R()-0.5)*0.5,a,(R()-0.5)*0.5);s.scale.set(1,h*(0.7+R()*0.4),1);s.castShadow=true;foliage.add(s);}
-  }else{                                                     // low mound
-    var b=new THREE.Mesh(ico(cr*0.4),m);b.position.y=h*0.35;b.scale.set(1.2,0.7,1.2);b.castShadow=true;foliage.add(b);
+  var g=new THREE.Group(); g.position.set(p.x,0,-p.y);   // scene north = -Z (so top-down reads north-up/east-right)
+  var R=rnd(seed), dead=p.status==="dead", tx=p.tx;
+  var h=Math.max(0.1,p.h||0.5), cr=Math.max(0.2,p.cr||0.6);
+  var fol=dead?DEADCOL:spCol(p,"fol"), bark=dead?DEADCOL:spCol(p,"bark");
+  var m=mat(fol), foliage=new THREE.Group(), soft=!!(SP[tx]&&SP[tx].soft);
+
+  if(tx==="LATR2"){                    // ── Creosote: open see-through vase of thin jointed stems, sparse olive tufts
+    var stems=7+Math.floor(R()*3), bm=matR(bark,1);
+    for(var i=0;i<stems;i++){
+      var a=(i/stems)*6.283+R()*0.5, tilt=0.16+R()*0.32, slen=h*(0.70+R()*0.34);
+      var s=new THREE.Mesh(stemGeo(cr*0.011,cr*0.028,slen,5),bm);
+      s.rotation.set(Math.cos(a)*tilt,a,Math.sin(a)*tilt); s.castShadow=true; foliage.add(s);
+      var tipx=Math.cos(a)*Math.sin(tilt)*slen, tipz=Math.sin(a)*Math.sin(tilt)*slen, tipy=slen*Math.cos(tilt);
+      if(R()<0.5){var nd=new THREE.Mesh(ico(cr*0.026),matR("#5b564a",1));   // swollen dark node
+        nd.position.set(tipx*0.5,tipy*0.5,tipz*0.5); nd.castShadow=true; foliage.add(nd);}
+      if(!dead&&R()<0.78){var nb=1+(R()<0.3?1:0);                           // sparse airy olive tufts at tips (gaps show through)
+        for(var b=0;b<nb;b++){var bl=new THREE.Mesh(ico(cr*(0.075+R()*0.055)),m);
+          bl.position.set(tipx+(R()-0.5)*cr*0.22,tipy+R()*cr*0.08,tipz+(R()-0.5)*cr*0.22);
+          bl.scale.y=1.3; bl.castShadow=true; foliage.add(bl);}}
+    }
+  }else if(tx==="CYLE8"){              // ── Christmas cholla: thin wiry canes + right-angle branchlets
+    var canes=2+Math.floor(R()*2), rad=cr*0.02;
+    var cg=stemGeo(rad*0.85,rad,1,5), bm=mat(fol);
+    for(var c=0;c<canes;c++){
+      var a=R()*6.283, cx=Math.cos(a)*cr*0.12, cz=Math.sin(a)*cr*0.12, yy=0, segs=2+Math.floor(R()*2);
+      for(var s2=0;s2<segs;s2++){
+        var seglen=h*(0.30+R()*0.22), lean=(R()-0.5)*0.6, la=a+(R()-0.5);
+        var cane=new THREE.Mesh(cg,bm); cane.position.set(cx,yy,cz);
+        cane.rotation.set(Math.cos(la)*lean,la,Math.sin(la)*lean); cane.scale.set(1,seglen,1); cane.castShadow=true; foliage.add(cane);
+        cx+=Math.cos(la)*Math.sin(lean)*seglen; cz+=Math.sin(la)*Math.sin(lean)*seglen; yy+=seglen*Math.cos(lean);
+        var nbr=1+Math.floor(R()*2);          // near-perpendicular terminal branchlets
+        for(var b2=0;b2<nbr;b2++){var ba=R()*6.283, blen=h*(0.10+R()*0.14);
+          var br=new THREE.Mesh(cg,bm); br.position.set(cx,yy-seglen*0.15,cz);
+          br.rotation.set(Math.cos(ba)*1.35,ba,Math.sin(ba)*1.35); br.scale.set(0.9,blen,0.9); br.castShadow=true; foliage.add(br);
+          if(!dead&&R()<0.5){var fr=new THREE.Mesh(ico(rad*1.8),mat(spCol(p,"fruit")));  // red winter fruit
+            fr.position.set(cx+Math.cos(ba)*blen*0.6,yy-seglen*0.15+blen*0.2,cz+Math.sin(ba)*blen*0.6); foliage.add(fr);}}
+      }
+    }
+  }else if(tx==="PRVE"){              // ── Velvet mesquite: crooked dark trunks under a broad feathery dome
+    var bm=matR(bark,1), nT=h<1.1?1:2+Math.floor(R()*2), trunkH=h*0.45, tops=[];
+    for(var t=0;t<nT;t++){var ta=(t/Math.max(1,nT))*6.283+R(), lean=nT>1?0.12+R()*0.14:0.04;
+      var tr=new THREE.Mesh(stemGeo(0.03+h*0.015,0.05+h*0.03,trunkH,6),bm);
+      tr.rotation.set(Math.cos(ta)*lean,ta,Math.sin(ta)*lean); tr.castShadow=true; g.add(tr);
+      tops.push([Math.cos(ta)*Math.sin(lean)*trunkH,trunkH*Math.cos(lean),Math.sin(ta)*Math.sin(lean)*trunkH]);}
+    var nbr=4+Math.floor(R()*3);        // zig-zag branches up-and-out
+    for(var i=0;i<nbr;i++){var o=tops[i%tops.length], a=R()*6.283, up=0.5+R()*0.5, blen=cr*(0.22+R()*0.16);
+      var br=new THREE.Mesh(stemGeo(0.02,0.035,blen,5),bm);
+      br.position.set(o[0],o[1],o[2]); br.rotation.set(Math.cos(a)*(1.1-up),a,Math.sin(a)*(1.1-up)); br.castShadow=true; g.add(br);}
+    if(!dead){var dome=5+Math.floor(R()*4);   // broad shallow umbrella, wider than tall, trunk kept visible
+      for(var i=0;i<dome;i++){var a=R()*6.283, rr=cr*0.30*(0.3+R());
+        var bl=new THREE.Mesh(ico(cr*(0.22+R()*0.14)),m);
+        bl.position.set(Math.cos(a)*rr,trunkH+cr*0.12+R()*cr*0.14,Math.sin(a)*rr); bl.scale.set(1,0.6,1); bl.castShadow=true; foliage.add(bl);}}
+  }else if(tx==="OPEN3"){            // ── Engelmann prickly pear: mounding clump of flat pads fanning up & out
+    var padG=new THREE.BoxGeometry(1,1,1), pw=cr*0.36, ph2=cr*0.44, base=3+Math.floor(R()*2);
+    function pad(x,y,z,yaw,tiltUp){var pd=new THREE.Mesh(padG,m);
+      pd.position.set(x,y,z); pd.rotation.set(0,yaw,tiltUp); pd.scale.set(pw,ph2,cr*0.06); pd.castShadow=true; foliage.add(pd);
+      return [x+Math.sin(yaw)*0.0,y+Math.cos(tiltUp)*ph2*0.5,z];}
+    var bases=[];
+    for(var i=0;i<base;i++){var a=(i/base)*6.283+R()*0.4, rr=cr*0.12;
+      bases.push([pad(Math.cos(a)*rr,ph2*0.5,Math.sin(a)*rr,a,(R()-0.5)*0.3),a]);}
+    var upper=6+Math.floor(R()*4);
+    for(var i=0;i<upper;i++){var pr=bases[i%bases.length], top=pr[0], a=pr[1]+(R()-0.5)*1.4;
+      pad(top[0]+(R()-0.5)*cr*0.1,top[1]+ph2*(0.2+R()*0.3),top[2]+(R()-0.5)*cr*0.1,a,(0.5+R()*0.5)*(R()<0.5?1:-1));}
+  }else if(tx==="FEWI"){            // ── Fishhook barrel: ribbed keg leaning south, woolly apex, fruit ring
+    var bodyH=Math.max(h,cr*0.9), rr=cr*0.5;
+    var body=new THREE.Mesh(stemGeo(rr*0.9,rr,bodyH,12),m); body.castShadow=true; foliage.add(body);
+    var apex=new THREE.Mesh(new THREE.SphereGeometry(rr*0.86,12,6,0,6.283,0,1.1),mat(dead?DEADCOL:spCol(p,"apex")));
+    apex.position.y=bodyH; apex.castShadow=true; foliage.add(apex);
+    if(!dead){var ring=8;                     // crown ring of yellow fruit
+      for(var i=0;i<ring;i++){var a=(i/ring)*6.283;var f=new THREE.Mesh(ico(rr*0.13),mat(spCol(p,"fruit")));
+        f.position.set(Math.cos(a)*rr*0.6,bodyH+rr*0.14,Math.sin(a)*rr*0.6); foliage.add(f);}
+      var sm=mat(spCol(p,"spine"));           // a few reddish hooked central spines on the south face
+      for(var i=0;i<4;i++){var a=-1.0+(i-1.5)*0.4;var sp=new THREE.Mesh(stemGeo(0.004,0.01,bodyH*0.5,4),sm);
+        sp.position.set(Math.cos(a)*rr,bodyH*(0.45+R()*0.3),Math.sin(a)*rr); sp.rotation.set(1.15,a,0); foliage.add(sp);}}
+    foliage.rotation.z=0.22+R()*0.10;         // the "compass barrel" southward lean
+  }else if(tx==="MAGR9"){          // ── Graham's pincushion: tiny frosted ball + pink flower halo
+    var rr=Math.max(0.05,cr*0.5);
+    var body=new THREE.Mesh(ico(rr),mat(dead?DEADCOL:spCol(p,"frost"))); body.position.y=rr*0.85; body.scale.y=0.9; body.castShadow=true; foliage.add(body);
+    if(!dead){var fh=7;for(var i=0;i<fh;i++){var a=(i/fh)*6.283;var fl=new THREE.Mesh(ico(rr*0.16),mat(spCol(p,"flower")));
+      fl.position.set(Math.cos(a)*rr*0.55,rr*1.5,Math.sin(a)*rr*0.55); foliage.add(fl);}}
+  }else if(tx==="EPTR"){           // ── Longleaf jointfir: airy broom of thin erect green rods, three-forked
+    var n=9+Math.floor(R()*5), rad=Math.max(0.008,cr*0.02);
+    var knot=new THREE.Mesh(ico(cr*0.09),matR(bark,1)); knot.position.y=cr*0.05; knot.castShadow=true; g.add(knot);
+    for(var i=0;i<n;i++){var a=R()*6.283, rr=cr*0.14*R(), tilt=0.08+R()*0.34, slen=h*(0.7+R()*0.4);
+      var s=new THREE.Mesh(stemGeo(rad*0.6,rad,slen,4),m);
+      s.position.set(Math.cos(a)*rr,0,Math.sin(a)*rr); s.rotation.set(Math.cos(a)*tilt,a,Math.sin(a)*tilt); s.castShadow=true; foliage.add(s);
+      if(R()<0.4){for(var f=0;f<2;f++){var fa=a+(f?0.4:-0.4), flen=slen*0.4;
+        var fk=new THREE.Mesh(stemGeo(rad*0.5,rad*0.7,flen,4),m);
+        fk.position.set(Math.cos(a)*rr+Math.cos(fa)*Math.sin(tilt)*slen*0.7,slen*0.7*Math.cos(tilt),Math.sin(a)*rr+Math.sin(fa)*Math.sin(tilt)*slen*0.7);
+        fk.rotation.set(Math.cos(fa)*(tilt+0.3),fa,Math.sin(fa)*(tilt+0.3)); foliage.add(fk);}}}
+  }else if(tx==="PAIN2"){          // ── Mariola: low dense silvery-grey cushion
+    var rr=cr*0.44;
+    var dome=new THREE.Mesh(ico(rr),m); dome.position.y=rr*0.62; dome.scale.set(1.18,0.72,1.18); dome.castShadow=true; foliage.add(dome);
+    var bumps=5+Math.floor(R()*3);
+    for(var i=0;i<bumps;i++){var a=R()*6.283, br2=rr*0.6*R();
+      var bp=new THREE.Mesh(ico(rr*(0.30+R()*0.16)),m);
+      bp.position.set(Math.cos(a)*br2,rr*(0.55+R()*0.35),Math.sin(a)*br2); bp.scale.y=0.7; bp.castShadow=true; foliage.add(bp);}
+  }else if(tx==="CAGI10"){         // ── Saguaro: tall fluted green column (juveniles armless), arms if tall
+    var rr=Math.max(0.06,cr*0.42), colH=h;
+    var col=new THREE.Mesh(stemGeo(rr*0.85,rr,colH,12),m); col.castShadow=true; foliage.add(col);
+    var domeTop=new THREE.Mesh(new THREE.SphereGeometry(rr*0.85,12,6,0,6.283,0,1.4),m); domeTop.position.y=colH; domeTop.castShadow=true; foliage.add(domeTop);
+    if(h>3){var arms=1+Math.floor(R()*3);      // upcurving arms only on mature giants
+      for(var i=0;i<arms;i++){var a=R()*6.283, ay=colH*(0.5+R()*0.25), al=colH*0.28;
+        var e=new THREE.Mesh(stemGeo(rr*0.6,rr*0.65,al,10),m); e.position.set(0,ay,0); e.rotation.set(0,a,1.1); e.castShadow=true; foliage.add(e);
+        var ex=Math.cos(a)*al*0.7, ez=Math.sin(a)*al*0.7;
+        var up=new THREE.Mesh(stemGeo(rr*0.55,rr*0.6,al*1.1,10),m); up.position.set(ex,ay+al*0.2,ez); up.castShadow=true; foliage.add(up);
+        var ad=new THREE.Mesh(new THREE.SphereGeometry(rr*0.55,10,5,0,6.283,0,1.4),m); ad.position.set(ex,ay+al*0.2+al*1.1,ez); foliage.add(ad);}}
+  }else{                            // fallback low mound
+    var b=new THREE.Mesh(ico(cr*0.4),m); b.position.y=h*0.35; b.scale.set(1.2,0.7,1.2); b.castShadow=true; foliage.add(b);
   }
-  g.add(foliage); g.userData={p:p,foliage:foliage};
-  if(!dead)CANOPY.push(foliage);
+
+  g.add(foliage);
+  // transparent pick proxy so every plant — even thin cacti — is reliably clickable
+  var pr=Math.max(0.28,cr*0.5), ph=Math.max(0.35,h);
+  var proxy=new THREE.Mesh(new THREE.CylinderGeometry(pr,pr,ph,6),PROXYMAT); proxy.position.y=ph/2; g.add(proxy);
+  // ground marker — species-coloured dot; reads as a survey dot-map from the sky cam
+  var mk=new THREE.Mesh(new THREE.CircleGeometry(Math.max(0.3,cr*0.46),14),
+    new THREE.MeshBasicMaterial({color:new THREE.Color(fol),transparent:true,opacity:0.62,depthWrite:false}));
+  mk.rotation.x=-Math.PI/2; mk.position.y=0.04; g.add(mk);
+  g.userData={p:p,foliage:foliage};
+  if(!dead&&soft)CANOPY.push(foliage);       // only soft-tissue plants sway
   return g;
 }
 
 var plants=[], seedbase=1;
 DATA.plants.forEach(function(p){var g=buildPlant(p,seedbase++); scene.add(g); plants.push(g);});
 
-// ---- controls ----
-var keys={},yaw=0.0,pitch=-0.05,px=0,pz=((DATA.ey||40)/2+4),walking=false,drag=false,lx=0,ly=0,moved=0;
+// ---- controls (first-person walk + top-down sky cam) ----
+var MODE="walk";
+var keys={},yaw=0.0,pitch=-0.05,px=0,pz=((DATA.ey||40)/2+4),walking=false,drag=false,lx=0,ly=0,moved=0,downx=0,downy=0;
 window.addEventListener("keydown",function(e){keys[e.code]=true;});
 window.addEventListener("keyup",function(e){keys[e.code]=false;});
 var cv=renderer.domElement;
 cv.addEventListener("pointerdown",function(e){drag=true;moved=0;lx=e.clientX;ly=e.clientY;downx=e.clientX;downy=e.clientY;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
 cv.addEventListener("pointerup",function(e){drag=false; if(moved<6)pick(e);});
 cv.addEventListener("pointercancel",function(){drag=false;});
-var downx=0,downy=0;
-cv.addEventListener("pointermove",function(e){if(!drag)return;moved+=Math.abs(e.clientX-lx)+Math.abs(e.clientY-ly);
-  yaw-=(e.clientX-lx)*0.004;pitch-=(e.clientY-ly)*0.004;pitch=Math.max(-1.2,Math.min(0.5,pitch));lx=e.clientX;ly=e.clientY;});
-var walkBtn=document.getElementById("walkBtn");
+cv.addEventListener("pointermove",function(e){if(!drag)return;var dx=e.clientX-lx,dy=e.clientY-ly;moved+=Math.abs(dx)+Math.abs(dy);
+  if(MODE==="sky"){var r=cv.getBoundingClientRect(),wpp=(ortho.right-ortho.left)/r.width;  // grab-drag pan (north-up/east-right)
+    sky.x=Math.max(-70,Math.min(70,sky.x-dx*wpp)); sky.z=Math.max(-70,Math.min(70,sky.z+dy*wpp)); sizeOrtho();}
+  else{yaw-=dx*0.004;pitch-=dy*0.004;pitch=Math.max(-1.2,Math.min(0.5,pitch));}
+  lx=e.clientX;ly=e.clientY;});
+cv.addEventListener("wheel",function(e){if(MODE!=="sky")return;e.preventDefault();
+  sky.half=Math.max(4,Math.min(60,sky.half*(1+(e.deltaY>0?1:-1)*0.12))); sizeOrtho();},{passive:false});
+var walkBtn=document.getElementById("walkBtn"), skyBtn=document.getElementById("skyBtn"), hintEl=document.getElementById("hint"), layerBtn=document.getElementById("layerBtn");
 walkBtn.addEventListener("click",function(){walking=!walking;walkBtn.innerHTML=walking?"&#10074;&#10074; Stop":"&#9654; Walk";});
+if(GEO&&GEO.ortho){layerBtn.addEventListener("click",function(){setLayer((LAYER+1)%3);});}else{layerBtn.style.display="none";}
+function setMode(mode){MODE=mode;walking=false;walkBtn.innerHTML="&#9654; Walk";
+  var comp=document.getElementById("compass");
+  if(mode==="sky"){scene.fog=null;sky.x=0;sky.z=0;sky.half=(DATA.ey||40)/2+3;sizeOrtho();
+    skyBtn.innerHTML="&#9654; Enter the plot";walkBtn.style.display="none";comp.style.display="block";
+    hintEl.innerHTML="top-down &middot; north up &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
+  else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Sky view";walkBtn.style.display="";comp.style.display="none";
+    hintEl.innerHTML="drag to look &middot; W A S D to move &middot; click a plant to read its tag";}}
+skyBtn.addEventListener("click",function(){setMode(MODE==="sky"?"walk":"sky");});
 
 // ---- pick / inspect ----
 var ray=new THREE.Raycaster(), card=document.getElementById("card"), reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 function pick(e){
   var r=cv.getBoundingClientRect();
   var nx=((e.clientX-r.left)/r.width)*2-1, ny=-((e.clientY-r.top)/r.height)*2+1;
-  ray.setFromCamera({x:nx,y:ny},camera);
+  ray.setFromCamera({x:nx,y:ny},MODE==="sky"?ortho:camera);
   var hit=ray.intersectObjects(plants,true)[0];
   if(!hit){card.style.display="none";return;}
   var o=hit.object; while(o&&!(o.userData&&o.userData.p))o=o.parent;
@@ -201,15 +346,21 @@ function pick(e){
 
 // ---- legend ----
 var lg=document.getElementById("legend");
-DATA.legend.slice(0,8).forEach(function(l){var d=document.createElement("span");d.className="lg";
-  d.innerHTML='<i style="background:'+(COL[l.form]||"#6f7a52")+'"></i>'+(l.common||l.tx)+' ×'+l.n;lg.appendChild(d);});
+DATA.legend.slice(0,9).forEach(function(l){var d=document.createElement("span");d.className="lg";
+  d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].fol)||"#6f7a52")+'"></i>'+(l.common||l.tx)+' ×'+l.n;lg.appendChild(d);});
 
 // ---- loop ----
-function resize(){var w=host.clientWidth||innerWidth,h=host.clientHeight||innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){var w=host.clientWidth||innerWidth,h=host.clientHeight||innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();sizeOrtho();}
 addEventListener("resize",resize);resize();
 var last=0;
 function loop(t){requestAnimationFrame(loop);
   var dt=Math.min(0.05,((t-last)/1000)||0);last=t;
+  if(!reduce){var gz=Math.sin(t*0.0006)*0.02+Math.sin(t*0.0013)*0.01;
+    for(var i=0;i<CANOPY.length;i++)CANOPY[i].rotation.z=gz;}
+  if(MODE==="sky"){
+    sun.position.set(sky.x+28,60,sky.z+16); sun.target.position.set(sky.x,0,sky.z); sun.target.updateMatrixWorld();
+    renderer.render(scene,ortho); return;
+  }
   var spd=9*dt,mf=0,ms=0;
   if(keys.KeyW||keys.ArrowUp)mf+=1;if(keys.KeyS||keys.ArrowDown)mf-=1;
   if(keys.KeyA||keys.ArrowLeft)ms-=1;if(keys.KeyD||keys.ArrowRight)ms+=1;
@@ -220,8 +371,6 @@ function loop(t){requestAnimationFrame(loop);
   var bob=(!reduce&&(mf||ms))?Math.sin(t*0.009)*0.04:0;
   camera.position.set(px,1.6+bob,pz); camera.rotation.set(pitch,yaw,0);
   sun.position.set(px+28,44,pz+16); sun.target.position.set(px,0,pz); sun.target.updateMatrixWorld();
-  if(!reduce){var g=Math.sin(t*0.0006)*0.02+Math.sin(t*0.0013)*0.01;
-    for(var i=0;i<CANOPY.length;i++)CANOPY[i].rotation.z=g;}
   renderer.render(scene,camera);
 }
 requestAnimationFrame(loop);

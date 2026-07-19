@@ -66,8 +66,37 @@ standing-dead, and **click a plant to read its actual NEON record** (species, in
 measured height/crown, status). 9 species, 104 measured heights, 28 dead. See `build_plot.md`. Live
 artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
 (self-contained), `plot-srer048.json` (derived), `plot.src.html` (template), `build_plot.md` (recipe);
-raw VST CSVs + token + `build_plot.py` stay in scratchpad. **Planned expansions:** plant diversity
-(% cover → ground/understory), phenology (animate the year per individual), link from the desert walk,
+raw VST CSVs + token + `build_plot.py` stay in scratchpad.
+
+**Botanical models (done):** each of the 9 species now has a research-accurate low-poly model keyed on
+the real `taxonID` (built from SEINet/FNA/USDA/ASDM/LBJWC descriptions) — creosote open see-through vase,
+Christmas cholla wiry canes with red winter fruit, velvet mesquite wide feathery umbrella over crooked
+multi-trunk, Engelmann prickly pear fanning pads, fishhook barrel leaning south with woolly apex + yellow
+fruit ring, Graham's pincushion frosted globe + pink halo, longleaf jointfir forked green broom, mariola
+silver cushion, saguaro fluted column (juvenile here; arms if tall). CAGI10 identified/named = Saguaro.
+Every plant carries a transparent pick-proxy so even thin cacti are clickable; dead woody plants render as
+bare skeletons. Rebuild with scratchpad `assemble_plot.py` (reuses Three.js + ground texture from the
+existing `plot.html`).
+
+**Sky cam (done):** a top-down orthographic mode (toggle "Sky view" / "Enter the plot") framing the whole
+surveyed strip — drag to pan, scroll to zoom, click any plant to read its tag from above. Each plant has a
+species-coloured ground disc so the overhead view reads as a NEON crown/survey dot-map. Fixes the "hard to
+navigate" first-person complaint.
+
+**Real-world ground layers (done):** a "Ground" toggle cycles stylized → **real NEON AOP aerial photo** →
+**colorized LiDAR canopy-height**, both georeferenced and draped over the plot so our tagged plants sit on the
+actual desert. Source: NEON AOP **2021-09** SRER (ortho DP3.30010.001 10 cm `2021_SRER_4_515000_3530000_image.tif`;
+CHM DP3.30015.001 1 m `NEON_D14_SRER_DP3_515000_3530000_CHM.tif`). Georeference: scene origin (0,0) = surveyed
+cloud bbox-centre UTM **E=515527.413, N=3530802.807** (zone 12N); crop a 64 m square, north-up/east-right, drape
+on a `PlaneGeometry(64,64)` with `tex.flipY=false`. Validated: plants land on dark shrubs in the photo (mean
+brightness 57 under plants vs 115 overall) and the dry wash sits on the east side. Built by scratchpad
+`geo_plot.py` (needs raw CSVs + token + downloaded tiles, not committed); both layers embedded as inline
+data-URIs (CSP-safe). Google Maps tiles were rejected (not redistributable + CSP blocks live embeds) — NEON
+AOP shares our UTM grid and is the correct, openly-licensed source.
+
+**Next (owner, "maybe"):** per-individual variation from the data — basalStemDiameter (stem thickness/count),
+measured height, elliptical crown (ninetyCrownDiameter), canopyPosition, status.
+**Deferred:** plant diversity (% cover → ground), phenology (animate the year), link from the desert walk,
 more plots.
 
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
