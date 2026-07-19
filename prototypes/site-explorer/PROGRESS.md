@@ -42,7 +42,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 16 | **Visual overhaul (stage 1)** — soft sun shadows, key-dominant warm light, distant horizon hills | DONE | #26 |
 | 17 | **Filmic tone mapping** — ACES on the renderer + matching ACES in the sky shader (consistent) | DONE | #27 |
 | 18 | **Richer geometry** — scattered rocks + fallen logs, layered distant hills, rounder tree crowns | DONE | #28 |
-| 19 | **Generated textures** — ground/bark/rock via image-gen (user's ChatGPT Pro or Higgsfield), embedded | PLANNED (awaiting the user's texture batch — brief sent) | — |
+| 19 | **Generated textures** — per-biome ground + bark from an image model, embedded inline, on ground+trunks | DONE | #29 |
+| 20+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -57,12 +58,14 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~1022 KB; deep-linkable via `?site=CODE`).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~1235 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
 - `site-data.json` / `map-data.json` / `neon-site-names.json` — generated/fetched data.
 - `lidar-{wref,scbi,harv,guan,teak,grsm,soap}.json` — real NEON AOP CHM height grids (derived; raw tiles never committed).
+- `tex/*.jpg` + `proc_tex.py` + `embed_tex.py` + `tex/build_tex.md` — generated ground/bark textures (256px,
+  embedded inline in walk.html) and their build pipeline + prompts (raw generations not committed).
 - `README.md` — what it is, per-rung detail, how to regenerate.
 
 **Nothing here touches the R/Shiny app**: `prototypes/` is outside `manifest.json`'s allowlist and the
@@ -83,6 +86,9 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   ~46 m (tile `NEON_D07_GRSM_DP3_273000_3952000`, 2022); SOAP (Soaproot Saddle) is an open foothill woodland
   (~42% forested, tile `NEON_D17_SOAP_DP3_298000_4100000`, 2024). All 46 sites are walkable. To add another:
   `build_lidar.py <SITE> <CHM.tif>` → inline as `<script id="lidar<SITE>">`.
+- The **ground/bark textures are AI-generated stylised impressions** (Rung 19), not real ground photography
+  of any site — they convey biome *feel* (forest floor, dry prairie, desert sand, tundra moss, bark), not
+  measured surface data. Embedded inline (CSP-safe); the flat-shaded canopy stays untextured.
 - No R in the sandbox → `export_data.py` reads the RDS with the pure-Python `rdata` package
   (`pip install rdata`). A production build would use an R writer beside `scripts/build_search_index.R`.
 - The **soundscape is synthesized, not recorded** (Rung 7): a procedural Web Audio graph — filtered pink-noise
@@ -121,9 +127,14 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   plus **fallen logs** in forest/grassland/mixed — so the floor isn't bare (all rigid + shadow-casting); the
   distant ridge is now **two layered rings** (near = taller/darker at R=300, far = lower/hazier at R=365, via
   vertex colours) for atmospheric depth; and procedural **deciduous crowns are rounder** (icosa detail 1). The
-  **generated-texture** stage (Rung 19) is queued on the owner's ChatGPT-Pro texture batch (a 7-prompt brief
-  was sent: 5 biome grounds + 2 barks; textures go only on the smooth ground + trunks, never the flat-shaded
-  canopy).
+  **generated-texture** stage is done (Rung 19, #29): seven stylized textures from an image model
+  (nano-banana via Higgsfield, ~14 credits) — 5 biome grounds + 2 barks — down-res'd to 256px and **embedded
+  inline as base64 data-URIs** (CSP-safe, ~163 KB total; walk.html ≈ 1.26 MB). They map only onto the **smooth
+  surfaces**: the ground plane by biome bucket (`groundMesh`, repeat ≈ 58) and the tree trunks (bark, repeat
+  2×6), keyed by tree shape (conifer vs deciduous). The **flat-shaded canopy stays untextured** so the textures
+  enhance rather than fight the low-poly look. Absent texture ⇒ flat-colour fallback, no other change.
+  Reproducible: `tex/*.jpg` + `proc_tex.py` + `embed_tex.py` + `tex/build_tex.md` (prompts) are committed;
+  raw multi-MB generations are not. It's a **stylized impression**, not real ground photography of any site.
 - **Wind is shown, not just heard** (Rung 12): the canopy gusts on the same ~14 s cycle (0.07 Hz) as the audio
   wind LFO — the flexible foliage (crowns, grass, shrubs, tufts) leans downwind and flutters harder during
   gusts, while **trunks, cactus and rocks are rigid** (tagged `userData.rigid`, kept in `world` not the sway
