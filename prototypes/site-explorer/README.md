@@ -47,6 +47,16 @@ generated from each site's `bucket` + `veg_ba_ha` (`walk-sites.json` → `params
 a gradient sky with a soft sun, a gentle canopy sway + walking head-bob (both reduced-motion aware), and
 a muted desert-ground tone.
 
+### Day to night (Rung 8)
+
+A **time-of-day slider** in the control row sweeps the scene from **dawn → midday → dusk → night**. It
+drives the gradient-sky shader's colours, arcs the sun's direction / colour / intensity across the sky, and
+dims the hemisphere light and fog to match — so the trunks catch a warm low sun at dawn and dusk, and the
+forest falls to a dim, moonlit blue at night. The slider's track previews the cycle, and the label/icon name
+the phase. The **midday stop reuses each site's own daytime palette and the original sun defaults, so the
+default view is unchanged** from before; the other stops blend a universal sky over the biome. It's a
+**mood/lighting illustration**, not a modelled solar position for any site's latitude or date.
+
 ### Soundscape (Rung 7)
 
 An optional **per-biome ambient soundscape**, off by default. Tap **Sound** and a procedural
@@ -125,6 +135,9 @@ its ~12 nodes appear after the tap, never before — no autoplay), the button's 
 flip both ways, and travelling between biomes while sound is on retunes without error; all nine bucket-diverse
 sites (forest / grassland / dryland / tundra / mixed) render with 0 console/page errors and no 390 px
 overflow. *Audio quality itself can't be verified headlessly (no audio device) — only correct graph creation
-and error-free toggling/retuning are checked.*
+and error-free toggling/retuning are checked.* The **time-of-day slider** was swept across all six phases
+(dawn → night): the label/icon track the phase, midday reproduces the original look, and every bucket renders
+cleanly at night — screenshots at dawn/midday/dusk/night confirm the sky, sun, and scene brightness shift as
+intended, with 0 console/page errors.
 
 Built by Desert Data Labs. Not affiliated with NEON / Battelle / NSF.
