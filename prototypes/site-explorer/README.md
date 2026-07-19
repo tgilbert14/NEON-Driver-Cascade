@@ -87,9 +87,10 @@ only on your tap because browsers require a gesture before audio can play, and i
 "reduce motion" preference elsewhere in the scene.
 
 It uses [Three.js](https://threejs.org) r128, **inlined** into the page (the Artifact CSP blocks CDNs),
-with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay cheap. Five of the six sites
-are a **procedural impression** from measured standing wood. Because it inlines a 3D engine, it is a
-heavier page and is kept **separate** from the lightweight main explorer, linked rather than merged.
+with `InstancedMesh` for trees/shrubs/grass/rock so thousands of plants stay cheap. Most sites are a
+**procedural impression** from measured standing wood (the seven real-LiDAR forests below are the
+exception). Because it inlines a 3D engine, it is a heavier page and is kept **separate** from the
+lightweight main explorer, linked rather than merged.
 
 **Seven forest sites are rendered from real NEON AOP LiDAR scans** — Wind River (`~68 m` old-growth
 conifer), Lower Teakettle (`~59 m` Sierra Nevada conifer), Great Smoky Mountains (`~46 m` dense
