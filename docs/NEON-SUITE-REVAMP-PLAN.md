@@ -47,7 +47,7 @@ The release layer is not at the same quality bar.
 | App | Public app on 2026-07-18 | Manifest/runtime-file drift | Executable helper tests | Immediate scientific or product risk |
 |---|---|---:|---:|---|
 | Small Mammal Tracker | **Startup Error -> restored in Pass 1** | 10 -> 0 files | 0 -> 11 fixtures + JS handler gate | physical-event parity and opportunity denominator repaired; exact current-source Driver join remains held |
-| Plant Phenology Explorer | available | 8 files | 1 | desert green-up opportunity and visit-cadence comparability must remain explicit |
+| Plant Phenology Explorer | **Startup Error -> restored in Pass 2** | 8 -> 0 files | 1 -> registered science/build/handler/semantic suite | desert green-up opportunity, interval censoring, and visit-cadence comparability are explicit; exact current-source Driver join remains held |
 | Plant Diversity | **production verified in Pass 3** | 13 -> 0 files | 1 -> registered science/build/handler/cover/semantic suite | nested grain, opportunity, recurrent panels, Chao2, unknown nativity, reference scope, and `legacy-partial` source limits are release-verified; Driver remains context only |
 | Vegetation Structure Explorer | available | 8 files | 1 | shared `stand_site()` contract can drift from Driver; state must not be presented as annual flux |
 | Ground Beetle Tracker | **Startup Error** | 8 files | 0 | catch-conditioned effort omits zero-carabid bouts; cover copy overstates ecosystem-health meaning |

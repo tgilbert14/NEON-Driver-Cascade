@@ -1651,7 +1651,10 @@ Rules:
   was created. The first local UTF-8/fence loop used scalar syntax that zsh treated
   as one filename; it made no change and the array-form rerun passed. Plant
   code/release and governance merges are cleanly separated so the public app remains
-  pinned to `d6c4862` while documentation closes on `8948930`.
+  pinned to `d6c4862` while documentation closes on `8948930`. Independent final
+  review caught and corrected the stale `1/2` outage count and Phenology baseline
+  row; the accurate current state is two of three discovered outages restored, with
+  Ground Beetle still open.
 - **Residual risk/next action:** Plant's exact bytes still cannot answer the missing
   upstream vintage or sampled-empty opportunity questions; its released generated
   cover is only a baseline subject to the new suite poster review. Merge this
