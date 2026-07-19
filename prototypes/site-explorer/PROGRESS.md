@@ -111,7 +111,13 @@ not the 20 × 40 plant bounding box. The scene is now anchored to the **true plo
 shrubs in the aerial but no records). Boundary = a 40 × 40 amber survey-tape rectangle. The AOP crop was
 re-anchored to the plot centre (HW 25 → 50 m window) and re-validated (plants still land on the real shrubs).
 
-**Plant-model toggle (done):** a "Plants: on/off" button hides the 3D models (keeping the ground dots +
+**Map-first default (done):** the primary view is now the top-down **map** — the real NEON aerial with each
+plant drawn as a crisp species-coloured **ring** at its real crown size (you see the shrub inside), inside the
+40×40 boundary, click-to-inspect. The 3D plant figures are the optional **"augmented"** layer: default off,
+turned on by the **"3D plants"** toggle or by **"Enter the plot (3D)"** (which drops you into the first-person
+walk). Marker/legend colours are a bright, distinct data-viz palette (`SP[tx].mk`).
+
+**Plant-model toggle (done):** the "3D plants: on/off" button hides the 3D models (keeping the ground rings +
 click-inspect) so you can compare our mapped positions against the aerial / canopy layers.
 
 **Cover & species panel (done):** a "Cover & species" side panel shows the plot's **estimated woody canopy

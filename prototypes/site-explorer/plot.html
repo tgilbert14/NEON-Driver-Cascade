@@ -180,18 +180,19 @@ var capG=new THREE.SphereGeometry(0.11,8,6), capM=new THREE.MeshStandardMaterial
 // Per-species colours + geometry, keyed on the real NEON taxonID. Each model is
 // built from a botanical spec (growth form, size, branching, colour) so it reads
 // as that actual plant. See build_plot.md for the sourced spec per species.
+// fol = 3D foliage colour · mk = bright, distinct MAP-MARKER colour (pops on the aerial, doubles as the legend key)
 var SP={
-  LATR2 :{fol:"#5f7030",bark:"#8a8579",soft:1},   // creosote — open olive vase
-  CYLE8 :{fol:"#7c8a5e",fruit:"#c1272d",soft:1},   // Christmas cholla — thin wiry tangle
-  PRVE  :{fol:"#9caf88",bark:"#5a4632",soft:1},    // velvet mesquite — feathery umbrella
-  OPEN3 :{fol:"#7f9e6d"},                           // Engelmann prickly pear — flat pads
-  FEWI  :{fol:"#5f8560",apex:"#d8cdae",fruit:"#f2c53d",spine:"#9c3b2a"}, // fishhook barrel
-  MAGR9 :{fol:"#6f9e5f",frost:"#c7d2b4",flower:"#cf4b97"},               // Graham's pincushion
-  EPTR  :{fol:"#8a9a52",bark:"#6b5a3c",soft:1},    // longleaf jointfir — green broom
-  PAIN2 :{fol:"#aeb398",soft:1},                   // mariola — silver cushion
-  CAGI10:{fol:"#4f6f43",flower:"#f2f0e6"}          // saguaro — fluted green column
+  LATR2 :{fol:"#5f7030",mk:"#7ad155",bark:"#8a8579",soft:1},   // creosote — open olive vase
+  CYLE8 :{fol:"#7c8a5e",mk:"#e6c53f",fruit:"#c1272d",soft:1},  // Christmas cholla — thin wiry tangle
+  PRVE  :{fol:"#9caf88",mk:"#ff9a3c",bark:"#5a4632",soft:1},   // velvet mesquite — feathery umbrella
+  OPEN3 :{fol:"#7f9e6d",mk:"#4fd2e6"},                          // Engelmann prickly pear — flat pads
+  FEWI  :{fol:"#5f8560",mk:"#ff5a5a",apex:"#d8cdae",fruit:"#f2c53d",spine:"#9c3b2a"}, // fishhook barrel
+  MAGR9 :{fol:"#6f9e5f",mk:"#ff5ad0",frost:"#c7d2b4",flower:"#cf4b97"},               // Graham's pincushion
+  EPTR  :{fol:"#8a9a52",mk:"#b6e84a",bark:"#6b5a3c",soft:1},   // longleaf jointfir — green broom
+  PAIN2 :{fol:"#aeb398",mk:"#ececec",soft:1},                  // mariola — silver cushion
+  CAGI10:{fol:"#4f6f43",mk:"#ffe14a",flower:"#f2f0e6"}         // saguaro — fluted green column
 };
-var DEADCOL="#8a7d64";
+var DEADCOL="#8a7d64", DEADMK="#a6a6a6";
 function spCol(p,key){var s=SP[p.tx]||{};return s[key]||"#6f7a52";}
 function mat(hex){return new THREE.MeshStandardMaterial({color:new THREE.Color(hex),roughness:1,flatShading:true});}
 function matR(hex,rough){return new THREE.MeshStandardMaterial({color:new THREE.Color(hex),roughness:rough,flatShading:true});}
@@ -330,10 +331,14 @@ function buildPlant(p,seed){
   // transparent pick proxy so every plant — even thin cacti — is reliably clickable
   var pr=Math.max(0.28,cr*0.5), ph=Math.max(0.35,h);
   var proxy=new THREE.Mesh(new THREE.CylinderGeometry(pr,pr,ph,6),PROXYMAT); proxy.position.y=ph/2; proxy.userData.keep=1; g.add(proxy);
-  // ground marker — species-coloured dot; reads as a survey dot-map from the sky cam (kept when models are hidden)
-  var mk=new THREE.Mesh(new THREE.CircleGeometry(Math.max(0.3,cr*0.46),14),
-    new THREE.MeshBasicMaterial({color:new THREE.Color(fol),transparent:true,opacity:0.62,depthWrite:false}));
-  mk.rotation.x=-Math.PI/2; mk.position.y=0.04; mk.userData.keep=1; g.add(mk);
+  // ground marker — a crisp species-coloured RING at the real crown size, so the map reads as a
+  // survey overlay (you see the actual shrub inside the ring). Kept when the 3D models are hidden.
+  var mr=Math.max(0.35,cr*0.5), mkCol=dead?DEADMK:spCol(p,"mk");
+  var mk=new THREE.Mesh(new THREE.RingGeometry(mr*0.74,mr,22),
+    new THREE.MeshBasicMaterial({color:new THREE.Color(mkCol),transparent:true,opacity:0.95,side:THREE.DoubleSide,depthWrite:false}));
+  mk.rotation.x=-Math.PI/2; mk.position.y=0.05;
+  if(cr90&&cr&&cr90<cr) mk.scale.y=Math.max(0.5,cr90/cr);   // elliptical crown footprint
+  mk.userData.keep=1; g.add(mk);
   g.userData={p:p,foliage:foliage};
   if(!dead&&soft)CANOPY.push(foliage);       // only soft-tissue plants sway
   return g;
@@ -363,15 +368,14 @@ walkBtn.addEventListener("click",function(){walking=!walking;walkBtn.innerHTML=w
 if(GEO&&GEO.ortho){layerBtn.addEventListener("click",function(){setLayer((LAYER+1)%3);});}else{layerBtn.style.display="none";}
 // toggle the 3D plant models on/off (keep the ground dots + pickability) to compare with the aerial/canopy layers
 var plantsBtn=document.getElementById("plantsBtn"), showPlants=true;
-plantsBtn.addEventListener("click",function(){showPlants=!showPlants;
-  for(var i=0;i<plants.length;i++){var ch=plants[i].children;for(var j=0;j<ch.length;j++){if(!ch[j].userData.keep)ch[j].visible=showPlants;}}
-  plantsBtn.innerHTML="Plants: "+(showPlants?"on":"off");});
+plantsBtn.addEventListener("click",function(){setPlants(!showPlants);});
 function setMode(mode){MODE=mode;walking=false;walkBtn.innerHTML="&#9654; Walk";
   var comp=document.getElementById("compass");
   if(mode==="sky"){scene.fog=null;sky.x=0;sky.z=0;sky.half=(DATA.plotDim||40)/2+4;sizeOrtho();
-    skyBtn.innerHTML="&#9654; Enter the plot";walkBtn.style.display="none";comp.style.display="block";
-    hintEl.innerHTML="top-down &middot; north up &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
-  else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Sky view";walkBtn.style.display="";comp.style.display="none";
+    skyBtn.innerHTML="&#9654; Enter the plot (3D)";walkBtn.style.display="none";comp.style.display="block";
+    hintEl.innerHTML="map &middot; north up &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
+  else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Map view";walkBtn.style.display="";comp.style.display="none";
+    if(!showPlants)setPlants(true);   // entering the 3D walk turns the plant figures on
     hintEl.innerHTML="drag to look &middot; W A S D to move &middot; click a plant to read its tag";}}
 skyBtn.addEventListener("click",function(){setMode(MODE==="sky"?"walk":"sky");});
 
@@ -408,7 +412,7 @@ function pick(e){
 // ---- legend ----
 var lg=document.getElementById("legend"), TXNAME={};
 DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;var d=document.createElement("span");d.className="lg";
-  d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].fol)||"#6f7a52")+'"></i>'+(l.common||l.tx)+' ×'+l.n;lg.appendChild(d);});
+  d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].mk)||"#8fae78")+'"></i>'+(l.common||l.tx)+' ×'+l.n;lg.appendChild(d);});
 
 // ---- ground cover & species panel ----
 var coverBtn=document.getElementById("coverBtn"), coverPanel=document.getElementById("coverPanel");
@@ -420,7 +424,7 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   if(c){var mx=0;c.bySpecies.forEach(function(s){if(s.pct>mx)mx=s.pct;});
     h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>';
     c.bySpecies.filter(function(s){return s.pct>0;}).forEach(function(s){
-      h+=cbar((TXNAME[s.tx]||s.tx)+' &times;'+s.n,s.pct,mx,(SP[s.tx]&&SP[s.tx].fol)||'#6f7a52');});
+      h+=cbar((TXNAME[s.tx]||s.tx)+' &times;'+s.n,s.pct,mx,(SP[s.tx]&&SP[s.tx].mk)||'#8fae78');});
     h+='<div class="cp-note">Estimated as summed crown areas &divide; the '+c.plotArea+'&thinsp;m&sup2; plot (crowns can overlap); ~'+Math.round(100-c.canopyPct)+'% is open interspace.</div>';}
   var sd=DATA.siteDiv;
   if(sd){var gm=0;sd.ground.forEach(function(g){if(g.pct>gm)gm=g.pct;});
@@ -434,6 +438,15 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
 })();
 coverBtn.addEventListener("click",function(){coverPanel.classList.toggle("open");});
+
+// ---- default to the MAP-FIRST view: top-down over the real aerial with the plant markers.
+//      The 3D plant figures are the optional "augmented" layer (toggle Plants on, or Enter the plot). ----
+function setPlants(on){showPlants=on;
+  for(var i=0;i<plants.length;i++){var ch=plants[i].children;for(var j=0;j<ch.length;j++){if(!ch[j].userData.keep)ch[j].visible=on;}}
+  plantsBtn.innerHTML="3D plants: "+(on?"on":"off");}
+plantsBtn.innerHTML="3D plants: off";
+if(GEO&&GEO.ortho){setMode("sky"); setLayer(1); setPlants(false);
+  skyBtn.innerHTML="&#9654; Enter the plot (3D)";}
 
 // ---- loop ----
 function resize(){var w=host.clientWidth||innerWidth,h=host.clientHeight||innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();sizeOrtho();}
