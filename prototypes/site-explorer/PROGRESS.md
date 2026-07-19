@@ -36,7 +36,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 10 | **Living soundscape** — the day-cycle drives the audio too: dawn chorus, quiet midday, night crickets | DONE | #19 |
 | 11 | **GRSM on real AOP LiDAR** — Great Smoky Mountains, a dense southern-Appalachian canopy (sixth real scan) | DONE | #20 |
 | 12 | **Wind you can see** — canopy gusts share the wind's ~14s rhythm; trunks stay planted, crowns sway | DONE | #21 |
-| 13+ | Optional — still more sites on real LiDAR; richer bird/insect voices; drifting clouds / sun shafts | PLANNED | — |
+| 13 | **Drifting clouds** — a procedural fbm cloud layer in the sky shader, sun-lit and dimming into night | DONE | #22 |
+| 14+ | Optional — still more sites on real LiDAR; richer bird/insect voices; distant terrain relief | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -51,7 +52,7 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~964 KB; deep-linkable via `?site=CODE`).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~965 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
@@ -89,6 +90,11 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   **night crickets** (insect layer swells toward dusk/night; `NIGHT_INS` gives forest/grassland/dryland a
   night-cricket capacity, **tundra stays silent**). `setBiomeSound()` re-times the chirp scheduler on every
   change so the chorus follows the slider promptly. Still synthesized, still an impression — no recordings.
+- **Drifting clouds are procedural** (Rung 13): a 5-octave value-noise (fbm) layer inside the sky-dome
+  fragment shader, drifting on a `time` uniform advanced from the loop (frozen under reduced motion). Broken
+  cover, upper-hemisphere only; lit by the **current sun** via a `sunI` uniform (set in `applyTOD`), so clouds
+  are bright by day, warm-rimmed near the sun, and fall to dark wisps at night. It's a **procedural sky, not a
+  weather feed** — no real cloud data.
 - **Wind is shown, not just heard** (Rung 12): the canopy gusts on the same ~14 s cycle (0.07 Hz) as the audio
   wind LFO — the flexible foliage (crowns, grass, shrubs, tufts) leans downwind and flutters harder during
   gusts, while **trunks, cactus and rocks are rigid** (tagged `userData.rigid`, kept in `world` not the sway
@@ -122,13 +128,13 @@ green → reset the branch onto the new master → next increment. Branch: `clau
 
 Done since Rung 6: the **headline driver in-scene** (Rung 6, #15), the **per-biome soundscape** (Rung 7, #16),
 the **day-to-night lighting** (Rung 8, #17), **TEAK on real AOP LiDAR** (Rung 9, #18), and the **living
-(time-of-day-linked) soundscape** (Rung 10, #19), **GRSM on real AOP LiDAR** (Rung 11, #20), and **visible wind** (Rung 12, #21). Six forest
-sites now render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN, TEAK, GRSM (grids committed as
-`lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves: **still more forest
-sites on real LiDAR** — pick another tall-canopy site (e.g. BART, SOAP), download its CHM tile via the NEON
-API (`X-API-Token`; the token is stashed at scratchpad `.neon_token`), then `build_lidar.py <SITE> <CHM.tif>`
-→ inline `lidar-<SITE>.json` (recipe above); richer bird/insect voices; or drifting clouds / sun shafts. No
-external data is needed for the last two.
+(time-of-day-linked) soundscape** (Rung 10, #19), **GRSM on real AOP LiDAR** (Rung 11, #20), **visible wind** (Rung 12, #21), and **drifting clouds**
+(Rung 13, #22). Six forest sites now render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN, TEAK, GRSM
+(grids committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves:
+**still more forest sites on real LiDAR** — pick another tall-canopy site (e.g. BART, SOAP), download its CHM
+tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad `.neon_token`), then
+`build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json` (recipe above); richer bird/insect voices; or
+distant terrain relief on the horizon. No external data is needed for the last two.
 
 **Reusable recipe for a new real-LiDAR site** (proven for TEAK): `TOKEN=$(cat scratchpad/.neon_token)`;
 GET `/api/v0/locations/<SITE>` for the tower UTM easting/northing → floor each to the 1 km grid for the tile's
