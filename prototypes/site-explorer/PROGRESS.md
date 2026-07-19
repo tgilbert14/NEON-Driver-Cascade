@@ -94,8 +94,15 @@ brightness 57 under plants vs 115 overall) and the dry wash sits on the east sid
 data-URIs (CSP-safe). Google Maps tiles were rejected (not redistributable + CSP blocks live embeds) — NEON
 AOP shares our UTM grid and is the correct, openly-licensed source.
 
-**Next (owner, "maybe"):** per-individual variation from the data — basalStemDiameter (stem thickness/count),
-measured height, elliptical crown (ninetyCrownDiameter), canopyPosition, status.
+**Per-individual variation (done):** each measured woody plant (104 of 179 — creosote, mesquite, jointfir,
+mariola) is now shaped by its own NEON record: **basalStemDiameter** drives stem/trunk thickness (and creosote
+stem count), **ninetyCrownDiameter** makes crowns **elliptical** (maxCrown × 90° axis) at a stable orientation,
+and the recorded canopy **shape** (half-sphere / oblate / inverted-cone / ellipsoid / cylinder) biases the
+vertical profile. The inspect card now surfaces the elliptical crown, basal stem ⌀, canopyPosition, recorded
+shape, and detailed plantStatus. Extra fields (`bd`, `cr90`, `shape`, `canopy`, `stat`) are pulled by
+`build_plot.py` (cacti have no VST apparent record, so they keep species defaults). Positions unchanged, so the
+AOP georeference is intact.
+
 **Deferred:** plant diversity (% cover → ground), phenology (animate the year), link from the desert walk,
 more plots.
 

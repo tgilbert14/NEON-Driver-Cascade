@@ -171,20 +171,23 @@ function buildPlant(p,seed){
   var g=new THREE.Group(); g.position.set(p.x,0,-p.y);   // scene north = -Z (so top-down reads north-up/east-right)
   var R=rnd(seed), dead=p.status==="dead", tx=p.tx;
   var h=Math.max(0.1,p.h||0.5), cr=Math.max(0.2,p.cr||0.6);
+  var bd=p.bd||0, cr90=p.cr90||cr;   // real basal-stem ⌀ (cm) + 90° crown axis (elliptical crown)
   var fol=dead?DEADCOL:spCol(p,"fol"), bark=dead?DEADCOL:spCol(p,"bark");
   var m=mat(fol), foliage=new THREE.Group(), soft=!!(SP[tx]&&SP[tx].soft);
 
   if(tx==="LATR2"){                    // ── Creosote: open see-through vase of thin jointed stems, sparse olive tufts
-    var stems=7+Math.floor(R()*3), bm=matR(bark,1);
+    // real basal-stem ⌀ drives how many stems and how thick (thin wiry when small, chunky multi-stem when large)
+    var stems=Math.max(5,Math.min(12,Math.round(5+(bd?(bd-1)*0.7:2)+R()*2))), bm=matR(bark,1);
+    var rBot=Math.max(0.02,Math.min(0.05,0.016+(bd||2)*0.006));   // thicker stems when basal ⌀ is larger (floored so it reads as a shrub)
     for(var i=0;i<stems;i++){
-      var a=(i/stems)*6.283+R()*0.5, tilt=0.16+R()*0.32, slen=h*(0.70+R()*0.34);
-      var s=new THREE.Mesh(stemGeo(cr*0.011,cr*0.028,slen,5),bm);
+      var a=(i/stems)*6.283+R()*0.5, tilt=0.14+R()*0.24, slen=h*(0.70+R()*0.34);
+      var s=new THREE.Mesh(stemGeo(rBot*0.45,rBot,slen,5),bm);
       s.rotation.set(Math.cos(a)*tilt,a,Math.sin(a)*tilt); s.castShadow=true; foliage.add(s);
       var tipx=Math.cos(a)*Math.sin(tilt)*slen, tipz=Math.sin(a)*Math.sin(tilt)*slen, tipy=slen*Math.cos(tilt);
-      if(R()<0.5){var nd=new THREE.Mesh(ico(cr*0.026),matR("#5b564a",1));   // swollen dark node
+      if(R()<0.5){var nd=new THREE.Mesh(ico(Math.max(rBot*1.5,cr*0.016)),matR("#5b564a",1));   // swollen dark node
         nd.position.set(tipx*0.5,tipy*0.5,tipz*0.5); nd.castShadow=true; foliage.add(nd);}
-      if(!dead&&R()<0.78){var nb=1+(R()<0.3?1:0);                           // sparse airy olive tufts at tips (gaps show through)
-        for(var b=0;b<nb;b++){var bl=new THREE.Mesh(ico(cr*(0.075+R()*0.055)),m);
+      if(!dead&&R()<0.88){var nb=1+(R()<0.45?1:0);                          // olive tufts at tips (airy but reads as a bush)
+        for(var b=0;b<nb;b++){var bl=new THREE.Mesh(ico(cr*(0.10+R()*0.065)),m);
           bl.position.set(tipx+(R()-0.5)*cr*0.22,tipy+R()*cr*0.08,tipz+(R()-0.5)*cr*0.22);
           bl.scale.y=1.3; bl.castShadow=true; foliage.add(bl);}}
     }
@@ -208,8 +211,9 @@ function buildPlant(p,seed){
     }
   }else if(tx==="PRVE"){              // ── Velvet mesquite: crooked dark trunks under a broad feathery dome
     var bm=matR(bark,1), nT=h<1.1?1:2+Math.floor(R()*2), trunkH=h*0.45, tops=[];
+    var rTr=Math.max(0.045,(bd?bd*0.006:0.06+h*0.03)/Math.sqrt(nT));   // trunk ⌀ from real basal-stem diameter
     for(var t=0;t<nT;t++){var ta=(t/Math.max(1,nT))*6.283+R(), lean=nT>1?0.12+R()*0.14:0.04;
-      var tr=new THREE.Mesh(stemGeo(0.03+h*0.015,0.05+h*0.03,trunkH,6),bm);
+      var tr=new THREE.Mesh(stemGeo(rTr*0.7,rTr,trunkH,6),bm);
       tr.rotation.set(Math.cos(ta)*lean,ta,Math.sin(ta)*lean); tr.castShadow=true; g.add(tr);
       tops.push([Math.cos(ta)*Math.sin(lean)*trunkH,trunkH*Math.cos(lean),Math.sin(ta)*Math.sin(lean)*trunkH]);}
     var nbr=4+Math.floor(R()*3);        // zig-zag branches up-and-out
@@ -280,6 +284,11 @@ function buildPlant(p,seed){
   }
 
   g.add(foliage);
+  // ── per-individual variation from the real NEON record ──
+  if(cr90&&cr&&Math.abs(cr-cr90)>0.06) foliage.scale.z*=Math.max(0.4,Math.min(1.0,cr90/cr)); // elliptical crown
+  var SHY={oblate:0.72,hemi:1.0,ellipsoid:1.12,cone:1.2,cyl:1.28};
+  if(p.shape&&SHY[p.shape]) foliage.scale.y*=SHY[p.shape];  // recorded canopy shape → vertical profile
+  g.rotation.y=R()*6.283;                                   // stable crown orientation (azimuth unrecorded)
   // transparent pick proxy so every plant — even thin cacti — is reliably clickable
   var pr=Math.max(0.28,cr*0.5), ph=Math.max(0.35,h);
   var proxy=new THREE.Mesh(new THREE.CylinderGeometry(pr,pr,ph,6),PROXYMAT); proxy.position.y=ph/2; g.add(proxy);
@@ -334,10 +343,16 @@ function pick(e){
   var o=hit.object; while(o&&!(o.userData&&o.userData.p))o=o.parent;
   if(!o){card.style.display="none";return;}
   var p=o.userData.p, dead=p.status==="dead";
+  var SN={hemi:"half-sphere",oblate:"oblate half-sphere",cone:"inverted cone",ellipsoid:"ellipsoid",cyl:"cylinder"};
+  var crown=p.cr90?(p.cr+" × "+p.cr90+" m"):(p.cr+" m");
+  var statusTxt=p.stat?p.stat:(dead?"standing dead":"live");
+  var det=""; if(p.bd)det+='<br>basal stem &#8960; '+p.bd+' cm';
+  var cs=[]; if(p.canopy)cs.push(p.canopy); if(p.shape&&SN[p.shape])cs.push(SN[p.shape]+' canopy');
+  if(cs.length)det+='<br>'+cs.join(' · ');
   card.innerHTML='<div class="c-sci">'+p.sci+'</div>'+(p.common?'<div class="c-common">'+p.common+'</div>':'')+
     '<div class="c-meta"><span class="c-tag">NEON.PLA…'+p.id+'</span> · tagged '+(p.date||'').slice(0,4)+
-    '<br>height '+(p.realh?p.h+' m (measured)':'~'+p.h+' m (typical)')+' · crown '+p.cr+' m'+
-    '<br>'+(dead?'<span class="c-dead">standing dead</span>':'live')+' · '+p.tx+'</div>';
+    '<br>height '+(p.realh?p.h+' m (measured)':'~'+p.h+' m (typical)')+' · crown '+crown+det+
+    '<br>'+(dead?'<span class="c-dead">'+statusTxt+'</span>':statusTxt)+' · '+p.tx+'</div>';
   card.style.display="block";
   var cw=card.offsetWidth,chh=card.offsetHeight;
   card.style.left=Math.min(window.innerWidth-cw-12,Math.max(12,e.clientX+14))+"px";
