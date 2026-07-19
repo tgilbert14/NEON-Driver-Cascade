@@ -54,6 +54,13 @@ distorts their bases. It's a gentle procedural gust and honours "reduce motion."
 asserting that two frames a few seconds apart *differ* with a static camera (motion present) but are
 *identical* under reduced-motion (correctly still), with 0 errors across every biome.
 
+**Drifting clouds** (Rung 13): the sky dome's fragment shader grows a soft, broken cloud layer from
+5-octave value noise (fbm) that drifts on a `time` uniform. The clouds are lit by the *current* sun — bright
+and warm-rimmed near it by day, fading to dark wisps at night as the time-of-day slider dims a `sunI`
+uniform — so the sky reads as part of the same day cycle as the light and sound. It's a **procedural sky, not
+a weather feed**, and it freezes under "reduce motion." The shader was checked headlessly for clean
+compilation (no WebGL shader errors) and correct day/night appearance.
+
 ### Day to night (Rung 8)
 
 A **time-of-day slider** in the control row sweeps the scene from **dawn → midday → dusk → night**. It
