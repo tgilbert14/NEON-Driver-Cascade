@@ -66,8 +66,19 @@ standing-dead, and **click a plant to read its actual NEON record** (species, in
 measured height/crown, status). 9 species, 104 measured heights, 28 dead. See `build_plot.md`. Live
 artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
 (self-contained), `plot-srer048.json` (derived), `plot.src.html` (template), `build_plot.md` (recipe);
-raw VST CSVs + token + `build_plot.py` stay in scratchpad. **Planned expansions:** plant diversity
-(% cover → ground/understory), phenology (animate the year per individual), link from the desert walk,
+raw VST CSVs + token + `build_plot.py` stay in scratchpad.
+
+**Botanical models (done):** each of the 9 species now has a research-accurate low-poly model keyed on
+the real `taxonID` (built from SEINet/FNA/USDA/ASDM/LBJWC descriptions) — creosote open see-through vase,
+Christmas cholla wiry canes with red winter fruit, velvet mesquite wide feathery umbrella over crooked
+multi-trunk, Engelmann prickly pear fanning pads, fishhook barrel leaning south with woolly apex + yellow
+fruit ring, Graham's pincushion frosted globe + pink halo, longleaf jointfir forked green broom, mariola
+silver cushion, saguaro fluted column (juvenile here; arms if tall). CAGI10 identified/named = Saguaro.
+Every plant carries a transparent pick-proxy so even thin cacti are clickable; dead woody plants render as
+bare skeletons. Rebuild with scratchpad `assemble_plot.py` (reuses Three.js + ground texture from the
+existing `plot.html`). **Next (owner, "maybe"):** per-individual variation from the data — basalStemDiameter
+(stem thickness/count), measured height, elliptical crown (ninetyCrownDiameter), canopyPosition, status.
+**Deferred:** plant diversity (% cover → ground), phenology (animate the year), link from the desert walk,
 more plots.
 
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
