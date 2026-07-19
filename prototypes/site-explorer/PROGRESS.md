@@ -95,13 +95,26 @@ data-URIs (CSP-safe). Google Maps tiles were rejected (not redistributable + CSP
 AOP shares our UTM grid and is the correct, openly-licensed source.
 
 **Per-individual variation (done):** each measured woody plant (104 of 179 — creosote, mesquite, jointfir,
-mariola) is now shaped by its own NEON record: **basalStemDiameter** drives stem/trunk thickness (and creosote
-stem count), **ninetyCrownDiameter** makes crowns **elliptical** (maxCrown × 90° axis) at a stable orientation,
-and the recorded canopy **shape** (half-sphere / oblate / inverted-cone / ellipsoid / cylinder) biases the
-vertical profile. The inspect card now surfaces the elliptical crown, basal stem ⌀, canopyPosition, recorded
-shape, and detailed plantStatus. Extra fields (`bd`, `cr90`, `shape`, `canopy`, `stat`) are pulled by
-`build_plot.py` (cacti have no VST apparent record, so they keep species defaults). Positions unchanged, so the
-AOP georeference is intact.
+mariola) is shaped by its own NEON record: mean **basalStemDiameter** → stem/trunk thickness,
+**ninetyCrownDiameter** → **elliptical** crowns, and recorded canopy **shape** → vertical profile.
+
+**Multi-stem correctness (done):** these plants are MULTI-STEM (median 10 stems, up to 45), and `plantStatus`
+is **per stem**. Old code picked one stem and mislabelled whole plants — the real counts are **5 fully dead,
+80 partially-dead (some stems dead), 23 all-live** (not "28 dead"). `build_plot.py` now aggregates: `stems`
+(count), `dead` (dead-stem count), status = dead only if EVERY stem is dead. Creosote renders its real stem
+count with the dead fraction as bare grey stems among green live ones; the card reads e.g. "live · 7 of 16
+stems standing dead · some damage".
+
+**Plot boundary (done):** a bright amber "survey tape" rectangle + low fence + capped corner posts mark the
+~20 × 40 m mapped extent (with the size in the subtitle), so you can see what area is surveyed in both walk
+and sky.
+
+**LiDAR layer cleanup (done):** the canopy-height drape is now a smoothed sand→green **heatmap** over the real
+height range (not per-pixel camo). **Load speed:** capped creosote stems + trimmed tufts cut load-to-interactive
+~1.9 s → ~1.2 s (headless).
+
+Extra JSON fields (`stems`, `dead`, `bd`, `cr90`, `shape`, `canopy`, `dmg`) come from `build_plot.py` (cacti
+have no VST apparent record → species defaults). Positions unchanged, so the AOP georeference is intact.
 
 **Deferred:** plant diversity (% cover → ground), phenology (animate the year), link from the desert walk,
 more plots.

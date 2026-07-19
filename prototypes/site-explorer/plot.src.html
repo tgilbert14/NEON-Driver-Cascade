@@ -70,7 +70,7 @@
 "use strict";
 var DATA=JSON.parse(document.getElementById("plotData").textContent);
 var GTEX=""; try{GTEX=JSON.parse(document.getElementById("groundTex").textContent);}catch(e){}
-document.getElementById("sub").innerHTML=DATA.n+" real tagged plants from NEON Vegetation Structure (DP1.10098.001), each at its mapped position in the surveyed area of plot SRER_048. Santa Rita Experimental Range · Sonoran desert.";
+document.getElementById("sub").innerHTML=DATA.n+" real tagged plants from NEON Vegetation Structure (DP1.10098.001), each at its mapped position inside the "+Math.round(DATA.ex)+"&thinsp;×&thinsp;"+Math.round(DATA.ey)+"&thinsp;m mapped area (amber boundary) of plot SRER_048. Santa Rita Experimental Range · Sonoran desert.";
 
 var host=document.getElementById("scene");
 var renderer=new THREE.WebGLRenderer({antialias:true});
@@ -131,15 +131,27 @@ function setLayer(n){LAYER=n; if(drapes.length){drapes[0].visible=(n===1); drape
   var gc=document.getElementById("geoCredit");
   if(CREDIT[n]){gc.innerHTML=CREDIT[n];gc.style.display="block";}else{gc.style.display="none";}}
 
-// plot boundary (40x40 outline, subtle)
-var DX=(DATA.ex||40)/2, DY=(DATA.ey||40)/2;
-var bl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(DATA.ex+2,0.02,DATA.ey+2)),
-  new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.28}));
-bl.position.y=0.02; scene.add(bl);
-// corner posts
+// ---- surveyed-area boundary: mark the mapped extent so you can see where you are ----
+var DX=(DATA.ex||40)/2, DY=(DATA.ey||40)/2, PAD=1.0, bx=DX+PAD, bz=DY+PAD;
+// faint fill so the mapped strip reads as a distinct area (from the ground and the sky cam)
+var bfill=new THREE.PlaneGeometry(bx*2,bz*2); bfill.rotateX(-Math.PI/2);
+var bfillMesh=new THREE.Mesh(bfill,new THREE.MeshBasicMaterial({color:0xffe6b0,transparent:true,opacity:0.06,depthWrite:false}));
+bfillMesh.position.y=0.05; scene.add(bfillMesh);
+// bright amber "survey tape" on the ground — clearly marks the mapped rectangle in walk & sky
+var tapeM=new THREE.MeshBasicMaterial({color:0xffbf3a,transparent:true,opacity:0.92,depthWrite:false});
+function btape(w,cx,cz,ry){var m=new THREE.Mesh(new THREE.BoxGeometry(w,0.04,0.45),tapeM);m.position.set(cx,0.07,cz);m.rotation.y=ry;scene.add(m);}
+btape(bx*2,0,-bz,0); btape(bx*2,0,bz,0); btape(bz*2,-bx,0,Math.PI/2); btape(bz*2,bx,0,Math.PI/2);
+// a low translucent fence so the boundary is unmistakable at eye level while walking
+var wallM=new THREE.MeshBasicMaterial({color:0xffc24d,transparent:true,opacity:0.28,side:THREE.DoubleSide,depthWrite:false}), WH=0.65;
+function bwall(w,cx,cz,ry){var m=new THREE.Mesh(new THREE.PlaneGeometry(w,WH),wallM);m.position.set(cx,WH/2,cz);m.rotation.y=ry;scene.add(m);}
+bwall(bx*2,0,-bz,0); bwall(bx*2,0,bz,0); bwall(bz*2,-bx,0,Math.PI/2); bwall(bz*2,bx,0,Math.PI/2);
+// corner posts with bright caps (survey markers)
 var postG=new THREE.CylinderGeometry(0.05,0.05,1.4,6); postG.translate(0,0.7,0);
 var postM=new THREE.MeshStandardMaterial({color:0xdad2c0,roughness:1});
-[[-DX-1,-DY-1],[DX+1,-DY-1],[-DX-1,DY+1],[DX+1,DY+1]].forEach(function(c){var p=new THREE.Mesh(postG,postM);p.position.set(c[0],0,c[1]);p.castShadow=true;scene.add(p);});
+var capG=new THREE.SphereGeometry(0.11,8,6), capM=new THREE.MeshStandardMaterial({color:0xe8a33a,emissive:new THREE.Color(0x4a2600),roughness:0.6});
+[[-bx,-bz],[bx,-bz],[-bx,bz],[bx,bz]].forEach(function(c){
+  var po=new THREE.Mesh(postG,postM);po.position.set(c[0],0,c[1]);po.castShadow=true;scene.add(po);
+  var cp=new THREE.Mesh(capG,capM);cp.position.set(c[0],1.4,c[1]);scene.add(cp);});
 
 // ---- plant palette + model builders ----
 // Per-species colours + geometry, keyed on the real NEON taxonID. Each model is
@@ -175,21 +187,24 @@ function buildPlant(p,seed){
   var fol=dead?DEADCOL:spCol(p,"fol"), bark=dead?DEADCOL:spCol(p,"bark");
   var m=mat(fol), foliage=new THREE.Group(), soft=!!(SP[tx]&&SP[tx].soft);
 
-  if(tx==="LATR2"){                    // ── Creosote: open see-through vase of thin jointed stems, sparse olive tufts
-    // real basal-stem ⌀ drives how many stems and how thick (thin wiry when small, chunky multi-stem when large)
-    var stems=Math.max(5,Math.min(12,Math.round(5+(bd?(bd-1)*0.7:2)+R()*2))), bm=matR(bark,1);
-    var rBot=Math.max(0.02,Math.min(0.05,0.016+(bd||2)*0.006));   // thicker stems when basal ⌀ is larger (floored so it reads as a shrub)
-    for(var i=0;i<stems;i++){
-      var a=(i/stems)*6.283+R()*0.5, tilt=0.14+R()*0.24, slen=h*(0.70+R()*0.34);
-      var s=new THREE.Mesh(stemGeo(rBot*0.45,rBot,slen,5),bm);
+  if(tx==="LATR2"){                    // ── Creosote: multi-stem vase; each stem is really live or standing-dead
+    var nStem=p.stems?Math.max(4,Math.min(11,p.stems)):(7+Math.floor(R()*3));  // real stem count (capped for perf)
+    var nDead=p.dead?Math.max(0,Math.min(nStem,Math.round(nStem*(p.dead/p.stems)))):(dead?nStem:0);
+    var rBot=Math.max(0.02,Math.min(0.05,0.016+(bd||2)*0.006));   // thicker stems when basal ⌀ is larger
+    var bm=matR(bark,1), dm=matR(DEADCOL,1);
+    for(var i=0;i<nStem;i++){
+      var stemDead=Math.floor((i+1)*nDead/nStem)>Math.floor(i*nDead/nStem);    // exactly nDead, spread evenly
+      var a=(i/nStem)*6.283+R()*0.5, tilt=0.14+R()*0.24, slen=h*(0.70+R()*0.34)*(stemDead?0.92:1);
+      var s=new THREE.Mesh(stemGeo(rBot*0.45,rBot,slen,5),stemDead?dm:bm);
       s.rotation.set(Math.cos(a)*tilt,a,Math.sin(a)*tilt); s.castShadow=true; foliage.add(s);
       var tipx=Math.cos(a)*Math.sin(tilt)*slen, tipz=Math.sin(a)*Math.sin(tilt)*slen, tipy=slen*Math.cos(tilt);
-      if(R()<0.5){var nd=new THREE.Mesh(ico(Math.max(rBot*1.5,cr*0.016)),matR("#5b564a",1));   // swollen dark node
-        nd.position.set(tipx*0.5,tipy*0.5,tipz*0.5); nd.castShadow=true; foliage.add(nd);}
-      if(!dead&&R()<0.88){var nb=1+(R()<0.45?1:0);                          // olive tufts at tips (airy but reads as a bush)
-        for(var b=0;b<nb;b++){var bl=new THREE.Mesh(ico(cr*(0.10+R()*0.065)),m);
+      if(!stemDead){                                                          // olive tufts only on the live stems
+        if(R()<0.5){var nd=new THREE.Mesh(ico(Math.max(rBot*1.5,cr*0.016)),matR("#5b564a",1));
+          nd.position.set(tipx*0.5,tipy*0.5,tipz*0.5); nd.castShadow=true; foliage.add(nd);}
+        if(R()<0.85){var bl=new THREE.Mesh(ico(cr*(0.11+R()*0.07)),m);
           bl.position.set(tipx+(R()-0.5)*cr*0.22,tipy+R()*cr*0.08,tipz+(R()-0.5)*cr*0.22);
-          bl.scale.y=1.3; bl.castShadow=true; foliage.add(bl);}}
+          bl.scale.y=1.3; bl.castShadow=true; foliage.add(bl);}
+      }
     }
   }else if(tx==="CYLE8"){              // ── Christmas cholla: thin wiry canes + right-angle branchlets
     var canes=2+Math.floor(R()*2), rad=cr*0.02;
@@ -345,14 +360,17 @@ function pick(e){
   var p=o.userData.p, dead=p.status==="dead";
   var SN={hemi:"half-sphere",oblate:"oblate half-sphere",cone:"inverted cone",ellipsoid:"ellipsoid",cyl:"cylinder"};
   var crown=p.cr90?(p.cr+" × "+p.cr90+" m"):(p.cr+" m");
-  var statusTxt=p.stat?p.stat:(dead?"standing dead":"live");
-  var det=""; if(p.bd)det+='<br>basal stem &#8960; '+p.bd+' cm';
+  var det=""; if(p.bd)det+='<br>'+(p.stems?p.stems+' stems · mean &#8960; '+p.bd+' cm':'basal stem &#8960; '+p.bd+' cm');
   var cs=[]; if(p.canopy)cs.push(p.canopy); if(p.shape&&SN[p.shape])cs.push(SN[p.shape]+' canopy');
   if(cs.length)det+='<br>'+cs.join(' · ');
+  var statusTxt;
+  if(dead) statusTxt='<span class="c-dead">standing dead (all stems)</span>';
+  else if(p.dead) statusTxt='live · <span class="c-dead">'+p.dead+' of '+p.stems+' stems standing dead</span>'+(p.dmg?' · some damage':'');
+  else statusTxt='live'+(p.dmg?' · some damage':'');
   card.innerHTML='<div class="c-sci">'+p.sci+'</div>'+(p.common?'<div class="c-common">'+p.common+'</div>':'')+
     '<div class="c-meta"><span class="c-tag">NEON.PLA…'+p.id+'</span> · tagged '+(p.date||'').slice(0,4)+
     '<br>height '+(p.realh?p.h+' m (measured)':'~'+p.h+' m (typical)')+' · crown '+crown+det+
-    '<br>'+(dead?'<span class="c-dead">'+statusTxt+'</span>':statusTxt)+' · '+p.tx+'</div>';
+    '<br>'+statusTxt+' · '+p.tx+'</div>';
   card.style.display="block";
   var cw=card.offsetWidth,chh=card.offsetHeight;
   card.style.left=Math.min(window.innerWidth-cw-12,Math.max(12,e.clientX+14))+"px";
