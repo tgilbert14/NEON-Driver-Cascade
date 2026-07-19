@@ -6,7 +6,7 @@ where we left off. This is the audience-expansion prototype proposed in
 suite from a scientist's question (*"does bottom-up cascade theory hold?"*) to a citizen's
 (*"what is this place, and what makes it tick?"*).
 
-Last updated: 2026-07-18.
+Last updated: 2026-07-19.
 
 ## Live artifacts (private to the owner unless shared)
 
@@ -32,7 +32,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 6 | **Science in-scene** — each site's honest headline driver shown in the 3D overlay | DONE | #15 |
 | 7 | **Soundscape** — per-biome procedural Web Audio ambience (wind/insects/birds), opt-in, retunes per site | DONE | #16 |
 | 8 | **Day-to-night lighting** — a time-of-day slider drives sky/sun/hemi/fog (dawn → midday → dusk → night) | DONE | #17 |
-| 9+ | Optional — more sites on real LiDAR (token available); TOD-linked soundscape (dawn birds / night insects) | PLANNED | — |
+| 9 | **TEAK on real AOP LiDAR** — Lower Teakettle (Sierra Nevada), the tallest real canopy in the set (~59 m) | DONE | #18 |
+| 10+ | Optional — still more sites on real LiDAR; TOD-linked soundscape (dawn birds / night insects) | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -47,11 +48,12 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~865 KB; deep-linkable via `?site=CODE`).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~903 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
-- `site-data.json` / `map-data.json` / `neon-site-names.json` / `lidar-wref.json` — generated/fetched data.
+- `site-data.json` / `map-data.json` / `neon-site-names.json` — generated/fetched data.
+- `lidar-{wref,scbi,harv,guan,teak}.json` — real NEON AOP CHM height grids (derived; raw tiles never committed).
 - `README.md` — what it is, per-rung detail, how to regenerate.
 
 **Nothing here touches the R/Shiny app**: `prototypes/` is outside `manifest.json`'s allowlist and the
@@ -64,10 +66,12 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   **15 of 18 sites, p = 0.004**. Single-site values are framed as *direction, never significance*
   (no short series can be significant); context-only measures are labelled "not counted in the network test".
 - The **year wheel is a per-biome schematic** (the bundle has annual, not monthly, data) — labelled as such.
-- The **3D vegetation is a procedural impression** from measured standing wood — **except the four forest
-  sites WREF, SCBI, HARV, GUAN**, whose canopies are **real NEON AOP LiDAR scans** (DP3.30015.001; a site
-  gets a real canopy when a `lidar-<site>.json` grid exists, keyed by site code). All 46 sites are
-  walkable. To add another: `build_lidar.py <SITE> <CHM.tif>` → inline as `<script id="lidar<SITE>">`.
+- The **3D vegetation is a procedural impression** from measured standing wood — **except the five forest
+  sites WREF, SCBI, HARV, GUAN, TEAK**, whose canopies are **real NEON AOP LiDAR scans** (DP3.30015.001; a site
+  gets a real canopy when a `lidar-<site>.json` grid exists, keyed by site code). TEAK (Lower Teakettle,
+  Sierra Nevada) is the tallest — real heights to ~59 m from tile `NEON_D17_TEAK_DP3_321000_4097000` (2024,
+  the 1 km tile over the tower). All 46 sites are walkable. To add another: `build_lidar.py <SITE> <CHM.tif>`
+  → inline as `<script id="lidar<SITE>">`.
 - No R in the sandbox → `export_data.py` reads the RDS with the pure-Python `rdata` package
   (`pip install rdata`). A production build would use an R writer beside `scripts/build_search_index.R`.
 - The **soundscape is synthesized, not recorded** (Rung 7): a procedural Web Audio graph — filtered pink-noise
@@ -100,16 +104,24 @@ errors, correct rendering, and no 390 px mobile overflow before merge.
 Stage-by-stage: build an increment → verify headlessly → commit/push → open draft PR → merge when CI is
 green → reset the branch onto the new master → next increment. Branch: `claude/neon-suite-expansion-c0wl9k`.
 
-## Next up (Rung 8+ — further polish)
+## Next up (Rung 10+ — further polish)
 
 Done since Rung 6: the **headline driver in-scene** (Rung 6, #15), the **per-biome soundscape** (Rung 7, #16),
-and the **day-to-night lighting** (Rung 8, #17). Four forest sites already render from **real AOP LiDAR** —
-WREF, SCBI, HARV, GUAN (grids committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`).
-Remaining nice-to-haves: **more forest sites on real LiDAR** — pick a tall-canopy site (e.g. BART, TEAK,
-SOAP, GRSM), download its CHM tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad
-`.neon_token`), then `build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json`; and a **TOD-linked
-soundscape** (louder dawn birds, night insects — wire `todVal` into `BIOME_SND`/`scheduleChirp`). No external
-data is needed for the audio tie-in.
+the **day-to-night lighting** (Rung 8, #17), and **TEAK on real AOP LiDAR** (Rung 9, #18). Five forest sites
+now render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN, TEAK (grids committed as `lidar-<site>.json`,
+inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves: **still more forest sites on real LiDAR** —
+pick another tall-canopy site (e.g. BART, SOAP, GRSM), download its CHM tile via the NEON API (`X-API-Token`;
+the token is stashed at scratchpad `.neon_token`), then `build_lidar.py <SITE> <CHM.tif>` → inline
+`lidar-<SITE>.json`; and a **TOD-linked soundscape** (louder dawn birds, night insects — wire `todVal` into
+`BIOME_SND`/`scheduleChirp`). No external data is needed for the audio tie-in.
+
+**Reusable recipe for a new real-LiDAR site** (proven for TEAK): `TOKEN=$(cat scratchpad/.neon_token)`;
+GET `/api/v0/locations/<SITE>` for the tower UTM easting/northing → floor each to the 1 km grid for the tile's
+SW corner; GET `/api/v0/products/DP3.30015.001` for the site's `availableMonths`; GET
+`/api/v0/data/DP3.30015.001/<SITE>/<YYYY-MM>?package=basic` and pick the `*_CHM.tif` whose name contains
+`<easting>_<northing>`; `curl` its signed `url`; `rdenv/bin/python3 build_lidar.py <SITE> <tile.tif>`; inline
+the resulting `lidar-<site>.json` after the last `lidar…` `<script>`; add the code to the switcher list. The
+raw `.tif` stays in scratchpad — **never commit it**, only the derived grid.
 
 Rung 5 (done): all 46 sites are now walkable — the six curated ones keep hand-authored scenes; the rest
 are generated from `bucket` + `veg_ba_ha` in `walk-sites.json` via `paramsFor()`. Deep-link any with
