@@ -56,6 +56,20 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 
 Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged).
 
+## Spin-off track: "The Plot" — a real-data plot reconstruction (`plot.html`)
+
+A new direction (owner's idea): instead of a statistical/procedural impression, reconstruct **one real
+NEON plot plant-by-plant**. Test build: **SRER_048** (Santa Rita, Sonoran desert) — **179 real tagged
+plants** from Vegetation Structure (DP1.10098.001), each at its **real mapped position** (pointID +
+stemDistance + stemAzimuth, point coords from the locations API), sized by real height/crown, live vs
+standing-dead, and **click a plant to read its actual NEON record** (species, individualID, tag year,
+measured height/crown, status). 9 species, 104 measured heights, 28 dead. See `build_plot.md`. Live
+artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
+(self-contained), `plot-srer048.json` (derived), `plot.src.html` (template), `build_plot.md` (recipe);
+raw VST CSVs + token + `build_plot.py` stay in scratchpad. **Planned expansions:** plant diversity
+(% cover → ground/understory), phenology (animate the year per individual), link from the desert walk,
+more plots.
+
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
