@@ -131,6 +131,7 @@
   var SCIENCE=JSON.parse(document.getElementById("walkScience").textContent);
   var BUCKETDOT={forest:"#3f7a4b",grassland:"#c99a3c",dryland:"#d98a3d",tundra:"#6fa8c9",other:"#2f8f7a"};
   var CLOUD_AMT={forest:0.82,grassland:0.66,dryland:0.34,tundra:0.60,other:0.62};   // deserts read clearer, humid forests cloudier
+  var RIDGE_AMP={forest:26,grassland:10,dryland:36,tundra:20,other:22};             // distant-hill height by biome
   function paramsFor(w){
     var ba=w.ba||0,b=w.bucket,P={code:w.code,name:w.name,sub:w.sub,dot:BUCKETDOT[b]||"#8a8a8a"};
     if(b==="forest"){var tall=6+ba*0.55;
@@ -158,11 +159,18 @@
   var host=document.getElementById("scene");
   var renderer=new THREE.WebGLRenderer({antialias:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;   // soft sun shadows ground the scene
   host.appendChild(renderer.domElement);
   var scene=new THREE.Scene();
   var camera=new THREE.PerspectiveCamera(65,1,0.1,400); camera.rotation.order="YXZ";
-  var hemi=new THREE.HemisphereLight(0xf1efe6,0x556047,1.02); scene.add(hemi);
-  var sun=new THREE.DirectionalLight(0xfff2dd,1.0); sun.position.set(60,120,30); scene.add(sun);
+  var hemi=new THREE.HemisphereLight(0xf1efe6,0x556047,0.92); scene.add(hemi);
+  var sun=new THREE.DirectionalLight(0xfff2dd,1.15); sun.position.set(60,120,30);
+  sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.near=1; sun.shadow.camera.far=280;
+  sun.shadow.camera.left=-95; sun.shadow.camera.right=95; sun.shadow.camera.top=95; sun.shadow.camera.bottom=-95;
+  sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.45;                               // tame instanced-mesh shadow acne
+  scene.add(sun);
+  var sunTarget=new THREE.Object3D(); scene.add(sunTarget); sun.target=sunTarget;    // shadow frustum follows the walker
   var world=new THREE.Group(); scene.add(world);
   var VEG=null;
 
@@ -211,10 +219,12 @@
     skyUni.topc.value.copy(top); skyUni.botc.value.copy(bot);
     _sd.set(a.dir[0]+(b.dir[0]-a.dir[0])*f,a.dir[1]+(b.dir[1]-a.dir[1])*f,a.dir[2]+(b.dir[2]-a.dir[2])*f).normalize();
     skyUni.sund.value.copy(_sd); sun.position.copy(_sd).multiplyScalar(150);
-    sun.color.copy(sc); sun.intensity=si; hemi.intensity=hi; hemi.color.copy(baseSky0);
+    sun.castShadow=_sd.y>0.05;                              // shadows while the sun is up (long at dawn/dusk, off at night)
+    sun.color.copy(sc); sun.intensity=si*1.35; hemi.intensity=hi*0.66; hemi.color.copy(baseSky0);  // key-dominant: shadows read
     skyUni.sunI.value=si;                                   // clouds brighten in day, dim at night
     hemi.groundColor.copy(baseGround).multiplyScalar(0.55+0.45*grd);
     if(scene.fog)scene.fog.color.copy(bot);
+    if(ridgeMat)ridgeMat.color.copy(bot).multiplyScalar(0.88);   // distant hills track the horizon colour + dim into night
   }
   var TOD_PHASE=[[0.09,"Dawn","&#127749;"],[0.29,"Morning","&#9728;"],[0.51,"Midday","&#9728;"],
     [0.71,"Afternoon","&#9728;"],[0.90,"Dusk","&#127751;"],[1.01,"Night","&#9790;"]];
@@ -235,13 +245,29 @@
     for(var i=0;i<n;i++){var c=base.clone();c.offsetHSL((Math.random()-0.5)*sat,0,(Math.random()-0.5)*lig);mesh.setColorAt(i,c);}
     if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;}
 
+  // distant hazy hills on the horizon — a ridge ring that follows the walker (no parallax, like real mountains)
+  var ridge=null, ridgeMat=null;
+  function buildRidge(bucket,seed){
+    if(ridge){scene.remove(ridge);ridge.geometry.dispose();ridge.material.dispose();ridge=null;}
+    var N=140,R=300,amp=RIDGE_AMP[bucket]||22,pos=[],idx=[];
+    for(var i=0;i<=N;i++){var a=i/N*6.2831853;
+      var v=Math.sin(a*3.0+seed)*0.5+Math.sin(a*7.0+seed*1.7+1.0)*0.3+Math.sin(a*13.0+seed*0.7+2.0)*0.2;
+      v=(v+1)/2; var h=amp*(0.26+0.74*v),cx=Math.cos(a)*R,cz=Math.sin(a)*R;
+      pos.push(cx,-10,cz); pos.push(cx,h,cz);}
+    for(var j=0;j<N;j++){var bq=j*2; idx.push(bq,bq+1,bq+2, bq+2,bq+1,bq+3);}
+    var g=new THREE.BufferGeometry();
+    g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
+    ridgeMat=new THREE.MeshBasicMaterial({fog:false,side:THREE.DoubleSide});
+    ridge=new THREE.Mesh(g,ridgeMat); ridge.frustumCulled=false; ridge.renderOrder=-1; scene.add(ridge);
+  }
   function groundMesh(color){
     var g=new THREE.PlaneGeometry(340,340,54,54); g.rotateX(-Math.PI/2);
     var r=rng(1234),p=g.attributes.position;
     for(var i=0;i<p.count;i++){var x=p.getX(i),z=p.getZ(i);
       p.setY(i,Math.sin(x*0.05)*Math.cos(z*0.045)*1.2+(r()-0.5)*0.8);}
     g.computeVertexNormals();
-    return new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:new THREE.Color(color),roughness:1}));
+    var gm=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:new THREE.Color(color),roughness:1}));
+    gm.receiveShadow=true; return gm;
   }
 
   // canopy from a height grid (real AOP CHM when available; a labelled synthetic field here)
@@ -255,14 +281,14 @@
       dummy.position.set(x,h*0.8,z);dummy.scale.set(cell*0.92,Math.max(cell*0.7,h*0.26),cell*0.92);
       dummy.rotation.set(0,(c[0]*0.7+c[1]*1.3)%6.2832,0);dummy.updateMatrix();canopy.setMatrixAt(k,dummy.matrix);
       var col=base.clone();col.offsetHSL((Math.random()-0.5)*0.03,0,0.16-(h/maxh)*0.32);canopy.setColorAt(k,col);}
-    canopy.instanceColor.needsUpdate=true; world.add(canopy);
+    canopy.instanceColor.needsUpdate=true; canopy.castShadow=true; canopy.receiveShadow=true; world.add(canopy);
     var tall=cells.filter(function(c){return c[2]>8;});
     var tg=new THREE.CylinderGeometry(0.18,0.3,1,5); tg.translate(0,0.5,0);
     var trunks=new THREE.InstancedMesh(tg,new THREE.MeshStandardMaterial({color:0x54411f,roughness:1}),tall.length);
     for(var m=0;m<tall.length;m++){var c2=tall[m];
       dummy.position.set((c2[0]-off)*cell,0,(c2[1]-off)*cell);dummy.scale.set(1,c2[2]*0.72,1);
       dummy.rotation.set(0,0,0);dummy.updateMatrix();trunks.setMatrixAt(m,dummy.matrix);}
-    trunks.userData.rigid=true; world.add(trunks);   // real-scan trunks stay planted; only crowns sway
+    trunks.userData.rigid=true; trunks.castShadow=true; world.add(trunks);   // real-scan trunks stay planted; only crowns sway
   }
 
   function build(site){
@@ -272,7 +298,9 @@
     scene.background=null; scene.fog=new THREE.Fog(new THREE.Color(site.sky[1]),42,150);
     baseSky0.set(site.sky[0]); baseSky1.set(site.sky[1]); baseGround.set(site.ground);
     applyTOD();   // sky/sun/hemi/fog from the current time-of-day over this site's palette
-    skyUni.cloudAmt.value=CLOUD_AMT[(ALL[site.code]&&ALL[site.code].bucket)||"forest"]||0.7;   // biome-varied cloud cover
+    var bkt=(ALL[site.code]&&ALL[site.code].bucket)||"forest";
+    skyUni.cloudAmt.value=CLOUD_AMT[bkt]||0.7;   // biome-varied cloud cover
+    buildRidge(bkt,hash(site.code)%100/15.0); if(ridgeMat)ridgeMat.color.copy(skyUni.botc.value).multiplyScalar(0.88);   // distant hills
     world.add(groundMesh(site.ground));
     var lidarEl=document.getElementById("lidar"+site.code);   // any site with a real CHM grid uses it
     if(lidarEl){
@@ -289,29 +317,29 @@
       var trunks=inst(tg,new THREE.MeshStandardMaterial({color:new THREE.Color(t.trunk),roughness:1}),t.n,function(i,d){
         var p=scatter(rand),h=t.hMin+rand()*(t.hMax-t.hMin);H[i]={x:p[0],z:p[1],h:h};
         d.position.set(p[0],0,p[1]);d.scale.set(1,h,1);d.rotation.set(0,rand()*6.28,0);});
-      trunks.userData.rigid=true; world.add(trunks);
+      trunks.userData.rigid=true; trunks.castShadow=true; world.add(trunks);
       var canopies=inst(cg,new THREE.MeshStandardMaterial({color:new THREE.Color(t.canopy),roughness:1,flatShading:true}),t.n,function(i,d){
         var o=H[i],conf=t.shape==="conifer",cw=conf?o.h*0.17:o.h*0.30,ch=conf?o.h*0.72:o.h*0.52;
         d.position.set(o.x,o.h*(conf?0.62:0.82),o.z);d.scale.set(cw,ch,cw);d.rotation.set(0,rand()*6.28,0);});
-      jitter(canopies,t.n,t.canopy,0.05,0.14); world.add(canopies);
+      jitter(canopies,t.n,t.canopy,0.05,0.14); canopies.castShadow=true; world.add(canopies);
     }
     if(site.cactus&&site.cactus.n){
       var cac=site.cactus,cr=rng(seed+5),cgeo=new THREE.CylinderGeometry(0.5,0.62,1,7);cgeo.translate(0,0.5,0);
       var cm=inst(cgeo,new THREE.MeshStandardMaterial({color:new THREE.Color(cac.color),roughness:1}),cac.n,function(i,d){
         var p=scatter(cr),h=3.2+cr()*3.8;d.position.set(p[0],0,p[1]);d.scale.set(1,h,1);d.rotation.set(0,cr()*6.28,0);});
-      cm.userData.rigid=true; world.add(cm);   // saguaro trunks don't sway
+      cm.userData.rigid=true; cm.castShadow=true; world.add(cm);   // saguaro cast long desert shadows; don't sway
     }
     if(site.shrub&&site.shrub.n){
       var s=site.shrub,sr=rng(seed+2),sg=new THREE.IcosahedronGeometry(1,0); sg.scale(1,0.55,1);
       var sm=inst(sg,new THREE.MeshStandardMaterial({color:new THREE.Color(s.color),roughness:1,flatShading:true}),s.n,function(i,d){
         var p=scatter(sr),sc=s.size*(0.55+sr()*0.9);d.position.set(p[0],sc*0.35,p[1]);d.scale.set(sc,sc,sc);d.rotation.set(0,sr()*6.28,0);});
-      jitter(sm,s.n,s.color,0.03,0.16); world.add(sm);
+      jitter(sm,s.n,s.color,0.03,0.16); sm.castShadow=true; world.add(sm);
     }
     if(site.tuft&&site.tuft.n){
       var tf=site.tuft,fr=rng(seed+6),fg=new THREE.IcosahedronGeometry(1,0); fg.scale(1,0.4,1);
       var fm=inst(fg,new THREE.MeshStandardMaterial({color:new THREE.Color(tf.color),roughness:1,flatShading:true}),tf.n,function(i,d){
         var p=scatter(fr),sc=0.3+fr()*0.5;d.position.set(p[0],sc*0.2,p[1]);d.scale.set(sc*1.4,sc,sc*1.4);d.rotation.set(0,fr()*6.28,0);});
-      jitter(fm,tf.n,tf.color,0.04,0.18); world.add(fm);
+      jitter(fm,tf.n,tf.color,0.04,0.18); fm.castShadow=true; world.add(fm);
     }
     if(site.grass&&site.grass.n){
       var g=site.grass,gr=rng(seed+3),gg=new THREE.ConeGeometry(0.05,1,4); gg.translate(0,0.5,0);
@@ -438,6 +466,9 @@
     var L=150; px=Math.max(-L,Math.min(L,px)); pz=Math.max(-L,Math.min(L,pz));
     var bob=(!reduce&&(mf||ms))?Math.sin(t*0.008)*0.05:0;
     camera.position.set(px,1.7+bob,pz); camera.rotation.set(pitch,yaw,0);
+    sun.position.copy(camera.position).addScaledVector(skyUni.sund.value,120);   // keep the shadow frustum on the walker
+    sunTarget.position.set(px,0,pz); sunTarget.updateMatrixWorld();
+    if(ridge)ridge.position.set(px,0,pz);                                        // distant hills stay on the horizon
     if(VEG&&!reduce){   // wind you can see — gusts breathe on the same ~14s cycle (0.07 Hz) as the wind you hear
       var slow=0.5+0.5*Math.sin(t*0.00044), med=0.5+0.5*Math.sin(t*0.0011+1.3), gust=(slow*0.7+med*0.3); gust*=gust;
       var amp=0.004+gust*0.013, fl=Math.sin(t*(0.0013+gust*0.0021));
