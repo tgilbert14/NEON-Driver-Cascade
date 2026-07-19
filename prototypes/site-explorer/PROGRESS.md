@@ -43,7 +43,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 17 | **Filmic tone mapping** — ACES on the renderer + matching ACES in the sky shader (consistent) | DONE | #27 |
 | 18 | **Richer geometry** — scattered rocks + fallen logs, layered distant hills, rounder tree crowns | DONE | #28 |
 | 19 | **Generated textures** — per-biome ground + bark from an image model, embedded inline, on ground+trunks | DONE | #29 |
-| 20+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
+| 20 | **Walkable forests** — real-LiDAR stems thinned from per-cell grid to sparse jittered scatter (sightlines!) | DONE | #30 |
+| 21+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -58,7 +59,7 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~1235 KB; deep-linkable via `?site=CODE`).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~1236 KB; deep-linkable via `?site=CODE`).
 - `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
@@ -86,6 +87,12 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   ~46 m (tile `NEON_D07_GRSM_DP3_273000_3952000`, 2022); SOAP (Soaproot Saddle) is an open foothill woodland
   (~42% forested, tile `NEON_D17_SOAP_DP3_298000_4100000`, 2024). All 46 sites are walkable. To add another:
   `build_lidar.py <SITE> <CHM.tif>` → inline as `<script id="lidar<SITE>">`.
+- **Real-LiDAR forests are walkable** (Rung 20): the CHM gives canopy height per 3 m cell, but placing a trunk
+  at every cell made a dense grid-wall you couldn't see through. `buildField` now derives **sparse stems** —
+  greedy tallest-first thinning with a minimum spacing (`minSp` cells) + off-grid jitter + height-varied
+  thickness — so a forest reads as a walkable interior with sightlines, not a lattice. The **canopy/floor are
+  unchanged** (still the full real height model); only the stems are thinned. Far fewer instances, so it also
+  renders lighter.
 - The **ground/bark textures are AI-generated stylised impressions** (Rung 19), not real ground photography
   of any site — they convey biome *feel* (forest floor, dry prairie, desert sand, tundra moss, bark), not
   measured surface data. Embedded inline (CSP-safe); the flat-shaded canopy stays untextured.

@@ -100,7 +100,7 @@
 (function(){
   "use strict";
   var THREE = window.THREE;
-  var LIDAR_NOTE="";
+  var LIDAR_NOTE="", LIDAR_STEMS=0;
   var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var SITES = [
     {code:"WREF",name:"Wind River Experimental Forest",sub:"Real airborne-LiDAR canopy · Washington",dot:"#3f7a4b",
@@ -297,15 +297,23 @@
       dummy.rotation.set(0,(c[0]*0.7+c[1]*1.3)%6.2832,0);dummy.updateMatrix();canopy.setMatrixAt(k,dummy.matrix);
       var col=base.clone();col.offsetHSL((Math.random()-0.5)*0.03,0,0.16-(h/maxh)*0.32);canopy.setColorAt(k,col);}
     canopy.instanceColor.needsUpdate=true; canopy.castShadow=true; canopy.receiveShadow=true; world.add(canopy);
-    var tall=cells.filter(function(c){return c[2]>8;});
-    var tg=new THREE.CylinderGeometry(0.18,0.3,1,5); tg.translate(0,0.5,0);
+    // stems are FAR sparser than canopy cells — pick well-spaced local highs (tallest first) so the forest is
+    // walkable with sightlines, not a grid-wall of trunks. Greedy Poisson-ish thinning + off-grid jitter.
+    var cand=cells.filter(function(c){return c[2]>6;}).sort(function(a,b){return b[2]-a[2];});
+    var occ={},stems=[],minSp=3;
+    for(var s=0;s<cand.length;s++){var c=cand[s],gi=c[0],gj=c[1],ok=true;
+      for(var di=-minSp;di<=minSp&&ok;di++)for(var dj=-minSp;dj<=minSp;dj++){if(occ[(gi+di)+"_"+(gj+dj)]){ok=false;break;}}
+      if(ok){occ[gi+"_"+gj]=1;stems.push(c);}}
+    var tg=new THREE.CylinderGeometry(0.6,0.95,1,6); tg.translate(0,0.5,0);   // unit trunk; scaled per stem
     var tmat=new THREE.MeshStandardMaterial({color:0x54411f,roughness:1});
     if(TEX.barkconifer){tmat.map=TEX.barkconifer; tmat.color.setRGB(0.95,0.9,0.85);}   // real-scan trunks get bark
-    var trunks=new THREE.InstancedMesh(tg,tmat,tall.length);
-    for(var m=0;m<tall.length;m++){var c2=tall[m];
-      dummy.position.set((c2[0]-off)*cell,0,(c2[1]-off)*cell);dummy.scale.set(1,c2[2]*0.72,1);
-      dummy.rotation.set(0,0,0);dummy.updateMatrix();trunks.setMatrixAt(m,dummy.matrix);}
+    var trunks=new THREE.InstancedMesh(tg,tmat,stems.length),jr=rng(9917);
+    for(var m=0;m<stems.length;m++){var c2=stems[m],h=c2[2],rad=0.18+Math.min(0.34,h/150);
+      var jx=(jr()-0.5)*cell*1.3,jz=(jr()-0.5)*cell*1.3;
+      dummy.position.set((c2[0]-off)*cell+jx,0,(c2[1]-off)*cell+jz);dummy.scale.set(rad,h*0.9,rad);
+      dummy.rotation.set(0,jr()*6.28,0);dummy.updateMatrix();trunks.setMatrixAt(m,dummy.matrix);}
     trunks.userData.rigid=true; trunks.castShadow=true; world.add(trunks);   // real-scan trunks stay planted; only crowns sway
+    LIDAR_STEMS=stems.length;
   }
 
   function build(site){
