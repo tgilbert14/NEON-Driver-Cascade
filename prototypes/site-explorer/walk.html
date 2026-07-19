@@ -226,7 +226,7 @@
     skyUni.sunI.value=si;                                   // clouds brighten in day, dim at night
     hemi.groundColor.copy(baseGround).multiplyScalar(0.55+0.45*grd);
     if(scene.fog)scene.fog.color.copy(bot);
-    if(ridgeMat)ridgeMat.color.copy(bot).multiplyScalar(0.88);   // distant hills track the horizon colour + dim into night
+    if(ridgeMat)ridgeMat.color.copy(bot);   // layered hills track the horizon colour (vertex-shaded) + dim into night
   }
   var TOD_PHASE=[[0.09,"Dawn","&#127749;"],[0.29,"Morning","&#9728;"],[0.51,"Midday","&#9728;"],
     [0.71,"Afternoon","&#9728;"],[0.90,"Dusk","&#127751;"],[1.01,"Night","&#9790;"]];
@@ -247,19 +247,23 @@
     for(var i=0;i<n;i++){var c=base.clone();c.offsetHSL((Math.random()-0.5)*sat,0,(Math.random()-0.5)*lig);mesh.setColorAt(i,c);}
     if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;}
 
-  // distant hazy hills on the horizon — a ridge ring that follows the walker (no parallax, like real mountains)
+  // distant hazy hills — two layered ridge rings that follow the walker (no parallax); far ring hazier for depth
   var ridge=null, ridgeMat=null;
   function buildRidge(bucket,seed){
     if(ridge){scene.remove(ridge);ridge.geometry.dispose();ridge.material.dispose();ridge=null;}
-    var N=140,R=300,amp=RIDGE_AMP[bucket]||22,pos=[],idx=[];
-    for(var i=0;i<=N;i++){var a=i/N*6.2831853;
-      var v=Math.sin(a*3.0+seed)*0.5+Math.sin(a*7.0+seed*1.7+1.0)*0.3+Math.sin(a*13.0+seed*0.7+2.0)*0.2;
-      v=(v+1)/2; var h=amp*(0.26+0.74*v),cx=Math.cos(a)*R,cz=Math.sin(a)*R;
-      pos.push(cx,-10,cz); pos.push(cx,h,cz);}
-    for(var j=0;j<N;j++){var bq=j*2; idx.push(bq,bq+1,bq+2, bq+2,bq+1,bq+3);}
+    var N=140,amp=RIDGE_AMP[bucket]||22,pos=[],idx=[],col=[];
+    function ring(R,a,so,bright){var base=pos.length/3;
+      for(var i=0;i<=N;i++){var ang=i/N*6.2831853;
+        var v=Math.sin(ang*3.0+so)*0.5+Math.sin(ang*7.0+so*1.7+1.0)*0.3+Math.sin(ang*13.0+so*0.7+2.0)*0.2;
+        v=(v+1)/2; var h=a*(0.26+0.74*v),cx=Math.cos(ang)*R,cz=Math.sin(ang)*R;
+        pos.push(cx,-12,cz, cx,h,cz); col.push(bright,bright,bright, bright,bright,bright);}
+      for(var j=0;j<N;j++){var b=base+j*2; idx.push(b,b+1,b+2, b+2,b+1,b+3);}}
+    ring(365,amp*0.66,seed*1.3+3.0,0.97);   // far ridge: lower, hazier (closer to sky colour)
+    ring(300,amp,seed,0.86);                 // near ridge: taller, darker silhouette
     var g=new THREE.BufferGeometry();
-    g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
-    ridgeMat=new THREE.MeshBasicMaterial({fog:false,side:THREE.DoubleSide});
+    g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute("color",new THREE.Float32BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();
+    ridgeMat=new THREE.MeshBasicMaterial({fog:false,vertexColors:true,side:THREE.DoubleSide});
     ridge=new THREE.Mesh(g,ridgeMat); ridge.frustumCulled=false; ridge.renderOrder=-1; scene.add(ridge);
   }
   function groundMesh(color){
@@ -302,7 +306,7 @@
     applyTOD();   // sky/sun/hemi/fog from the current time-of-day over this site's palette
     var bkt=(ALL[site.code]&&ALL[site.code].bucket)||"forest";
     skyUni.cloudAmt.value=CLOUD_AMT[bkt]||0.7;   // biome-varied cloud cover
-    buildRidge(bkt,hash(site.code)%100/15.0); if(ridgeMat)ridgeMat.color.copy(skyUni.botc.value).multiplyScalar(0.88);   // distant hills
+    buildRidge(bkt,hash(site.code)%100/15.0); if(ridgeMat)ridgeMat.color.copy(skyUni.botc.value);   // layered distant hills
     world.add(groundMesh(site.ground));
     var lidarEl=document.getElementById("lidar"+site.code);   // any site with a real CHM grid uses it
     if(lidarEl){
@@ -315,7 +319,7 @@
     if(!lidarEl && site.trees&&site.trees.n){
       var t=site.trees,rand=rng(seed+1),H=[];
       var tg=new THREE.CylinderGeometry(0.13,0.22,1,5); tg.translate(0,0.5,0);
-      var cg=t.shape==="conifer"?new THREE.ConeGeometry(1,2.3,6):new THREE.IcosahedronGeometry(1,0);
+      var cg=t.shape==="conifer"?new THREE.ConeGeometry(1,2.5,7):new THREE.IcosahedronGeometry(1,1);  // rounder deciduous crown
       var trunks=inst(tg,new THREE.MeshStandardMaterial({color:new THREE.Color(t.trunk),roughness:1}),t.n,function(i,d){
         var p=scatter(rand),h=t.hMin+rand()*(t.hMax-t.hMin);H[i]={x:p[0],z:p[1],h:h};
         d.position.set(p[0],0,p[1]);d.scale.set(1,h,1);d.rotation.set(0,rand()*6.28,0);});
@@ -355,6 +359,18 @@
         var p=scatter(rr2),sc=0.35+rr2()*1.0;d.position.set(p[0],sc*0.25,p[1]);d.scale.set(sc,sc*0.7,sc);
         d.rotation.set(rr2()*6.28,rr2()*6.28,rr2()*6.28);});
       rm.userData.rigid=true; world.add(rm);   // rocks don't sway
+    }
+    // scattered ground detail so the floor isn't bare: small pebbles everywhere + fallen logs in wooded/meadow biomes
+    var gd=rng(seed+11), rockN={forest:80,grassland:55,dryland:110,tundra:45,other:75}[bkt]||70;
+    var peb=inst(new THREE.IcosahedronGeometry(1,0),new THREE.MeshStandardMaterial({color:0x8a857b,roughness:1,flatShading:true}),rockN,function(i,d){
+      var p=scatter(gd),sc=0.2+gd()*0.55;d.position.set(p[0],sc*0.2,p[1]);d.scale.set(sc*1.2,sc*0.5,sc*1.1);
+      d.rotation.set(gd()*6.28,gd()*6.28,gd()*6.28);});
+    jitter(peb,rockN,"#8a857b",0.02,0.22); peb.userData.rigid=true; peb.castShadow=true; peb.receiveShadow=true; world.add(peb);
+    if(bkt==="forest"||bkt==="grassland"||bkt==="other"){
+      var logN={forest:16,grassland:7,other:9}[bkt]||8, dl=rng(seed+12);
+      var lm=inst(new THREE.CylinderGeometry(0.32,0.4,1,6),new THREE.MeshStandardMaterial({color:0x5a4327,roughness:1}),logN,function(i,d){
+        var p=scatter(dl),len=2.5+dl()*4.5;d.position.set(p[0],0.34,p[1]);d.rotation.set(0,dl()*6.28,1.5708);d.scale.set(1,len,1);});
+      jitter(lm,logN,"#5a4327",0.03,0.14); lm.userData.rigid=true; lm.castShadow=true; world.add(lm);
     }
     VEG=new THREE.Group(); var kids=world.children.slice();   // sway only the flexible foliage (crowns, grass, shrubs, tufts)
     for(var vi=1;vi<kids.length;vi++){ if(kids[vi].userData&&kids[vi].userData.rigid)continue; VEG.add(kids[vi]); }
