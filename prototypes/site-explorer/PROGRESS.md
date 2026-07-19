@@ -35,7 +35,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 9 | **TEAK on real AOP LiDAR** — Lower Teakettle (Sierra Nevada), the tallest real canopy in the set (~59 m) | DONE | #18 |
 | 10 | **Living soundscape** — the day-cycle drives the audio too: dawn chorus, quiet midday, night crickets | DONE | #19 |
 | 11 | **GRSM on real AOP LiDAR** — Great Smoky Mountains, a dense southern-Appalachian canopy (sixth real scan) | DONE | #20 |
-| 12+ | Optional — still more sites on real LiDAR; richer bird/insect voices; weather (wind gusts you can see) | PLANNED | — |
+| 12 | **Wind you can see** — canopy gusts share the wind's ~14s rhythm; trunks stay planted, crowns sway | DONE | #21 |
+| 13+ | Optional — still more sites on real LiDAR; richer bird/insect voices; drifting clouds / sun shafts | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -88,6 +89,11 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   **night crickets** (insect layer swells toward dusk/night; `NIGHT_INS` gives forest/grassland/dryland a
   night-cricket capacity, **tundra stays silent**). `setBiomeSound()` re-times the chirp scheduler on every
   change so the chorus follows the slider promptly. Still synthesized, still an impression — no recordings.
+- **Wind is shown, not just heard** (Rung 12): the canopy gusts on the same ~14 s cycle (0.07 Hz) as the audio
+  wind LFO — the flexible foliage (crowns, grass, shrubs, tufts) leans downwind and flutters harder during
+  gusts, while **trunks, cactus and rocks are rigid** (tagged `userData.rigid`, kept in `world` not the sway
+  group) so a gust never distorts their bases. It's a **gentle, procedural gust**, reduced-motion-aware (no
+  sway when the OS asks for reduced motion) — an impression of wind, not measured wind speed.
 - The **day-to-night lighting is illustrative** (Rung 8): a time-of-day slider (`TOD` keyframes → `applyTOD()`)
   blends the sky-shader colours, arcs the sun's direction/colour/intensity, and dims the hemisphere light and
   fog from dawn → midday → dusk → night. The **midday stop (0.40) uses each site's own daytime palette and the
@@ -116,13 +122,13 @@ green → reset the branch onto the new master → next increment. Branch: `clau
 
 Done since Rung 6: the **headline driver in-scene** (Rung 6, #15), the **per-biome soundscape** (Rung 7, #16),
 the **day-to-night lighting** (Rung 8, #17), **TEAK on real AOP LiDAR** (Rung 9, #18), and the **living
-(time-of-day-linked) soundscape** (Rung 10, #19), and **GRSM on real AOP LiDAR** (Rung 11, #20). Six forest
+(time-of-day-linked) soundscape** (Rung 10, #19), **GRSM on real AOP LiDAR** (Rung 11, #20), and **visible wind** (Rung 12, #21). Six forest
 sites now render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN, TEAK, GRSM (grids committed as
 `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves: **still more forest
 sites on real LiDAR** — pick another tall-canopy site (e.g. BART, SOAP), download its CHM tile via the NEON
 API (`X-API-Token`; the token is stashed at scratchpad `.neon_token`), then `build_lidar.py <SITE> <CHM.tif>`
-→ inline `lidar-<SITE>.json` (recipe above); richer bird/insect voices; or visible weather (wind gusts that
-move the canopy). No external data is needed for the last two.
+→ inline `lidar-<SITE>.json` (recipe above); richer bird/insect voices; or drifting clouds / sun shafts. No
+external data is needed for the last two.
 
 **Reusable recipe for a new real-LiDAR site** (proven for TEAK): `TOKEN=$(cat scratchpad/.neon_token)`;
 GET `/api/v0/locations/<SITE>` for the tower UTM easting/northing → floor each to the 1 km grid for the tile's

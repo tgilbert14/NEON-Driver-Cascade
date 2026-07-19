@@ -47,6 +47,13 @@ generated from each site's `bucket` + `veg_ba_ha` (`walk-sites.json` → `params
 a gradient sky with a soft sun, a gentle canopy sway + walking head-bob (both reduced-motion aware), and
 a muted desert-ground tone.
 
+**Wind you can see** (Rung 12): the canopy gusts on the same ~14 s cycle (0.07 Hz) as the audio wind, so the
+wind you hear and the wind you see move together. Only the flexible foliage (crowns, grass, shrubs, tufts)
+leans downwind and flutters harder during gusts — **trunks, cactus and rocks stay rigid**, so a gust never
+distorts their bases. It's a gentle procedural gust and honours "reduce motion." Verified headlessly by
+asserting that two frames a few seconds apart *differ* with a static camera (motion present) but are
+*identical* under reduced-motion (correctly still), with 0 errors across every biome.
+
 ### Day to night (Rung 8)
 
 A **time-of-day slider** in the control row sweeps the scene from **dawn → midday → dusk → night**. It
