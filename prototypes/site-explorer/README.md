@@ -63,7 +63,10 @@ An optional **per-biome ambient soundscape**, off by default. Tap **Sound** and 
 [Web Audio](https://developer.mozilla.org/docs/Web/API/Web_Audio_API) graph fades in — filtered
 pink-noise wind with slow gusts, a faint insect shimmer, and sparse bird chirps — retuning as you travel
 between biomes (a closed forest gets birds and a soft canopy wind; the desert gets a brighter, drier wind
-with a few insects and no birds; the tundra a low, bare wind). It is **synthesized in the browser, not a
+with a few insects and no birds; the tundra a low, bare wind). It also **follows the time-of-day slider**
+(Rung 10): a **dawn chorus** (birds busiest and loudest near dawn, occasional at midday, silent at night)
+and **night crickets** (the insect layer swells toward dusk and night — forest, grassland and desert gain a
+night-cricket voice, while the tundra stays silent). It is **synthesized in the browser, not a
 field recording** — nothing is streamed or fetched (so it stays within the Artifact CSP, like the inlined
 3D engine), and it's an *impression* of the biome's ambience, not the sound of any real site. It starts
 only on your tap because browsers require a gesture before audio can play, and it honours the system's
@@ -136,7 +139,10 @@ its ~12 nodes appear after the tap, never before — no autoplay), the button's 
 flip both ways, and travelling between biomes while sound is on retunes without error; all nine bucket-diverse
 sites (forest / grassland / dryland / tundra / mixed) render with 0 console/page errors and no 390 px
 overflow. *Audio quality itself can't be verified headlessly (no audio device) — only correct graph creation
-and error-free toggling/retuning are checked.* The **time-of-day slider** was swept across all six phases
+and error-free toggling/retuning are checked.* The **time-of-day–linked soundscape** was checked by
+instrumenting the Web Audio graph: bird chirps peak at dawn and fall to zero at night, the insect-gain target
+rises monotonically from dawn to night, and at night the tundra's insect gain is exactly 0 while grassland and
+desert are non-zero — all with 0 errors. The **time-of-day slider** was swept across all six phases
 (dawn → night): the label/icon track the phase, midday reproduces the original look, and every bucket renders
 cleanly at night — screenshots at dawn/midday/dusk/night confirm the sky, sun, and scene brightness shift as
 intended, with 0 console/page errors.

@@ -341,7 +341,7 @@
     var ig=ctx.createGain(); ig.gain.value=0; ins.connect(ibp); ibp.connect(ig); ig.connect(master);
     var il=ctx.createOscillator(); il.frequency.value=13; var ilg=ctx.createGain(); ilg.gain.value=0.012;
     il.connect(ilg); ilg.connect(ig.gain); ins.start(); il.start();               // insect shimmer (AM)
-    AUDIO={ctx:ctx,master:master,wf:wf,wg:wg,ig:ig,birds:false,chirpT:null};
+    AUDIO={ctx:ctx,master:master,wf:wf,wg:wg,ig:ig,birds:false,birdRate:0.5,birdGain:0.05,chirpT:null};
     scheduleChirp();
     return AUDIO;
   }
@@ -351,21 +351,31 @@
     o.type="sine"; o.frequency.setValueAtTime(f0,t);
     o.frequency.exponentialRampToValueAtTime(f0*(1.2+Math.random()*0.5),t+0.06);
     o.frequency.exponentialRampToValueAtTime(f0*0.82,t+0.14);
-    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.06,t+0.02);
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(AUDIO.birdGain||0.05,t+0.02);
     g.gain.exponentialRampToValueAtTime(0.0008,t+0.18);
     o.connect(g); g.connect(AUDIO.master); o.start(t); o.stop(t+0.22);
   }
   function scheduleChirp(){
-    if(!AUDIO)return;
-    var delay=(AUDIO.birds?1300:6000)+Math.random()*(AUDIO.birds?3200:7000);
+    if(!AUDIO)return;                                   // busier (shorter gaps) when bird activity is high
+    var r=AUDIO.birdRate||0.5,
+      delay=AUDIO.birds?(850+(1-r)*2600+Math.random()*1400):(6500+Math.random()*7000);
     AUDIO.chirpT=setTimeout(function(){chirp(); scheduleChirp();},delay);
   }
   var BIOME_SND={forest:{wf:620,wg:0.42,birds:true,ins:0},grassland:{wf:1000,wg:0.34,birds:true,ins:0.02},
     dryland:{wf:1500,wg:0.24,birds:false,ins:0.012},tundra:{wf:360,wg:0.5,birds:false,ins:0},other:{wf:820,wg:0.35,birds:true,ins:0.01}};
-  function setBiomeSound(bucket){
+  // time-of-day shapes the living sound: a dawn chorus, quiet midday, evening/night crickets.
+  var TOD_BIRDS=[[0.12,1.0],[0.30,0.80],[0.55,0.42],[0.78,0.55],[0.90,0.28],[1.01,0.05]];   // activity by tod
+  var TOD_INS=[[0.30,0.16],[0.55,0.30],[0.78,0.66],[0.90,1.0],[1.01,1.25]];                  // insect swell to night
+  var NIGHT_INS={forest:0.011,grassland:0.015,dryland:0.013,tundra:0,other:0.011};           // night-cricket capacity
+  function stepv(tbl,v){for(var i=0;i<tbl.length;i++)if(v<tbl[i][0])return tbl[i][1];return tbl[tbl.length-1][1];}
+  function setBiomeSound(bucket){        // (name kept) applies biome AND time-of-day together
     if(!AUDIO)return; var s=BIOME_SND[bucket]||BIOME_SND.other,t=AUDIO.ctx.currentTime;
-    AUDIO.wf.frequency.setTargetAtTime(s.wf,t,0.6); AUDIO.wg.gain.setTargetAtTime(s.wg,t,0.6);
-    AUDIO.ig.gain.setTargetAtTime(s.ins,t,0.9); AUDIO.birds=s.birds;
+    var bf=stepv(TOD_BIRDS,todVal),inf=stepv(TOD_INS,todVal),windMul=todVal>0.9?0.82:1.0;
+    AUDIO.wf.frequency.setTargetAtTime(s.wf,t,0.6); AUDIO.wg.gain.setTargetAtTime(s.wg*windMul,t,0.6);
+    var ins=Math.max(s.ins,NIGHT_INS[bucket]||0)*inf;               // crickets rise at dusk/night, tundra stays silent
+    AUDIO.ig.gain.setTargetAtTime(ins,t,0.9);
+    AUDIO.birds=s.birds&&bf>0.12; AUDIO.birdRate=bf; AUDIO.birdGain=0.05*(0.6+0.7*bf);
+    if(AUDIO.chirpT){clearTimeout(AUDIO.chirpT);AUDIO.chirpT=null;} scheduleChirp();  // re-time to the new rate now
   }
   function toggleSound(){
     soundOn=!soundOn;
@@ -384,6 +394,7 @@
   var todRange=document.getElementById("todRange"),todLabel=document.getElementById("todLabel"),
     todIcon=document.getElementById("todIcon");
   function onTOD(){todVal=parseFloat(todRange.value); applyTOD();
+    if(soundOn)setBiomeSound(curBucket);                 // dawn chorus / night crickets follow the light
     var p=todPhase(todVal); todLabel.textContent=p[1]; todIcon.innerHTML=p[2];}
   todRange.addEventListener("input",onTOD);
 

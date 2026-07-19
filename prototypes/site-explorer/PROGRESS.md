@@ -33,7 +33,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 7 | **Soundscape** — per-biome procedural Web Audio ambience (wind/insects/birds), opt-in, retunes per site | DONE | #16 |
 | 8 | **Day-to-night lighting** — a time-of-day slider drives sky/sun/hemi/fog (dawn → midday → dusk → night) | DONE | #17 |
 | 9 | **TEAK on real AOP LiDAR** — Lower Teakettle (Sierra Nevada), the tallest real canopy in the set (~59 m) | DONE | #18 |
-| 10+ | Optional — still more sites on real LiDAR; TOD-linked soundscape (dawn birds / night insects) | PLANNED | — |
+| 10 | **Living soundscape** — the day-cycle drives the audio too: dawn chorus, quiet midday, night crickets | DONE | #19 |
+| 11+ | Optional — still more sites on real LiDAR; richer bird/insect voices; weather (wind gusts you can see) | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -80,6 +81,11 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   gesture to start audio). Each biome retunes the graph (`BIOME_SND`): forest = birds + soft wind, dryland =
   bright wind + faint insects + no birds, tundra = low bare wind, etc. It's an **impression of the biome's
   ambience, not a field recording** of any site.
+- The soundscape is **wired to time of day** (Rung 10): the same `todVal` that drives the lighting also shapes
+  the audio — a **dawn chorus** (birds most frequent/loud near dawn, occasional midday, off at night) and
+  **night crickets** (insect layer swells toward dusk/night; `NIGHT_INS` gives forest/grassland/dryland a
+  night-cricket capacity, **tundra stays silent**). `setBiomeSound()` re-times the chirp scheduler on every
+  change so the chorus follows the slider promptly. Still synthesized, still an impression — no recordings.
 - The **day-to-night lighting is illustrative** (Rung 8): a time-of-day slider (`TOD` keyframes → `applyTOD()`)
   blends the sky-shader colours, arcs the sun's direction/colour/intensity, and dims the hemisphere light and
   fog from dawn → midday → dusk → night. The **midday stop (0.40) uses each site's own daytime palette and the
@@ -104,16 +110,17 @@ errors, correct rendering, and no 390 px mobile overflow before merge.
 Stage-by-stage: build an increment → verify headlessly → commit/push → open draft PR → merge when CI is
 green → reset the branch onto the new master → next increment. Branch: `claude/neon-suite-expansion-c0wl9k`.
 
-## Next up (Rung 10+ — further polish)
+## Next up (Rung 11+ — further polish)
 
 Done since Rung 6: the **headline driver in-scene** (Rung 6, #15), the **per-biome soundscape** (Rung 7, #16),
-the **day-to-night lighting** (Rung 8, #17), and **TEAK on real AOP LiDAR** (Rung 9, #18). Five forest sites
-now render from **real AOP LiDAR** — WREF, SCBI, HARV, GUAN, TEAK (grids committed as `lidar-<site>.json`,
-inlined as `<script id="lidar<SITE>">`). Remaining nice-to-haves: **still more forest sites on real LiDAR** —
-pick another tall-canopy site (e.g. BART, SOAP, GRSM), download its CHM tile via the NEON API (`X-API-Token`;
-the token is stashed at scratchpad `.neon_token`), then `build_lidar.py <SITE> <CHM.tif>` → inline
-`lidar-<SITE>.json`; and a **TOD-linked soundscape** (louder dawn birds, night insects — wire `todVal` into
-`BIOME_SND`/`scheduleChirp`). No external data is needed for the audio tie-in.
+the **day-to-night lighting** (Rung 8, #17), **TEAK on real AOP LiDAR** (Rung 9, #18), and the **living
+(time-of-day-linked) soundscape** (Rung 10, #19). Five forest sites now render from **real AOP LiDAR** — WREF,
+SCBI, HARV, GUAN, TEAK (grids committed as `lidar-<site>.json`, inlined as `<script id="lidar<SITE>">`).
+Remaining nice-to-haves: **still more forest sites on real LiDAR** — pick another tall-canopy site (e.g. BART,
+SOAP, GRSM), download its CHM tile via the NEON API (`X-API-Token`; the token is stashed at scratchpad
+`.neon_token`), then `build_lidar.py <SITE> <CHM.tif>` → inline `lidar-<SITE>.json` (recipe above); richer
+bird/insect voices; or visible weather (wind gusts that move the canopy). No external data is needed for the
+last two.
 
 **Reusable recipe for a new real-LiDAR site** (proven for TEAK): `TOKEN=$(cat scratchpad/.neon_token)`;
 GET `/api/v0/locations/<SITE>` for the tower UTM easting/northing → floor each to the 1 km grid for the tile's
