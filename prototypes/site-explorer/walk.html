@@ -130,6 +130,7 @@
   var ALL=JSON.parse(document.getElementById("walkSites").textContent);
   var SCIENCE=JSON.parse(document.getElementById("walkScience").textContent);
   var BUCKETDOT={forest:"#3f7a4b",grassland:"#c99a3c",dryland:"#d98a3d",tundra:"#6fa8c9",other:"#2f8f7a"};
+  var CLOUD_AMT={forest:0.82,grassland:0.66,dryland:0.34,tundra:0.60,other:0.62};   // deserts read clearer, humid forests cloudier
   function paramsFor(w){
     var ba=w.ba||0,b=w.bucket,P={code:w.code,name:w.name,sub:w.sub,dot:BUCKETDOT[b]||"#8a8a8a"};
     if(b==="forest"){var tall=6+ba*0.55;
@@ -167,11 +168,11 @@
 
   // gradient sky dome with a soft sun (ignores fog; horizon colour == fog colour for a seamless join)
   var skyUni={topc:{value:new THREE.Color("#8fb0cf")},botc:{value:new THREE.Color("#d6e2ea")},
-    sund:{value:sun.position.clone().normalize()},time:{value:0},sunI:{value:1.0}};
+    sund:{value:sun.position.clone().normalize()},time:{value:0},sunI:{value:1.0},cloudAmt:{value:0.7}};
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(320,32,16),new THREE.ShaderMaterial({
     side:THREE.BackSide,depthWrite:false,uniforms:skyUni,
     vertexShader:"varying vec3 vp;void main(){vp=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
-    fragmentShader:"varying vec3 vp;uniform vec3 topc;uniform vec3 botc;uniform vec3 sund;uniform float time;uniform float sunI;"+
+    fragmentShader:"varying vec3 vp;uniform vec3 topc;uniform vec3 botc;uniform vec3 sund;uniform float time;uniform float sunI;uniform float cloudAmt;"+
       "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}"+
       "float nz(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);"+
         "float a=hash(i),b=hash(i+vec2(1.0,0.0)),c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0));"+
@@ -183,7 +184,7 @@
       "float up=max(d.y,0.06);vec2 uv=d.xz/up*1.3+vec2(time*0.006,time*0.0022);"+          // drifting clouds
       "float cl=smoothstep(0.50,0.95,fbm(uv))*smoothstep(0.02,0.30,d.y);"+                  // broken cover, above horizon only
       "vec3 cloud=mix(botc,vec3(1.0),0.62)*(0.35+0.65*sunI)+vec3(1.0,0.85,0.6)*pow(s,3.0)*0.35*sunI;"+ // lit by the current sun
-      "c=mix(c,cloud,cl*0.7);gl_FragColor=vec4(c,1.0);}"})));
+      "c=mix(c,cloud,cl*cloudAmt);gl_FragColor=vec4(c,1.0);}"})));
 
   // ---- time of day ----  a slider drives sky/sun/hemi/fog from dawn -> night.
   // top/bot === null means "use this site's own daytime palette", so the default (0.40 = Midday)
@@ -271,6 +272,7 @@
     scene.background=null; scene.fog=new THREE.Fog(new THREE.Color(site.sky[1]),42,150);
     baseSky0.set(site.sky[0]); baseSky1.set(site.sky[1]); baseGround.set(site.ground);
     applyTOD();   // sky/sun/hemi/fog from the current time-of-day over this site's palette
+    skyUni.cloudAmt.value=CLOUD_AMT[(ALL[site.code]&&ALL[site.code].bucket)||"forest"]||0.7;   // biome-varied cloud cover
     world.add(groundMesh(site.ground));
     var lidarEl=document.getElementById("lidar"+site.code);   // any site with a real CHM grid uses it
     if(lidarEl){
@@ -368,8 +370,8 @@
     o.connect(g); g.connect(AUDIO.master); o.start(t); o.stop(t+0.22);
   }
   function scheduleChirp(){
-    if(!AUDIO)return;                                   // busier (shorter gaps) when bird activity is high
-    var r=AUDIO.birdRate||0.5,
+    if(!AUDIO||!soundOn)return;                         // stop the idle timer when muted; restarts on toggle-on
+    var r=AUDIO.birdRate||0.5,                          // busier (shorter gaps) when bird activity is high
       delay=AUDIO.birds?(850+(1-r)*2600+Math.random()*1400):(6500+Math.random()*7000);
     AUDIO.chirpT=setTimeout(function(){chirp(); scheduleChirp();},delay);
   }
