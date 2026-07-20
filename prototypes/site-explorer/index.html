@@ -65,11 +65,13 @@
      interactive, and never styled to look like a disabled button. */
   .mapdot.built{cursor:pointer}
   .mapdot.built:hover,.mapdot.built:focus-visible{outline:none;stroke:var(--text);stroke-width:2.2}
-  .mapdot.unbuilt{opacity:.4;pointer-events:none;stroke-width:.8}
-  .mapdot.sel{stroke:var(--text);stroke-width:2.8}
-  @keyframes dotpulse{0%,100%{stroke-width:2.8}50%{stroke-width:4.2}}
-  .mapdot.built.sel{animation:dotpulse 2.6s ease-in-out infinite}
-  @media (prefers-reduced-motion: reduce){.mapdot.built.sel{animation:none}}
+  .mapdot.unbuilt{opacity:.72;pointer-events:none;stroke-width:1}
+  .mapdot.built{stroke:var(--text);stroke-width:2}
+  .mapdot.sel{stroke:var(--text);stroke-width:2.6}
+  .maphalo{fill:none;stroke:var(--a1);stroke-width:2;opacity:.55}
+  @keyframes halopulse{0%,100%{r:11;opacity:.55}50%{r:15;opacity:.12}}
+  .maphalo{animation:halopulse 2.8s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){.maphalo{animation:none;opacity:.4}}
   #mapHover{color:var(--text);font-style:italic}
   @media (max-width:560px){.inset{width:44%}.maplegend{width:100%}}
 
@@ -298,7 +300,8 @@
            plot:"https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e"};
   var ON_ARTIFACT=/(^|\.)claude\.ai$/.test(location.hostname);
   function walkHref(code){return (ON_ARTIFACT?ART.walk:"./walk.html")+"?site="+encodeURIComponent(code);}
-  function plotHref(){return ON_ARTIFACT?ART.plot:"./plot.html";}
+  function plotHref(code){var p=BUILT[code]&&BUILT[code].plot;
+    return (ON_ARTIFACT?ART.plot:"./plot.html")+(p?"?plot="+encodeURIComponent(p):"");}
   // Ground truth, not a guess: these seven sites have a committed lidar-<site>.json built
   // from a real NEON AOP canopy-height scan. Everything else is drawn procedurally from the
   // site's measured standing wood. Saying which is which turns a buried caveat into the
@@ -330,7 +333,7 @@
     svg.setAttribute("viewBox","0 0 "+space.w+" "+space.h);
     var out='<path d="'+space.outline+'" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>';
     space.sites.forEach(function(p){
-      var st=SITEMAP[p.code],built=isBuilt(p.code),rad=built?r+1.8:r*0.72,
+      var st=SITEMAP[p.code],built=isBuilt(p.code),rad=built?r+1.6:r,
           nm=esc((st&&st.name)||p.code), where=(st&&st.state?" &middot; "+esc(st.state):"");
       // Built sites are real controls. Unbuilt ones are scenery: no tabindex, no button
       // role, and an aria-label that says why - a silent unfocusable dot would read as
@@ -341,6 +344,7 @@
         ' aria-label="'+nm+(st&&st.state?", "+esc(st.state):"")+
         (built?'"':' — in the NEON network, not built yet"')+
         '><title>'+nm+where+(built?'':' &mdash; not built yet')+'</title></circle>';
+      if(built)out+='<circle class="maphalo" cx="'+p.x+'" cy="'+p.y+'" r="11" pointer-events="none"/>';
     });
     svg.innerHTML=out;
   }
@@ -500,7 +504,7 @@
       var on=(id===PLOT_SITE);
       pl.style.display="inline-flex";
       pl.classList.toggle("off",!on);
-      if(on){ pl.removeAttribute("aria-disabled"); pl.href=plotHref();
+      if(on){ pl.removeAttribute("aria-disabled"); pl.href=plotHref(id);
         pl.textContent="Meet the individual plants →";
         pl.title="179 individually tagged plants, mapped where they actually stand, in one plot here."; }
       else { pl.setAttribute("aria-disabled","true"); pl.removeAttribute("href");

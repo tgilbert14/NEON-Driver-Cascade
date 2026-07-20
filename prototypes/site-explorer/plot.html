@@ -106,6 +106,17 @@
   #card .c-meta{font-family:var(--mono);font-size:.68rem;color:#ffffffb0;margin-top:.45rem;line-height:1.5}
   #card .c-tag{color:#e0a24e}
   #card .c-dead{color:#c98a7a}
+  .crumbs{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
+    display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;justify-content:flex-end;max-width:min(30rem,72vw);
+    font-family:var(--mono);font-size:.68rem;background:#12110deb;border:1px solid #ffffff2a;
+    border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(8px);box-shadow:0 6px 20px #0007}
+  .crumbs a{color:#f4efe3;text-decoration:none;min-height:32px;display:inline-flex;align-items:center}
+  .crumbs a:hover{text-decoration:underline}
+  .crumbs a:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
+  .crumbs b{color:#e6c78a;font-weight:600}
+  .crumbs .sep{opacity:.45}
+  .crumbs .cw{opacity:.6}
+  @media (max-width:520px){.crumbs .cw{display:none}}
   .backlink{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
     font-family:var(--mono);font-size:.7rem;color:#f4efe3cc;text-decoration:none;background:var(--panel);border:1px solid var(--line);
     border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(6px)}
@@ -195,7 +206,16 @@
 <div id="tip"></div>
 <div id="coverPanel"></div>
 <div id="compass"><span class="ar">&#8593;</span>N</div>
-<a class="backlink" href="./index.html">&larr; back to the map</a>
+<!-- The plot is the deepest rung, so it must offer BOTH ways back out: the site it
+     belongs to (the walk) and the network map. A single "back" was ambiguous once the
+     walk existed as a separate place. -->
+<nav class="crumbs" aria-label="Where you are">
+  <a href="./index.html">&larr; Network</a>
+  <span class="sep">&middot;</span>
+  <a id="crumbSite" href="./walk.html?site=SRER">Santa Rita <span class="cw">(walk the site)</span></a>
+  <span class="sep">&middot;</span>
+  <b id="crumbPlot">SRER_048</b>
+</nav>
 <script>/**
  * @license
  * Copyright 2010-2021 Three.js Authors
@@ -755,6 +775,14 @@ function setInfo(on){
 }
 // On a phone the description panel plus the control stack left a sliver of actual plot,
 // so it starts collapsed there. The reopen pill is always present.
+// The breadcrumb names the plot and site actually loaded, ready for ?plot=<ID>.
+(function(){
+  var cp=document.getElementById("crumbPlot"), cs=document.getElementById("crumbSite");
+  var pid=(DATA.plot||"SRER_048"), site=(DATA.provenance&&DATA.provenance.site)||pid.split("_")[0];
+  if(cp)cp.textContent=pid;
+  if(cs){cs.href="./walk.html?site="+encodeURIComponent(site);
+    cs.innerHTML=(SITENAME[site]||site)+' <span class="cw">(walk the site)</span>';}
+})();
 setInfo(window.innerWidth>=768);
 infoBtn.addEventListener("click",function(){setInfo(false);});
 infoReopen.addEventListener("click",function(){setInfo(true);infoBtn.focus({preventScroll:true});});
@@ -777,6 +805,7 @@ var CM=["species","height","stems","dead"], cmi=0;
 // dead" from a live-by-construction status, and a species-typical default height
 // rendered on a scale captioned "plant height". Unmeasured plants now render flat grey
 // and are counted in the legend instead.
+var SITENAME={SRER:"Santa Rita"};   // display names for the breadcrumb
 var NOMEAS="#6b6a66";
 // Ramp domains come from the loaded plot. Hard-coded 0.3-2.8 m and 1-20 stems were
 // SRER's ranges: a forest plot would peg every ring at maximum while the caption still

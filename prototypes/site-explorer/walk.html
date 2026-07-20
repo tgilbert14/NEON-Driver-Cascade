@@ -55,6 +55,11 @@
     border:1px solid #00000066;cursor:pointer}
   .tod #todLabel{font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;color:#ffffffcc;min-width:8ch}
   .tod #todIcon{font-size:.9rem;width:1.1em;text-align:center}
+  .chiplab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+    color:#ffffffa8;align-self:center;margin-right:.15rem}
+  .noplot{font-family:var(--mono);font-size:.66rem;color:#ffffff8c}
+  .plotchip{text-decoration:none}
+  .plotchip .cn{opacity:.7;font-size:.92em}
   .backlink{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
     font-family:var(--mono);font-size:.7rem;color:#f4efe3cc;text-decoration:none;background:var(--panel);
     border:1px solid var(--line);border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(6px)}
@@ -82,7 +87,7 @@
     <div class="note" id="note"></div>
   </div>
 </div>
-<a class="backlink" id="backlink" href="./index.html">&larr; back to the map</a>
+<a class="backlink" id="backlink" href="./index.html">&larr; the network map</a>
 
 <script>/**
  * @license
@@ -567,19 +572,31 @@
     var sci=document.getElementById("sciLine"); sci.className="sci "+(sc.tone||"none"); sci.textContent=sc.line;
     curBucket=(ALL[site.code]&&ALL[site.code].bucket)||"forest"; if(soundOn)setBiomeSound(curBucket);
     document.getElementById("note").innerHTML=document.getElementById("lidar"+site.code)?LIDAR_NOTE:site.note;
-    Array.prototype.forEach.call(btnHost.children,function(b){b.setAttribute("aria-pressed",b.dataset.code===site.code?"true":"false");});
+    renderPlotChips(site.code);
   }
-  // SCBI belongs here: it is the only hand-authored deciduous scene backed by a real
-  // AOP CHM, and index.html deep-links every site, so omitting it left an active site
-  // with no matching chip and a stale aria-pressed sync.
-  ["WREF","SCBI","HARV","GUAN","TEAK","GRSM","SOAP","KONZ","CPER","SRER","JORN","MOAB","TOOL","NIWO"].filter(function(c){return ALL[c]||FEATURED[c];}).forEach(function(code){
-    var w=ALL[code]||{},f=FEATURED[code],dot=(f&&f.dot)||BUCKETDOT[w.bucket]||"#8a8a8a",nm=(f&&f.name)||w.name||code;
-    var b=document.createElement("button");b.className="sbtn";b.type="button";b.dataset.code=code;
-    b.innerHTML='<i style="background:'+dot+'"></i>'+(code==="TEAK"?"Teakettle":code==="GRSM"?"Smokies":nm.split(" ")[0])+
-      (code==="SRER"?" (Sonoran)":code==="JORN"?" (Chihuahuan)":code==="TEAK"?" (Sierra)":code==="GRSM"?" (Appalachian)":code==="SOAP"?" (foothills)":"");
-    b.addEventListener("click",function(){go(code);});
-    btnHost.appendChild(b);
-  });
+  /* ---- the chip row is a PLOT picker, not a site switcher ------------------------
+     The walk is now reached from one site at a time, so offering fourteen other sites
+     here was a lateral move out of the place the visitor just chose. These chips are
+     the plots reconstructed AT this site, which is the step further in. The registry
+     is per-site so this scales: a second SRER plot is one entry.                    */
+  var PLOTS={ SRER:[{id:"SRER_048", label:"SRER_048", note:"179 tagged plants"}] };
+  function renderPlotChips(code){
+    btnHost.innerHTML="";
+    var list=PLOTS[code]||[];
+    if(!list.length){
+      btnHost.innerHTML='<span class="noplot">No plot here has been reconstructed plant by plant yet.</span>';
+      return;
+    }
+    var lab=document.createElement("span"); lab.className="chiplab";
+    lab.textContent=list.length===1?"Plot mapped here:":"Plots mapped here:";
+    btnHost.appendChild(lab);
+    list.forEach(function(p){
+      var a=document.createElement("a"); a.className="sbtn plotchip";
+      a.href="./plot.html?plot="+encodeURIComponent(p.id);
+      a.innerHTML='<i style="background:#e6c78a"></i>'+p.label+' <span class="cn">'+p.note+'</span>';
+      btnHost.appendChild(a);
+    });
+  }
   // Site keys are uppercase; a deep link of ?site=srer would otherwise miss both maps
   // and land silently on Wind River wearing correct-looking chrome.
   var startCode=(new URLSearchParams(location.search).get("site")||"").trim().toUpperCase();

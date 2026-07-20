@@ -66,10 +66,16 @@ def script_body(html, opener):
     j = html.index("</script>", i)
     return html[i:j]
 
-# THREE: the first bare <script>...</script> after the sky-view backlink anchor
-anchor = "&larr; back to the map</a>"
-tj_open = old.index("<script>", old.index(anchor)) + len("<script>")
-three = old[tj_open:old.index("</script>", tj_open)]
+# THREE: locate the runtime STRUCTURALLY, not by neighbouring prose. This previously
+# keyed off the literal string "back to the map</a>", so the moment that link was
+# reworded the assembler stopped being able to find Three.js at all - a rebuild loop
+# that breaks when unrelated copy changes is not a build step.
+import re as _re
+_bare = [m for m in _re.finditer(r"<script>(.*?)</script>", old, _re.DOTALL)]
+_cands = [m.group(1) for m in _bare if len(m.group(1)) > 100000 and "THREE" in m.group(1)]
+if not _cands:
+    raise SystemExit("could not find the inlined Three.js runtime in plot.html")
+three = max(_cands, key=len)
 
 gtex = script_body(old, '<script id="groundTex" type="application/json">')
 geo = script_body(old, '<script id="geoLayers" type="application/json">')
