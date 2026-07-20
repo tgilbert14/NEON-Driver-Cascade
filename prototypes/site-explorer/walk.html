@@ -601,7 +601,11 @@
   // back-link: return to wherever we came from; fall back to the hosted map
   // (a production Pages deploy would just use the relative ./index.html)
   var bl=document.getElementById("backlink");
-  bl.href="https://claude.ai/code/artifact/ae959cc7-7728-4445-a4e1-bc5e79671755";
+  // Relative by default so the prototype works from the repo; the published artifact URL
+  // only when we are actually served from that host.
+  bl.href=/(^|\.)claude\.ai$/.test(location.hostname)
+    ? "https://claude.ai/code/artifact/ae959cc7-7728-4445-a4e1-bc5e79671755"
+    : "./index.html";
   bl.addEventListener("click",function(e){if(history.length>1){e.preventDefault();history.back();}});
 })();
 </script>

@@ -124,37 +124,13 @@
     padding:.45rem .95rem;backdrop-filter:blur(4px);transition:background .15s ease,border-color .15s ease}
   .stepin:hover{background:#ffffff3d;border-color:#fff}
   .stepin:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .rungs{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+  .stepin.alt{background:#ffffff1f}
+  .stepin.off{opacity:.5;cursor:default;pointer-events:none;background:#ffffff12}
 
   section.blk{padding:clamp(1.8rem,5vw,3rem) 0 .6rem}
   .blk h3{font-family:var(--serif);font-weight:600;font-size:clamp(1.3rem,3vw,1.7rem);margin:.3rem 0 .2rem;text-wrap:balance}
   .blk .lede{color:var(--muted);max-width:64ch;margin:.2rem 0 0}
-
-  .yearrow{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:clamp(1rem,4vw,2.4rem);align-items:center;margin-top:1.3rem}
-  @media (max-width:720px){.yearrow{grid-template-columns:1fr}}
-  .wheelbox{aspect-ratio:1;width:100%;max-width:340px;margin:0 auto}
-  .wheelbox svg{width:100%;height:auto;display:block;overflow:visible}
-  .month-seg{cursor:pointer}
-  .month-seg:focus-visible{outline:none}
-  .month-seg:focus-visible .seg-hit{stroke:var(--text);stroke-width:1.5}
-  .wheel-center .m{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;fill:var(--muted)}
-  .wheel-center .cap{font-family:var(--serif);font-size:.95rem;fill:var(--text)}
-  .legend{display:flex;flex-direction:column;gap:.8rem}
-  .legend .lg{display:flex;align-items:flex-start;gap:.7rem}
-  .legend .dot{width:14px;height:14px;border-radius:50%;margin-top:.28rem;flex:0 0 auto}
-  .legend .lg b{font-family:var(--sans);font-weight:650}
-  .legend .lg span{color:var(--muted);font-size:.92rem;display:block}
-  .rhythm{margin-top:.6rem;font-family:var(--serif);font-style:italic;color:var(--text);font-size:1.05rem;max-width:44ch}
-  .playbar{display:flex;align-items:center;gap:.7rem;margin-top:1rem;flex-wrap:wrap}
-  .playbtn{font:inherit;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;
-    background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.42rem .95rem;color:var(--text);
-    transition:border-color .15s ease,background .15s ease}
-  .playbtn:hover{border-color:var(--a1)}
-  .playbtn:focus-visible{outline:2px solid var(--a1);outline-offset:2px}
-  .playbtn .pi{color:var(--a1);font-size:.72rem;line-height:1}
-  .scrub{flex:1;min-width:7rem;max-width:15rem;accent-color:var(--a1);cursor:pointer}
-  .scrub:focus-visible{outline:2px solid var(--a1);outline-offset:3px}
-  .scrubm{font-family:var(--mono);font-size:.78rem;color:var(--muted);min-width:2.4rem;font-variant-numeric:tabular-nums}
-  .schematic{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;color:var(--muted);margin-top:.6rem}
 
   .drivers{display:grid;gap:.9rem;margin-top:1.3rem}
   .nonemsg{color:var(--muted);font-style:italic;background:var(--surface);border:1px dashed var(--line);
@@ -216,8 +192,8 @@
 <div class="wrap masthead">
   <div class="eyebrow">A design prototype · public site explorer</div>
   <h1>What drives this place?</h1>
-  <p>Pick a NEON field site and meet it as a <em>place</em> first &mdash; its rhythm across a year, and
-    the few things that really seem to run it. The science is here too, tucked one tap away.</p>
+  <p>Pick a NEON field site and meet it as a <em>place</em> first &mdash; where it is, what stands on it,
+    and the few things that really seem to run it. The science is here too, tucked one tap away.</p>
   <div class="badge">Wired to the committed atlas bundle &middot; <b>46 sites, real direction screens</b></div>
 </div>
 
@@ -257,38 +233,13 @@
       <h2 id="heroName"></h2>
       <div class="thesis" id="heroThesis"></div>
       <div class="place" id="heroPlace"></div>
-      <a class="stepin" id="stepIn" href="#" style="display:none">Step inside this place &rarr;</a>
+      <div class="rungs">
+        <a class="stepin" id="stepIn" href="#" style="display:none">Step inside this place &rarr;</a>
+        <a class="stepin alt" id="meetPlants" href="#" style="display:none">Meet the individual plants &rarr;</a>
+      </div>
     </div>
   </div>
 </div>
-
-<section class="blk wrap">
-  <div class="eyebrow">A year here</div>
-  <h3>The site keeps its own calendar</h3>
-  <p class="lede">Averages flatten a place. This wheel sketches when the rain arrives, when the ground
-    goes green, and when the animals stir. Hover or tap a month.</p>
-  <div class="yearrow">
-    <div class="wheelbox" id="wheelbox"></div>
-    <div>
-      <div class="legend">
-        <div class="lg"><span class="dot" style="background:var(--cool)"></span>
-          <div><b>Rain</b><span>when water shows up &mdash; and how hard</span></div></div>
-        <div class="lg"><span class="dot" style="background:var(--a2)"></span>
-          <div><b>Green</b><span>plants leafing out and growing</span></div></div>
-        <div class="lg"><span class="dot" style="background:var(--a1)"></span>
-          <div><b>Animals</b><span>the mice, bugs and birds responding</span></div></div>
-      </div>
-      <div class="rhythm" id="rhythm"></div>
-      <div class="playbar">
-        <button id="playBtn" class="playbtn" type="button" aria-label="Play the year in motion">
-          <span class="pi" aria-hidden="true">&#9654;</span><span id="playLbl">Play the year</span></button>
-        <input id="scrub" class="scrub" type="range" min="0" max="11" step="1" value="0" aria-label="Scrub through the months">
-        <span id="scrubM" class="scrubm">Jan</span>
-      </div>
-      <div class="schematic" id="schematic"></div>
-    </div>
-  </div>
-</section>
 
 <section class="blk wrap">
   <div class="eyebrow">What drives this place</div>
@@ -311,8 +262,7 @@
     </div>
     <div><b>Read the numbers honestly.</b> Single-site values are exploratory: with only ~6&ndash;13 years
       per site, no one site can be statistically significant &mdash; the <em>direction</em> is what's
-      readable. The only result that clears significance is the pooled network test shown up top. The
-      year-wheel is a schematic of each biome's typical rhythm, not measured monthly data.</div>
+      readable. The only result that clears significance is the pooled network test shown up top.</div>
     <div>Built by Desert Data Labs. Not affiliated with NEON / Battelle / NSF.</div>
   </div>
 </footer>
@@ -328,8 +278,21 @@
   var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---- travel map ---- */
-  var WALK_URL="https://claude.ai/code/artifact/93dc3028-3d44-4e50-88dd-5ce9b9985918";
-  var WALKABLE={WREF:1,SCBI:1,KONZ:1,SRER:1,JORN:1,TOOL:1};
+  // The sibling pages live beside this file, so link to them RELATIVELY: the prototype
+  // has to work opened straight from the repo. The published-artifact URLs are used only
+  // when we are actually being served from that host.
+  var ART={walk:"https://claude.ai/code/artifact/93dc3028-3d44-4e50-88dd-5ce9b9985918",
+           plot:"https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e"};
+  var ON_ARTIFACT=/(^|\.)claude\.ai$/.test(location.hostname);
+  function walkHref(code){return (ON_ARTIFACT?ART.walk:"./walk.html")+"?site="+encodeURIComponent(code);}
+  function plotHref(){return ON_ARTIFACT?ART.plot:"./plot.html";}
+  // Ground truth, not a guess: these seven sites have a committed lidar-<site>.json built
+  // from a real NEON AOP canopy-height scan. Everything else is drawn procedurally from the
+  // site's measured standing wood. Saying which is which turns a buried caveat into the
+  // reason to click.
+  var LIDAR={WREF:1,SCBI:1,HARV:1,GUAN:1,TEAK:1,GRSM:1,SOAP:1};
+  // The Plot has only been reconstructed for one NEON plot so far.
+  var PLOT_SITE="SRER";
   var MAP=JSON.parse(document.getElementById("mapData").textContent);
   var BUCKET_COLOR={forest:"#3f7a4b",grassland:"#c99a3c",dryland:"#d98a3d",tundra:"#6fa8c9",other:"#2f8f7a"};
   var BUCKET_NAME={forest:"Forest",grassland:"Grassland",dryland:"Dryland / desert",tundra:"Tundra / alpine",other:"Other"};
@@ -370,51 +333,28 @@
     function(c){c.classList.toggle("sel",c.dataset.id===id);});}
 
   // featured worlds (hand-authored place identity; science still comes from the bundle)
+  // editorial identity for the three written-up sites (name/kicker/place only).
+  // Their invented rhythm text and month curves are gone.
   var FEAT={
     SRER:{name:"Santa Rita",kicker:"Sonoran Desert · Arizona",
       place:"Santa Rita Experimental Range (SRER) · NEON Domain 14",
-      thesis:"A place that runs on rain — when it finally comes.",
-      rhythmText:"Nine dry months, then the summer monsoon breaks and the desert lives fast for a few weeks.",
-      world:{a1:"#d98a3d",a2:"#8a9a5b",a3:"#6d5a9c",sky1:"#2a1e3a",sky2:"#7c3a2f",land:"#b06a34"},
-      rain:[2,1,1,0,0,0,3,3,2,1,0,1],green:[0,0,1,1,0,0,1,2,3,1,0,0],animal:[1,1,1,1,1,1,2,2,2,2,1,1],
-      caps:{6:"The monsoon breaks — rain arrives hard and fast.",7:"Peak monsoon; the desert drinks.",8:"A brief green flush — the desert's short spring.",0:"Winter rains, sometimes. The other wet season."}},
+      world:{a1:"#d98a3d",a2:"#8a9a5b",a3:"#6d5a9c",sky1:"#2a1e3a",sky2:"#7c3a2f",land:"#b06a34"}},
     KONZ:{name:"Konza Prairie",kicker:"Tallgrass Prairie · Kansas",
       place:"Konza Prairie Biological Station (KONZ) · NEON Domain 06",
-      thesis:"Fire and rain, on a grassland that remembers both.",
-      rhythmText:"Spring fire clears the old thatch; warm rains through summer send the tallgrass shoulder-high.",
-      world:{a1:"#c99a3c",a2:"#5f8a3f",a3:"#3b6ea5",sky1:"#213a52",sky2:"#3b6ea5",land:"#9a7a2e"},
-      rain:[1,1,2,2,3,3,2,2,2,1,1,1],green:[0,0,1,2,3,3,3,3,2,1,0,0],animal:[1,1,1,2,2,2,3,3,2,2,1,1],
-      caps:{3:"Prairie fire clears last year's thatch.",4:"Warm rains; the grass explodes upward.",6:"High summer — seeds set, mice build.",9:"The grass cures gold and goes to seed."}},
+      world:{a1:"#c99a3c",a2:"#5f8a3f",a3:"#3b6ea5",sky1:"#213a52",sky2:"#3b6ea5",land:"#9a7a2e"}},
     SCBI:{name:"Blue Ridge Forest",kicker:"Eastern Deciduous Forest · Virginia",
       place:"Smithsonian Conservation Biology Institute (SCBI) · NEON Domain 02",
-      thesis:"Where spring warmth sets the clock.",
-      rhythmText:"A tall, closed canopy that leafs out in a rush each April and lets go in a blaze each October.",
-      world:{a1:"#3f7a4b",a2:"#a9c46a",a3:"#7a5230",sky1:"#12321f",sky2:"#2f5a37",land:"#5a4327"},
-      rain:[2,2,2,2,2,2,2,2,2,2,2,2],green:[0,0,1,2,3,3,3,3,2,1,0,0],animal:[0,1,1,2,2,2,2,2,1,1,0,0],
-      caps:{3:"Leaf-out — and warm springs pull it earlier.",4:"The canopy closes overhead.",9:"The canopy turns and begins to drop.",6:"Deep summer shade; the forest runs full."}}
+      world:{a1:"#3f7a4b",a2:"#a9c46a",a3:"#7a5230",sky1:"#12321f",sky2:"#2f5a37",land:"#5a4327"}}
   };
-  // biome fallback worlds + schematic rhythms for the other 43 sites
+  // per-biome colour palettes for the other 43 sites (design tokens only - the
+  // fabricated month curves and per-biome 'thesis' sentences were removed with the
+  // year wheel; every site sentence is now derived from its own data)
   var BIOME={
-    forest:{world:{a1:"#3f7a4b",a2:"#a9c46a",a3:"#7a5230",sky1:"#12321f",sky2:"#2f5a37",land:"#5a4327"},
-      thesis:"A forest that keeps time by the turning of its canopy.",
-      rain:[2,2,2,2,2,2,2,2,2,2,2,2],green:[0,0,1,2,3,3,3,3,2,1,0,0],animal:[0,1,1,2,2,2,2,2,1,1,0,0],
-      caps:{3:"Leaf-out — warmer springs pull it earlier.",9:"The canopy turns and drops."}},
-    grassland:{world:{a1:"#c99a3c",a2:"#5f8a3f",a3:"#3b6ea5",sky1:"#213a52",sky2:"#3b6ea5",land:"#9a7a2e"},
-      thesis:"A grassland written by rain and fire.",
-      rain:[1,1,2,2,3,3,2,2,2,1,1,1],green:[0,0,1,2,3,3,3,3,2,1,0,0],animal:[1,1,1,2,2,2,3,3,2,2,1,1],
-      caps:{4:"Warm rains; the grass runs high.",6:"Seeds set; the mice build."}},
-    dryland:{world:{a1:"#d98a3d",a2:"#8a9a5b",a3:"#6d5a9c",sky1:"#2a1e3a",sky2:"#7c3a2f",land:"#b06a34"},
-      thesis:"Dryland — it waits, then lives fast when the rain comes.",
-      rain:[2,1,1,0,0,0,3,3,2,1,0,1],green:[0,0,1,1,0,0,1,2,3,1,0,0],animal:[1,1,1,1,1,1,2,2,2,2,1,1],
-      caps:{6:"The monsoon breaks — rain arrives hard.",8:"A brief green flush."}},
-    tundra:{world:{a1:"#6fa8c9",a2:"#9bb5a0",a3:"#8595a5",sky1:"#1e2b3a",sky2:"#3a5266",land:"#6b7f8c"},
-      thesis:"The far north, where summer is a short, bright pulse.",
-      rain:[1,1,1,1,2,2,2,2,1,1,1,1],green:[0,0,0,0,1,3,3,2,1,0,0,0],animal:[0,0,0,1,2,3,3,2,1,0,0,0],
-      caps:{5:"Snowmelt; a compressed green summer.",6:"The brief pulse of life."}},
-    other:{world:{a1:"#2f8f7a",a2:"#a9c46a",a3:"#b07a34",sky1:"#123028",sky2:"#2f6f5a",land:"#6a5a2e"},
-      thesis:"A place with its own seasonal signature.",
-      rain:[2,2,2,2,2,2,2,2,2,2,2,2],green:[1,1,2,2,3,3,3,3,2,2,1,1],animal:[1,1,1,2,2,2,2,2,2,1,1,1],
-      caps:{4:"The growing season opens.",9:"The season winds down."}}
+    forest:{world:{a1:"#3f7a4b",a2:"#a9c46a",a3:"#7a5230",sky1:"#12321f",sky2:"#2f5a37",land:"#5a4327"}},
+    grassland:{world:{a1:"#c99a3c",a2:"#5f8a3f",a3:"#3b6ea5",sky1:"#213a52",sky2:"#3b6ea5",land:"#9a7a2e"}},
+    dryland:{world:{a1:"#d98a3d",a2:"#8a9a5b",a3:"#6d5a9c",sky1:"#2a1e3a",sky2:"#7c3a2f",land:"#b06a34"}},
+    tundra:{world:{a1:"#6fa8c9",a2:"#9bb5a0",a3:"#8595a5",sky1:"#1e2b3a",sky2:"#3a5266",land:"#6b7f8c"}},
+    other:{world:{a1:"#2f8f7a",a2:"#a9c46a",a3:"#b07a34",sky1:"#123028",sky2:"#2f6f5a",land:"#6a5a2e"}}
   };
   function titleCase(s){return (s||"").replace(/\b\w/g,function(c){return c.toUpperCase();});}
 
@@ -465,6 +405,22 @@
 
   /* ---- select a site ---- */
   var current=null;
+  // One honest line per site, computed from the driver intervals. A link "points one
+  // way" only when its plausible range stays on one side of zero; otherwise the honest
+  // answer is that we cannot tell yet. "Nothing readable" is a legitimate result here,
+  // not an empty state.
+  function siteAnswer(s){
+    var ds=s.drivers||[], clean=ds.filter(function(d){
+      return d.lo!=null&&d.hi!=null&&!(d.lo<0&&d.hi>0);});
+    if(!ds.length)
+      return "Nothing here has enough overlapping years to read yet — an honest gap, not an empty place.";
+    if(!clean.length)
+      return "Of the "+ds.length+" link"+(ds.length>1?"s":"")+" checkable here, none is clean enough to call "+
+             "yet — every plausible range still crosses zero.";
+    clean.sort(function(a,b){return Math.abs(b.r)-Math.abs(a.r);});
+    return clean[0].claim+" — "+clean.length+" of "+ds.length+" link"+(ds.length>1?"s":"")+
+           " checkable here "+(clean.length===1?"points":"point")+" one way.";
+  }
   function select(id){
     var s=SITEMAP[id]; if(!s)return; current=id;
     var f=FEAT[id], bi=BIOME[s.bucket]||BIOME.other;
@@ -477,87 +433,38 @@
     var locale=(s.state||s.domain)+(s.domain_name?" · "+s.domain_name+" domain":"");
     document.getElementById("heroKicker").textContent=f?f.kicker:(titleCase(s.biome_label)+" · "+(s.state||s.domain));
     document.getElementById("heroName").textContent=f?f.name:(s.name||("Site "+s.site));
-    document.getElementById("heroThesis").textContent=f?f.thesis:bi.thesis;
-    document.getElementById("heroPlace").textContent=f?f.place:
-      ("NEON site "+s.site+" · "+locale+(s.veg_ba_ha!=null?" · standing wood "+s.veg_ba_ha.toFixed(1)+" m²/ha":""));
-    document.getElementById("rhythm").textContent=f?f.rhythmText:bi.thesis;
-    document.getElementById("schematic").textContent=f?"Rhythm sketch for this site.":"Rhythm sketch — typical for a "+titleCase(s.biome_label)+" (schematic, not measured monthly data).";
-
-    drawWheel(f||bi);
-    if(player)player.resetIdle();
+    // The hero sentence is DERIVED from this site's own intervals, not authored. The
+    // previous version printed a per-biome template - one sentence shared by all 26
+    // forest sites - and printed it twice on the same screen.
+    document.getElementById("heroThesis").textContent=siteAnswer(s);
     drawDrivers(s);
     highlightMapDot(id);
-    var si=document.getElementById("stepIn");   // every site is walkable now (procedural from its biome + standing wood)
-    si.style.display="inline-flex"; si.href=WALK_URL+"?site="+id;
-  }
-
-  /* ---- year wheel (with year-in-motion) ---- */
-  var WHEEL=null, player=null;
-  function polar(cx,cy,rad,deg){var a=(deg-90)*Math.PI/180;return[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];}
-  function drawWheel(src){
-    var box=document.getElementById("wheelbox"),SZ=320,cx=SZ/2,cy=SZ/2,step=30;
-    var svg='<svg viewBox="0 0 '+SZ+' '+SZ+'" role="img" aria-label="A year here, month by month">';
-    var rings=[{key:"rain",r0:118,r1:150,col:"var(--cool)"},{key:"green",r0:84,r1:116,col:"var(--a2)"},{key:"animal",r0:50,r1:82,col:"var(--a1)"}];
-    for(var m=0;m<12;m++){
-      var a0=m*step+2,a1=(m+1)*step-2;
-      var pO=polar(cx,cy,152,a0),pO2=polar(cx,cy,152,a1),pI=polar(cx,cy,48,a1),pI2=polar(cx,cy,48,a0);
-      svg+='<g class="month-seg" tabindex="0" role="button" data-m="'+m+'" aria-label="'+M[m]+'">';
-      svg+='<path class="seg-hit" d="M'+pO[0]+' '+pO[1]+'A152 152 0 0 1 '+pO2[0]+' '+pO2[1]+'L'+pI[0]+' '+pI[1]+'A48 48 0 0 0 '+pI2[0]+' '+pI2[1]+'Z" fill="transparent" stroke="transparent"/>';
-      rings.forEach(function(rg){
-        var v=src[rg.key][m],op=[0.08,0.4,0.7,1][v],mid=(rg.r0+rg.r1)/2,hw=(rg.r1-rg.r0)/2*(v===0?0.5:(0.5+v*0.16));
-        var q0=polar(cx,cy,mid-hw,a0),q1=polar(cx,cy,mid-hw,a1),q2=polar(cx,cy,mid+hw,a1),q3=polar(cx,cy,mid+hw,a0);
-        svg+='<path d="M'+q0[0]+' '+q0[1]+'A'+(mid-hw)+' '+(mid-hw)+' 0 0 1 '+q1[0]+' '+q1[1]+'L'+q2[0]+' '+q2[1]+'A'+(mid+hw)+' '+(mid+hw)+' 0 0 0 '+q3[0]+' '+q3[1]+'Z" fill="'+rg.col+'" opacity="'+op+'"/>';
-      });
-      var lp=polar(cx,cy,166,(a0+a1)/2);
-      svg+='<text x="'+lp[0]+'" y="'+lp[1]+'" font-family="var(--mono)" font-size="8" fill="var(--muted)" text-anchor="middle" dominant-baseline="middle">'+M[m][0]+'</text></g>';
+    var si=document.getElementById("stepIn");
+    si.style.display="inline-flex"; si.href=walkHref(id);
+    si.textContent=LIDAR[id]
+      ? "Step inside — this canopy is a real laser scan →"
+      : (s.veg_ba_ha!=null
+          ? "Step inside — drawn from "+s.veg_ba_ha.toFixed(1)+" m²/ha of measured wood →"
+          : "Step inside — built from ground cover →");
+    si.title=LIDAR[id]
+      ? "Real NEON airborne LiDAR canopy heights for this site — not an impression."
+      : (s.veg_ba_ha!=null
+          ? "The vegetation is a procedural impression sized from this site's measured standing wood."
+          : "Standing wood was not measured here, so the scene is built from ground cover alone.");
+    // The Plot is real per-individual data and exists for exactly one plot.
+    var pl=document.getElementById("meetPlants");
+    if(pl){
+      var on=(id===PLOT_SITE);
+      pl.style.display="inline-flex";
+      pl.classList.toggle("off",!on);
+      if(on){ pl.removeAttribute("aria-disabled"); pl.href=plotHref();
+        pl.textContent="Meet the individual plants →";
+        pl.title="179 individually tagged plants, mapped where they actually stand, in one plot here."; }
+      else { pl.setAttribute("aria-disabled","true"); pl.removeAttribute("href");
+        pl.textContent="Plant-by-plant: Santa Rita only, so far";
+        pl.title="The Plot has only been reconstructed for Santa Rita (SRER_048) so far."; }
     }
-    svg+='<g id="nowPointer" style="opacity:0;transition:opacity .3s ease">'+
-      '<line x1="'+cx+'" y1="'+(cy-44)+'" x2="'+cx+'" y2="'+(cy-155)+'" stroke="var(--a1)" stroke-width="2.4" stroke-linecap="round"/>'+
-      '<circle cx="'+cx+'" cy="'+(cy-155)+'" r="4.2" fill="var(--a1)"/></g>';
-    svg+='<g class="wheel-center"><text class="m" x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" id="wcM"></text><text class="cap" x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" id="wcC"></text></g></svg>';
-    box.innerHTML=svg;
-    var mEl=box.querySelector("#wcM"),cEl=box.querySelector("#wcC"),caps=src.caps||{},
-        ptr=box.querySelector("#nowPointer"),segs=box.querySelectorAll(".month-seg");
-    function caption(m){
-      mEl.textContent=M[m];cEl.textContent="";
-      var cap=caps[m]||"a quieter month here";var words=cap.split(" "),line="";
-      words.forEach(function(wd){if((line+" "+wd).trim().length>22){addT(line);line=wd;}else line=(line?line+" ":"")+wd;});addT(line);
-      function addT(t){var ts=document.createElementNS("http://www.w3.org/2000/svg","tspan");ts.setAttribute("x",cx);ts.setAttribute("dy",cEl.childNodes.length?"1.1em":"0");ts.textContent=t;cEl.appendChild(ts);}
-    }
-    function emphasize(m){Array.prototype.forEach.call(segs,function(g){
-      var hit=g.querySelector(".seg-hit");hit.style.transition="fill .25s ease";
-      hit.style.fill=(+g.dataset.m===m)?"color-mix(in srgb,var(--a1) 20%,transparent)":"transparent";});}
-    WHEEL={rest:0,
-      setMonth:function(m){caption(m);emphasize(m);ptr.style.opacity="1";
-        ptr.setAttribute("transform","rotate("+(m*30+15)+" "+cx+" "+cy+")");
-        var sc=document.getElementById("scrub"),sm=document.getElementById("scrubM");
-        if(sc)sc.value=m; if(sm)sm.textContent=M[m];}
-    };
-    Array.prototype.forEach.call(segs,function(g){var m=+g.dataset.m;
-      g.addEventListener("mouseenter",function(){if(player)player.pause();WHEEL.setMonth(m);});
-      g.addEventListener("focus",function(){if(player)player.pause();WHEEL.setMonth(m);});});
-    var rest=Object.keys(caps).map(Number).sort(function(a,b){return a-b;})[0];
-    WHEEL.rest=(rest==null?0:rest); WHEEL.setMonth(WHEEL.rest);   // rest on the site's signature month
   }
-
-  /* ---- year-in-motion player (wired once) ---- */
-  (function(){
-    var playBtn=document.getElementById("playBtn"),
-        playLbl=document.getElementById("playLbl"),
-        playIcon=playBtn.querySelector(".pi"),
-        scrub=document.getElementById("scrub");
-    var st={month:0,playing:false,timer:null};
-    function setBtn(){playIcon.innerHTML=st.playing?"&#10074;&#10074;":"&#9654;";
-      playLbl.textContent=st.playing?"Pause":(reduce?"Step a month":"Play the year");}
-    function go(m){st.month=((m%12)+12)%12; if(WHEEL)WHEEL.setMonth(st.month);}
-    function pause(){st.playing=false; if(st.timer){clearInterval(st.timer);st.timer=null;} setBtn();}
-    function play(){ if(reduce){go(st.month+1);return;}
-      st.playing=true; setBtn(); go(st.month); st.timer=setInterval(function(){go(st.month+1);},820);}
-    playBtn.addEventListener("click",function(){st.playing?pause():play();});
-    scrub.addEventListener("input",function(e){pause();go(+e.target.value);});
-    player={pause:pause,resetIdle:function(){pause();st.month=(WHEEL&&WHEEL.rest!=null)?WHEEL.rest:0;scrub.value=st.month;}};
-    setBtn();
-  })();
 
   /* ---- driver cards (real bundle values) ---- */
   function noteFor(d){

@@ -14,8 +14,13 @@ Last updated: 2026-07-20.
 - **Step inside (3D walk):** https://claude.ai/code/artifact/93dc3028-3d44-4e50-88dd-5ce9b9985918
 
 To update either: republish the **same file path** via the Artifact tool (keeps the URL). From a
-different chat, pass the URL as `url`. The two pages cross-link by hardcoded artifact URL
-(`WALK_URL` in `index.html`; the back-link in `walk.html`) — update those if a URL ever changes.
+different chat, pass the URL as `url`.
+
+**Cross-linking is relative, not hardcoded** (as of rung 22). `index.html` → `./walk.html?site=CODE`
+and `./plot.html`; `walk.html` and `plot.html` → `./index.html`. The published artifact URLs are used
+**only** when the page is actually served from `claude.ai` (`ART` + `ON_ARTIFACT` in `index.html`, and
+the equivalent host test on `walk.html`'s back-link). This is what lets the prototype work opened
+straight from the repo — it previously did not. Update the `ART` map if an artifact URL ever changes.
 
 ## The concept ladder (what's built)
 
@@ -46,7 +51,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 20 | **Walkable forests** — real-LiDAR stems thinned from per-cell grid to sparse jittered scatter (sightlines!) | DONE | #30 |
 | 21 | **Provenance receipt + scientific corrections** — every page now names its source vintage; six wrong/unsourced numbers fixed | DONE | — |
 | 21b | **Protocol review (NEON SOP)** — "Survey campaigns" was a misread; relabelled "First tagged", and three shipped claims corrected | DONE | — |
-| 22+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
+| 22 | **Index explorer, pass 1** — driver cards show the plausible range; the invented year wheel is cut; the three pages finally link up | DONE | — |
+| 23+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -247,6 +253,56 @@ NEON's recorded sampled area, which makes it a lower bound and the percentage an
 **Still UNKNOWN, deliberately.** Growth, survival, true recruitment and the recorded sampled area all need
 `vst_perplotperyear` and `vst_apparentindividual` keyed on `eventID` — neither is committed here. The page
 says so rather than guessing.
+
+## Rung 22 — the index explorer, pass 1
+
+A seven-lens audit found the index was not an outline but **a finished shell around an invented
+middle**: `FEAT` hand-wrote prose and 12-month rain/green/animal curves for 3 sites, `BIOME` supplied
+5 canned templates for the other 43. So the hero and year wheel carried no site-specific information
+for 43 of 46 sites — all 26 forest sites shared one sentence — and `select()` printed that sentence
+**twice on the same screen**.
+
+**Two honesty breaks, both fixed.**
+
+1. Driver cards drew a **solid** bar of width `|r|` and labelled the p-value **"confidence"**. A solid
+   bar reads as a firm result; a non-scientist reads "confidence 0.88" as 88% sure, which is close to
+   the opposite. KONZ's first card has r = −0.22 over an interval of **−1.00 to +0.70** and drew as a
+   confident bar 22% wide. The bundle carries a plausible range for all **162** links and **133 of them
+   straddle zero** — none of which was visible. Replaced with a whisker on a zero-centred −1…+1 axis:
+   hatched band lo→hi, dot at r, and a verdict word derived from the interval itself
+   ("points one way" / "can't tell which way yet"). `p` moved to the drawer, relabelled
+   *"how easily chance alone could produce a pattern this strong — higher means more easily."*
+   Correcting a misread number teaches; hiding it does not.
+2. The year wheel gave featured sites `"Rhythm sketch for this site."` instead of
+   `"(schematic, not measured monthly data)"`. The page boots on SRER, so **the first wheel any
+   visitor saw was the one missing its caveat**, and it said "for this site" — implying measured data.
+   The bundle is annual; no month on that wheel was measured for any of the 46 sites.
+
+**The wheel is cut, not captioned.** Removing it removes the break; captioning only manages it, and
+hanging real units on fabricated rings would make it worse. Gone: the section, its CSS, `drawWheel`,
+the player, and every invented month array and `thesis`/`rhythmText` string. **Kept:** the per-biome
+colour palettes, which are design tokens, not claims.
+
+**The hero sentence is now derived.** `siteAnswer()` reads the site's own intervals: it names the
+strongest link whose range stays one side of zero, or says plainly that none is clean enough to call.
+Across the 46 sites that yields 22 with a readable link, 23 honestly reporting nothing clean, and 1
+(TEAK) with too little data — "an honest gap, not an empty place."
+
+**The three pages are finally one journey.** `index.html` had **no reference to `plot.html` at all**,
+and pinned the walk to a private `claude.ai/code/artifact/…` URL — so opened from the repo, the
+prototype's own navigation did not work. Both now resolve **relatively**, falling back to the artifact
+URLs only when actually served from that host. The dead `WALKABLE` list was replaced with the real
+seven-site LiDAR set, and the walk link now states ground truth: *"this canopy is a real laser scan"*
+for those 7, *"drawn from 5.1 m²/ha of measured wood"* for the 33 with a measurement, *"built from
+ground cover"* for the 6 without. A second rung links The Plot, active on SRER (the default landing
+site) and explicitly disabled elsewhere with "Santa Rita only, so far."
+
+**Still to do** (from the audit, in order): the field card rebuilt from data for all 46; the masthead
+orienting paragraph; the solid-vs-null result pair with map result-mode; the weather→plants→animals
+chain from the 20 unused `signals`. Also unused and worth surfacing: `biome_class` (41
+temperature-limited / 5 water-limited), `veg_ba_se`, `veg_design_status`, `lat`/`lon`, and
+`network.null` — the matched null result (temp_spring→green-up, 8 of 18, p = 0.76) that proves the
+test can fail.
 
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
