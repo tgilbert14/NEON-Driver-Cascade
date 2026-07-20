@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Plot — SRER_048, plant by plant</title>
+<title>The Plot — __PLOTID__, plant by plant</title>
 <style>
   :root{--ink:#f4efe3;--panel:#0e0d0acc;--line:#ffffff26;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
     --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--serif:"Iowan Old Style",Palatino,Georgia,serif;}
@@ -211,7 +211,7 @@
   <div class="top" id="topBox" hidden>
     <div class="acard">
       <div class="eyebrow">A real-data reconstruction</div>
-      <div class="ttl" id="aTitle">SRER_048 &mdash; plant by plant</div>
+      <div class="ttl" id="aTitle">__PLOTID__ &mdash; plant by plant</div>
       <div class="sub" id="sub"></div>
       <div class="afacts" id="aFacts"></div>
       <div class="aground" id="aGround" hidden></div>
@@ -312,11 +312,17 @@ document.getElementById("sub").innerHTML=
 (function(){
   var d=Math.round(DATA.plotDim||40), pv=DATA.provenance||{}, f=[];
   function row(k,v){f.push('<div class="fr"><b>'+k+'</b><span>'+v+'</span></div>');}
-  row("plot", "SRER_048 &middot; "+d+"&thinsp;×&thinsp;"+d+"&thinsp;m (amber boundary)");
+  row("plot", (DATA.plot||"SRER_048")+" &middot; "+d+"&thinsp;×&thinsp;"+d+"&thinsp;m (amber boundary)");
   row("where", "Santa Rita Experimental Range &middot; Sonoran desert");
   row("source", (pv.product||"DP1.10098.001")+" &middot; NEON Vegetation Structure");
   row("dates", "the year each plant's tag went on, not a re-survey");
-  if(DATA.surveyNote)row("surveyed", DATA.surveyNote+" — the shaded half was not mapped");
+  if(DATA.surveyNote){
+    // Only claim a "shaded area" when one is actually drawn (same test as the scene shade,
+    // below): a plot whose plants span the whole boundary has no shaded strip to explain.
+    var _pd=DATA.plotDim||40, _xmin=(DATA.mappedExtent&&DATA.mappedExtent.xmin!=null)
+      ? DATA.mappedExtent.xmin : Math.min.apply(null,DATA.plants.map(function(p){return p.x;}));
+    row("surveyed", DATA.surveyNote+(((_xmin+_pd/2)>2)?" — the shaded area was not mapped":""));
+  }
   document.getElementById("aFacts").innerHTML=f.join("");
 })();
 
@@ -1032,6 +1038,19 @@ var SITENAME={SRER:"Santa Rita"};   // display names for the breadcrumb
   if(cp)cp.textContent=pid;
   if(cs){cs.href="./walk.html?site="+encodeURIComponent(site);
     cs.innerHTML=(SITENAME[site]||site)+' <span class="cw">(walk the site)</span>';}
+  // --- plot switcher: other built plots at this site (relative in-repo, artifact URL when served) ---
+  var PLOTS=[
+    {id:"SRER_048", file:"plot.html",         art:"https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e"},
+    {id:"SRER_056", file:"plot-srer056.html", art:"https://claude.ai/code/artifact/fc6de1aa-76e8-4bf3-bef3-df371876f0fd"}
+  ];
+  var onArt=/(^|\.)claude\.ai$/.test(location.hostname);
+  var others=PLOTS.filter(function(p){return p.id!==pid && p.art.indexOf("__ART_")<0;});
+  if(others.length && cp && cp.parentNode){
+    var sw=document.createElement("span"); sw.className="plotsw";
+    sw.innerHTML=' <span class="cw">also</span> '+others.map(function(p){
+      return '<a href="'+(onArt?p.art:("./"+p.file))+'">'+p.id+'</a>';}).join(' ');
+    cp.parentNode.appendChild(sw);
+  }
 })();
 // Starts CLOSED on every screen: the plot is the point, and the reopen pill is always
 // visible so the panel is one obvious tap away.

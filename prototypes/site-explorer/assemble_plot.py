@@ -56,6 +56,9 @@ ap = argparse.ArgumentParser(description="assemble the self-contained plot page"
 ap.add_argument("--plot", default="SRER_048",
                 help="plot id to inline, e.g. SRER_048 (default: %(default)s)")
 ap.add_argument("--out", default="plot.html", help="output file (default: %(default)s)")
+ap.add_argument("--geo", default=None,
+                help="geo-layers JSON to inject (bootstraps a NEW plot's AOP layers). If omitted, "
+                     "reuse the geo block from --out when it already exists, else from plot.html.")
 args = ap.parse_args()
 
 PLOT_ID = args.plot
@@ -96,7 +99,15 @@ if not _cands:
 three = max(_cands, key=len)
 
 gtex = script_body(old, '<script id="groundTex" type="application/json">')
-geo = script_body(old, '<script id="geoLayers" type="application/json">')
+# geo layers are plot-SPECIFIC (unlike Three.js + the ground texture, which every plot
+# shares). Reuse the block from the output file when rebuilding an existing plot; inject a
+# fresh bundle with --geo to bootstrap a new plot, whose page then carries its own geo.
+if args.geo:
+    geo = read_text(args.geo if os.path.isabs(args.geo) else os.path.join(D, args.geo))
+else:
+    out_path = os.path.join(D, args.out)
+    geo_src = out_path if os.path.exists(out_path) else os.path.join(D, "plot.html")
+    geo = script_body(read_text(geo_src), '<script id="geoLayers" type="application/json">')
 
 # sanity: the extracts must look like what we expect before we write anything
 assert len(three) > 100000, "three.js extract looks wrong (%d bytes)" % len(three)
@@ -106,7 +117,8 @@ assert '"ortho"' in geo and '"chm"' in geo, "geoLayers extract looks wrong: %r" 
 out = (src.replace("__THREE__", three)
           .replace("__PLOTDATA__", data)
           .replace("__GROUNDTEX__", gtex)
-          .replace("__GEOLAYERS__", geo))
+          .replace("__GEOLAYERS__", geo)
+          .replace("__PLOTID__", PLOT_ID))   # static <title>/About heading, resolved at build time
 
 # sanity: the exact placeholder TAGS from the template must be gone.
 # (three.js itself contains the token "__THREE__" internally, so check the tags, not bare tokens.)
