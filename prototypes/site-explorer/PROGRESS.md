@@ -44,7 +44,8 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 18 | **Richer geometry** — scattered rocks + fallen logs, layered distant hills, rounder tree crowns | DONE | #28 |
 | 19 | **Generated textures** — per-biome ground + bark from an image model, embedded inline, on ground+trunks | DONE | #29 |
 | 20 | **Walkable forests** — real-LiDAR stems thinned from per-cell grid to sparse jittered scatter (sightlines!) | DONE | #30 |
-| 21+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
+| 21 | **Provenance receipt + scientific corrections** — every page now names its source vintage; six wrong/unsourced numbers fixed | DONE | — |
+| 22+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -63,7 +64,7 @@ NEON plot plant-by-plant**. Test build: **SRER_048** (Santa Rita, Sonoran desert
 plants** from Vegetation Structure (DP1.10098.001), each at its **real mapped position** (pointID +
 stemDistance + stemAzimuth, point coords from the locations API), sized by real height/crown, live vs
 standing-dead, and **click a plant to read its actual NEON record** (species, individualID, tag year,
-measured height/crown, status). 9 species, 104 measured heights, 28 dead. See `build_plot.md`. Live
+measured height/crown, status). 9 species, 104 measured heights, 5 whole plants dead of the 104 assessed. See `build_plot.md`. Live
 artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
 (self-contained), `plot-srer048.json` + `div-srer.json` (derived), `plot.src.html` (template),
 **`assemble_plot.py`** (reproducible re-inliner — commits, needs no raw data/token), `build_plot.md` (recipe).
@@ -100,9 +101,11 @@ AOP shares our UTM grid and is the correct, openly-licensed source.
 mariola) is shaped by its own NEON record: mean **basalStemDiameter** → stem/trunk thickness,
 **ninetyCrownDiameter** → **elliptical** crowns, and recorded canopy **shape** → vertical profile.
 
-**Multi-stem correctness (done):** these plants are MULTI-STEM (median 10 stems, up to 45), and `plantStatus`
+**Multi-stem correctness (done):** these plants are MULTI-STEM (median 11 stems, up to 45), and `plantStatus`
 is **per stem**. Old code picked one stem and mislabelled whole plants — the real counts are **5 fully dead,
-80 partially-dead (some stems dead), 23 all-live** (not "28 dead"). `build_plot.py` now aggregates: `stems`
+80 partially-dead (some stems dead), 19 all-live** (not "28 dead") — of the **104** plants that carry a
+VST apparent-individual record. The other 75 (the cacti) have no such record, so their status is not
+assessable and they are not in that denominator. `build_plot.py` now aggregates: `stems`
 (count), `dead` (dead-stem count), status = dead only if EVERY stem is dead. Creosote renders its real stem
 count with the dead fraction as bare grey stems among green live ones; the card reads e.g. "live · 7 of 16
 stems standing dead · some damage".
@@ -129,7 +132,9 @@ per-plant proxy pick-list (`PICK`).
 click-inspect) so you can compare our mapped positions against the aerial / canopy layers.
 
 **Cover & species panel (done):** a "Cover & species" side panel shows the plot's **estimated woody canopy
-cover (~26.6%)** by species (from the real crowns ÷ 1600 m²), plus **SRER site-level ground cover** from plant
+cover (~53.9%)** by species (summed live crown ellipses π(cr÷2)(cr90÷2) ÷ the **790 m² surveyed**
+strip, not the full 1600 m² plot — VST mapped only the eastern half, so the unsurveyed west is
+excluded from the denominator rather than counted as measured zero cover), plus **SRER site-level ground cover** from plant
 diversity (litter 57% / bare soil 26% / rock 8% …) and the understory species (Lehmann lovegrass, black grama,
 tanglehead, burroweed, fairy duster). SRER_048 is not itself a diversity plot, so the ground/understory layer
 is site-level context (`div-srer.py` → `div-srer.json`, 2024 growing season), clearly labelled.
@@ -160,11 +165,55 @@ have no VST apparent record → species defaults). Positions unchanged, so the A
 plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,
 more plots.
 
+## Rung 21 — the provenance receipt (and the numbers it exposed)
+
+The prototype's data was **correct but unfalsifiable**: nothing on any page said *which* vintage of a
+versioned, revised NEON product it came from. A review against the sibling Vegetation Structure
+Explorer — which has since pinned itself to **RELEASE-2026** (DOI `10.48443/pypa-qf12`) with an exact
+raw digest — made the gap concrete. Fixed in two halves.
+
+**The receipt.** `export_data.py` now reads the `source_products` table that
+`scripts/build_cascade.R` already writes into the bundle, and stamps it into `site-data.json.meta.provenance`
+together with the bundle's SHA-256, schema version, build time and tier rule. The explorer footer renders
+it: bundle `47b98e48…` · built 2026-07-03 · and, behind a disclosure, the **exact sibling commit for all
+seven source products** (veg is pinned at `5e73e0d`). `plot-srer048.json` and `div-srer.json` gained a
+`provenance` object each, and The Plot's panel now has a "Where this data came from" section. Where a
+field genuinely cannot be recovered it says **UNKNOWN with the reason** rather than staying silent —
+the release tag was never captured because the build queried the live API, and `build_plot.py` is not
+committed, so those records are not reproducible from this repo alone. Both facts are now stated on the
+page instead of being invisible.
+
+**What the receipt exposed.** Writing down the formula forced four published numbers to be corrected:
+
+- **Canopy cover was normalised to the wrong denominator.** Cover divided by the full 1600 m² plot
+  while density, eleven lines earlier, divided by the 790 m² *surveyed* strip — two denominators for
+  one plot in one panel. VST mapped only the eastern half, so the whole-plot divisor counts 810 m² of
+  never-surveyed ground as measured zero cover. Now **53.9% over the surveyed area**, with the formula
+  (live-only, elliptical) written out and the whole-plot figure kept as a labelled aside.
+- **"23 all-live" was arithmetically impossible** — 5 + 80 + 23 = 108 against 104 records. It is **19**.
+- **Stem median was 10; it is 11.** And the retired **"28 dead"** still survived in two places.
+- **"5 of 179 whole plants dead"** conflated assessed with unassessable: the 75 cacti carry no VST
+  apparent-individual record and are live by construction. Now **"5 of 104 assessed"**.
+
+**Also fixed in this rung.** A genuine honesty-rail break: **NIWO** (tundra bucket, `ba` 31.1 m²/ha)
+rendered treeless while its caption claimed "built from … measured standing wood" — the tundra branch
+never reads `ba`. The claim is now made only when the bucket actually used the measurement, and the
+unused figure is disclosed instead of asserted. Plus: **no page had a `<meta name="viewport">`**, so
+every responsive rule was dead on real phones (mobile browsers laid out at ~980 px and scaled down);
+added, along with the `<meta charset="utf-8">` all three pages were missing. `assemble_plot.py` read
+and wrote with the platform's locale encoding and newline translation — on this Windows host that is
+cp1252 + CRLF, which would corrupt the UTF-8 text and violate `.gitattributes eol=lf`; now explicit.
+
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
-- `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~1236 KB; deep-linkable via `?site=CODE`).
-- `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
+- `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined; ~133 KB).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~1270 KB; deep-linkable via `?site=CODE`, case-insensitive).
+- `plot.html` — "The Plot", SRER_048 (self-contained; ~952 KB). Built from `plot.src.html` by `assemble_plot.py`.
+- `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science
+  **plus the provenance receipt**: bundle SHA-256, build time, schema, and the seven source-product commits).
+- `assemble_index.py` — re-inlines `site-data.json` + `map-data.json` into `index.html`. Idempotent;
+  replaces only the two tagged block bodies. (This step used to be a manual paste, which is not a build step.)
+- `assemble_plot.py` — re-inlines the scene template + committed JSON into `plot.html` (needs no raw data or token).
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
 - `site-data.json` / `map-data.json` / `neon-site-names.json` — generated/fetched data.
@@ -179,6 +228,21 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
 
 ## Key facts / honesty rails (keep these true)
 
+- **Every number names its vintage.** NEON products are versioned and revise prior data, and the sibling
+  apps this bundle was built from keep moving. "From the committed bundle" is not provenance. The explorer
+  footer carries the bundle SHA-256, build time and all seven source-product commits; The Plot's panel
+  carries its product, access bound, release (currently **UNKNOWN**, with the reason) and bout composition.
+  A field that cannot be recovered says `UNKNOWN` **and why** — never nothing.
+- **The Plot is a two-bout composite, not a census.** Its 179 plants pool the 2016 (88) and 2021 (91)
+  survey campaigns into one scene. The sibling's current contract treats the latest supported event per
+  plot as current state and does not pool repeated events; the page says so, and the Survey filter lets
+  you separate them.
+- **Cover is over the surveyed area, and is summed not unioned.** VST mapped only the eastern half of
+  SRER_048, so cover divides by 790 m², not the 1600 m² plot — dividing by the plot would count
+  never-surveyed ground as measured zero. Crowns overlap, so `100 − cover` is **not** open interspace.
+- **A scene may only claim a measurement it actually used.** The tundra branch ignores `veg_ba_ha`, so
+  NIWO must not say it was "built from measured standing wood" (it renders from ground cover alone); the
+  unused figure is disclosed instead. Same rule for grassland below its `ba > 2` threshold.
 - The science is **real** from the committed bundle: the one solid pooled result is `temp → green-up`,
   **15 of 18 sites, p = 0.004**. Single-site values are framed as *direction, never significance*
   (no short series can be significant); context-only measures are labelled "not counted in the network test".
@@ -262,10 +326,14 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
 
 ```bash
 pip install rdata
-python3 prototypes/site-explorer/export_data.py            # -> site-data.json
+python3 prototypes/site-explorer/export_data.py            # -> site-data.json (+ provenance receipt)
 python3 prototypes/site-explorer/build_map.py us.json       # -> map-data.json (us.json = a US-states GeoJSON)
-# then inline site-data.json / map-data.json into index.html's <script id="siteData"> / <script id="mapData">
+python3 prototypes/site-explorer/assemble_index.py          # -> re-inlines both into index.html (idempotent)
 ```
+
+The re-inline used to be a manual paste. It is a build step now: `assemble_index.py` replaces only the
+bodies of the two tagged `<script>` blocks, parses each JSON first (so a malformed file fails loudly
+instead of shipping), and is a no-op when the data has not changed.
 Verify headlessly with Chromium at `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` via
 `playwright-core` (WebGL needs `--enable-unsafe-swiftshader`). Every rung was checked for 0 console/page
 errors, correct rendering, and no 390 px mobile overflow before merge.

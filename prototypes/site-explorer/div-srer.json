@@ -78,5 +78,24 @@
 "pct": 0.9
 }
 ],
-"note": "SRER site-level plant diversity (DP1.10058.001, 2024 growing season). SRER_048 is a Vegetation-Structure plot and is not itself a diversity plot, so this is the site's ground + herbaceous layer as context for the interspaces."
+"note": "SRER site-level plant diversity (DP1.10058.001, 2024 growing season). SRER_048 is a Vegetation-Structure plot and is not itself a diversity plot, so this is the site's ground + herbaceous layer as context for the interspaces.",
+"provenance": {
+"product": "DP1.10058.001",
+"productName": "Plant presence and percent cover (NEON TOS)",
+"site": "SRER",
+"scope": "site-level (SRER_048 is a Vegetation Structure plot, not a diversity plot)",
+"bout": "2024-08",
+"plots": 4,
+"subplots": 24,
+"obtained": "live NEON API query (see build_plot.md)",
+"accessed_on_or_before": "2026-07-19",
+"accessed_basis": "first commit of this file (91bc858, 2026-07-19 23:41 UTC)",
+"officialNeonRelease": "UNKNOWN",
+"releaseDoi": "UNKNOWN",
+"release_basis": "built from a live API query rather than a pinned NEON release; vintage not captured at build time",
+"builder": "div_srer.py (scratchpad; not committed)",
+"reproducible_from_repo": false,
+"ground_pct_sum": 100.8,
+"ground_pct_sum_note": "These are mean per-subplot cover shares and do not form a closed budget: they sum to 100.8%, not 100%. Read each class on its own, not as a share of a whole."
+}
 }

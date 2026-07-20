@@ -18,7 +18,7 @@ height/crown, status).
 
 SRER_048 has **179 mapped plants, 9 species** (creosote bush ×93, Christmas cholla ×53, velvet
 mesquite ×13, fishhook barrel cactus, Engelmann prickly pear, Graham's pincushion, longleaf
-jointfir, …), 104 with measured heights, 28 standing dead.
+jointfir, …), 104 with measured heights, and 5 whole plants standing dead of those 104.
 
 ## Build
 
@@ -124,9 +124,11 @@ plants; cacti have no VST apparent record) is shaped by its own record, pulled i
 These plants are **multi-stem**: an individual has one crown/height row plus many per-stem rows, each with a
 `basalStemDiameter` and its own `plantStatus`. `build_plot.py` aggregates across the stems:
 
-- **`stems`** — real stem count (median 10, up to 45).
+- **`stems`** — real stem count (median 11, up to 45).
 - **`dead`** — how many of those stems are standing dead. A plant is only `status: "dead"` when **every** stem
-  is dead (SRER_048: 5 fully dead, 80 partially-dead, 23 all-live — *not* the 28 a per-stem read implied).
+  is dead (SRER_048: 5 fully dead, 80 partially-dead, 19 all-live — *not* the 28 a per-stem read implied).
+  Those 104 are the plants carrying a VST apparent-individual record; the 75 cacti have none, so whole-plant
+  mortality is reported as "5 of 104 assessed", never "of 179".
 - **`bd`** — mean `basalStemDiameter` (cm) → stem/trunk thickness.
 - **`cr90`** — `ninetyCrownDiameter` (m) → the crown is drawn **elliptical** (`maxCrownDiameter` × `cr90`).
 - **`shape`** — recorded canopy shape → foliage vertical profile. **`canopy`** = `canopyPosition`,
@@ -145,9 +147,27 @@ window (`HW=25`) centred on the plot.
 
 ## Ground cover & species (the "Cover & species" panel)
 
-- **This plot (from our VST crowns):** estimated woody canopy cover `= Σ crown ellipse areas ÷ 1600 m²`
-  (~26.6%, creosote-dominated), broken down by species. Crowns can overlap, so it's an estimate; ~73% is
-  open interspace.
+- **This plot (from our VST crowns):** estimated woody canopy cover, broken down by species. The exact
+  formula is
+
+  ```
+  cover = Σ π · (cr / 2) · (cr90 / 2)   over LIVE plants only
+          ────────────────────────────
+                  790 m²               (= ex × ey, the surveyed strip)
+  ```
+
+  giving **~53.9%**, creosote-dominated. Three things this formula makes explicit that an earlier
+  version left unstated:
+
+  1. **Live only.** The 5 whole-dead plants (5.0 m² of crown) are excluded.
+  2. **Elliptical.** Crowns use both measured axes (`cr` × `cr90`), not a circle on `cr`.
+  3. **Divided by the surveyed area, not the plot.** VST mapped only the **eastern half** of the
+     40 × 40 m base plot. Dividing by the full 1600 m² would count 810 m² of never-surveyed ground as
+     measured zero cover, which understates cover (the same crowns give ~26.6% that way). The panel
+     shows the whole-plot figure only as a labelled aside.
+
+  Crowns can overlap, so this is **summed crown area, not a union** — and therefore `100 − cover` is
+  **not** open interspace and must never be reported as such.
 - **SRER ground layer (site diversity):** SRER_048 is a VST plot and is **never** a plant-diversity plot, so
   `div-srer.py` aggregates SRER **site-level** plant diversity (DP1.10058.001, 2024 growing season) into
   `div-srer.json` — ground categories (litter ~57%, bare soil ~26%, rock, biocrust) and top understory species

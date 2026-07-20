@@ -1726,3 +1726,101 @@ Rules:
   checks, and merge. After that docs-only closeout, continue Vegetation Structure
   through its complete app-local release and vendor its new evidence here before
   starting another app.
+
+### 2026-07-19 23:11 MST - site-explorer provenance receipt and scientific corrections / root
+
+- **Changed/classification:** work is confined to `prototypes/site-explorer/**`. Added
+  `assemble_index.py`; modified `export_data.py`, `assemble_plot.py`, `index.html`,
+  `walk.html`, `plot.src.html`, `plot.html`, `site-data.json`, `plot-srer048.json`,
+  `div-srer.json`, `PROGRESS.md`, `README.md`, `build_plot.md`. Classification is
+  `app-local` plus `suite-platform` (the provenance-receipt pattern is reusable).
+  Ecological Driver implication is explicitly **NONE**. No Driver app code, estimator,
+  scientific pin, source lock, workflow, generated artifact, or manifest changed.
+  `prototypes/` is outside `manifest.json`'s allowlist and outside the rebuild's
+  captured code surface, so no rebuild was required or run.
+- **Artifacts/non-impact:** no generation or promotion ran. All five canonical files
+  were rehashed at the end of this session and are UNCHANGED: cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, manifest
+  `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Learned (promoted to the prototype's honesty rails):** a derived figure needs its
+  *denominator* recorded, not only its formula. The prototype reported plot canopy
+  cover over the full 1600 m2 base plot while reporting density over the 790 m2
+  actually surveyed - two denominators for one plot in one panel. Vegetation Structure
+  mapped only the eastern half of SRER_048, so the whole-plot divisor silently counts
+  810 m2 of never-surveyed ground as measured zero cover. Second reusable lesson: a
+  build script that omits explicit `encoding=` and `newline=` is not portable. On this
+  Windows host Python defaults to cp1252 and translates LF to CRLF, so `export_data.py`
+  emitted 4380 CRLF into a file `.gitattributes` pins to `eol=lf`, and `assemble_plot.py`
+  would have decoded UTF-8 page text as cp1252. This is the same cross-platform byte-drift
+  class the release gate exists to catch, reaching a prototype that CI does not cover.
+- **Scientific corrections (recomputed independently from `plot-srer048.json` before any
+  edit):** all-live plants 23 -> **19** (5 + 80 + 23 = 108 exceeded the 104 records that
+  carry stem data); stem median 10 -> **11**; the retired "28 dead" removed from two
+  further places; whole-plant mortality "5 of 179" -> **"5 of 104 assessed"** (75 cacti
+  carry no `vst_apparentindividual` record and are live by construction); canopy cover
+  26.6% over 1600 m2 -> **53.9% over the 790 m2 surveyed strip**, with the previously
+  unstated formula now written out (summed **live-only** elliptical crowns
+  `pi*(cr/2)*(cr90/2)`, summed not unioned, so `100 - cover` is not open interspace).
+  An honesty-rail break was also closed: NIWO (tundra bucket, `veg_ba_ha` 31.1) rendered
+  treeless while its caption claimed the scene was "built from measured standing wood";
+  the tundra branch never reads `ba`. The claim is now made only when the bucket used the
+  measurement, and the unused figure is disclosed rather than asserted.
+- **Provenance added:** `export_data.py` now reads the bundle's existing `source_products`
+  table and stamps `site-data.json.meta.provenance` with the bundle SHA-256, schema
+  version, build time, tier rule, prior-family status and the exact commit for all seven
+  source products; the explorer footer renders it behind a disclosure. `plot-srer048.json`
+  and `div-srer.json` gained `provenance` objects, surfaced on The Plot. Fields that
+  cannot be recovered are recorded as `UNKNOWN` **with the reason** (the Plot was built
+  from a live API query, so no release tag or DOI was captured, and `build_plot.py` is
+  uncommitted, so those records are not reproducible from this repository alone). The
+  Plot is now labelled a **two-bout composite** (2016 n=88, 2021 n=91), not a census.
+- **Test process/environment:** cwd `D:\Git\NEON-Driver-Cascade`; Windows PowerShell/Git
+  Bash; Python 3.10 with `rdata` 0.11.2 installed for the read-only bundle reader
+  (`pip install rdata`, as README documents); Node 24 for `node --check`; the in-app
+  browser for render checks. Gates run and results: independent recomputation of every
+  corrected statistic directly from `plot-srer048.json` (expected: confirm or refute the
+  claimed values; actual: all six confirmed before editing); `node --check` on the
+  authored script block of `index.html` and `walk.html` (PASS); all 14 committed JSON
+  files parsed (PASS); CRLF/UTF-8 sweep over every text file in the directory (PASS after
+  the `export_data.py` fix); `export_data.py` run twice with identical SHA-256
+  (`ada2943c...`) and `assemble_plot.py` run twice with identical SHA-256
+  (`241608ef...`), establishing determinism for both; `assemble_index.py` re-run reported
+  "already current", establishing idempotency; `site-data.json` diffed field-by-field
+  against its pre-change copy (expected: only the two new veg keys added and no science
+  value moved; actual: exactly that, plus one latent bug fixed - WOOD's `veg_type` had
+  been the literal string `"<NA>"` and is now `null`, with `veg_design_status`
+  `unsupported-unmatched-plots` now carried through, matching this document's locked WOOD
+  pins); browser render of all three pages with zero console errors, 46 sites, and no
+  horizontal overflow at 320 px.
+- **Evidence invalidated:** none of the Driver's build, determinism, manifest, boot,
+  browser, or release evidence. The completion matrix is untouched because no row's
+  subject changed. Superseded are the prototype's own stale claims listed above.
+- **Failure/cleanup:** one real defect was found by attempting to verify rather than
+  assuming - none of the three prototype pages carried `<meta name="viewport">` or
+  `<meta charset>`. Without the viewport tag mobile browsers lay out at ~980 px and scale
+  down, so every responsive rule in all three pages was dead on a real phone; this was
+  invisible until a 320 px viewport reported `clientWidth` 980. Both tags were added and
+  the 320 px re-check passed. No lock, stage, backup, pending file, credential, or
+  scratch residue remains; the `.neon_token` present in the sibling checkout was never
+  read, used, or recorded.
+- **Residual risk:** the Plot's NEON release vintage is unrecoverable and is now labelled
+  `UNKNOWN` rather than silently absent - it cannot be resolved without rebuilding from a
+  pinned release. The walk's `veg_ba_ha` is computed by the Driver's own adapter from the
+  sibling's tables at pinned commit `5e73e0d`; whether the sibling's RELEASE-2026 family
+  would move any site is **UNKNOWN and must not be asserted either way**, because
+  determining it would require a Driver rebuild that the sibling's own disposition
+  (`HOLD / CONTEXT ONLY / NO DRIVER BYTE CHANGE`) forbids. Browser coverage remains
+  finite and the in-app preview strips query strings, so the `?site=` deep-link
+  normalization was verified by code inspection and by exercising the switcher, not by a
+  real deep-link load.
+- **Next action:** owner review of this prototype tranche. Separately, and independently
+  of the prototype, `docs/NEON-SUITE-LEARNING-LOOP.md` row 4 is now materially stale in
+  every column: the Vegetation Structure sibling completed and production-verified its
+  pass on 2026-07-19/20 (22 commits beyond the pinned `5e73e0d`, pinned to NEON
+  RELEASE-2026, DOI `10.48443/pypa-qf12`), and it has published both
+  `docs/DRIVER-KNOWLEDGE-PACKAGE.md` and `docs/SUITE-LEARNING-HANDOFF.md`. That register
+  row is corrected in the same tranche; vendoring the sibling's full receipt remains a
+  separate task requiring its app-local evidence.

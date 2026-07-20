@@ -29,16 +29,35 @@ import os, json
 
 D = os.path.dirname(os.path.abspath(__file__))
 
-old = open(os.path.join(D, "plot.html")).read()
-src = open(os.path.join(D, "plot.src.html")).read()
+# Encoding and line endings are explicit on purpose. Python's default text mode uses
+# the locale encoding (cp1252 on this Windows host) and translates "\n" to "\r\n" on
+# write. Either would corrupt this build: the pages carry UTF-8 (em dashes, degree
+# signs, times signs) and .gitattributes pins these files to `eol=lf`. Reading as
+# cp1252 mangles the text; writing without newline="" rewrites every line ending and
+# makes the output differ byte-for-byte between Windows and Linux.
+def read_text(path):
+    with open(path, encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+def write_text(path, text):
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+
+
+old = read_text(os.path.join(D, "plot.html"))
+src = read_text(os.path.join(D, "plot.src.html"))
 
 # --- editable content (small, committed JSON) -------------------------------
-data_obj = json.loads(open(os.path.join(D, "plot-srer048.json")).read())
+data_obj = json.loads(read_text(os.path.join(D, "plot-srer048.json")))
 try:
-    data_obj["siteDiv"] = json.load(open(os.path.join(D, "div-srer.json")))  # SRER site-level ground/herb cover
+    data_obj["siteDiv"] = json.loads(read_text(os.path.join(D, "div-srer.json")))  # SRER site-level ground/herb cover
 except Exception as e:
     print("  (no div-srer.json:", e, ")")
-data = json.dumps(data_obj)
+# ensure_ascii=False keeps the UTF-8 text as UTF-8 (matching the page's charset)
+# rather than expanding it into \uXXXX escapes; sort_keys makes the embed stable
+# so re-running with unchanged inputs is a no-op diff.
+data = json.dumps(data_obj, ensure_ascii=False, sort_keys=True)
 
 # --- heavy embeds: reuse verbatim from the existing plot.html ---------------
 def script_body(html, opener):
@@ -70,6 +89,6 @@ out = (src.replace("__THREE__", three)
 for ph in ("<script>__THREE__</script>", ">__PLOTDATA__<", ">__GROUNDTEX__<", ">__GEOLAYERS__<"):
     assert ph not in out, "placeholder tag %s not replaced" % ph
 
-open(os.path.join(D, "plot.html"), "w").write(out)
+write_text(os.path.join(D, "plot.html"), out)
 print("wrote plot.html: %d bytes (three=%d, data=%d, gtex=%d, geo=%d)" % (
     len(out), len(three), len(data), len(gtex), len(geo)))

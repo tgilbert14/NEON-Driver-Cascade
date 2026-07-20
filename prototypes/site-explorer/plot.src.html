@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Plot — SRER_048, plant by plant</title>
 <style>
   :root{--ink:#f4efe3;--panel:#0e0d0acc;--line:#ffffff26;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -60,6 +62,7 @@
   .cp-x{position:absolute;top:.9rem;right:1rem;cursor:pointer;color:#f4efe3aa;font-family:var(--mono);font-size:.66rem}
   .cp-sec{font-family:var(--mono);font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:#e6c78a;margin:1.15rem 0 .55rem}
   .cp-big{font-family:var(--serif);font-size:1.55rem;line-height:1;margin:.1rem 0 .1rem}
+  .cp-sub{font-family:var(--mono);font-size:.58rem;color:#ffffffa8;margin:.15rem 0 .1rem}
   .cp-row{margin:.34rem 0;font-family:var(--mono);font-size:.68rem}
   .cp-row .lab{display:flex;justify-content:space-between;gap:.6rem;color:#f4efe3cc}
   .cp-row .lab b{color:#f4efe3;font-weight:600}
@@ -485,13 +488,29 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   h+=stat("density","~"+dens.toFixed(0)+" / 100 m&sup2; surveyed");
   h+=stat("plant height","mean "+meanH.toFixed(1)+" m &middot; tallest "+tall.toFixed(1)+" m");
   if(totStem)h+=stat("stems mapped",totStem+" &middot; "+(totStem-deadStem)+" live / "+deadStem+" dead");
-  h+=stat("whole plants dead",fullyDead+" of "+P.length);
+  // Mortality is only assessable where a VST apparent-individual record exists (the
+  // woody plants). The cacti carry no such record and are live by construction, so
+  // they are not in the denominator — "of 179" would silently claim otherwise.
+  var assessed=0;P.forEach(function(p){if(p.stems)assessed++;});
+  h+=stat("whole plants dead",fullyDead+" of "+assessed+" assessed");
+  if(assessed<P.length)h+='<div class="cp-note">'+(P.length-assessed)+' plants (the cacti) have no '+
+    'VST apparent-individual record, so live/dead status could not be assessed for them.</div>';
   var c=DATA.cover;
   if(c){var mx=0;c.bySpecies.forEach(function(s){if(s.pct>mx)mx=s.pct;});
-    h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>';
+    h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>'+
+      '<div class="cp-sub">of the surveyed '+(c.surveyedArea||790)+'&thinsp;m&sup2; &mdash; the eastern half</div>';
     c.bySpecies.filter(function(s){return s.pct>0;}).forEach(function(s){
       h+=cbar((TXNAME[s.tx]||s.tx)+' &times;'+s.n,s.pct,mx,(SP[s.tx]&&SP[s.tx].mk)||'#8fae78');});
-    h+='<div class="cp-note">Estimated as summed crown areas &divide; the '+c.plotArea+'&thinsp;m&sup2; plot (crowns can overlap); ~'+Math.round(100-c.canopyPct)+'% is open interspace.</div>';}
+    // Denominator honesty: VST mapped only the eastern half, so the whole 1600 m2 plot
+    // is the wrong divisor - it would count 810 m2 of never-surveyed ground as measured
+    // zero cover. And because crowns overlap, this is SUMMED crown area, not a union:
+    // 100 - cover is therefore NOT open interspace, and must not be reported as such.
+    h+='<div class="cp-note">Summed live crown ellipses &pi;(cr&divide;2)(cr90&divide;2) &divide; the '+
+      (c.surveyedArea||790)+'&thinsp;m&sup2; <b>surveyed</b> area. Crowns can overlap, so this is summed '+
+      'crown area rather than a union &mdash; it is not one minus the open ground. The western half of '+
+      'the 40&times;40&thinsp;m plot was never mapped, so it is excluded from the denominator instead of '+
+      'being counted as zero cover'+(c.canopyPctWholePlot?' (over the full plot the same crowns give ~'+
+      c.canopyPctWholePlot+'%, which understates cover for that reason)':'')+'.</div>';}
   var sd=DATA.siteDiv;
   if(sd){var gm=0;sd.ground.forEach(function(g){if(g.pct>gm)gm=g.pct;});
     h+='<div class="cp-sec">SRER ground layer (site diversity)</div>';
@@ -499,7 +518,30 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
     var sm=0;sd.species.forEach(function(s){if(s.pct>sm)sm=s.pct;});
     h+='<div class="cp-sec">Understory plants (site, mean cover)</div>';
     sd.species.forEach(function(s){h+=cbar((s.common||s.name),s.pct,sm,'#7f9e5e');});
-    h+='<div class="cp-note">'+sd.note+'</div>';}
+    h+='<div class="cp-note">'+sd.note+
+      ((sd.provenance&&sd.provenance.ground_pct_sum_note)?' '+sd.provenance.ground_pct_sum_note:'')+
+      ' Different product, scale and year from the woody-canopy figures above &mdash; the two layers are '+
+      'not additive.</div>';}
+  // --- where this data came from -----------------------------------------
+  // NEON products are versioned and revise prior data. A number with no release,
+  // no date and no builder cannot be checked against its source, so say plainly
+  // what is known and what is not, rather than staying silent.
+  var pv=DATA.provenance;
+  if(pv){
+    h+='<div class="cp-sec">Where this data came from</div>';
+    h+=stat("product",pv.product+" &middot; "+(pv.plot||""));
+    h+=stat("obtained",pv.obtained||"&mdash;");
+    h+=stat("accessed","on or before "+(pv.accessed_on_or_before||"unknown"));
+    h+=stat("NEON release",(pv.officialNeonRelease==="UNKNOWN")?"<i>unknown</i>":pv.officialNeonRelease);
+    h+=stat("survey bouts",(pv.survey_campaigns||[]).join(" + ")||"&mdash;");
+    var warn=[];
+    if(pv.officialNeonRelease==="UNKNOWN"&&pv.release_basis)warn.push(pv.release_basis);
+    if(pv.campaign_note)warn.push(pv.campaign_note);
+    if(pv.reproducible_from_repo===false&&pv.builder)warn.push("Built by "+pv.builder+", so these records cannot be regenerated from this repository alone.");
+    if(pv.sibling_current_release&&pv.sibling_current_release.note)
+      warn.push(pv.sibling_current_release.note+" ("+pv.sibling_current_release.officialNeonRelease+")");
+    if(warn.length)h+='<div class="cp-note"><b>Limits.</b> '+warn.join(" ")+'</div>';
+  }
   coverPanel.innerHTML=h;
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
 })();
