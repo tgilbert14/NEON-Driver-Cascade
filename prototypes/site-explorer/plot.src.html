@@ -42,6 +42,11 @@
     color:#f4efe3cc;text-shadow:0 1px 6px #000a;max-width:60ch}
   .cscale .grad{width:120px;height:9px;border-radius:5px;border:1px solid #ffffff40}
   .cscale b{color:#f4efe3}
+  /* shown only while the first-tagged filter is narrowed, where the wrong reading is tempting */
+  .tagnote{max-width:58ch;margin-top:.45rem;padding:.4rem .6rem;border-left:2px solid #e6c78a80;
+    background:#0e0d0acc;border-radius:0 6px 6px 0;font-family:var(--mono);font-size:.6rem;
+    line-height:1.55;color:#f4efe3cc;pointer-events:none}
+  .tagnote b{color:#f4efe3}
   #card{position:fixed;z-index:4;max-width:19rem;background:#12110dEE;border:1px solid #ffffff2a;border-left:3px solid #d98a3d;
     border-radius:12px;padding:.7rem .85rem;backdrop-filter:blur(8px);pointer-events:none;display:none;box-shadow:0 8px 30px #000a}
   #card .c-sci{font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.15}
@@ -86,11 +91,14 @@
       <button class="walk" id="layerBtn" type="button" style="background:#3a352b;color:#f4efe3">Ground: stylized</button>
       <button class="walk" id="plantsBtn" type="button" style="background:#2b3326;color:#f4efe3">Plants: on</button>
       <button class="walk" id="colorBtn" type="button" style="background:#2b2f38;color:#f4efe3">Colour: species</button>
-      <button class="walk" id="surveyBtn" type="button" style="background:#33302b;color:#f4efe3">Survey: 2016+2021</button>
+      <button class="walk" id="surveyBtn" type="button" style="background:#33302b;color:#f4efe3" title="Filters by the year each plant's tag went on — not a before/after survey">First tagged: all</button>
       <button class="walk" id="coverBtn" type="button" style="background:#2e2a33;color:#f4efe3">Cover &amp; species</button>
       <button class="walk" id="infoBtn" type="button" style="background:#20242a;color:#f4efe3">&#9432; About</button>
       <span class="hint" id="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
     </div>
+    <div class="tagnote" id="tagNote" style="display:none">Showing plants by the year their <b>tag went on</b>.
+      This is not a before-and-after survey &mdash; every plant is tagged once, then re-measured later, so no
+      plant can appear in both years. A plant missing from a year was not absent; it just wasn&rsquo;t tagged yet.</div>
     <div class="cscale" id="cscale"></div>
     <div class="legend" id="legend"></div>
   </div>
@@ -484,7 +492,11 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   function stat(k,v){return '<div class="cp-row"><div class="lab"><span>'+k+'</span><b>'+v+'</b></div></div>';}
   h+='<div class="cp-sec">This plot at a glance</div>';
   h+=stat("tagged plants",P.length+" &middot; "+DATA.legend.length+" species");
-  h+=stat("survey campaigns","2016: "+y16+" &middot; 2021: "+y21);
+  h+=stat("first tagged","2016: "+y16+" &middot; 2021: "+y21);
+  h+='<div class="cp-note">The year each plant&rsquo;s <b>tag went on</b> &mdash; not a before-and-after '+
+    'survey. Plants are tagged once and re-measured later, so the two groups cannot share a plant. '+
+    'Most 2021 entries are cacti, which NEON only began mapping here under a site-specific exception; '+
+    'they were almost certainly standing in 2016 too.</div>';
   h+=stat("density","~"+dens.toFixed(0)+" / 100 m&sup2; surveyed");
   h+=stat("plant height","mean "+meanH.toFixed(1)+" m &middot; tallest "+tall.toFixed(1)+" m");
   if(totStem)h+=stat("stems mapped",totStem+" &middot; "+(totStem-deadStem)+" live / "+deadStem+" dead");
@@ -493,8 +505,12 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   // they are not in the denominator — "of 179" would silently claim otherwise.
   var assessed=0;P.forEach(function(p){if(p.stems)assessed++;});
   h+=stat("whole plants dead",fullyDead+" of "+assessed+" assessed");
-  if(assessed<P.length)h+='<div class="cp-note">'+(P.length-assessed)+' plants (the cacti) have no '+
-    'VST apparent-individual record, so live/dead status could not be assessed for them.</div>';
+  var ub=(DATA.provenance||{}).unmeasured_breakdown;
+  if(ub)h+='<div class="cp-note">'+ub.total+' plants have a mapped position but no structural record: '+
+    ub.cacti+' cacti and '+ub.woody+' woody plants. NEON&rsquo;s standard woody protocol does not map cacti at '+
+    'all &mdash; Santa Rita has a site-specific exception to map them, and they are measured under a separate '+
+    'cactus protocol. So live/dead status could not be assessed for these, and this is a status at each '+
+    'plant&rsquo;s own measurement date, not a mortality rate.</div>';
   var c=DATA.cover;
   if(c){var mx=0;c.bySpecies.forEach(function(s){if(s.pct>mx)mx=s.pct;});
     h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>'+
@@ -510,7 +526,11 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
       'crown area rather than a union &mdash; it is not one minus the open ground. The western half of '+
       'the 40&times;40&thinsp;m plot was never mapped, so it is excluded from the denominator instead of '+
       'being counted as zero cover'+(c.canopyPctWholePlot?' (over the full plot the same crowns give ~'+
-      c.canopyPctWholePlot+'%, which understates cover for that reason)':'')+'.</div>';}
+      c.canopyPctWholePlot+'%, which understates cover for that reason)':'')+'. '+
+      '<b>Treat this as approximate.</b> The 790&thinsp;m&sup2; is the bounding box of the mapped plants, '+
+      'not NEON&rsquo;s recorded sampled area &mdash; surveyed ground holding no qualifying stems adds area '+
+      'but no plants, so the divisor is a lower bound and this percentage an upper bound. The recorded '+
+      'value lives in a NEON table not included here.</div>';}
   var sd=DATA.siteDiv;
   if(sd){var gm=0;sd.ground.forEach(function(g){if(g.pct>gm)gm=g.pct;});
     h+='<div class="cp-sec">SRER ground layer (site diversity)</div>';
@@ -533,10 +553,14 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
     h+=stat("obtained",pv.obtained||"&mdash;");
     h+=stat("accessed","on or before "+(pv.accessed_on_or_before||"unknown"));
     h+=stat("NEON release",(pv.officialNeonRelease==="UNKNOWN")?"<i>unknown</i>":pv.officialNeonRelease);
-    h+=stat("survey bouts",(pv.survey_campaigns||[]).join(" + ")||"&mdash;");
+    h+=stat("dates mean",(pv.date_field_meaning?"year first tagged":"&mdash;"));
+    h+=stat("condition shown",(pv.measurement_basis?"latest measurement (~2021)":"&mdash;"));
     var warn=[];
     if(pv.officialNeonRelease==="UNKNOWN"&&pv.release_basis)warn.push(pv.release_basis);
-    if(pv.campaign_note)warn.push(pv.campaign_note);
+    if(pv.cohort_note)warn.push(pv.cohort_note);
+    if(pv.cacti_scope)warn.push(pv.cacti_scope);
+    if(pv.not_every_plant)warn.push(pv.not_every_plant);
+    if(pv.unresolved_without_raw_tables)warn.push(pv.unresolved_without_raw_tables);
     if(pv.reproducible_from_repo===false&&pv.builder)warn.push("Built by "+pv.builder+", so these records cannot be regenerated from this repository alone.");
     if(pv.sibling_current_release&&pv.sibling_current_release.note)
       warn.push(pv.sibling_current_release.note+" ("+pv.sibling_current_release.officialNeonRelease+")");
@@ -576,8 +600,15 @@ function applyColor(){var m=CM[cmi];
     L=m==="height"?["ring colour = plant height","0.3 m","2.8 m"]:m==="stems"?["ring colour = stem count","1","&ge;20"]:["ring colour = share of stems standing dead","0%","100%"];
   cscale.style.display="flex";cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2];}
 colorBtn.addEventListener("click",function(){cmi=(cmi+1)%CM.length;applyColor();});
-var SY=[["all","2016+2021"],["2016","2016 only"],["2021","2021 only"]], syi=0;
-surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=SY[syi][0];surveyBtn.innerHTML="Survey: "+SY[syi][1];applyVis();});
+// "First tagged", not "Survey": the date on each plant is when its tag went on, not when the
+// plot was visited. Every plant is tagged once and re-measured later, so these groups can never
+// share a plant - that is the table's structure, not turnover. Labelling it "Survey 2016 vs 2021"
+// invites a recruitment/mortality reading the data cannot support.
+var SY=[["all","all"],["2016","2016 only"],["2021","2021 only"]], syi=0;
+surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=SY[syi][0];surveyBtn.innerHTML="First tagged: "+SY[syi][1];
+  var n=document.getElementById("tagNote");
+  if(n)n.style.display=(surveyYear==="all")?"none":"block";
+  applyVis();});
 
 // ---- default to the MAP-FIRST view: top-down over the real aerial with the plant markers.
 //      The 3D plant figures are the optional "augmented" layer (toggle Plants on, or Enter the plot). ----

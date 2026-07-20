@@ -45,6 +45,7 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 19 | **Generated textures** — per-biome ground + bark from an image model, embedded inline, on ground+trunks | DONE | #29 |
 | 20 | **Walkable forests** — real-LiDAR stems thinned from per-cell grid to sparse jittered scatter (sightlines!) | DONE | #30 |
 | 21 | **Provenance receipt + scientific corrections** — every page now names its source vintage; six wrong/unsourced numbers fixed | DONE | — |
+| 21b | **Protocol review (NEON SOP)** — "Survey campaigns" was a misread; relabelled "First tagged", and three shipped claims corrected | DONE | — |
 | 22+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
@@ -192,7 +193,7 @@ page instead of being invisible.
   (live-only, elliptical) written out and the whole-plot figure kept as a labelled aside.
 - **"23 all-live" was arithmetically impossible** — 5 + 80 + 23 = 108 against 104 records. It is **19**.
 - **Stem median was 10; it is 11.** And the retired **"28 dead"** still survived in two places.
-- **"5 of 179 whole plants dead"** conflated assessed with unassessable: the 75 cacti carry no VST
+- **"5 of 179 whole plants dead"** conflated assessed with unassessable: 75 plants carry no VST
   apparent-individual record and are live by construction. Now **"5 of 104 assessed"**.
 
 **Also fixed in this rung.** A genuine honesty-rail break: **NIWO** (tundra bucket, `ba` 31.1 m²/ha)
@@ -203,6 +204,49 @@ every responsive rule was dead on real phones (mobile browsers laid out at ~980 
 added, along with the `<meta charset="utf-8">` all three pages were missing. `assemble_plot.py` read
 and wrote with the platform's locale encoding and newline translation — on this Windows host that is
 cp1252 + CRLF, which would corrupt the UTF-8 text and violate `.gitattributes eol=lf`; now explicit.
+
+## Rung 21b — the protocol review (and the caveat it reversed)
+
+Rung 21 shipped a caveat calling The Plot a "two-bout composite, not a census," reasoning that pooling the
+2016 and 2021 survey campaigns violated the sibling's rule against pooling repeated events. **That reasoning
+was wrong**, and a review against the published NEON VST protocol (NEON.DOC.000987, the DP1.10098.001 user
+guide, and the Cactus SOP NEON.DOC.001715) reversed it. Recorded here because the mistake is more instructive
+than the fix.
+
+**The misread.** `vst_mappingandtagging` is a *one-row-per-individual tagging table*: its date is when a
+plant's tag went on, not when the plot was visited. Plants are tagged once and re-measured in later bouts.
+So grouping 179 individuals by that date can never show the same plant twice — the "zero overlap between two
+disjoint cohorts" that looked like a finding is **arithmetically forced by the table's structure**. It is a
+diagnostic that the wrong column was joined, not evidence about the vegetation.
+
+**What the two groups actually are.** First-tag cohorts under *different survey scopes*:
+
+| tag date | n | measured | what |
+|---|---:|---:|---|
+| 2016-10-26 | 83 | 81 | creosote + mesquite — the woody bout |
+| 2021-10-13/14 | 21 | 21 | more woody |
+| **2021-04-27** | **6** | **0** | Engelmann prickly pear — the spring *Opuntia* campaign |
+| **2021-10-18** | **64** | **0** | cholla, barrel, pincushion, saguaro |
+
+Every cactus carries a 2021 tag and **no** structural measurement. That is protocol: NEON's standard woody
+protocol does not map cacti at all; Santa Rita (Domain 14) has a written site-specific exception to *map*
+large-stature cacti, which postdates the 2016 bout and needs its own spring visit; and cacti are *measured*
+under a separate Cactus SOP into a different table. A saguaro is decades old — it did not arrive in 2021.
+
+**Three shipped claims corrected.** "75 plants (the cacti)" → **70 cacti + 5 woody**. The "9 species"
+headline → 9 *mapped*, but **2 → 4 among measured** species. And the condition on screen is roughly a **2021
+snapshot**, not the tag year: 2016-tagged mesquites carry basal diameter, but SRER only measured mesquite
+that way from 2020 onward, so the build joined each plant's latest record.
+
+**The fix in the UI.** The "Survey: 2016+2021" control — which invited exactly the recruitment reading the
+protocol forbids — is now **"First tagged"**, and narrowing it raises a note explaining that no plant can
+appear in both years and that a plant missing from a year was not absent, just not yet tagged. The cover
+figure is additionally marked approximate: its 790 m² divisor is the bounding box of the mapped plants, not
+NEON's recorded sampled area, which makes it a lower bound and the percentage an upper bound.
+
+**Still UNKNOWN, deliberately.** Growth, survival, true recruitment and the recorded sampled area all need
+`vst_perplotperyear` and `vst_apparentindividual` keyed on `eventID` — neither is committed here. The page
+says so rather than guessing.
 
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
@@ -233,13 +277,30 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   footer carries the bundle SHA-256, build time and all seven source-product commits; The Plot's panel
   carries its product, access bound, release (currently **UNKNOWN**, with the reason) and bout composition.
   A field that cannot be recovered says `UNKNOWN` **and why** — never nothing.
-- **The Plot is a two-bout composite, not a census.** Its 179 plants pool the 2016 (88) and 2021 (91)
-  survey campaigns into one scene. The sibling's current contract treats the latest supported event per
-  plot as current state and does not pool repeated events; the page says so, and the Survey filter lets
-  you separate them.
-- **Cover is over the surveyed area, and is summed not unioned.** VST mapped only the eastern half of
-  SRER_048, so cover divides by 790 m², not the 1600 m² plot — dividing by the plot would count
-  never-surveyed ground as measured zero. Crowns overlap, so `100 − cover` is **not** open interspace.
+- **The Plot's dates are first-tag dates, and the two groups are NOT re-surveys.**
+  `vst_mappingandtagging` holds one row per individual — the date its tag went on. A plant is tagged once
+  and re-measured in later bouts, so grouping by that date *cannot* show the same plant twice: the zero
+  overlap between the 2016 (88) and 2021 (91) groups is forced by the table's structure and is **not**
+  evidence of recruitment, mortality or turnover. The control is labelled **"First tagged"**, and narrowing
+  it raises an explanatory note. Never call these "survey campaigns" or "re-surveys."
+- **The Plot may not claim recruitment, mortality, turnover, or rising richness.** NEON records death as
+  `standing dead` / `lost, presumed dead`, never as an absent row, so a plant missing from a group is not a
+  plant that died. And the species difference between the groups is survey *scope*: NEON's standard woody
+  protocol does not map cacti at all, Santa Rita has a site-specific exception that postdates the 2016
+  bout, and cacti are measured under a separate Cactus SOP into a different table. Among *measured* plants
+  the species count goes 2 → 4, not 2 → 9.
+- **Condition shown is roughly a 2021 snapshot, not the tag year.** 2016-tagged velvet mesquite carry basal
+  diameter, but SRER measured mesquite at basal diameter only from 2020 onward (as a tree at DBH before) —
+  so the build joined each plant's *latest* measurement. The tag year says when a plant entered the record;
+  it does not date the measurements drawn on screen.
+- **Cover is over the surveyed area, summed not unioned, and its denominator is inferred.** VST mapped only
+  the eastern half of SRER_048, so cover divides by 790 m², not the 1600 m² plot — dividing by the plot
+  would count never-mapped ground as measured zero. Crowns overlap, so `100 − cover` is **not** open
+  interspace. And the 790 m² is the *bounding box of the mapped plants*, not NEON's recorded sampled area:
+  surveyed ground holding no qualifying stems adds area but no plants, so the divisor is a lower bound and
+  the percentage an **upper** bound. Label it approximate until `vst_perplotperyear` is pulled.
+- **This is a map of tagged individuals, not of every plant in the plot.** Saplings are never mapped, and
+  a plant with no stem ≥ 1 cm basal diameter is outside this protocol entirely.
 - **A scene may only claim a measurement it actually used.** The tundra branch ignores `veg_ba_ha`, so
   NIWO must not say it was "built from measured standing wood" (it renders from ground cover alone); the
   unused figure is disclosed instead. Same rule for grassland below its `ba > 2` threshold.

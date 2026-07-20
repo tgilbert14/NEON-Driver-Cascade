@@ -16,9 +16,28 @@ height/crown, status).
   UTM coordinate. Plant position = point + `stemDistance·[sin(az), cos(az)]`, recentred to the
   surveyed cloud's centre.
 
-SRER_048 has **179 mapped plants, 9 species** (creosote bush ×93, Christmas cholla ×53, velvet
-mesquite ×13, fishhook barrel cactus, Engelmann prickly pear, Graham's pincushion, longleaf
-jointfir, …), 104 with measured heights, and 5 whole plants standing dead of those 104.
+SRER_048 has **179 mapped plants across 9 species** — creosote bush ×93, Christmas cholla ×53, velvet
+mesquite ×13, fishhook barrel ×7, Engelmann prickly pear ×6, Graham's pincushion ×3, longleaf jointfir ×2,
+mariola ×1, saguaro ×1.
+
+**But "9 species" is a *mapping* count, not a measured-community count.** Only **104 plants across 4
+species** carry a structural measurement (creosote, mesquite, jointfir, mariola). The other 75 — **70 cacti
+and 5 woody** — have a mapped position and nothing else, and 5 of the 104 are whole-plant standing dead.
+
+That split is protocol, not a data gap. NEON's standard woody protocol **does not map cacti at all**; Santa
+Rita (Domain 14) carries a written site-specific exception to *map* large-stature cacti, and cacti are
+*measured* under a separate Cactus SOP (`NEON.DOC.001715`) whose records do not land in
+`vst_apparentindividual`. So every cactus here is a real, really-positioned plant with no height by design.
+
+Two further consequences worth stating before anyone compares years:
+
+- **All five cactus species carry 2021 tag dates and none carry 2016.** The site-specific cactus exception
+  postdates the 2016 bout, and the cactus campaign needs its own spring visit. These plants were almost
+  certainly standing here in 2016 (a saguaro is decades old) — they were not yet in the survey's scope.
+- **Velvet mesquite changed measurement basis mid-record**: measured as a tree at DBH before 2020, as a
+  shrub at basal diameter from 2020 onward. 2016-tagged mesquites in this file carry basal diameter, which
+  indicates the build joined each plant's **latest** measurement rather than its tagging-era one — so the
+  condition shown is closer to a ~2021 snapshot than to the year in the `date` field.
 
 ## Build
 
@@ -127,7 +146,8 @@ These plants are **multi-stem**: an individual has one crown/height row plus man
 - **`stems`** — real stem count (median 11, up to 45).
 - **`dead`** — how many of those stems are standing dead. A plant is only `status: "dead"` when **every** stem
   is dead (SRER_048: 5 fully dead, 80 partially-dead, 19 all-live — *not* the 28 a per-stem read implied).
-  Those 104 are the plants carrying a VST apparent-individual record; the 75 cacti have none, so whole-plant
+  Those 104 are the plants carrying a VST apparent-individual record. The other **75 are 70 cacti + 5 woody**
+  (3 mesquite, 2 creosote) — not "75 cacti" as an earlier version of this doc said. So whole-plant
   mortality is reported as "5 of 104 assessed", never "of 179".
 - **`bd`** — mean `basalStemDiameter` (cm) → stem/trunk thickness.
 - **`cr90`** — `ninetyCrownDiameter` (m) → the crown is drawn **elliptical** (`maxCrownDiameter` × `cr90`).
@@ -183,7 +203,12 @@ mapped positions against the aerial / canopy layers.
   Non-species modes swap in a continuous ramp (short→tall, few→many stems, share of stems standing dead) and show
   a gradient scale legend, turning the crown dot-map into a quick single-variable data-viz.
 - **Survey filter** — the "Survey" button cycles **2016+2021 → 2016 only → 2021 only**, hiding plants not tagged
-  in that bout (each plant carries its tag `date`), so you can compare the two re-survey campaigns.
+  in that bout (each plant carries its tag `date`). **These are first-tag cohorts, not re-surveys.**
+  `vst_mappingandtagging` holds one row per individual — the date its tag went on — so a plant is tagged
+  once and re-measured in later bouts. Grouping by that date therefore *cannot* show the same plant twice;
+  zero overlap between 2016 and 2021 is forced by the table's structure and is **not** evidence of
+  recruitment, mortality or turnover. The UI control is labelled "First tagged" for that reason, and shows
+  an explanatory note whenever it is narrowed.
 - **Legend chips are filters** — click any species chip to show/hide it; the chip dims + strikes through.
 - **Unmapped-area shade** — a light dark plane over the plot's western half makes it obvious that side was never
   surveyed (VST mapped only the eastern half), rather than looking like missing data.

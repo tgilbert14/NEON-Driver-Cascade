@@ -1824,3 +1824,81 @@ Rules:
   `docs/DRIVER-KNOWLEDGE-PACKAGE.md` and `docs/SUITE-LEARNING-HANDOFF.md`. That register
   row is corrected in the same tranche; vendoring the sibling's full receipt remains a
   separate task requiring its app-local evidence.
+
+### 2026-07-20 08:16 MST - site-explorer protocol review; a prior-entry caveat reversed / root
+
+- **Changed/classification:** confined to `prototypes/site-explorer/**` (`plot-srer048.json`,
+  `plot.src.html`, `plot.html`, `build_plot.md`, `PROGRESS.md`). Classification `app-local`
+  plus `scientific-contract` (it corrects published claims about a NEON product).
+  Ecological Driver implication explicitly **NONE**. No Driver app code, estimator,
+  scientific pin, source lock, workflow, generated artifact, or manifest changed.
+- **Evidence invalidated - THIS ENTRY REVERSES A CLAIM MADE IN THE PRECEDING ENTRY.** The
+  2026-07-19 23:11 MST entry recorded that The Plot had been labelled "a two-bout composite,
+  not a census", reasoning that pooling the 2016 and 2021 survey campaigns conflicted with
+  the sibling's rule against pooling repeated events. **That reasoning was wrong and the
+  label has been withdrawn.** The remaining corrections in that entry (cover denominator,
+  19 all-live, median 11, 5-of-104, NIWO, viewport/charset, encoding) all stand.
+- **Learned - the causal error:** `vst_mappingandtagging` is a ONE-ROW-PER-INDIVIDUAL tagging
+  table. Its date is when a plant's tag went on, not when the plot was surveyed. Individuals
+  are tagged once and re-measured in later bouts. Therefore grouping the 179 plants by that
+  date CANNOT produce a plant appearing twice: the "two disjoint cohorts with zero shared
+  individualIDs" that was read as a finding is arithmetically forced by the table's
+  structure. The generalisable rule: before drawing an inference from a grouping, establish
+  whether the grouping key can even vary within the entity being grouped. A zero-overlap
+  result on a one-row-per-entity key is a diagnostic that the wrong table was joined, not a
+  result. Verified by two independent specialist reviews against primary sources
+  (NEON.DOC.000987 VST protocol, the DP1.10098.001 user guide, and the Cactus SOP
+  NEON.DOC.001715), which converged.
+- **Scientific corrections made (each re-verified locally against the committed file before
+  editing):** (1) the two date groups are FIRST-TAG COHORTS, not re-surveys - the UI control
+  "Survey: 2016+2021" is now "First tagged", and narrowing it raises a note stating that no
+  plant can appear in both years and that absence from a year is not absence from the plot;
+  (2) "75 plants (the cacti) have no VST record" was wrong - it is **70 cacti plus 5 woody**
+  (3 mesquite, 2 creosote); (3) the "9 species" headline is a MAPPING count - among measured
+  plants the species count is **2 -> 4**, because NEON's standard woody protocol does not map
+  cacti at all, Santa Rita (Domain 14) carries a site-specific exception to map large-stature
+  cacti that postdates the 2016 bout, and cacti are measured under a separate Cactus SOP into
+  a different table; (4) the condition rendered is approximately a **2021 snapshot**, not the
+  tag year - 2016-tagged velvet mesquite carry basal diameter, but SRER measured mesquite at
+  basal diameter only from 2020 onward (as a tree at DBH before), which indicates the builder
+  joined each plant's latest measurement; (5) the 790 m2 cover divisor is the bounding box of
+  the mapped plants, not NEON's recorded sampled area, so it is a lower bound and the
+  percentage an UPPER bound - now labelled approximate. The page additionally records that
+  saplings are never mapped, so this is a map of tagged individuals rather than of every
+  plant present.
+- **Claims now explicitly forbidden on this surface** (recorded in `plot-srer048.json`
+  `provenance.cannot_show` and in the prototype's honesty rails): recruitment or ingrowth;
+  mortality between visits; turnover; rising species richness; and any statement that a
+  2016-tagged plant is gone. NEON records death as `standing dead` / `lost, presumed dead`,
+  never as an absent row.
+- **Test process/environment:** cwd `D:\Git\NEON-Driver-Cascade`; Python 3.10; Node 24; the
+  in-app browser. Every specialist claim was independently re-derived from the committed
+  `plot-srer048.json` before any edit was made (expected: confirm or refute; actual: all four
+  load-bearing claims confirmed - the seven-date decomposition, the 70+5 split, the 2->4
+  measured-species count, and basal diameter present on 2016-tagged mesquite). Then
+  `node --check` on the rebuilt plot app block (PASS); `assemble_plot.py` rebuild (PASS,
+  956,933 bytes); browser check that the control cycles all/2016/2021, that the explanatory
+  note shows only when narrowed, that the corrected 70+5 text renders, and that the approximate
+  cover caveat and revised provenance render (all PASS, zero console errors).
+- **Artifacts/non-impact:** no generation or promotion ran. The five canonical files are
+  unchanged: cascade `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`,
+  search `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, manifest
+  `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Failure/cleanup:** the failure was analytical, not operational - a wrong inference reached
+  a commit and is corrected here rather than being silently overwritten. No lock, stage,
+  backup, pending file, or credential residue; no sibling repository or working tree was
+  modified.
+- **Residual risk:** growth, survival, true recruitment, and the NEON-recorded sampled area
+  remain **UNKNOWN** and are labelled as such on the page. Settling them requires
+  `vst_perplotperyear` (recorded sampled area, which growth forms were surveyed per bout) and
+  `vst_apparentindividual` keyed on `eventID` (each plant's full measurement career); neither
+  is committed here, and the builder that could fetch them is scratchpad-only. The inference
+  that the SRER cactus-mapping exception postdates the 2016 bout is well supported by
+  convergent evidence (no cactus carries a 2016 tag; NEON's API shows no spring sampling month
+  at SRER before 2019) but was not confirmed against the specific superseded protocol revision,
+  and is worded as an inference on the page.
+- **Next action:** owner review. If this surface is ever rebuilt from raw NEON data, pull
+  `vst_perplotperyear` and eventID-keyed `vst_apparentindividual` first and replace the
+  inferred cover denominator with the recorded sampled area.
