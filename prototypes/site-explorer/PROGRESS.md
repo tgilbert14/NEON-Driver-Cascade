@@ -393,9 +393,23 @@ shipped a false sentence at plot #2:
 copy of the source; the control layout above; the `BUILT` registry as the single source of what
 exists; and a plot-picker slot in the breadcrumb from day one, even while it renders as one item.
 
-**Still to do before plot #2:** template-ise `plot.html` + teach `assemble_plot.py` a plot argument;
-replace the inferred cover denominator with NEON's recorded `area_shrub`; a keyboard path to the 179
-records (the payload is currently pointer-only); and the Cover panel's modal behaviour on phones.
+**Templating — where it actually stands.** `assemble_plot.py` now takes `--plot <ID>` (and `--out`),
+so the build is no longer hard-wired to SRER_048: it resolves `plot-<id>.json`, refuses a mismatch
+between the requested id and the file's own `plot` field, and fails cleanly if the data does not
+exist. The page reads `?plot=<ID>` and **validates** it — if you ask for a plot that has not been
+built, it says so rather than silently showing SRER_048, which would be the page lying about what
+it is displaying.
+
+What is *not* solved, deliberately: the page inlines **one** plot so it stays self-contained and
+needs no network. Inlining all 38 SRER plots would add roughly 2 MB; generating 38 separate pages
+would be roughly 37 MB, since each carries its own copy of Three.js. Neither is acceptable. **The
+production answer is a shell page that fetches `plot-<ID>.json` on demand** (~54 KB each) — that is
+a hosting decision, not a code one, and self-containment was a constraint of artifact hosting rather
+than of the design. Take that decision before plot #2, not during it.
+
+**Still to do before plot #2:** replace the inferred cover denominator with NEON's recorded
+`area_shrub` (600 m² for SRER_048 — the value exists in the Vegetation Structure bundle); and a
+keyboard path to the 179 records, since the payload is still reachable only by pointer.
 
 ## Lesson: syntax checking is not a boot check
 

@@ -25,7 +25,7 @@ needed), use the scratchpad recipes documented in build_plot.md:
   - geo_plot.py   -> the AOP crops        (needs the raw ortho/CHM GeoTIFF tiles)
 Those three stay in scratchpad because they need bulk raw data that is not committed.
 """
-import os, json
+import os, json, sys, argparse
 
 D = os.path.dirname(os.path.abspath(__file__))
 
@@ -48,8 +48,26 @@ def write_text(path, text):
 old = read_text(os.path.join(D, "plot.html"))
 src = read_text(os.path.join(D, "plot.src.html"))
 
+# --- which plot? ------------------------------------------------------------
+# The build was hard-wired to SRER_048. It now takes a plot id so a second plot is a
+# build argument rather than an edit. The DATA file is plot-<lowercased id>.json to
+# match the existing plot-srer048.json.
+ap = argparse.ArgumentParser(description="assemble the self-contained plot page")
+ap.add_argument("--plot", default="SRER_048",
+                help="plot id to inline, e.g. SRER_048 (default: %(default)s)")
+ap.add_argument("--out", default="plot.html", help="output file (default: %(default)s)")
+args = ap.parse_args()
+
+PLOT_ID = args.plot
+data_path = os.path.join(D, "plot-%s.json" % PLOT_ID.lower().replace("_", ""))
+if not os.path.exists(data_path):
+    sys.exit("no data file for plot %s (looked for %s)" % (PLOT_ID, os.path.basename(data_path)))
+
 # --- editable content (small, committed JSON) -------------------------------
-data_obj = json.loads(read_text(os.path.join(D, "plot-srer048.json")))
+data_obj = json.loads(read_text(data_path))
+if data_obj.get("plot") and data_obj["plot"] != PLOT_ID:
+    sys.exit("plot id mismatch: asked for %s, %s contains %s"
+             % (PLOT_ID, os.path.basename(data_path), data_obj["plot"]))
 try:
     data_obj["siteDiv"] = json.loads(read_text(os.path.join(D, "div-srer.json")))  # SRER site-level ground/herb cover
 except Exception as e:
@@ -95,6 +113,6 @@ out = (src.replace("__THREE__", three)
 for ph in ("<script>__THREE__</script>", ">__PLOTDATA__<", ">__GROUNDTEX__<", ">__GEOLAYERS__<"):
     assert ph not in out, "placeholder tag %s not replaced" % ph
 
-write_text(os.path.join(D, "plot.html"), out)
-print("wrote plot.html: %d bytes (three=%d, data=%d, gtex=%d, geo=%d)" % (
-    len(out), len(three), len(data), len(gtex), len(geo)))
+write_text(os.path.join(D, args.out), out)
+print("wrote %s: %s, %d bytes (three=%d, data=%d, gtex=%d, geo=%d)" % (
+    args.out, PLOT_ID, len(out), len(three), len(data), len(gtex), len(geo)))

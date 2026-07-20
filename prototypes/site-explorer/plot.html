@@ -128,6 +128,11 @@
   #card .c-meta{font-family:var(--mono);font-size:.68rem;color:#ffffffb0;margin-top:.45rem;line-height:1.5}
   #card .c-tag{color:#e0a24e}
   #card .c-dead{color:#c98a7a}
+  .plotwarn{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100% - 4.6rem);z-index:7;
+    max-width:min(30rem,92vw);background:#3a2a12f2;border:1px solid #e6c78a66;border-radius:12px;
+    padding:.6rem .85rem;font-size:.8rem;line-height:1.45;color:#f4efe3;pointer-events:auto;
+    box-shadow:0 10px 30px #0009;top:4.6rem;bottom:auto}
+  .plotwarn b{color:#e6c78a}
   .crumbs{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
     display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;justify-content:flex-end;max-width:min(30rem,72vw);
     font-family:var(--mono);font-size:.68rem;background:#12110deb;border:1px solid #ffffff2a;
@@ -269,6 +274,22 @@
 (function(){
 "use strict";
 var DATA=JSON.parse(document.getElementById("plotData").textContent);
+/* ---- ?plot=<ID> -----------------------------------------------------------------
+   This page ships ONE plot inlined, so it is self-contained and needs no network. The
+   walk links here as ./plot.html?plot=SRER_048, and a future plot is built with
+   `assemble_plot.py --plot <ID>`. Until more than one plot exists, honour the parameter
+   by VALIDATING it rather than ignoring it: silently showing SRER_048 to someone who
+   asked for a different plot would be the page lying about what it is showing. */
+(function(){
+  var want=(new URLSearchParams(location.search).get("plot")||"").trim().toUpperCase();
+  if(!want || want===String(DATA.plot||"").toUpperCase())return;
+  var b=document.createElement("div"); b.className="plotwarn";
+  b.innerHTML="Showing <b>"+(DATA.plot||"this plot")+"</b>. You asked for <b>"+
+    want.replace(/[<>&]/g,"")+"</b>, which has not been built yet — "+
+    "so far only "+(DATA.plot||"one plot")+" has been reconstructed plant by plant.";
+  document.addEventListener("DOMContentLoaded",function(){document.body.appendChild(b);});
+  if(document.body)document.body.appendChild(b);
+})();
 var GTEX=""; try{GTEX=JSON.parse(document.getElementById("groundTex").textContent);}catch(e){}
 // Short lead + structured facts: the panel has to fit without a scrollbar, and a wall
 // of prose was what made it need one.
