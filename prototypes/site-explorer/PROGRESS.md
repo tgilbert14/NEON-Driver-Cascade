@@ -52,7 +52,8 @@ straight from the repo — it previously did not. Update the `ART` map if an art
 | 21 | **Provenance receipt + scientific corrections** — every page now names its source vintage; six wrong/unsourced numbers fixed | DONE | — |
 | 21b | **Protocol review (NEON SOP)** — "Survey campaigns" was a misread; relabelled "First tagged", and three shipped claims corrected | DONE | — |
 | 22 | **Index explorer, pass 1** — driver cards show the plausible range; the invented year wheel is cut; the three pages finally link up | DONE | — |
-| 23+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
+| 23 | **Production push, pass 1** — map gated to built sites; The Plot made phone-usable; controls restructured; plot source de-SRER'd | DONE | — |
+| 24+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -303,6 +304,98 @@ chain from the 20 unused `signals`. Also unused and worth surfacing: `biome_clas
 temperature-limited / 5 water-limited), `veg_ba_se`, `veg_design_status`, `lat`/`lon`, and
 `network.null` — the matched null result (temp_spring→green-up, 8 of 18, p = 0.76) that proves the
 test can fail.
+
+## The goal, and the ladder
+
+The target is **a production-ready product for Santa Rita** that works as the case for building
+this across the whole NEON network. Not a prototype — a showcase whose job is to earn the
+network-wide build. The ladder:
+
+```
+SRER_048 perfected → template → all SRER plots → site-level plan → [decision] → next site → network
+```
+
+Plot #2 is **another SRER plot**, so the hard things (camera, scale, species models, ground layers)
+stay fixed and only plot geometry and the plant list vary.
+
+**What step 2 actually is, measured from the Vegetation Structure bundle:** SRER has **38 plots with
+VST data (~20,000 records)**, 20 distributed and 18 tower. SRER_048 is the richest of all 38 (2,121
+records). Sampled areas **vary per plot** — trees 400–800 m², shrub 200–800 m²; SRER_048 is a tower
+plot at 800/600 m². Plot geometry is therefore per-plot data, already available for all 38, and must
+never be hard-coded. The bundle also carries `area_trees`/`area_shrub`, which is NEON's **recorded**
+sampled area — the value that should eventually replace the inferred cover denominator.
+
+**Two-channel data contract:** the woody plants come from the Vegetation Structure table; the cacti
+do **not** — they are mapped under a site-specific exception and measured under a separate Cactus
+SOP into a different table. SRER_048 has 179 mapped plants but only 114 appear in the woody bundle.
+Any future build must pull both channels or explicitly account for the gap.
+
+## Rung 23 — the production push
+
+**The map is now a build registry.** All 46 sites still render — this is a case for a network-wide
+build and hiding the other 45 would hide the argument — but only built sites are interactive, driven
+by one object:
+
+```js
+var BUILT = { SRER: {plot:"SRER_048", plots:1} };
+```
+
+The map, picker, directory and `select()` all read it, and `select()` guards on it. **Activating the
+next site is one line.** Unbuilt sites are drawn as scenery, not disabled controls: muted, no
+`tabindex`, `role="img"`, and an aria-label saying why. A greyed-out button reads as broken software
+45 times out of 46; a quiet dot on a network map reads as scope.
+
+**The Plot now works on a phone.** Three independent failures: `pointer-events` sat on the *containers*,
+so the control row swallowed drags and taps across most of the viewport while the hint said "drag to
+pan"; the tap-vs-drag gate compared accumulated path length, which only grows, so a wobbling thumb
+defeated it; and the overhead view could not be zoomed at all, because zoom was wheel-only and the
+canvas sets `touch-action:none`. All three fixed, plus the description panel now starts collapsed
+under 768 px.
+
+**Seven peer buttons became four controls** — `[▣ Map | ▲ Walk in]`, `[Layers ▾]`, `[ⓘ Plot data]` —
+with the legacy buttons kept hidden so every existing handler still works. The **First-tagged filter
+moved into the data panel**, directly beneath the paragraph explaining that these are first-tag
+cohorts and not re-surveys: it is the one control that invites a reading the data forbids, and its
+caveat used to live in a `title` attribute touch users never see.
+
+## The scale-out contract — read this before adding plot #2
+
+Adding a plot should cost **one JSON file + one registry line + any missing species models.**
+Anything more is a design failure to fix *before* plot #2, not during it.
+
+**Data contract.** `plot-<PLOTID>.json` matching the SRER_048 shape: `plot, plotDim, ex, ey, n,
+cover{...}, note, plants[], legend[], provenance{}`, plus `surveyNote` and `mappedExtent`. Rules:
+1. **Optional fields must degrade, never crash.** `realh, stems, bd, cr90, shape, canopy, dmg` are
+   absent on all 75 unmeasured plants and the renderer handles it. Absent fields must render as
+   *not measured* — never as a ramp value. (This was a live bug: the colour modes were painting
+   invented values for 42% of the plot.)
+2. **`provenance` is mandatory**, and must carry `officialNeonRelease` even when the value is the
+   literal `UNKNOWN`, with a `release_basis` saying why. The rail is *UNKNOWN and why, never nothing*.
+3. **A species model per `taxonID`** must exist in `SP{}` or the plant falls back to a generic mound —
+   and that fallback must be *labelled*, never silent. A second Sonoran plot reuses most of the 9
+   existing models; a different biome needs a whole new family. **This is the real cost of plot #2.**
+4. **A georeferenced AOP crop, or an explicit `null`.** The page now lands overhead either way.
+
+**Already made data-driven (do not regress these).** Each was a latent honesty bug that would have
+shipped a false sentence at plot #2:
+
+| Was hard-coded | Now |
+|---|---|
+| survey-extent prose ("the eastern half") | `DATA.surveyNote` |
+| unsurveyed shading inferred as always-west | `DATA.mappedExtent.xmin`, inference only as fallback |
+| tag-year filter `["2016","2021"]` | derived from `plants[].date` |
+| at-a-glance year tallies | derived per year |
+| colour ramp domains 0.3–2.8 m, 1–20 stems | computed from the loaded plot *(this also fixed a real bug — stems actually reach 45, so multi-stem plants were saturating)* |
+| cover caveat naming 790 m² and "western half" | assembled from `cover.surveyedArea` + `cover.denominatorBasis` |
+| boot mode conditional on an aerial existing | always lands overhead |
+
+**Freeze now.** One template file keyed by query string (`plot.html?plot=SRER_048`) — never a second
+copy of the source; the control layout above; the `BUILT` registry as the single source of what
+exists; and a plot-picker slot in the breadcrumb from day one, even while it renders as one item.
+
+**Still to do before plot #2:** template-ise `plot.html` + teach `assemble_plot.py` a plot argument;
+replace the inferred cover denominator with NEON's recorded `area_shrub`; a keyboard path to the 179
+records (the payload is currently pointer-only); and the Cover panel's modal behaviour on phones.
 
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 

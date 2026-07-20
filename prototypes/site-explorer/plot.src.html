@@ -288,8 +288,13 @@ var capG=new THREE.SphereGeometry(0.11,8,6), capM=new THREE.MeshStandardMaterial
 [[-bx,-bz],[bx,-bz],[-bx,bz],[bx,bz]].forEach(function(c){
   var po=new THREE.Mesh(postG,postM);po.position.set(c[0],0,c[1]);po.castShadow=true;scene.add(po);
   var cp=new THREE.Mesh(capG,capM);cp.position.set(c[0],1.4,c[1]);scene.add(cp);});
-// dim the part of the plot that was NOT surveyed (VST mapped woody plants only in the eastern half)
-var mapXmin=Math.min.apply(null,DATA.plants.map(function(p){return p.x;}));
+// Dim the part of the plot that was NOT surveyed. This previously inferred the gap from
+// the minimum plant x alone, i.e. it assumed the unmapped strip is always on the WEST.
+// A plot mapped in a different half would have been shaded wrongly and silently, so the
+// data may supply an explicit mapped extent; the inference is only the fallback.
+var mapXmin=(DATA.mappedExtent&&DATA.mappedExtent.xmin!=null)
+  ? DATA.mappedExtent.xmin
+  : Math.min.apply(null,DATA.plants.map(function(p){return p.x;}));
 if(mapXmin-(-bx)>2){var wW=mapXmin+bx, shG=new THREE.PlaneGeometry(wW,bz*2); shG.rotateX(-Math.PI/2);
   var sh=new THREE.Mesh(shG,new THREE.MeshBasicMaterial({color:0x0a0d12,transparent:true,opacity:0.4,depthWrite:false}));
   sh.position.set((-bx+mapXmin)/2,0.055,0); scene.add(sh);}
@@ -621,15 +626,16 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
 (function buildCover(){
   var h='<div class="cp-x" id="coverX">&times; close</div><div class="cp-h">Plot data &amp; analysis</div>';
   // --- plot at a glance (computed from the real records) ---
-  var P=DATA.plants,hs=[],totStem=0,deadStem=0,fullyDead=0,y16=0,y21=0;
+  var P=DATA.plants,hs=[],totStem=0,deadStem=0,fullyDead=0,byYear={};
   P.forEach(function(p){if(p.realh)hs.push(p.h);if(p.stems){totStem+=p.stems;deadStem+=(p.dead||0);}
-    if(p.status==="dead")fullyDead++;var y=(p.date||"").slice(0,4);if(y==="2016")y16++;else if(y==="2021")y21++;});
+    if(p.status==="dead")fullyDead++;
+    var y=(p.date||"").slice(0,4); if(y)byYear[y]=(byYear[y]||0)+1;});
   var meanH=hs.length?hs.reduce(function(a,b){return a+b;},0)/hs.length:0, tall=hs.length?Math.max.apply(null,hs):0;
   var area=(DATA.ex||20)*(DATA.ey||40), dens=area?P.length/area*100:0;
   function stat(k,v){return '<div class="cp-row"><div class="lab"><span>'+k+'</span><b>'+v+'</b></div></div>';}
   h+='<div class="cp-sec">This plot at a glance</div>';
   h+=stat("tagged plants",P.length+" &middot; "+DATA.legend.length+" species");
-  h+=stat("first tagged","2016: "+y16+" &middot; 2021: "+y21);
+  h+=stat("first tagged",TAGYEARS.map(function(y){return y+": "+(byYear[y]||0);}).join(" &middot; ")||"&mdash;");
   // The filter lives HERE, next to the paragraph that constrains it - not in the control
   // row, where its caveat was a title attribute touch users never see and a note that
   // only appeared after they had already drawn the wrong conclusion.
@@ -656,7 +662,8 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   var c=DATA.cover;
   if(c){var mx=0;c.bySpecies.forEach(function(s){if(s.pct>mx)mx=s.pct;});
     h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>'+
-      '<div class="cp-sub">of the surveyed '+(c.surveyedArea||790)+'&thinsp;m&sup2; &mdash; the eastern half</div>';
+      '<div class="cp-sub">of the surveyed '+(c.surveyedArea||Math.round((DATA.ex||0)*(DATA.ey||0)))+
+      '&thinsp;m&sup2;'+(DATA.surveyNote?' &mdash; '+DATA.surveyNote:'')+'</div>';
     c.bySpecies.filter(function(s){return s.pct>0;}).forEach(function(s){
       h+=cbar((TXNAME[s.tx]||s.tx)+' &times;'+s.n,s.pct,mx,(SP[s.tx]&&SP[s.tx].mk)||'#8fae78');});
     // Denominator honesty: VST mapped only the eastern half, so the whole 1600 m2 plot
@@ -665,11 +672,11 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
     // 100 - cover is therefore NOT open interspace, and must not be reported as such.
     h+='<div class="cp-note">Summed live crown ellipses &pi;(cr&divide;2)(cr90&divide;2) &divide; the '+
       (c.surveyedArea||790)+'&thinsp;m&sup2; <b>surveyed</b> area. Crowns can overlap, so this is summed '+
-      'crown area rather than a union &mdash; it is not one minus the open ground. The western half of '+
-      'the 40&times;40&thinsp;m plot was never mapped, so it is excluded from the denominator instead of '+
-      'being counted as zero cover'+(c.canopyPctWholePlot?' (over the full plot the same crowns give ~'+
-      c.canopyPctWholePlot+'%, which understates cover for that reason)':'')+'. '+
-      '<b>Treat this as approximate.</b> The 790&thinsp;m&sup2; is the bounding box of the mapped plants, '+
+      'crown area rather than a union &mdash; it is not one minus the open ground. '+
+      (c.denominatorBasis?c.denominatorBasis+' ':'')+
+      (c.canopyPctWholePlot?'(Over the full plot the same crowns give ~'+
+      c.canopyPctWholePlot+'%, which understates cover for that reason.) ':'')+
+      '<b>Treat this as approximate.</b> The '+(c.surveyedArea||'')+'&thinsp;m&sup2; is the bounding box of the mapped plants, '+
       'not NEON&rsquo;s recorded sampled area &mdash; surveyed ground holding no qualifying stems adds area '+
       'but no plants, so the divisor is a lower bound and this percentage an upper bound. The recorded '+
       'value lives in a NEON table not included here.</div>';}
@@ -765,6 +772,15 @@ var CM=["species","height","stems","dead"], cmi=0;
 // rendered on a scale captioned "plant height". Unmeasured plants now render flat grey
 // and are counted in the legend instead.
 var NOMEAS="#6b6a66";
+// Ramp domains come from the loaded plot. Hard-coded 0.3-2.8 m and 1-20 stems were
+// SRER's ranges: a forest plot would peg every ring at maximum while the caption still
+// printed the desert numbers.
+var DOM=(function(){
+  var hs=DATA.plants.filter(function(p){return p.realh===true;}).map(function(p){return p.h;}),
+      ss=DATA.plants.filter(function(p){return p.stems!=null;}).map(function(p){return p.stems;});
+  function rng(a,d){return a.length?[Math.min.apply(null,a),Math.max.apply(null,a)]:d;}
+  return {h:rng(hs,[0,1]), s:rng(ss,[1,2])};
+})();
 function measured(p,m){
   if(m==="height")return p.realh===true;      // h is a species default unless realh
   if(m==="stems") return p.stems!=null;
@@ -775,14 +791,16 @@ function applyColor(){var m=CM[cmi],unmeas=0;
   for(var i=0;i<plants.length;i++){var p=plants[i].userData.p,mk=plants[i].userData.mk,col;
     if(m==="species")col=(p.status==="dead")?DEADMK:spCol(p,"mk");
     else if(!measured(p,m)){col=NOMEAS;unmeas++;}
-    else if(m==="height")col=lerp3(RH,(p.h-0.3)/2.5);
-    else if(m==="stems")col=lerp3(RS,((p.stems||1)-1)/19);
+    else if(m==="height")col=lerp3(RH,(p.h-DOM.h[0])/(DOM.h[1]-DOM.h[0]||1));
+    else if(m==="stems")col=lerp3(RS,(p.stems-DOM.s[0])/(DOM.s[1]-DOM.s[0]||1));
     else col=lerp3(RD,(p.dead||0)/p.stems);
     mk.material.color.set(col);}
   colorBtn.innerHTML=m;
   if(m==="species"){cscale.style.display="none";return;}
   var R=m==="height"?RH:m==="stems"?RS:RD,
-    L=m==="height"?["ring colour = plant height","0.3 m","2.8 m"]:m==="stems"?["ring colour = stem count","1","&ge;20"]:["ring colour = share of stems standing dead","0%","100%"];
+    L=m==="height"?["ring colour = plant height",DOM.h[0].toFixed(1)+" m",DOM.h[1].toFixed(1)+" m"]
+     :m==="stems"?["ring colour = stem count",String(DOM.s[0]),String(DOM.s[1])]
+     :["ring colour = share of stems standing dead","0%","100%"];
   cscale.style.display="flex";
   cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2]+
     (unmeas?'&nbsp;&nbsp;<span class="nm"><i style="background:'+NOMEAS+'"></i>not measured ('+unmeas+')</span>':'');}
@@ -791,7 +809,12 @@ colorBtn.addEventListener("click",function(){cmi=(cmi+1)%CM.length;applyColor();
 // plot was visited. Every plant is tagged once and re-measured later, so these groups can never
 // share a plant - that is the table's structure, not turnover. Labelling it "Survey 2016 vs 2021"
 // invites a recruitment/mortality reading the data cannot support.
-var SY=[["all","all"],["2016","2016 only"],["2021","2021 only"]], syi=0;
+// Derived from the plants themselves. Hard-coding 2016/2021 meant plot #2's tag years
+// would simply never appear in the filter.
+var TAGYEARS=(function(){var seen={},out=[];
+  DATA.plants.forEach(function(p){var y=(p.date||"").slice(0,4); if(y&&!seen[y]){seen[y]=1;out.push(y);}});
+  return out.sort();})();
+var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})), syi=0;
 function syncTagFilter(){var b=document.getElementById("tagFilterBtn"); if(b)b.innerHTML=SY[syi][1];}
 surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=SY[syi][0];surveyBtn.innerHTML="First tagged: "+SY[syi][1];syncTagFilter();
   var n=document.getElementById("tagNote");
@@ -803,7 +826,10 @@ surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=S
 function setPlants(on){showPlants=on; applyVis(); plantsBtn.innerHTML=(on?"on":"off");}
 // default: the MAP is the hero — top-down over the real aerial, 3D plant figures ON (from above),
 // clickable species rings. "3D plants" toggles the figures; "Enter the plot (3D)" is the first-person walk.
-if(GEO&&GEO.ortho){setMode("sky"); setLayer(1); setPlants(true);
+// Land overhead regardless of whether an aerial exists: a plot shipped without one
+// previously dropped the visitor straight into first-person, contradicting the flow.
+setMode("sky");
+if(GEO&&GEO.ortho){setLayer(1); setPlants(true);
   skyBtn.innerHTML="&#9654; Enter the plot (3D)";}else{setPlants(true);}
 applyColor();
 
@@ -820,7 +846,8 @@ function loop(t){requestAnimationFrame(loop);
     sun.position.set(sky.x+28,60,sky.z+16); sun.target.position.set(sky.x,0,sky.z); sun.target.updateMatrixWorld();
     renderer.render(scene,ortho); return;
   }
-  var spd=9*dt,mf=0,ms=0;
+  // 9 m/s crossed this 40 m plot in four seconds - a sprint, not a walk.
+  var spd=1.4*dt*(walking?1:3),mf=0,ms=0;
   if(keys.KeyW||keys.ArrowUp)mf+=1;if(keys.KeyS||keys.ArrowDown)mf-=1;
   if(keys.KeyA||keys.ArrowLeft)ms-=1;if(keys.KeyD||keys.ArrowRight)ms+=1;
   if(walking)mf+=1;
