@@ -1663,3 +1663,66 @@ Rules:
   artistic direction; once approved, run the full one-app learning loop and do not
   begin another app until Vegetation is production-verified and its lessons are
   vendored back here.
+
+### 2026-07-19 18:16 MST - Small Mammal dual-surface Living Poster production handoff / root
+
+- **Changed/classification:** updated only this handoff, the suite learning loop,
+  revamp plan, and reusable playbook. The central Pass 1 row and priority brief now
+  replace stale pre-poster release evidence rather than duplicating it.
+  Classification is `suite-platform` and `Driver-impacting`; the exact decision is
+  **NONE for the Living Poster pattern / CONTEXT ONLY for the existing mammal
+  signal / NO DRIVER BYTE CHANGE**. No Driver app, estimator, source lock, workflow,
+  generated artifact, data file, or manifest changed.
+- **Sibling release identity:** Small Mammal runtime merge
+  `bdf56b0482ac76364e7055107361d58d8728d782` is the exact deployed application;
+  documentation-only closeout merge
+  `8d650b787075bb548d17f8380060597f5a8ff7f9` is the later repository identity. The
+  production manifest records R 4.5.2, 91 packages, 118 files, and SHA-256
+  `90c1366fcd51c507cb786a45a60dd59607a6980f97fc2e4d2e21b29af326d28e`.
+- **Product/public evidence:** Connect deployment #122 reported exact `bdf56b0` at
+  2026-07-19 18:00 MST. Both Connect and Pages now open with the same artistic
+  Living Poster promise: a large real USGS Sherman-trap photograph, “One trap
+  night. A whole population story.”, “Follow tagged small mammals across years of
+  return visits.”, and “Pick a place”. Desktop, 390 x 844, and 320 x 800 browser
+  checks found no root overflow; the app shell stayed on one row at 320. Pages run
+  `29710189059` passed on attempt 3 after attempts 1 and 2 failed only on GitHub
+  HTTP 503 responses.
+- **Learned:** a public showcase and its launched app are one first-impression
+  contract even though their implementations differ. Updating only Pages can leave
+  the in-app pre-selection state looking like the retired cover, so each release
+  must verify hook, promise, CTA, dominant art, and claim boundary on both surfaces.
+  A nominal 320-pixel viewport yielded only 305 usable layout pixels; inspect the
+  framework-generated gutters, brand/actions, and top-bar wrap in addition to the
+  poster component itself.
+- **Test process/result:** started clean from `origin/master`
+  `c6d7c74a644375d3bef210b42d7c754d4ca43825` on branch
+  `agent/driver-small-mammal-poster-handoff`; confirmed no rebuild lock. Ran
+  `git diff --check`; strict Node UTF-8/LF/no-BOM/control/trailing-whitespace/code-
+  fence checks on all four changed Markdown files; table-shape checks on the suite
+  register; stale-current-receipt scans; changed-file scope review; and SHA-256
+  rehashing of the five Driver release files. Independently resolved both sibling
+  commit objects and parsed the `bdf56b0` manifest as 91 packages/118 files while
+  reproducing its exact SHA-256. Expected and actual result: PASS. Driver
+  R/build/browser gates are N/A because the Driver runtime and publication surfaces
+  did not change.
+- **Evidence invalidated:** only the central current-state references to Small
+  Mammal runtime `1615ab4`, 117 files, manifest `f6c4a5ff...`, closeout `b05cecc`,
+  and a Pages-only documentary V4 endpoint are superseded. Their dated historical
+  receipts remain factual. No Driver release, determinism, science, manifest, boot,
+  browser, or publication evidence is invalidated.
+- **Artifacts/non-impact:** no generation or promotion ran. Canonical Driver
+  SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Failure/cleanup:** the two Pages HTTP 503 failures were external publication
+  attempts and recovered without source changes on attempt 3. This Driver docs-only
+  handoff had no failed local gate, created no lock/stage/backup/pending/temp data,
+  and changed no credential or external state.
+- **Residual risk/next action:** browser coverage remains finite, and this local
+  documentation tranche still requires coordinating-owner review, commit, remote
+  checks, and merge. After that docs-only closeout, continue Vegetation Structure
+  through its complete app-local release and vendor its new evidence here before
+  starting another app.
