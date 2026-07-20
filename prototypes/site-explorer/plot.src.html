@@ -202,6 +202,8 @@
   .pl-row:focus-visible{outline:2px solid #e6c78a;outline-offset:1px}
   .pl-id{font-family:var(--mono);font-size:.78rem;color:#f4efe3}
   .pl-meta{font-family:var(--mono);font-size:.66rem;color:#f4efe3a8}
+  .so-list{display:flex;flex-direction:column;gap:.3rem}
+  .so-k{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#e6c78a}
 </style>
 <div id="loading">Reconstructing the plot&hellip;</div>
 <div id="scene"></div>
@@ -865,6 +867,29 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
     'all &mdash; Santa Rita has a site-specific exception to map them, and they are measured under a separate '+
     'cactus protocol. So live/dead status could not be assessed for these, and this is a status at each '+
     'plant&rsquo;s own measurement date, not a mortality rate.</div>';
+  // --- standouts: real individuals worth a look (each flies to + opens its record) ---
+  // Only the actual records: heights/crowns are the *measured* plants, the partial-death
+  // row is the "a dead branch is not a dead plant" case, and the saguaro is flagged
+  // mapped-not-measured so nothing here asserts a number the record does not carry.
+  var meas=P.filter(function(p){return p.realh===true;});
+  function argmax(arr,f){var best=null,bv=-Infinity;arr.forEach(function(p){var v=f(p);if(v>bv){bv=v;best=p;}});return best;}
+  var sTall=argmax(meas,function(p){return p.h;});
+  var sWide=argmax(meas,function(p){return (p.cr||0)*(p.cr90||p.cr||0);});
+  var sPart=argmax(P.filter(function(p){return p.stems&&p.status!=="dead"&&p.dead;}),function(p){return p.dead/p.stems;});
+  var sagu=P.filter(function(p){return p.tx==="CAGI10";});
+  var stand=[];
+  if(sTall)stand.push([sTall,"Tallest","measured "+sTall.h+" m &middot; "+(sTall.common||sTall.tx)]);
+  if(sWide&&sWide!==sTall)stand.push([sWide,"Widest crown",(sWide.cr90?sWide.cr+"&times;"+sWide.cr90:sWide.cr)+" m &middot; "+(sWide.common||sWide.tx)]);
+  if(sPart)stand.push([sPart,"Most partial death",sPart.dead+" of "+sPart.stems+" stems dead, still alive &middot; "+(sPart.common||sPart.tx)]);
+  if(sagu.length===1)stand.push([sagu[0],"The lone saguaro","one juvenile &middot; mapped, not measured"]);
+  if(stand.length){
+    h+='<div class="cp-sec">Standouts <span class="cp-cue">(tap to fly there)</span></div><div class="so-list">';
+    stand.forEach(function(s){
+      h+='<button class="pl-row so-row" type="button" data-id="'+s[0].id+'">'+
+         '<span class="so-k">'+s[1]+'</span>'+
+         '<span class="pl-meta">'+s[2]+'</span></button>';});
+    h+='</div>';
+  }
   var c=DATA.cover;
   if(c&&c.metric==="crown_area_index"){
     var mx=0;(c.bySpecies||[]).forEach(function(sp){if(sp.crownArea_m2>mx)mx=sp.crownArea_m2;});
@@ -968,6 +993,12 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
     if(search)search.addEventListener("input",function(){render(search.value);});
     list.addEventListener("click",function(e){var b=e.target.closest(".pl-row"); if(b)selectById(b.dataset.id);});
   })();
+  // Standouts fly to the plant: close the panel so the framed individual is visible.
+  Array.prototype.forEach.call(coverPanel.querySelectorAll(".so-row"),function(b){
+    b.addEventListener("click",function(){
+      coverPanel.classList.remove("open"); coverBtn.setAttribute("aria-expanded","false");
+      selectById(b.dataset.id);});
+  });
   var tf=document.getElementById("tagFilterBtn");
   if(tf){tf.innerHTML=SY[syi][1]; tf.addEventListener("click",function(){surveyBtn.click();});}
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
