@@ -14,8 +14,12 @@
      inside its own share instead of shoving the legend off the bottom. */
   #ui{position:fixed;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;
     gap:.75rem;padding:clamp(.8rem,3vw,1.6rem);overflow:hidden}
-  #ui > .top{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto}
+  /* margin-bottom:auto keeps the bottom stack pinned to the bottom when the top panel is
+     hidden; with plain space-between and one child gone the survivor jumps to the top. */
+  #ui > .top{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto;
+    margin-bottom:auto}
   #ui > .bottom{flex:0 0 auto;min-height:0}
+  #ui > .geocredit{flex:0 0 auto;margin-top:auto}
   .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:#ffffffb0;text-shadow:0 1px 6px #000a}
   .ttl{font-family:var(--serif);font-weight:600;font-size:clamp(1.5rem,4.5vw,2.4rem);line-height:1.05;margin:.15rem 0;text-shadow:0 2px 16px #000b}
   .sub{font-size:.9rem;color:#fdf8eecc;max-width:44ch;text-shadow:0 1px 10px #000a}
@@ -64,6 +68,8 @@
   .cscale{display:none;align-items:center;gap:.5rem;pointer-events:none;font-family:var(--mono);font-size:.62rem;
     color:#f4efe3cc;text-shadow:0 1px 6px #000a;max-width:60ch}
   .cscale .grad{width:120px;height:9px;border-radius:5px;border:1px solid #ffffff40}
+  .cscale .nm{display:inline-flex;align-items:center;gap:.32rem;color:#f4efe3cc}
+  .cscale .nm i{width:9px;height:9px;border-radius:2px;display:inline-block;border:1px solid #ffffff40}
   .cscale b{color:#f4efe3}
   /* shown only while the first-tagged filter is narrowed, where the wrong reading is tempting */
   .tagnote{max-width:58ch;margin-top:.45rem;padding:.4rem .6rem;border-left:2px solid #e6c78a80;
@@ -101,7 +107,7 @@
   .cp-fold>summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;
     text-transform:uppercase;color:#e6c78a;padding:.25rem 0;min-height:32px;display:flex;align-items:center;gap:.4rem}
   .cp-fold>summary::-webkit-details-marker{display:none}
-  .cp-fold>summary::before{content:"B8";display:inline-block;transition:transform .15s;color:#e6c78a99}
+  .cp-fold>summary::before{content:"▸";display:inline-block;transition:transform .15s;color:#e6c78a99}
   .cp-fold[open]>summary::before{transform:rotate(90deg)}
   .cp-fold>summary:hover{color:#f0d9a8}
   .cp-fold>summary:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
@@ -119,9 +125,12 @@
         title="Hide this panel to see the whole plot">Hide</button>
     </div>
     <div class="sub" id="sub"></div>
-    <div class="geocredit" id="geoCredit"></div>
   </div>
   <button class="reopen" id="infoReopen" type="button" hidden>&#9432; About this plot</button>
+  <!-- The NEON aerial/CHM attribution must NOT live inside the collapsible info panel:
+       hiding that panel and then switching to the real orthophoto left a NEON image on
+       screen with no credit and no vintage. It sits with the scene instead. -->
+  <div class="geocredit" id="geoCredit"></div>
   <div class="bottom">
     <div class="row">
       <button class="walk" id="walkBtn" type="button">&#9654; Walk</button>
@@ -641,18 +650,35 @@ var RH=[[0,[214,198,150]],[0.5,[150,182,92]],[1,[42,92,52]]],   // height
     RD=[[0,[96,204,96]],[0.5,[236,202,72]],[1,[222,72,60]]];    // dead fraction
 function gradCss(R){return"linear-gradient(90deg,"+R.map(function(s){return"rgb("+s[1].join(",")+") "+(s[0]*100)+"%";}).join(",")+")";}
 var CM=["species","height","stems","dead"], cmi=0;
-function applyColor(){var m=CM[cmi];
+// A colour ramp is a claim of measurement. 75 of these 179 plants (42%) carry NO
+// structural record - 70 cacti, which NEON maps but measures under a separate protocol,
+// plus 5 woody plants that were mapped and not measured. Ramping them anyway invented
+// values the panel itself says do not exist: "1 stem" from (p.stems||1), "0% standing
+// dead" from a live-by-construction status, and a species-typical default height
+// rendered on a scale captioned "plant height". Unmeasured plants now render flat grey
+// and are counted in the legend instead.
+var NOMEAS="#6b6a66";
+function measured(p,m){
+  if(m==="height")return p.realh===true;      // h is a species default unless realh
+  if(m==="stems") return p.stems!=null;
+  if(m==="dead")  return p.stems!=null;       // share-of-stems needs a real stem count
+  return true;
+}
+function applyColor(){var m=CM[cmi],unmeas=0;
   for(var i=0;i<plants.length;i++){var p=plants[i].userData.p,mk=plants[i].userData.mk,col;
     if(m==="species")col=(p.status==="dead")?DEADMK:spCol(p,"mk");
+    else if(!measured(p,m)){col=NOMEAS;unmeas++;}
     else if(m==="height")col=lerp3(RH,(p.h-0.3)/2.5);
     else if(m==="stems")col=lerp3(RS,((p.stems||1)-1)/19);
-    else col=lerp3(RD,p.stems?(p.dead||0)/p.stems:(p.status==="dead"?1:0));
+    else col=lerp3(RD,(p.dead||0)/p.stems);
     mk.material.color.set(col);}
   colorBtn.innerHTML="Colour: "+m;
   if(m==="species"){cscale.style.display="none";return;}
   var R=m==="height"?RH:m==="stems"?RS:RD,
     L=m==="height"?["ring colour = plant height","0.3 m","2.8 m"]:m==="stems"?["ring colour = stem count","1","&ge;20"]:["ring colour = share of stems standing dead","0%","100%"];
-  cscale.style.display="flex";cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2];}
+  cscale.style.display="flex";
+  cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2]+
+    (unmeas?'&nbsp;&nbsp;<span class="nm"><i style="background:'+NOMEAS+'"></i>not measured ('+unmeas+')</span>':'');}
 colorBtn.addEventListener("click",function(){cmi=(cmi+1)%CM.length;applyColor();});
 // "First tagged", not "Survey": the date on each plant is when its tag went on, not when the
 // plot was visited. Every plant is tagged once and re-measured later, so these groups can never
