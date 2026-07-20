@@ -71,11 +71,19 @@
   .hint{font-family:var(--mono);font-size:.66rem;color:#ffffff99;text-shadow:0 1px 6px #000a}
   /* the legend is also the species filter, so it must stay reachable: cap it and let it
      scroll rather than let it run past the bottom of the window */
+  .legendrow{display:flex;gap:.5rem;align-items:flex-start;flex-wrap:wrap}
   .legend{display:flex;gap:.4rem;flex-wrap:wrap;pointer-events:none;max-width:60ch;
     max-height:min(34vh,10.5rem);overflow-y:auto;overscroll-behavior:contain;padding-right:.2rem}
   .lg{pointer-events:auto;font-family:var(--mono);font-size:.66rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;
     padding:.28rem .6rem;backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:.4rem}
   .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .legend.nokey .lg i{background:none !important;border:1px solid #ffffff66}
+  .lg:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .lg:active{transform:scale(.96)}
+  .resetb{pointer-events:auto;font:inherit;font-family:var(--mono);font-size:.66rem;cursor:pointer;
+    color:#111;background:#e6c78a;border:none;border-radius:999px;padding:.34rem .8rem;min-height:36px;font-weight:650}
+  .resetb[hidden]{display:none}
+  .resetb:focus-visible{outline:2px solid #f4efe3;outline-offset:2px}
   .lg{cursor:pointer;user-select:none;transition:opacity .15s,border-color .15s}
   .lg:hover{border-color:#ffffff55}
   .lg.off{opacity:.4;text-decoration:line-through}
@@ -113,7 +121,7 @@
     background:#0e0d0ae8;border-radius:0 6px 6px 0;font-family:var(--sans);font-size:.8rem;
     line-height:1.5;color:#f4efe3ee;pointer-events:none}
   .tagnote b{color:#f4efe3}
-  #card{position:fixed;z-index:4;max-width:19rem;background:#12110dEE;border:1px solid #ffffff2a;border-left:3px solid #d98a3d;
+  #card{pointer-events:auto;position:fixed;z-index:6;max-width:19rem;background:#12110dEE;border:1px solid #ffffff2a;border-left:3px solid #d98a3d;
     border-radius:12px;padding:.7rem .85rem;backdrop-filter:blur(8px);pointer-events:none;display:none;box-shadow:0 8px 30px #000a}
   #card .c-sci{font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.15}
   #card .c-common{font-size:.9rem;color:#fdf8ee;margin-top:.05rem}
@@ -136,12 +144,24 @@
     border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(6px)}
   #loading{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:#0b0b0a;color:#f4efe3;
     font-family:var(--serif);font-size:1.1rem;font-style:italic}
+  .cp-head{position:sticky;top:0;z-index:2;background:#12110df7;margin:-1.1rem -1.15rem .4rem;
+    padding:1.1rem 1.15rem .6rem;border-bottom:1px solid #ffffff1a}
   #coverPanel{position:fixed;top:0;right:0;bottom:0;z-index:4;width:min(21rem,88vw);overflow-y:auto;pointer-events:auto;
     background:#12110df7;border-left:1px solid #ffffff22;backdrop-filter:blur(10px);padding:1.1rem 1.15rem 2.5rem;
     transform:translateX(101%);transition:transform .28s ease;box-shadow:-12px 0 40px #0007}
   #coverPanel.open{transform:translateX(0)}
   .cp-h{font-family:var(--serif);font-size:1.18rem;margin:0 0 .1rem}
-  .cp-x{position:absolute;top:.9rem;right:1rem;cursor:pointer;color:#f4efe3aa;font-family:var(--mono);font-size:.66rem}
+  /* the close was a 10px <div>; on a phone this panel covers 88vw so it needs a real
+     target and a sticky header that does not scroll away */
+  .cp-x{position:absolute;top:.7rem;right:.8rem;cursor:pointer;color:#f4efe3;background:#ffffff1f;
+    border:1px solid #ffffff33;border-radius:999px;font:inherit;font-family:var(--mono);font-size:.68rem;
+    padding:.4rem .8rem;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+  .cp-x:hover{background:#ffffff33}
+  .cp-x:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .c-x{position:absolute;top:.4rem;right:.4rem;cursor:pointer;background:#ffffff1a;border:1px solid #ffffff33;
+    color:#f4efe3;border-radius:999px;width:32px;height:32px;line-height:1;font-size:1rem}
+  .c-x:hover{background:#ffffff33}
+  .c-x:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
   .cp-sec{font-family:var(--mono);font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:#e6c78a;margin:1.15rem 0 .55rem}
   .cp-big{font-family:var(--serif);font-size:1.55rem;line-height:1;margin:.1rem 0 .1rem}
   .cp-sub{font-family:var(--mono);font-size:.72rem;color:#f4efe3d9;margin:.2rem 0 .1rem}
@@ -215,7 +235,10 @@
       This is not a before-and-after survey &mdash; every plant is tagged once, then re-measured later, so no
       plant can appear in both years. A plant missing from a year was not absent; it just wasn&rsquo;t tagged yet.</div>
     <div class="cscale" id="cscale"></div>
-    <div class="legend" id="legend"></div>
+    <div class="legendrow">
+      <div class="legend" id="legend"></div>
+      <button class="resetb" id="resetBtn" type="button" hidden>&#8634; Reset view</button>
+    </div>
   </div>
 </div>
 <div id="card"></div>
@@ -541,15 +564,41 @@ selRing.rotation.x=-Math.PI/2; selRing.position.y=0.09; selRing.visible=false; s
 var selPlant=null;
 // filters: species (legend chips) + survey campaign (year)
 var hidden={}, surveyYear="all";
+// Filters could empty the map completely with no count, no message and no way back
+// except un-clicking nine chips by hand.
+function updateShownCount(){
+  var n=0; for(var i=0;i<plants.length;i++) if(shown(plants[i].userData.p))n++;
+  var h=document.getElementById("hint"), r=document.getElementById("resetBtn");
+  if(r)r.hidden=(n===DATA.plants.length);
+  if(h){
+    if(n===0)h.innerHTML='<b>Nothing is showing</b> &mdash; every plant is filtered out.';
+    else if(n<DATA.plants.length)h.innerHTML="showing <b>"+n+"</b> of "+DATA.plants.length+" plants";
+    else h.innerHTML=HINT_BASE;
+  }
+  return n;
+}
+function resetView(){
+  hidden={}; surveyYear="all"; syi=0;
+  var sb=document.getElementById("surveyBtn"); if(sb)sb.innerHTML="First tagged: all";
+  if(typeof syncTagFilter==="function")syncTagFilter();
+  Array.prototype.forEach.call(document.querySelectorAll(".lg"),function(d){d.classList.remove("off");
+    d.setAttribute("aria-pressed","true");});
+  applyVis();
+}
 function shown(p){return !hidden[p.tx] && (surveyYear==="all" || (p.date||"").slice(0,4)===surveyYear);}
 function applyVis(){for(var i=0;i<plants.length;i++){var g=plants[i],on=shown(g.userData.p);
   g.visible=on; var ch=g.children;
   for(var j=0;j<ch.length;j++){var c=ch[j];
     if(c.userData.proxy||c.userData.keep) c.visible=on; else c.visible=on&&showPlants;}}
-  if(selPlant&&!shown(selPlant.userData.p)){selRing.visible=false;selPlant=null;}}
+  // The card asserts a specific plant. If a filter hides that plant, the card was left
+  // on screen describing something no longer visible.
+  if(selPlant&&!shown(selPlant.userData.p)){
+    selRing.visible=false; selPlant=null;
+    var cd=document.getElementById("card"); if(cd)cd.style.display="none";}
+  updateShownCount();}
 
 // ---- controls (first-person walk + top-down sky cam) ----
-var MODE="walk";
+var MODE="walk", HINT_BASE="";
 var keys={},yaw=0.0,pitch=-0.05,px=8,pz=((DATA.plotDim||40)/2+4),walking=false,drag=false,lx=0,ly=0,moved=0,downx=0,downy=0;
 window.addEventListener("keydown",function(e){keys[e.code]=true;});
 window.addEventListener("keyup",function(e){keys[e.code]=false;});
@@ -596,12 +645,16 @@ plantsBtn.addEventListener("click",function(){setPlants(!showPlants);});
 function setMode(mode){MODE=mode;walking=false;walkBtn.innerHTML="&#9654; Walk";
   if(typeof syncSeg==="function")syncSeg();
   var comp=document.getElementById("compass");
+  var touch=(navigator.maxTouchPoints||0)>0;
   if(mode==="sky"){scene.fog=null;sky.x=0;sky.z=0;sky.half=(DATA.plotDim||40)/2+4;sizeOrtho();
     skyBtn.innerHTML="&#9654; Enter the plot (3D)";walkBtn.style.display="none";comp.style.display="block";
-    hintEl.innerHTML="map &middot; north up &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
+    HINT_BASE="map &middot; north up &middot; drag to pan &middot; "+(touch?"pinch":"scroll")+
+      " to zoom &middot; "+(touch?"tap":"click")+" a plant to read its tag";}
   else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Map view";walkBtn.style.display="";comp.style.display="none";
     if(!showPlants)setPlants(true);   // entering the 3D walk turns the plant figures on
-    hintEl.innerHTML="drag to look &middot; W A S D to move &middot; click a plant to read its tag";}}
+    HINT_BASE=touch?"drag to look &middot; tap a plant to read its tag"
+                   :"drag to look &middot; W A S D to move &middot; click a plant to read its tag";}
+  if(typeof updateShownCount==="function")updateShownCount(); else hintEl.innerHTML=HINT_BASE;}
 skyBtn.addEventListener("click",function(){setMode(MODE==="sky"?"walk":"sky");});
 
 /* ---- the visible controls -------------------------------------------------------
@@ -666,7 +719,11 @@ function pick(e){
   card.innerHTML='<div class="c-sci">'+p.sci+'</div>'+(p.common?'<div class="c-common">'+p.common+'</div>':'')+
     '<div class="c-meta"><span class="c-tag">NEON.PLA…'+p.id+'</span> · tagged '+(p.date||'').slice(0,4)+
     '<br>height '+(p.realh?p.h+' m (measured)':'~'+p.h+' m (typical)')+' · crown '+crown+det+
-    '<br>'+statusTxt+' · '+p.tx+'</div>';
+    '<br>'+statusTxt+' · '+p.tx+'</div>'+
+    '<button class="c-x" id="cardX" type="button" aria-label="Close this record">&times;</button>';
+  var cx=document.getElementById("cardX");
+  if(cx)cx.addEventListener("click",function(){
+    card.style.display="none"; selRing.visible=false; selPlant=null;});
   card.style.display="block";
   var cw=card.offsetWidth,chh=card.offsetHeight;
   card.style.left=Math.min(window.innerWidth-cw-12,Math.max(12,e.clientX+14))+"px";
@@ -675,10 +732,21 @@ function pick(e){
 
 // ---- legend ----
 var lg=document.getElementById("legend"), TXNAME={};
-DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;var d=document.createElement("span");d.className="lg";
+// These chips are the primary species filter, so they are <button>s with aria-pressed,
+// not <span>s with click handlers: as spans they were unreachable by keyboard entirely
+// and announced as nothing.
+(function(){var rb=document.getElementById("resetBtn");
+  if(rb)rb.addEventListener("click",function(){resetView();rb.blur();});})();
+DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;
+  var d=document.createElement("button"); d.type="button"; d.className="lg";
+  d.setAttribute("aria-pressed","true");
   d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].mk)||"#8fae78")+'"></i>'+(l.common||l.tx)+' &times;'+l.n;
-  d.title="Click to show/hide "+(l.common||l.tx)+" on the map";
-  d.addEventListener("click",function(){hidden[l.tx]=!hidden[l.tx];d.classList.toggle("off",!!hidden[l.tx]);applyVis();});
+  d.title="Show or hide "+(l.common||l.tx)+" on the map";
+  d.addEventListener("click",function(){
+    hidden[l.tx]=!hidden[l.tx];
+    d.classList.toggle("off",!!hidden[l.tx]);
+    d.setAttribute("aria-pressed",String(!hidden[l.tx]));
+    applyVis();});
   lg.appendChild(d);});
 
 // ---- ground cover & species panel ----
@@ -692,7 +760,8 @@ var TAGYEARS=(function(){var seen={},out=[];
   return out.sort();})();
 var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})), syi=0;
 (function buildCover(){
-  var h='<div class="cp-x" id="coverX">&times; close</div><div class="cp-h">Plot data &amp; analysis</div>';
+  var h='<div class="cp-head"><div class="cp-h">Plot data &amp; analysis</div>'+
+        '<button class="cp-x" id="coverX" type="button" aria-label="Close this panel">&times; close</button></div>';
   // --- plot at a glance (computed from the real records) ---
   var P=DATA.plants,hs=[],totStem=0,deadStem=0,fullyDead=0,byYear={};
   P.forEach(function(p){if(p.realh)hs.push(p.h);if(p.stems){totStem+=p.stems;deadStem+=(p.dead||0);}
@@ -877,6 +946,9 @@ function applyColor(){var m=CM[cmi],unmeas=0;
     else col=lerp3(RD,(p.dead||0)/p.stems);
     mk.material.color.set(col);}
   colorBtn.innerHTML=m;
+  // The legend swatches show SPECIES colours. While the rings are coloured by height,
+  // stems or dead-share, those swatches are a second, contradictory key on screen.
+  lg.classList.toggle("nokey", m!=="species");
   if(m==="species"){cscale.style.display="none";return;}
   var R=m==="height"?RH:m==="stems"?RS:RD,
     L=m==="height"?["ring colour = plant height",DOM.h[0].toFixed(1)+" m",DOM.h[1].toFixed(1)+" m"]

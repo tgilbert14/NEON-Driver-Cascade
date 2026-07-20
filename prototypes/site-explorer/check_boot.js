@@ -104,6 +104,7 @@ function run(file) {
     AudioContext: anything('AudioContext'), webkitAudioContext: anything('AudioContext'),
     Image: function(){ return makeEl('img'); },
     performance: { now: () => 0 },
+    navigator: { maxTouchPoints: 0, userAgent: 'boot-check', language: 'en-US', share: undefined },
   };
   win.window = win; win.self = win; win.globalThis = win;
 
