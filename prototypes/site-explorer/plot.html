@@ -649,6 +649,12 @@ DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;var d=doc
 var coverBtn=document.getElementById("coverBtn"), coverPanel=document.getElementById("coverPanel");
 function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><span>'+lab+'</span><b>'+val+'%</b></div>'+
   '<div class="cp-bar"><i style="width:'+Math.max(2,Math.min(100,val/(max||1)*100))+'%;background:'+col+'"></i></div></div>';}
+// Derived from the plants themselves. Hard-coding 2016/2021 meant plot #2's tag years
+// would simply never appear in the filter.
+var TAGYEARS=(function(){var seen={},out=[];
+  DATA.plants.forEach(function(p){var y=(p.date||"").slice(0,4); if(y&&!seen[y]){seen[y]=1;out.push(y);}});
+  return out.sort();})();
+var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})), syi=0;
 (function buildCover(){
   var h='<div class="cp-x" id="coverX">&times; close</div><div class="cp-h">Plot data &amp; analysis</div>';
   // --- plot at a glance (computed from the real records) ---
@@ -776,6 +782,7 @@ function setInfo(on){
 // On a phone the description panel plus the control stack left a sliver of actual plot,
 // so it starts collapsed there. The reopen pill is always present.
 // The breadcrumb names the plot and site actually loaded, ready for ?plot=<ID>.
+var SITENAME={SRER:"Santa Rita"};   // display names for the breadcrumb
 (function(){
   var cp=document.getElementById("crumbPlot"), cs=document.getElementById("crumbSite");
   var pid=(DATA.plot||"SRER_048"), site=(DATA.provenance&&DATA.provenance.site)||pid.split("_")[0];
@@ -805,7 +812,6 @@ var CM=["species","height","stems","dead"], cmi=0;
 // dead" from a live-by-construction status, and a species-typical default height
 // rendered on a scale captioned "plant height". Unmeasured plants now render flat grey
 // and are counted in the legend instead.
-var SITENAME={SRER:"Santa Rita"};   // display names for the breadcrumb
 var NOMEAS="#6b6a66";
 // Ramp domains come from the loaded plot. Hard-coded 0.3-2.8 m and 1-20 stems were
 // SRER's ranges: a forest plot would peg every ring at maximum while the caption still
@@ -844,12 +850,6 @@ colorBtn.addEventListener("click",function(){cmi=(cmi+1)%CM.length;applyColor();
 // plot was visited. Every plant is tagged once and re-measured later, so these groups can never
 // share a plant - that is the table's structure, not turnover. Labelling it "Survey 2016 vs 2021"
 // invites a recruitment/mortality reading the data cannot support.
-// Derived from the plants themselves. Hard-coding 2016/2021 meant plot #2's tag years
-// would simply never appear in the filter.
-var TAGYEARS=(function(){var seen={},out=[];
-  DATA.plants.forEach(function(p){var y=(p.date||"").slice(0,4); if(y&&!seen[y]){seen[y]=1;out.push(y);}});
-  return out.sort();})();
-var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})), syi=0;
 function syncTagFilter(){var b=document.getElementById("tagFilterBtn"); if(b)b.innerHTML=SY[syi][1];}
 surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=SY[syi][0];surveyBtn.innerHTML="First tagged: "+SY[syi][1];syncTagFilter();
   var n=document.getElementById("tagNote");

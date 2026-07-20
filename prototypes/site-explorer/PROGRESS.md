@@ -397,6 +397,30 @@ exists; and a plot-picker slot in the breadcrumb from day one, even while it ren
 replace the inferred cover denominator with NEON's recorded `area_shrub`; a keyboard path to the 179
 records (the payload is currently pointer-only); and the Cover panel's modal behaviour on phones.
 
+## Lesson: syntax checking is not a boot check
+
+Three separate runtime-ordering bugs shipped in one day, each of which left `plot.html` frozen on
+"Reconstructing the plot…" — because the loading overlay is only hidden on the **last** line of the
+script, so *any* exception anywhere leaves it up forever.
+
+All three were `var X` declared **after** the top-level code that read it. `var` hoists as
+`undefined`, so the read throws a `TypeError` rather than a `ReferenceError`, and — crucially —
+`node --check` passes every time, because the **syntax is valid**. The bugs were:
+
+| Symbol | Declared | First used | Introduced by |
+|---|---|---|---|
+| `SITENAME` | line 802 | line 774 | the breadcrumb |
+| `TAGYEARS` | line 843 | line 436 | de-SRER'ing the tag-year filter |
+| `SY` / `syi` | line 846 | line 531 | moving the filter into the data panel |
+
+The pattern behind all three: `buildCover()` is an IIFE that runs **immediately**, near the top, but
+kept acquiring references to things declared further down as the file grew.
+
+`check_boot.js` exists because of this. It executes each page's authored script against a stub DOM
+and a Proxy-based THREE, and fails loudly with the offending line. It found two of these three; only
+the first was caught by hand. It cannot prove a page *looks* right — nothing renders — but it proves
+the script runs to completion, and that is exactly the failure mode that had been shipping.
+
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined; ~133 KB).
@@ -407,6 +431,10 @@ records (the payload is currently pointer-only); and the Cover panel's modal beh
 - `assemble_index.py` — re-inlines `site-data.json` + `map-data.json` into `index.html`. Idempotent;
   replaces only the two tagged block bodies. (This step used to be a manual paste, which is not a build step.)
 - `assemble_plot.py` — re-inlines the scene template + committed JSON into `plot.html` (needs no raw data or token).
+- `check_boot.js` — **runs each page's script for real** against a stub DOM and reports the first
+  exception. `node --check` only validates syntax; this proves the script reaches its end, which is
+  the difference between a working page and one frozen on its loading overlay. Run it before every
+  commit: `node check_boot.js index.html walk.html plot.html`.
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
 - `site-data.json` / `map-data.json` / `neon-site-names.json` — generated/fetched data.
@@ -539,6 +567,7 @@ pip install rdata
 python3 prototypes/site-explorer/export_data.py            # -> site-data.json (+ provenance receipt)
 python3 prototypes/site-explorer/build_map.py us.json       # -> map-data.json (us.json = a US-states GeoJSON)
 python3 prototypes/site-explorer/assemble_index.py          # -> re-inlines both into index.html (idempotent)
+node prototypes/site-explorer/check_boot.js      prototypes/site-explorer/{index,walk,plot}.html        # -> must print BOOT OK for all three
 ```
 
 The re-inline used to be a manual paste. It is a build step now: `assemble_index.py` replaces only the
