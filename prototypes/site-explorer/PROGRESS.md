@@ -6,7 +6,7 @@ where we left off. This is the audience-expansion prototype proposed in
 suite from a scientist's question (*"does bottom-up cascade theory hold?"*) to a citizen's
 (*"what is this place, and what makes it tick?"*).
 
-Last updated: 2026-07-19.
+Last updated: 2026-07-20.
 
 ## Live artifacts (private to the owner unless shared)
 
@@ -65,8 +65,10 @@ stemDistance + stemAzimuth, point coords from the locations API), sized by real 
 standing-dead, and **click a plant to read its actual NEON record** (species, individualID, tag year,
 measured height/crown, status). 9 species, 104 measured heights, 28 dead. See `build_plot.md`. Live
 artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
-(self-contained), `plot-srer048.json` (derived), `plot.src.html` (template), `build_plot.md` (recipe);
-raw VST CSVs + token + `build_plot.py` stay in scratchpad.
+(self-contained), `plot-srer048.json` + `div-srer.json` (derived), `plot.src.html` (template),
+**`assemble_plot.py`** (reproducible re-inliner — commits, needs no raw data/token), `build_plot.md` (recipe).
+Rebuild loop: edit `plot.src.html` → `python3 assemble_plot.py` → `plot.html`. The from-scratch data builders
+(`build_plot.py`, `div_srer.py`, `geo_plot.py`) stay in scratchpad (they need raw NEON CSVs/tiles + token).
 
 **Botanical models (done):** each of the 9 species now has a research-accurate low-poly model keyed on
 the real `taxonID` (built from SEINet/FNA/USDA/ASDM/LBJWC descriptions) — creosote open see-through vase,
@@ -136,10 +138,26 @@ is site-level context (`div-srer.py` → `div-srer.json`, 2024 growing season), 
 height range (not per-pixel camo). **Load speed:** capped creosote stems + trimmed tufts cut load-to-interactive
 ~1.9 s → ~1.2 s (headless).
 
+**Unmapped-area shade + About-first + analysis (done):** four owner-requested touches to "max out this plot":
+(1) a **light dark shade** over the plot's **western half** (a `MeshBasicMaterial` plane at y≈0.05, opacity 0.4)
+so it's obvious *why* that side has no plants — VST only mapped the east half; the About text calls it out in
+bold. (2) The **About panel is readable by default** now (dark backdrop on) with a **"ⓘ Hide info"** toggle, so a
+first-time viewer reads the plot's story before clearing it — the button flips to "ⓘ About" to bring it back.
+(3) **Colour-by modes** — a "Colour" button cycles the ring colours through **species → height → stems → dead**;
+non-species modes swap in a continuous ramp (height: short→tall, stems: few→many, dead: share of stems standing
+dead) and reveal a gradient **scale legend** with a plain-language caption. Turns the dot-map into a quick
+data-viz of any one variable. (4) A **survey-campaign filter** — a "Survey" button cycles **2016+2021 → 2016 only
+→ 2021 only**, hiding plants not tagged in that bout (each plant carries its tag `date`), so you can watch the
+plot's mapped population across the two re-surveys. (5) The **"Cover & species" panel now opens with a "this plot
+at a glance" analysis block** — tagged plants + species count, per-campaign tallies, density (~plants/100 m²
+surveyed), mean/tallest height, total/live/dead **stems mapped**, and whole-plants-dead — all computed live from
+the VST records. Verified headless (0 errors; buttons cycle; shade covers the west half; stats compute).
+
 Extra JSON fields (`stems`, `dead`, `bd`, `cr90`, `shape`, `canopy`, `dmg`) come from `build_plot.py` (cacti
 have no VST apparent record → species defaults). Positions unchanged, so the AOP georeference is intact.
 
-**Deferred:** plant diversity (% cover → ground), phenology (animate the year), link from the desert walk,
+**Deferred:** phenology (animate the year — owner: "pheno is another area, not tied to these plots; max out this
+plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,
 more plots.
 
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
