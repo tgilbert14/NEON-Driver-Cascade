@@ -60,10 +60,16 @@
   .maplegend{display:flex;flex-direction:column;gap:.4rem;margin-top:.1rem;padding-top:.2rem}
   .lgk{display:inline-flex;align-items:center;gap:.45rem;font-size:.8rem;color:var(--muted)}
   .lgk i{width:11px;height:11px;border-radius:50%;display:inline-block;flex:0 0 auto}
-  .mapdot{cursor:pointer;stroke:var(--surface);stroke-width:1.2;transition:stroke-width .12s ease}
-  .mapdot:hover,.mapdot:focus-visible{outline:none;stroke:var(--text);stroke-width:1.8}
-  .mapdot.feat{stroke:var(--text);stroke-width:1.3}
-  .mapdot.sel{stroke:var(--text);stroke-width:2.6}
+  .mapdot{stroke:var(--surface);stroke-width:1.2;transition:stroke-width .12s ease}
+  /* Built = a real control. Unbuilt = the network we have not reached yet: quiet, not
+     interactive, and never styled to look like a disabled button. */
+  .mapdot.built{cursor:pointer}
+  .mapdot.built:hover,.mapdot.built:focus-visible{outline:none;stroke:var(--text);stroke-width:2.2}
+  .mapdot.unbuilt{opacity:.4;pointer-events:none;stroke-width:.8}
+  .mapdot.sel{stroke:var(--text);stroke-width:2.8}
+  @keyframes dotpulse{0%,100%{stroke-width:2.8}50%{stroke-width:4.2}}
+  .mapdot.built.sel{animation:dotpulse 2.6s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){.mapdot.built.sel{animation:none}}
   #mapHover{color:var(--text);font-style:italic}
   @media (max-width:560px){.inset{width:44%}.maplegend{width:100%}}
 
@@ -185,16 +191,22 @@
     display:grid;gap:.15rem;font-size:.82em;line-height:1.5}
   .provbody .pr{display:flex;gap:.5rem;flex-wrap:wrap}
   .provbody .pr b{min-width:8.5rem;display:inline-block;font-weight:600}
+  .badge .dim{color:var(--muted);font-weight:400}
+  .maplegend .lgk.unb{opacity:.75}
+  .site-row.unbuilt{opacity:.52;cursor:default}
+  .site-row.unbuilt .nt{font-style:italic}
   @media (max-width:480px){.provbody .pr b{min-width:0;display:block}}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
 
 <div class="wrap masthead">
-  <div class="eyebrow">A design prototype · public site explorer</div>
+  <div class="eyebrow">An independent view of published NEON data</div>
   <h1>What drives this place?</h1>
-  <p>Pick a NEON field site and meet it as a <em>place</em> first &mdash; where it is, what stands on it,
-    and the few things that really seem to run it. The science is here too, tucked one tap away.</p>
-  <div class="badge">Wired to the committed atlas bundle &middot; <b>46 sites, real direction screens</b></div>
+  <p>NEON sends people to the same fixed patches of ground, year after year, to count the same
+    things &mdash; plants, mice, beetles, birds &mdash; and record the weather over them. This is one
+    of those places, taken apart down to the individual plant.</p>
+  <div class="badge">Built so far: <b>Santa Rita, Arizona</b> &middot; one plot, 179 tagged plants
+    &middot; <span class="dim">45 more sites mapped, not yet built</span></div>
 </div>
 
 <div class="wrap">
@@ -202,10 +214,11 @@
 </div>
 
 <section class="blk wrap" id="mapSection">
-  <div class="eyebrow">Travel the network</div>
-  <h3>Forty-six places, one map</h3>
-  <p class="lede">Every NEON site the atlas covers, coloured by the kind of country it is.
-    Tap a dot to drop into that place. <span id="mapHover"></span></p>
+  <div class="eyebrow">The network</div>
+  <h3>Forty-six places. One of them is built.</h3>
+  <p class="lede">Every NEON site the atlas covers. <b>Santa Rita is live</b> &mdash; tap it to go in.
+    The pale dots are the rest of the network: real sites with real data, not yet built out here.
+    That is the shape of the work, not a gap we forgot to fill. <span id="mapHover"></span></p>
   <div class="mapwrap">
     <div class="mapmain"><svg id="mapMainSvg" role="group" aria-label="Map of NEON sites in the lower 48 states"></svg></div>
     <div class="mapinsets">
@@ -217,7 +230,7 @@
 </section>
 
 <div class="wrap">
-  <div class="eyebrow" style="margin-bottom:.4rem">Or start with three we've written up</div>
+  <div class="eyebrow" style="margin-bottom:.4rem">Start here</div>
   <div class="picker" id="picker" role="group" aria-label="Choose a featured site"></div>
   <details class="dir" id="dir">
     <summary><span class="plus">+</span> <span>Browse all 46 NEON sites</span></summary>
@@ -291,8 +304,22 @@
   // site's measured standing wood. Saying which is which turns a buried caveat into the
   // reason to click.
   var LIDAR={WREF:1,SCBI:1,HARV:1,GUAN:1,TEAK:1,GRSM:1,SOAP:1};
-  // The Plot has only been reconstructed for one NEON plot so far.
-  var PLOT_SITE="SRER";
+
+  /* ---- BUILD REGISTRY -----------------------------------------------------------
+     The single place that decides which sites are BUILT. Everything else - the map,
+     the picker, the directory, the hero - reads this and nothing hard-codes a site
+     code. Adding a site is one line here, not a rewrite.
+
+     The map deliberately still renders all 46. The unbuilt ones are the scope of the
+     work, not broken controls: this is a case study for the whole network, and hiding
+     the other 45 would hide the argument. They are drawn quiet, marked "not built yet",
+     and are not clickable, so nothing promises depth that does not exist.            */
+  var BUILT={
+    SRER:{plot:"SRER_048", plots:1}
+  };
+  function isBuilt(code){return !!BUILT[code];}
+  var BUILT_CODES=Object.keys(BUILT);
+  var PLOT_SITE=BUILT_CODES[0];
   var MAP=JSON.parse(document.getElementById("mapData").textContent);
   var BUCKET_COLOR={forest:"#3f7a4b",grassland:"#c99a3c",dryland:"#d98a3d",tundra:"#6fa8c9",other:"#2f8f7a"};
   var BUCKET_NAME={forest:"Forest",grassland:"Grassland",dryland:"Dryland / desert",tundra:"Tundra / alpine",other:"Other"};
@@ -303,10 +330,17 @@
     svg.setAttribute("viewBox","0 0 "+space.w+" "+space.h);
     var out='<path d="'+space.outline+'" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>';
     space.sites.forEach(function(p){
-      var st=SITEMAP[p.code],feat=st&&st.featured,rad=feat?r+1.4:r;
-      out+='<circle class="mapdot'+(feat?' feat':'')+'" data-id="'+p.code+'" data-r="'+rad+'" cx="'+p.x+'" cy="'+p.y+'" r="'+rad+
-        '" fill="'+bucketColor(p.code)+'" tabindex="0" role="button" aria-label="'+esc((st&&st.name)||p.code)+
-        (st&&st.state?", "+esc(st.state):"")+'"><title>'+esc((st&&st.name)||p.code)+(st&&st.state?" &middot; "+esc(st.state):"")+'</title></circle>';
+      var st=SITEMAP[p.code],built=isBuilt(p.code),rad=built?r+1.8:r*0.72,
+          nm=esc((st&&st.name)||p.code), where=(st&&st.state?" &middot; "+esc(st.state):"");
+      // Built sites are real controls. Unbuilt ones are scenery: no tabindex, no button
+      // role, and an aria-label that says why - a silent unfocusable dot would read as
+      // broken to a screen reader, and a focusable one would promise a destination.
+      out+='<circle class="mapdot'+(built?' built':' unbuilt')+'" data-id="'+p.code+'" data-r="'+rad+
+        '" cx="'+p.x+'" cy="'+p.y+'" r="'+rad+'" fill="'+(built?bucketColor(p.code):"var(--muted)")+'"'+
+        (built?' tabindex="0" role="button"':' role="img"')+
+        ' aria-label="'+nm+(st&&st.state?", "+esc(st.state):"")+
+        (built?'"':' — in the NEON network, not built yet"')+
+        '><title>'+nm+where+(built?'':' &mdash; not built yet')+'</title></circle>';
     });
     svg.innerHTML=out;
   }
@@ -316,6 +350,7 @@
       renderSpace(document.getElementById(pair[0]),MAP[pair[1]],5);});
     Array.prototype.forEach.call(document.querySelectorAll(".mapdot"),function(c){
       var id=c.dataset.id,st=SITEMAP[id],br=+c.dataset.r;
+      if(!isBuilt(id))return;   // scenery: no hover-grow, no focus, no click
       function enter(){c.setAttribute("r",br+2.4);
         if(hov)hov.textContent=((st&&st.name)||id)+(st&&st.state?" · "+st.state:"")+(st?" — "+titleCase(st.biome_label):"");}
       function leave(){c.setAttribute("r",br); if(hov)hov.textContent="";}
@@ -326,8 +361,11 @@
       c.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();c.click();}});
     });
     var present={}; DATA.sites.forEach(function(s){present[s.bucket]=1;});
-    document.getElementById("mapLegend").innerHTML=Object.keys(BUCKET_NAME).filter(function(b){return present[b];})
-      .map(function(b){return '<span class="lgk"><i style="background:'+BUCKET_COLOR[b]+'"></i>'+BUCKET_NAME[b]+'</span>';}).join("");
+    var nUn=DATA.sites.filter(function(s){return !isBuilt(s.site);}).length;
+    document.getElementById("mapLegend").innerHTML=
+      Object.keys(BUCKET_NAME).filter(function(b){return present[b];})
+        .map(function(b){return '<span class="lgk"><i style="background:'+BUCKET_COLOR[b]+'"></i>'+BUCKET_NAME[b]+'</span>';}).join("")+
+      '<span class="lgk unb"><i style="background:var(--muted)"></i>not built yet ('+nUn+')</span>';
   }
   function highlightMapDot(id){Array.prototype.forEach.call(document.querySelectorAll(".mapdot"),
     function(c){c.classList.toggle("sel",c.dataset.id===id);});}
@@ -369,7 +407,7 @@
 
   /* ---- featured picker ---- */
   var picker=document.getElementById("picker");
-  ["SRER","KONZ","SCBI"].forEach(function(id){
+  BUILT_CODES.filter(function(id){return FEAT[id];}).forEach(function(id){
     var f=FEAT[id];
     var b=document.createElement("button");
     b.className="pick";b.type="button";b.dataset.id=id;b.setAttribute("aria-pressed","false");
@@ -390,11 +428,13 @@
       return s.site.toLowerCase().indexOf(filter)>=0||(s.biome_label||"").toLowerCase().indexOf(filter)>=0||
         (s.name||"").toLowerCase().indexOf(filter)>=0||(s.state||"").toLowerCase().indexOf(filter)>=0;
     }).forEach(function(s){
-      var b=document.createElement("button");
-      b.className="site-row";b.type="button";b.dataset.id=s.site;
+      var built=isBuilt(s.site);
+      var b=document.createElement(built?"button":"div");
+      b.className="site-row"+(built?"":" unbuilt");b.dataset.id=s.site;
+      if(built)b.type="button";
       b.innerHTML='<span class="code">'+s.site+'</span><span class="rb">'+(s.name||titleCase(s.biome_label||"—"))+
-        (s.state?" · "+s.state:"")+'</span><span class="nt">'+s.n_testable+' tested</span>';
-      b.addEventListener("click",function(){select(s.site);
+        (s.state?" · "+s.state:"")+'</span><span class="nt">'+(built?s.n_testable+' tested':'not built yet')+'</span>';
+      if(built)b.addEventListener("click",function(){select(s.site);
         document.getElementById("hero").scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});});
       listEl.appendChild(b);
     });
@@ -422,6 +462,9 @@
            " checkable here "+(clean.length===1?"points":"point")+" one way.";
   }
   function select(id){
+    // Guard rather than trust callers: a stale deep link or a future control must not
+    // be able to open a site whose content does not exist.
+    if(!isBuilt(id))return;
     var s=SITEMAP[id]; if(!s)return; current=id;
     var f=FEAT[id], bi=BIOME[s.bucket]||BIOME.other;
     var world=f?f.world:bi.world;
