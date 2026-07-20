@@ -435,6 +435,45 @@ and a Proxy-based THREE, and fails loudly with the offending line. It found two 
 the first was caught by hand. It cannot prove a page *looks* right — nothing renders — but it proves
 the script runs to completion, and that is exactly the failure mode that had been shipping.
 
+## The cover figure was wrong three ways — what replaced it
+
+The published "~53.9% canopy cover" was wrong in a way that outranked the denominator debate, and the
+fault was mine: **13.1% of the numerator was invented.** All 75 plants without a structural record
+carry a *per-species constant* crown diameter — every one of the 53 Christmas cholla is exactly
+0.7 m, every unmeasured mesquite exactly 3.2 m — distinguishable only by a missing `cr90`. The cover
+sum gated on `status === "live"` rather than on whether a crown was actually measured, so those
+defaults were summed as though they were data. This is the *same* bug recorded as fixed for the
+colour ramps; it was never fixed in the headline number.
+
+| | |
+|---|---|
+| measured woody crowns | **370.0 m²** (99 plants) |
+| placeholder woody | 28.1 m² (5 plants) |
+| placeholder cacti | 27.8 m² (70 plants) |
+| **invented share of the published figure** | **13.1%** |
+
+Two further errors, both confirmed against the protocol:
+
+- **The denominator was a guess when it did not need to be.** 790 m² was the bounding box of the mapped
+  plants. The real figure is **800 m² by design**: protocol Table 10 samples two of the four 20 × 20 m
+  subplots of a 40 × 40 m base plot. The "unsurveyed western half" was the sampling design all along.
+- **The caveat pointed the wrong way.** It said the divisor was a lower bound and the percentage an
+  upper bound. That holds only for the tree channel; for a nested-subplot channel the sampled area can
+  be *smaller* than the bounding box, so the published number could equally have been an under-estimate.
+
+Now reported as a **crown area index in m²/m²**, never a percentage, with cacti held out as a count.
+
+**Still unresolved, and stated on the page:** the 800 m² assumes the measured woody plants were searched
+across the full selected subplots. If they came from nested subplots the denominator is smaller and the
+index higher. Settling it needs `subplotID` per record — which the committed file does not carry.
+
+**Contract gap that must close before plot #2:** no plant record carries `growthForm`, `subplotID` or
+`eventID`. `growthForm` assigns the measurement channel and therefore which sampled area applies;
+`subplotID`/`eventID` pins the denominator. Without them the same ambiguity propagates to 37 more plots.
+NEON records these areas per `plotID` × `eventID`, they can be NULL when a growth form is not scheduled,
+and at SRER *Prosopis velutina* changed channel in 2020 — so the channel must be read per record, never
+per species. Recorded in the file as `contractGaps`.
+
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
 - `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined; ~133 KB).
@@ -484,12 +523,16 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
   diameter, but SRER measured mesquite at basal diameter only from 2020 onward (as a tree at DBH before) —
   so the build joined each plant's *latest* measurement. The tag year says when a plant entered the record;
   it does not date the measurements drawn on screen.
-- **Cover is over the surveyed area, summed not unioned, and its denominator is inferred.** VST mapped only
-  the eastern half of SRER_048, so cover divides by 790 m², not the 1600 m² plot — dividing by the plot
-  would count never-mapped ground as measured zero. Crowns overlap, so `100 − cover` is **not** open
-  interspace. And the 790 m² is the *bounding box of the mapped plants*, not NEON's recorded sampled area:
-  surveyed ground holding no qualifying stems adds area but no plants, so the divisor is a lower bound and
-  the percentage an **upper** bound. Label it approximate until `vst_perplotperyear` is pulled.
+- **There is no cover percentage, and there must not be one.** The page reports a **woody crown area
+  index — 0.46 m² of crown per m² of ground** (370 m² of measured crown over the 800 m² NEON searched,
+  99 plants). Three independent reasons a percentage would be wrong: crowns **overlap**, so a sum is not a
+  union; each crown is measured from its **two maximum diameters at right angles**, so the ellipse
+  circumscribes an open desert crown; and the measurement "may include live and dead material". The
+  denominator is **800 m² by design** — a 40 × 40 m base plot is sampled in two of its four 20 × 20 m
+  subplots, randomly selected, and at SRER_048 those are the eastern pair. That is *why* the plants fill
+  half the plot; it was never a survey gap. **Cacti are excluded** — NEON measures them under a separate
+  Cactus SOP against a different sampled area, and at Santa Rita only large-stature individuals are
+  mapped, so they are a mapped subset, not a census. They are reported as a count and species list.
 - **This is a map of tagged individuals, not of every plant in the plot.** Saplings are never mapped, and
   a plant with no stem ≥ 1 cm basal diameter is outside this protocol entirely.
 - **A scene may only claim a measurement it actually used.** The tundra branch ignores `veg_ba_ha`, so

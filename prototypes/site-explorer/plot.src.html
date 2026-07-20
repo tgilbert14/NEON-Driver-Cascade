@@ -168,7 +168,8 @@
   .c-x:hover{background:#ffffff33}
   .c-x:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
   .cp-sec{font-family:var(--mono);font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:#e6c78a;margin:1.15rem 0 .55rem}
-  .cp-big{font-family:var(--serif);font-size:1.55rem;line-height:1;margin:.1rem 0 .1rem}
+  .cp-big{font-family:var(--serif);font-size:1.55rem;line-height:1.1;margin:.1rem 0 .1rem}
+  .cp-per{font-family:var(--sans);font-size:.8rem;color:#f4efe3b0;font-style:normal}
   .cp-sub{font-family:var(--mono);font-size:.72rem;color:#f4efe3d9;margin:.2rem 0 .1rem}
   .cp-row{margin:.34rem 0;font-family:var(--mono);font-size:.68rem}
   .cp-row .lab{display:flex;justify-content:space-between;gap:.6rem;color:#f4efe3cc}
@@ -772,7 +773,7 @@ DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;
 
 // ---- ground cover & species panel ----
 var coverBtn=document.getElementById("coverBtn"), coverPanel=document.getElementById("coverPanel");
-function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><span>'+lab+'</span><b>'+val+'%</b></div>'+
+function cbar(lab,val,max,col,unit){return '<div class="cp-row"><div class="lab"><span>'+lab+'</span><b>'+val+(unit||'%')+'</b></div>'+
   '<div class="cp-bar"><i style="width:'+Math.max(2,Math.min(100,val/(max||1)*100))+'%;background:'+col+'"></i></div></div>';}
 // Derived from the plants themselves. Hard-coding 2016/2021 meant plot #2's tag years
 // would simply never appear in the filter.
@@ -818,26 +819,26 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
     'cactus protocol. So live/dead status could not be assessed for these, and this is a status at each '+
     'plant&rsquo;s own measurement date, not a mortality rate.</div>';
   var c=DATA.cover;
-  if(c){var mx=0;c.bySpecies.forEach(function(s){if(s.pct>mx)mx=s.pct;});
-    h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>'+
-      '<div class="cp-sub">of the surveyed '+(c.surveyedArea||Math.round((DATA.ex||0)*(DATA.ey||0)))+
-      '&thinsp;m&sup2;'+(DATA.surveyNote?' &mdash; '+DATA.surveyNote:'')+'</div>';
-    c.bySpecies.filter(function(s){return s.pct>0;}).forEach(function(s){
-      h+=cbar((TXNAME[s.tx]||s.tx)+' &times;'+s.n,s.pct,mx,(SP[s.tx]&&SP[s.tx].mk)||'#8fae78');});
-    // Denominator honesty: VST mapped only the eastern half, so the whole 1600 m2 plot
-    // is the wrong divisor - it would count 810 m2 of never-surveyed ground as measured
-    // zero cover. And because crowns overlap, this is SUMMED crown area, not a union:
-    // 100 - cover is therefore NOT open interspace, and must not be reported as such.
-    h+='<div class="cp-note">Summed live crown ellipses &pi;(cr&divide;2)(cr90&divide;2) &divide; the '+
-      (c.surveyedArea||790)+'&thinsp;m&sup2; <b>surveyed</b> area. Crowns can overlap, so this is summed '+
-      'crown area rather than a union &mdash; it is not one minus the open ground. '+
-      (c.denominatorBasis?c.denominatorBasis+' ':'')+
-      (c.canopyPctWholePlot?'(Over the full plot the same crowns give ~'+
-      c.canopyPctWholePlot+'%, which understates cover for that reason.) ':'')+
-      '<b>Treat this as approximate.</b> The '+(c.surveyedArea||'')+'&thinsp;m&sup2; is the bounding box of the mapped plants, '+
-      'not NEON&rsquo;s recorded sampled area &mdash; surveyed ground holding no qualifying stems adds area '+
-      'but no plants, so the divisor is a lower bound and this percentage an upper bound. The recorded '+
-      'value lives in a NEON table not included here.</div>';}
+  if(c&&c.metric==="crown_area_index"){
+    var mx=0;(c.bySpecies||[]).forEach(function(sp){if(sp.crownArea_m2>mx)mx=sp.crownArea_m2;});
+    h+='<div class="cp-sec">This plot &middot; woody crowns (VST)</div>'+
+      '<div class="cp-big">'+c.value+' m&sup2;<span class="cp-per"> of crown per m&sup2; of ground</span></div>'+
+      '<div class="cp-sub">'+c.crownArea_m2+'&thinsp;m&sup2; of measured crown over the '+
+      c.sampledArea_m2+'&thinsp;m&sup2; NEON searched &middot; '+c.nPlants+' plants</div>';
+    (c.bySpecies||[]).forEach(function(sp){
+      h+=cbar((TXNAME[sp.tx]||sp.tx)+' &times;'+sp.n, sp.crownArea_m2, mx, (SP[sp.tx]&&SP[sp.tx].mk)||'#8fae78', ' m²');});
+    // This is NOT a cover percentage and must never be shown as one: crowns overlap, and
+    // each is measured from two MAXIMUM diameters at right angles, so the ellipse
+    // circumscribes an open desert crown. 13% of the previous figure was also invented -
+    // the 75 unmeasured plants carry a per-species constant, not a measurement.
+    h+='<div class="cp-note"><b>This is summed crown area, not ground cover.</b> '+c.notCover+' '+
+      c.sampledAreaBasis+'</div>';
+    h+='<div class="cp-note"><b>What is left out.</b> '+c.excludes+'</div>';
+    if(c.unresolved)h+='<div class="cp-note"><b>Unresolved.</b> '+c.unresolved+'</div>';
+    if(c.cactiMapped)h+='<div class="cp-sec">Cacti mapped here</div>'+
+      '<div class="cp-sub">'+c.cactiMapped.n+' plants across '+c.cactiMapped.species.length+
+      ' species &mdash; positions only</div><div class="cp-note">'+c.cactiMapped.note+'</div>';
+  }
   // The ground layer and the provenance receipt are reference material, not the headline.
   // They were roughly half the panel's height and pushed the plot's own numbers out of
   // view, so both fold away behind a summary and open only on request.
