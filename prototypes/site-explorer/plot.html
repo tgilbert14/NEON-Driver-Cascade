@@ -36,6 +36,10 @@
     background:#12110deb;border:1px solid #ffffff2a;border-radius:8px;padding:.28rem .5rem;backdrop-filter:blur(6px);
     box-shadow:0 6px 20px #0008;white-space:nowrap}
   #tip b{color:#e6c78a}
+  .cscale{display:none;align-items:center;gap:.5rem;pointer-events:none;font-family:var(--mono);font-size:.62rem;
+    color:#f4efe3cc;text-shadow:0 1px 6px #000a;max-width:60ch}
+  .cscale .grad{width:120px;height:9px;border-radius:5px;border:1px solid #ffffff40}
+  .cscale b{color:#f4efe3}
   #card{position:fixed;z-index:4;max-width:19rem;background:#12110dEE;border:1px solid #ffffff2a;border-left:3px solid #d98a3d;
     border-radius:12px;padding:.7rem .85rem;backdrop-filter:blur(8px);pointer-events:none;display:none;box-shadow:0 8px 30px #000a}
   #card .c-sci{font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.15}
@@ -78,10 +82,13 @@
       <button class="walk" id="skyBtn" type="button" style="background:#26231d;color:#f4efe3">&#9723; Sky view</button>
       <button class="walk" id="layerBtn" type="button" style="background:#3a352b;color:#f4efe3">Ground: stylized</button>
       <button class="walk" id="plantsBtn" type="button" style="background:#2b3326;color:#f4efe3">Plants: on</button>
+      <button class="walk" id="colorBtn" type="button" style="background:#2b2f38;color:#f4efe3">Colour: species</button>
+      <button class="walk" id="surveyBtn" type="button" style="background:#33302b;color:#f4efe3">Survey: 2016+2021</button>
       <button class="walk" id="coverBtn" type="button" style="background:#2e2a33;color:#f4efe3">Cover &amp; species</button>
       <button class="walk" id="infoBtn" type="button" style="background:#20242a;color:#f4efe3">&#9432; About</button>
       <span class="hint" id="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
     </div>
+    <div class="cscale" id="cscale"></div>
     <div class="legend" id="legend"></div>
   </div>
 </div>
@@ -105,7 +112,7 @@
 "use strict";
 var DATA=JSON.parse(document.getElementById("plotData").textContent);
 var GTEX=""; try{GTEX=JSON.parse(document.getElementById("groundTex").textContent);}catch(e){}
-document.getElementById("sub").innerHTML=DATA.n+" real tagged plants from NEON Vegetation Structure (DP1.10098.001), each at its mapped position in the "+Math.round(DATA.plotDim||40)+"&thinsp;×&thinsp;"+Math.round(DATA.plotDim||40)+"&thinsp;m plot SRER_048 (amber boundary) — the woody plants were mapped in its eastern half. Santa Rita Experimental Range · Sonoran desert.";
+document.getElementById("sub").innerHTML=DATA.n+" real tagged plants from NEON Vegetation Structure (DP1.10098.001), each at its mapped position in the "+Math.round(DATA.plotDim||40)+"&thinsp;×&thinsp;"+Math.round(DATA.plotDim||40)+"&thinsp;m plot SRER_048 (amber boundary). The woody plants were mapped only in the eastern half — the <b>shaded western half was not surveyed</b>. Santa Rita Experimental Range · Sonoran desert.";
 
 var host=document.getElementById("scene");
 var renderer=new THREE.WebGLRenderer({antialias:true});
@@ -187,6 +194,11 @@ var capG=new THREE.SphereGeometry(0.11,8,6), capM=new THREE.MeshStandardMaterial
 [[-bx,-bz],[bx,-bz],[-bx,bz],[bx,bz]].forEach(function(c){
   var po=new THREE.Mesh(postG,postM);po.position.set(c[0],0,c[1]);po.castShadow=true;scene.add(po);
   var cp=new THREE.Mesh(capG,capM);cp.position.set(c[0],1.4,c[1]);scene.add(cp);});
+// dim the part of the plot that was NOT surveyed (VST mapped woody plants only in the eastern half)
+var mapXmin=Math.min.apply(null,DATA.plants.map(function(p){return p.x;}));
+if(mapXmin-(-bx)>2){var wW=mapXmin+bx, shG=new THREE.PlaneGeometry(wW,bz*2); shG.rotateX(-Math.PI/2);
+  var sh=new THREE.Mesh(shG,new THREE.MeshBasicMaterial({color:0x0a0d12,transparent:true,opacity:0.4,depthWrite:false}));
+  sh.position.set((-bx+mapXmin)/2,0.055,0); scene.add(sh);}
 
 // ---- plant palette + model builders ----
 // Per-species colours + geometry, keyed on the real NEON taxonID. Each model is
@@ -216,6 +228,7 @@ var PROXYMAT=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:
 
 var CANOPY=[];  // swayable foliage groups (soft-tissue plants only)
 var PICK=[];    // per-plant pick proxies (fast hover/click raycast targets)
+var MARKERS=[]; // per-plant ground rings (recoloured by the "Color by" analysis modes)
 function buildPlant(p,seed){
   var g=new THREE.Group(); g.position.set(p.x,0,-p.y);   // scene north = -Z (so top-down reads north-up/east-right)
   var R=rnd(seed), dead=p.status==="dead", tx=p.tx;
@@ -351,8 +364,8 @@ function buildPlant(p,seed){
     new THREE.MeshBasicMaterial({color:new THREE.Color(mkCol),transparent:true,opacity:0.95,side:THREE.DoubleSide,depthWrite:false}));
   mk.rotation.x=-Math.PI/2; mk.position.y=0.05;
   if(cr90&&cr&&cr90<cr) mk.scale.y=Math.max(0.5,cr90/cr);   // elliptical crown footprint
-  mk.userData.keep=1; g.add(mk);
-  g.userData={p:p,foliage:foliage};
+  mk.userData.keep=1; g.add(mk); MARKERS.push(mk);
+  g.userData={p:p,foliage:foliage,mk:mk};
   if(!dead&&soft)CANOPY.push(foliage);       // only soft-tissue plants sway
   return g;
 }
@@ -365,13 +378,14 @@ var selRing=new THREE.Mesh(new THREE.RingGeometry(0.86,1.0,32),
   new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.95,side:THREE.DoubleSide,depthWrite:false}));
 selRing.rotation.x=-Math.PI/2; selRing.position.y=0.09; selRing.visible=false; selRing.renderOrder=5; scene.add(selRing);
 var selPlant=null;
-// species filter state
-var hidden={};   // tx -> hidden
-function applyVis(){for(var i=0;i<plants.length;i++){var g=plants[i],on=!hidden[g.userData.p.tx];
+// filters: species (legend chips) + survey campaign (year)
+var hidden={}, surveyYear="all";
+function shown(p){return !hidden[p.tx] && (surveyYear==="all" || (p.date||"").slice(0,4)===surveyYear);}
+function applyVis(){for(var i=0;i<plants.length;i++){var g=plants[i],on=shown(g.userData.p);
   g.visible=on; var ch=g.children;
   for(var j=0;j<ch.length;j++){var c=ch[j];
     if(c.userData.proxy||c.userData.keep) c.visible=on; else c.visible=on&&showPlants;}}
-  if(selPlant&&hidden[selPlant.userData.p.tx]){selRing.visible=false;selPlant=null;}}
+  if(selPlant&&!shown(selPlant.userData.p)){selRing.visible=false;selPlant=null;}}
 
 // ---- controls (first-person walk + top-down sky cam) ----
 var MODE="walk";
@@ -463,7 +477,21 @@ var coverBtn=document.getElementById("coverBtn"), coverPanel=document.getElement
 function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><span>'+lab+'</span><b>'+val+'%</b></div>'+
   '<div class="cp-bar"><i style="width:'+Math.max(2,Math.min(100,val/(max||1)*100))+'%;background:'+col+'"></i></div></div>';}
 (function buildCover(){
-  var h='<div class="cp-x" id="coverX">&times; close</div><div class="cp-h">Ground cover &amp; species</div>';
+  var h='<div class="cp-x" id="coverX">&times; close</div><div class="cp-h">Plot data &amp; analysis</div>';
+  // --- plot at a glance (computed from the real records) ---
+  var P=DATA.plants,hs=[],totStem=0,deadStem=0,fullyDead=0,y16=0,y21=0;
+  P.forEach(function(p){if(p.realh)hs.push(p.h);if(p.stems){totStem+=p.stems;deadStem+=(p.dead||0);}
+    if(p.status==="dead")fullyDead++;var y=(p.date||"").slice(0,4);if(y==="2016")y16++;else if(y==="2021")y21++;});
+  var meanH=hs.length?hs.reduce(function(a,b){return a+b;},0)/hs.length:0, tall=hs.length?Math.max.apply(null,hs):0;
+  var area=(DATA.ex||20)*(DATA.ey||40), dens=area?P.length/area*100:0;
+  function stat(k,v){return '<div class="cp-row"><div class="lab"><span>'+k+'</span><b>'+v+'</b></div></div>';}
+  h+='<div class="cp-sec">This plot at a glance</div>';
+  h+=stat("tagged plants",P.length+" &middot; "+DATA.legend.length+" species");
+  h+=stat("survey campaigns","2016: "+y16+" &middot; 2021: "+y21);
+  h+=stat("density","~"+dens.toFixed(0)+" / 100 m&sup2; surveyed");
+  h+=stat("plant height","mean "+meanH.toFixed(1)+" m &middot; tallest "+tall.toFixed(1)+" m");
+  if(totStem)h+=stat("stems mapped",totStem+" &middot; "+(totStem-deadStem)+" live / "+deadStem+" dead");
+  h+=stat("whole plants dead",fullyDead+" of "+P.length);
   var c=DATA.cover;
   if(c){var mx=0;c.bySpecies.forEach(function(s){if(s.pct>mx)mx=s.pct;});
     h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>';
@@ -482,9 +510,38 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
 })();
 coverBtn.addEventListener("click",function(){coverPanel.classList.toggle("open");});
-// "About" toggles a readable dark backdrop behind the top-left plot notes (default off, so the map is clean first)
+// "About": a readable dark backdrop behind the top-left plot notes. Shown on first load for orientation; "Hide info" dismisses it.
 var infoBtn=document.getElementById("infoBtn"), topEl=document.querySelector(".top");
-infoBtn.addEventListener("click",function(){var on=topEl.classList.toggle("readable");infoBtn.style.background=on?"#3d4a57":"#20242a";});
+function setInfo(on){topEl.classList.toggle("readable",on);infoBtn.innerHTML=on?"&#9432; Hide info":"&#9432; About";infoBtn.style.background=on?"#3d4a57":"#20242a";}
+setInfo(true);
+infoBtn.addEventListener("click",function(){setInfo(!topEl.classList.contains("readable"));});
+
+// ---- "Colour by" analysis modes + survey-campaign filter ----
+var colorBtn=document.getElementById("colorBtn"), surveyBtn=document.getElementById("surveyBtn"), cscale=document.getElementById("cscale");
+function lerp3(stops,t){t=Math.max(0,Math.min(1,t));var a=stops[0],b=stops[stops.length-1];
+  for(var i=0;i<stops.length-1;i++){if(t>=stops[i][0]&&t<=stops[i+1][0]){a=stops[i];b=stops[i+1];break;}}
+  var f=(b[0]-a[0])?(t-a[0])/(b[0]-a[0]):0,c=a[1],d=b[1];
+  return"rgb("+Math.round(c[0]+(d[0]-c[0])*f)+","+Math.round(c[1]+(d[1]-c[1])*f)+","+Math.round(c[2]+(d[2]-c[2])*f)+")";}
+var RH=[[0,[214,198,150]],[0.5,[150,182,92]],[1,[42,92,52]]],   // height
+    RS=[[0,[96,152,224]],[0.5,[126,204,126]],[1,[240,150,60]]], // stem count
+    RD=[[0,[96,204,96]],[0.5,[236,202,72]],[1,[222,72,60]]];    // dead fraction
+function gradCss(R){return"linear-gradient(90deg,"+R.map(function(s){return"rgb("+s[1].join(",")+") "+(s[0]*100)+"%";}).join(",")+")";}
+var CM=["species","height","stems","dead"], cmi=0;
+function applyColor(){var m=CM[cmi];
+  for(var i=0;i<plants.length;i++){var p=plants[i].userData.p,mk=plants[i].userData.mk,col;
+    if(m==="species")col=(p.status==="dead")?DEADMK:spCol(p,"mk");
+    else if(m==="height")col=lerp3(RH,(p.h-0.3)/2.5);
+    else if(m==="stems")col=lerp3(RS,((p.stems||1)-1)/19);
+    else col=lerp3(RD,p.stems?(p.dead||0)/p.stems:(p.status==="dead"?1:0));
+    mk.material.color.set(col);}
+  colorBtn.innerHTML="Colour: "+m;
+  if(m==="species"){cscale.style.display="none";return;}
+  var R=m==="height"?RH:m==="stems"?RS:RD,
+    L=m==="height"?["ring colour = plant height","0.3 m","2.8 m"]:m==="stems"?["ring colour = stem count","1","&ge;20"]:["ring colour = share of stems standing dead","0%","100%"];
+  cscale.style.display="flex";cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2];}
+colorBtn.addEventListener("click",function(){cmi=(cmi+1)%CM.length;applyColor();});
+var SY=[["all","2016+2021"],["2016","2016 only"],["2021","2021 only"]], syi=0;
+surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=SY[syi][0];surveyBtn.innerHTML="Survey: "+SY[syi][1];applyVis();});
 
 // ---- default to the MAP-FIRST view: top-down over the real aerial with the plant markers.
 //      The 3D plant figures are the optional "augmented" layer (toggle Plants on, or Enter the plot). ----
@@ -493,6 +550,7 @@ function setPlants(on){showPlants=on; applyVis(); plantsBtn.innerHTML="3D plants
 // clickable species rings. "3D plants" toggles the figures; "Enter the plot (3D)" is the first-person walk.
 if(GEO&&GEO.ortho){setMode("sky"); setLayer(1); setPlants(true);
   skyBtn.innerHTML="&#9654; Enter the plot (3D)";}else{setPlants(true);}
+applyColor();
 
 // ---- loop ----
 function resize(){var w=host.clientWidth||innerWidth,h=host.clientHeight||innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();sizeOrtho();}

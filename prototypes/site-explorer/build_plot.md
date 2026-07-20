@@ -132,6 +132,22 @@ window (`HW=25`) centred on the plot.
 A **"Plants: on/off"** toggle hides the 3D models (keeping the ground dots + click-inspect) to compare the
 mapped positions against the aerial / canopy layers.
 
+## Analysis & map controls
+
+- **Colour-by** — the "Colour" button cycles the ground-ring colour through **species → height → stems → dead**.
+  Non-species modes swap in a continuous ramp (short→tall, few→many stems, share of stems standing dead) and show
+  a gradient scale legend, turning the crown dot-map into a quick single-variable data-viz.
+- **Survey filter** — the "Survey" button cycles **2016+2021 → 2016 only → 2021 only**, hiding plants not tagged
+  in that bout (each plant carries its tag `date`), so you can compare the two re-survey campaigns.
+- **Legend chips are filters** — click any species chip to show/hide it; the chip dims + strikes through.
+- **Unmapped-area shade** — a light dark plane over the plot's western half makes it obvious that side was never
+  surveyed (VST mapped only the eastern half), rather than looking like missing data.
+- **This plot at a glance** — the "Cover & species" panel opens with a live analysis block (tagged plants +
+  species, per-campaign tallies, density per 100 m² surveyed, mean/tallest height, total/live/dead stems, whole
+  plants dead), all computed from the VST records in the browser.
+- **About-first** — the top-left plot notes are readable by default (dark backdrop on); a "ⓘ Hide info" button
+  clears it so the map reads clean, and flips to "ⓘ About" to bring it back.
+
 ## Planned expansions (see chat brainstorm)
 
 Phenology (animate leaf-out/flower/senescence through the year per individual), a link from the
