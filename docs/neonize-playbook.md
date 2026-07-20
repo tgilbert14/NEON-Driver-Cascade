@@ -55,15 +55,21 @@ mammal/beetle apps — NOT a shared package; independent deploys must stay self-
 these from the flagship and adapt the data layer:
 
 ### 2a. Design system & chrome — vendor a pinned version, then adapt
+
 - `docs/index.html` **and the in-app first-run surface**: make one Living Poster
   promise across both entry points—one dominant app-native object, one 3–7 word
   hook, one 6–12 word plain-language promise, and one CTA—adapted to each shell
   rather than forced into pixel identity. Put routes, role, facts, CAN/CANNOT,
   methods, provenance, receipts, and suite relationships below the fold or behind
-  progressive disclosure. Updating only Pages leaves launched users with a stale
-  or generic first impression, so release QA must verify both surfaces. Prefer a
-  licensed, provenance-tracked documentary image only when field realism earns
-  trust; use an explicitly stylized illustration when abstraction is the point.
+  progressive disclosure. Updating only either entry surface can leave the other
+  serving a retired or generic first impression, so release QA must verify both
+  surfaces. Prefer a licensed, provenance-tracked documentary image only when
+  field realism earns trust; use an explicitly stylized illustration when
+  abstraction is the point.
+  Serve raster art through a responsive `<picture>` family with declared natural
+  dimensions, checksums, and byte budgets; retain an intentional fallback. Verify
+  both entry URLs cache-busted at desktop, 390, and 320 rather than accepting one
+  cached surface as proof for the other.
   Cohesion comes from suite mark, typography, art language, motif family, registry,
   and in-app Suite panel—not identical heroes, forced constellations/mascots, or
   generic prose.
@@ -76,14 +82,22 @@ these from the flagship and adapt the data layer:
 - `www/styles.css` `:root` tokens + dark-theme block; `www/app.js` (count-up engine, confetti, loading overlay, the custom-message handlers).
 
 ### 2b. Data bundling — copy the pattern, swap the product
-- `scripts/refresh_data.R`: per-site `loadByProduct` → trim to a `keep` column vector → xz-compress → `data/sites/<SITE>.rds`. Build with **R-4.1.1** (neonUtilities; R-4.5.2 crashes on `loadByProduct`). Token in gitignored `.neon_token` (env `NEON_TOKEN`).
+
+- `scripts/refresh_data.R`: per-site `loadByProduct` → trim to a `keep` column
+  vector → xz-compress → `data/sites/<SITE>.rds`. On the validated Windows refresh
+  host, build with **R-4.1.1** because R-4.5.2 crashed inside `loadByProduct`; do not
+  generalize that result across platforms. Vegetation's pinned Linux R-4.5.2 fetch
+  passed, so every app must test and record its own fetch runtime. Token in
+  gitignored `.neon_token` (env `NEON_TOKEN`).
 - `read_bundle()` (defensive — NULL on missing/corrupt, never crash boot), `load_site_bundle()`, `data/site_index.rds` (one row/site for the picker), the manifest→republish discipline (Connect Cloud serves the *published* snapshot — rebuilt bundles aren't live until `writeManifest()` + commit + republish). See `docs/data-bundling-pattern.md`.
 - A committed `data-sample/` demo so the app runs bundle-only with no network (demo-on-startup).
 
 ### 2c. Shared analysis helpers — port the defensible ones
+
 From `R/helpers.R`: `species_level_only()` (drop genus-only/morphospecies before any richness), `make_species_pal()` (one color per species across all charts), Hill numbers / `species_accum()` (rarefaction + Chao1 w/ CI), `mode_chr()`, `safe_*()` NA-safe reducers, the n-gate idioms. The diversity family ports to almost any taxon product.
 
 ### 2d. The interactive-downloadable-plot funnel — one proven signature pattern
+
 The Size Lab (`www/pincards.js` + the plotly `customdata` pattern in Small Mammals) is
 a proven option when the product honestly has positionable entities. It is not a
 mandatory suite gesture. First design the product-native signature interaction; use
@@ -107,10 +121,12 @@ ship a different signature and preserve the same inspectability/export standard.
 Carry the relevant hard-won gotchas (§4), not the visual trope itself.
 
 ### 2e. Report PDF — `R/report_pdf.R`
+
 Base `grid`/`grDevices` `cairo_pdf` (no LaTeX/Chrome), streamed by a `downloadHandler`. Re-theme
 the page geometry from `DDL`; swap the per-product content renderers.
 
 ### 2f. What does NOT port (product-specific — design fresh every time)
+
 The **entire data model and its "unit of analysis."** For small mammals the unit is the
 *tagged individual* and its mark-recapture career — so the dossier, Hall of Fame, MNKA detection,
 age/lifespan, tag-identity QC, home-range/trap-grid, body-measurement outliers are all
@@ -177,7 +193,13 @@ release receipt.
 
 ## 4. The gotcha catalog (carry into every NEONize)
 
-- **R version:** R-4.5.2 runs the app but **crashes on `neonUtilities::loadByProduct`** (access violation). Pull/bundle data with **R-4.1.1**. Launch R via **PowerShell**, not git-bash (git-bash segfaults R here). Reference neonUtilities by a *computed* package name so the rsconnect scanner doesn't pin it into the manifest (the deploy is bundle-only + lean).
+- **Fetch runtime is platform-specific.** On the validated Windows host, R-4.5.2
+  crashed inside `neonUtilities::loadByProduct` (access violation), so that workflow
+  pulls/bundles with R-4.1.1 through PowerShell rather than git-bash. Vegetation's
+  pinned Linux R-4.5.2 fetch passed. Test and receipt the exact OS/R/package path
+  instead of treating either result as universal. Reference neonUtilities by a
+  *computed* package name when the deploy is bundle-only so the rsconnect scanner
+  does not pin an unused fetch dependency into the manifest.
 - **Fonts and boot assets must be network-independent.** Runtime theme font helpers that fetch or compile remote fonts are a cold-start failure mode, and a client-side font stylesheet is still an external rendering dependency. Use a system stack, or commit licensed font files and verify their checksums. The Driver's proven default is `system-ui`/platform sans with local serif fallbacks. Audit startup and first render with network blocked; a manual republish that only warms a cache is not a fix.
 - **A 320px viewport may have only 305px of usable layout width.** Desktop test
   browsers can reserve 15px for the vertical scrollbar, so `body { min-width:
@@ -195,10 +217,27 @@ release receipt.
   that representation, verify the required name and container type, execute every
   migration twice, and require identical all-bundle hashes on the second pass.
 - **plotly re-render kills event handlers:** a Shiny+plotly re-render runs `Plotly.purge`+`newPlot` on the SAME div, silently wiping `gd.on()` listeners. **Never** gate binding on a persistent expando — re-attach `plotly_click` on every render (rAF-debounced MutationObserver scan). This was the Size Lab blocker.
+- **Gate server-side Plotly reads on the raw registered event, not inferred app
+  state.** In plotly R 4.12, `renderPlotly()` prepares the widget and only then
+  registers its declared Shiny event IDs. A reactive `plotly::event_data()` can
+  therefore query a source before registration even when loaded-site checks pass.
+  Keep an explicit `event_register("plotly_click")` on the widget; trigger the
+  observer from the raw `plotly_click-<source>` value in
+  `session$rootScope()$input`, and only then call
+  `event_data(..., priority = "event")`. The raw event proves that the rendered
+  source is registered, while event priority preserves repeated identical clicks.
+  Verify fresh-load and post-reset server logs as well as repeated post-render
+  interactions; a clean browser console alone is not sufficient evidence.
 - **plotly pin anchors must be DATA coords**, recomputed via `gd._fullLayout.xaxis.l2p()+_offset` on `plotly_relayout` + a `ResizeObserver` — frozen pixels drift on resize/fullscreen/rotate. Anchor from the data point, not the click event (touch has no `clientX`).
 - **`ctx_anno()`/`add_annotations` accumulates** across reactive re-renders (the binding doesn't clear it) — fold the caption into the `layout(annotations=...)` list instead, so it's replaced wholesale. (Invisible when copies overlap, but real.)
 - **Named-vector `updateSelectInput`** spams console warnings — wrap choices as `as.list(setNames(...))`. Build filter choices from the *plotted* subset so a choice can't land on an empty chart.
 - **selectize fires `change` via jQuery `.trigger()`** — a native `addEventListener('change')` never sees it. Listen on `shiny:inputchanged` (jQuery) or the widget's own event.
+- **Server-backed Selectize choices need a reset contract.** Showing a picker after
+  clearing loaded state does not restore remote choices. Put initial population in
+  one reusable helper, call it on both session initialization and every return to
+  the picker, and browser-test `load site -> change site -> search a different site`
+  through one exact returned choice. Vegetation proved this lifecycle in production
+  with its complete 42-site choice family.
 - **`validate(need())` doesn't display in some widget outputs** (stale output persists) — return a real message-chart/empty-state instead.
 - **`asset_url()` bakes the cache-bust version at app start** (ui is an object, built once) — a running server serves the old `?v=` after you edit a `www/` file; **restart** to pick up JS/CSS changes in preview.
 - **html-to-image over WebGL fails** — force SVG (`scatter`, not `scattergl`/`toWebGL`) for any chart you want to export; `Plotly.Plots.resize(gd)` before `toPng` (a tab that rendered hidden can be 0-sized); strip live animation classes before capture.
@@ -228,6 +267,29 @@ release receipt.
   fill unknown `builtAt`, `neonRelease`, `sourceCutoff`, query receipt, or raw-source
   digest fields. Preserve explicit `NA` until a complete reviewed source receipt
   exists across the expected family and index.
+- **Build the event ledger before derived structure.** Preserve every source row
+  and event identity before choosing a current snapshot, tallying stems, or scaling
+  by area. A measurement without a matching published opportunity row is not a
+  sampled absence or zero: retain it under a dedicated held state and invent no
+  opportunity date, effort, area, presence, absence, or denominator.
+- **Source identity and mapping identity are separate invariants.** Preserve the
+  source `uid` and the exact mapping/tagging row used for each observation. Blank or
+  duplicate source UIDs fail; tied mapping candidates fail closed. A plausible
+  compound key is not permission to pick an arbitrary row.
+- **Equal units do not make physical channels interchangeable.** Tree DBH bole
+  cross-section and shrub/sapling stem-base cross-section can both be expressed as
+  m²/ha while differing in measurement height, threshold, sampled area, and
+  physical meaning. Register channel IDs, channel-specific support, point-of-use
+  caveats, and separate search/presentation paths; never pool or rank across them.
+- **Independently reconstruct every derived release family.** A verifier must
+  derive support states, snapshots, summaries, indexes, and exports from preserved
+  rows rather than calling the builder's headline helpers. Synthetic positive and
+  corruption fixtures should prove the verifier can both reproduce and reject.
+- **Candidate promotion is an identity proof, not a copy step.** Bind the candidate
+  artifact to one exact reviewed PR head and run. Require the promotion commit's
+  direct parent to equal that head, its changed paths to equal the artifact ledger,
+  and every committed blob to match the artifact checksum before merging. A green
+  diagnostic artifact from another head cannot authorize promotion.
 - **Test framework markup at both sides of every responsive seam.** Shiny
   `actionButton()` places its label in a text node inside `.action-label`, so a
   sibling selector cannot hide it. Preserve the DOM name, zero only the inherited
