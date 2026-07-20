@@ -63,8 +63,8 @@ The release layer is not at the same quality bar.
 | My Little Inverts | available | 9 files | 0 | water type, sampler, habitat, and density-index support need executable tests and a current expert review |
 
 At baseline, all nine companion manifests disagreed with at least one currently
-tracked runtime file. Small Mammal Pass 1 has now closed its drift and independently
-validated R 4.5.2 / 91-package / 118-file release family. Plant Phenology Pass 2
+tracked runtime file. Small Mammal Cover V5 has now closed its drift and independently
+validated R 4.5.2 / 91-package / 120-file release family. Plant Phenology Pass 2
 then closed its drift with a pinned R 4.5.2 / 92-package / 60-runtime-file release.
 Plant Diversity Pass 3 closed its drift with R 4.5.2 / 91 packages / 150 manifest
 files and exact runtime, source-limit, export, responsive, and semantic receipts.
@@ -254,7 +254,8 @@ keep the apps independent and vendor generated, versioned suite artifacts:
 - `suite-registry.json`: app ID, public name, role, DPID, repository, cover, app URL,
   palette, field motif/art direction, status, and Driver disposition;
 - `suite-copy.json`: one canonical short description and role statement per app;
-- generated below-fold cover destinations and in-app Suite panel;
+- a generated single Driver route for each companion poster, the full registry for
+  Driver, and the full in-app Suite/About panel;
 - `suite-release-status.json`: last verified commit, manifest hash, public-health
   time, and release state;
 - a cover/social validator; and
@@ -278,48 +279,56 @@ Use roles, not decorative causal arrows:
 
 Every cover page as a whole and every About panel should answer: `What is this
 app?`, `What role does it play in the suite?`, and `How can it inform Driver?` The
-poster face does not need to answer all three; those answers can sit below the fold.
-The third answer may be `context only`.
+companion poster face answers the first with one invitation and provides exactly one
+Driver route; the full suite and scientific relationship story belongs below the
+fold, in the in-app Suite/About panel, and in Driver. The third answer may be
+`context only`.
 
 ## 6. Visual and cover system
 
-### Validated direction — first production proof complete
+### Suite Living Poster V1 — canonical shared frame
 
-The cover face is an artistic poster for a curious non-scientist, not a compressed
-methods page. Above the fold, use only:
+Every companion uses the same structural frame on both public Pages and its in-app
+first-run surface. This is a shared scaffold, not a cloned artwork. The required
+face is:
 
-1. one dominant app-native object or field motif;
-2. one 3–7 word hook;
-3. one 6–12 word plain-language promise; and
-4. one primary CTA.
+1. a focusable skip target;
+2. a DDL topline/identity with exactly one route to Driver;
+3. an app/unofficial eyebrow;
+4. one 3–7-word human hook;
+5. one 6–12-word plain-language promise;
+6. exactly one contextual CTA;
+7. one dominant responsive editorial artwork;
+8. a visible illustration/photo/data boundary; and
+9. a compact scope/honesty/Source/Feedback footer.
 
-Do not place metric bands, methods summaries, CAN/CANNOT detail, provenance blocks,
-release receipts, relationship maps, or secondary actions on the poster face. Put
-those trust and science surfaces below the fold, where they remain easy to find and
-screenshot-safe at the point of interpretation. Small Mammal proves the direction
-on both the public Pages showcase and the in-app first-run surface; later apps must
-revalidate the pattern against their own product, art, shell, and user job.
+No companion poster face carries a metric band, methods block, release receipt,
+second marketing bridge, relationship map, or full suite directory. Driver is the
+suite ambassador and may carry the complete registry and integration story below
+its own poster; companions keep the full registry in their in-app Suite/About panel.
+Pages and Connect share the hook, promise, art authority, disclosure, Driver route,
+and CTA intent even when their framework geometry differs.
 
-### Family cohesion without repetition
+The frame is constant; the visual/content variables are not. Each app owns its
+palette, motif, crop, words, focal position, CTA noun, and scientific limitation.
+Plant may use nested quadrat/flower motifs; Phenology a bud/seasonal arc; Mammals a
+trap or track rendered as art rather than fake field documentation. Driver's motifs
+may converge into an integration gesture, but that gesture is visual—not a causal
+claim.
 
-- Cohesion comes from a subtle suite mark, typography, art language, app-specific
-  palette, related field-motif families, the versioned registry, and the in-app
-  Suite panel—not identical hero shells, a forced star map, or a mascot on every app.
-- Each companion gets one product-native visual idea strong enough to recognize at
-  a glance. Plant may use nested quadrat/flower motifs; Phenology a bud/seasonal arc;
-  Mammals a trap or track rendered as art rather than fake field documentation.
-- Driver is the master poster and suite ambassador: companion field motifs converge
-  into one cascade/integration gesture. This is a visual relationship, not a causal
-  claim.
-- Small Mammal's documentary V4 evolved into the first dual-surface Living Poster
-  production release. Its artistic Pages proof is PR #85 / merge `eb9e1a3`, not
-  the earlier documentary Pages run. Vegetation then proved that a more abstract,
-  measurement-led screenprint can carry the same brief hook/promise/CTA system
-  without copying Mammal's shell. Phenology/Plant generated-art releases remain
-  factual baselines and must be reviewed against this stronger pattern before
-  suite-wide art is standardized.
-- Compose and validate a separate 1200×630 social image; never treat a hero crop as
-  the social design by default.
+Chronology matters: the approved Small Mammal screenprint existed in a concept
+board but was not shipped by PR #85. Vegetation established the production frame.
+Small Mammal Cover V5 then proved that the same frame transfers to a second app in
+PR #86 / merge `c4c46fce`, using “Who moves after dark?”, “Meet the tiny lives
+reshaping the landscape.”, “Meet the mammals”, and a dominant trap/mouse editorial
+screenprint. Phenology/Plant generated-art releases remain factual baselines and
+must be reviewed against this contract before their next cover release.
+
+Validate exact copy/action count, provenance and asset hashes, a separately composed
+1200×630 social card, keyboard/focus order, reduced-motion and forced-color modes,
+zero overflow at desktop/390/320 and both sides of real framework seams, cache-busted
+Pages and Connect identities, CTA-to-picker focus, and console/server logs. Remove
+retired runtime media once its provenance remains recoverable.
 
 ### Trust, access, and provenance
 
@@ -350,13 +359,14 @@ Suggested palette families remain distinct but related:
 
 ## 7. Per-app priority briefs
 
-### Small Mammal Tracker — first pass COMPLETE / production verified
+### Small Mammal Tracker — first pass + Cover V5 COMPLETE / production verified
 
-- Restored and advanced Connect production through runtime merge
-  `bdf56b0482ac76364e7055107361d58d8728d782`; deployment #122 serves exact
-  `bdf56b0` from 2026-07-19 18:00 MST. The documentation-only closeout is
-  `8d650b787075bb548d17f8380060597f5a8ff7f9`. Semantic readiness, a fresh JORN
-  interaction, and no first-party console error remain verified.
+- Cover V5 source head `3e66ddcab6119b4ab0cace85a64616cb19cf766b`
+  passed exact-head run `29755133857`; PR #86 merged as
+  `c4c46fce3725126231504d8f9610f52e8f929ef8`. Main CI `29755368217`, semantic
+  smoke `29755368297`, and Pages `29755366998` passed. Connect deployment #125
+  published exact `c4c46fce` under R 4.5.2 with all 91 packages supplied.
+  Documentation closeout PR #87 merged as `047204e7`.
 - Shipped the reviewed physical-event resolver: exact six status tokens, canonical
   A-J x 1-10 events, strict multi-capture collapse, two documented double-trap
   exceptions, explicit placeholder uncertainty, and fail-closed ambiguity.
@@ -369,26 +379,24 @@ Suggested palette families remain distinct but related:
 - Shipped tidy event/capture and monthly MNKA/CPUE/N-hat/p-hat exports with a
   codebook, exact 46-site/145-species framing, accessibility contracts, all-suite
   About navigation, and a versioned 1200×630 habitat social card.
-- Validated the canonical R 4.5.2 / 91-package / 118-file manifest, including the
+- Validated the canonical R 4.5.2 / 91-package / 120-file manifest, including the
   distinction between installed URL-package provenance and Connect's absolute-CRAN
   network contract. Final SHA-256 is
-  `90c1366fcd51c507cb786a45a60dd59607a6980f97fc2e4d2e21b29af326d28e`.
+  `3fdf334febde34f93f75430bd5ef7daa61cc36f1d6ef7f540578051bee24d3fc`;
+  `wk 0.9.5` retains its full HTTPS CRAN tarball reference.
 - Driver disposition is `CONTEXT / NO BYTE CHANGE`: contract parity is closed, but
   exact eligible-source site-year join/support remains held for suite synthesis.
-- The Living Poster now converges both first impressions around a large, real USGS
-  Sherman-trap photograph, hook “One trap night. A whole population story.”,
-  promise “Follow tagged small mammals across years of return visits.”, and CTA
-  “Pick a place”. Detail, methods, provenance, release receipt, and suite navigation
-  remain progressively disclosed rather than competing with the poster face.
-- Final Connect and Pages browser QA passed desktop, 390 x 844, and 320 x 800 with
-  no root overflow, local image/social assets, stable navigation/touch targets, and
-  a one-row app shell at 320. At that viewport the framework left 305 usable layout
-  pixels, so the proof measures generated shell geometry rather than assuming the
-  nominal viewport. The final artistic Pages release is PR #85, merge
-  `eb9e1a3e9e91096a1c1a82ebf116bf85d33405e3`, with PR CI `29711968094`, main CI
-  `29712103176`, Pages `29712102838`, and production semantic verification
-  `29712103164`. Pages run `29710189059` remains a valid documentary-V4 receipt,
-  but is superseded as evidence of artistic dual-surface parity.
+- The Living Poster now converges both first impressions around the owner-selected
+  hook “Who moves after dark?”, promise “Meet the tiny lives reshaping the
+  landscape.”, CTA “Meet the mammals”, and an editorial screenprint whose metal box
+  trap is dominant beside a recognizable mouse. A visible boundary says the art is
+  illustration, and the honesty note prevents the invitation from becoming a claim
+  that capture records measured landscape effects.
+- Pages and Connect passed desktop, 390 x 844, 320 x 568/720, and real responsive
+  seams with zero root overflow and byte-matched full/compact artwork. The CTA moved
+  focus to the 46-site picker; JORN loaded all ten tabs; species and environmental-
+  driver bar clicks worked. PR #85 / `eb9e1a3` and Connect #122 / `bdf56b0` are
+  documentary Cover V4 history, not evidence for the owner-selected screenprint.
 
 ### Plant Phenology Explorer — second pass COMPLETE / production verified
 
@@ -658,7 +666,7 @@ No app pass is complete without evidence in all applicable rows.
 | Responsive | stable desktop, tablet, 390px, and 320px geometry plus both sides of every app-specific breakpoint seam; no persistent overflow, clipped status, or sub-44px control |
 | Accessibility | automated scan plus keyboard and screen-reader-name checks; color is not the only channel |
 | Publish | green PR head, merge commit, deployed identity, content-aware app-ready marker, console/network health |
-| Social/cover | canonical metadata, separately composed 1200×630 card, asset checksum, alt text, every suite link, accurate availability copy |
+| Social/cover | canonical metadata, separately composed 1200×630 card, asset checksum, alt text, one Driver route on a companion poster, full registry in Driver/in-app Suite/About, accurate availability copy |
 | Driver | pinned knowledge package, measured joins, disposition, and explicit implication or `NONE` |
 
 The current execution environment has no local R runtime, so this audit does not

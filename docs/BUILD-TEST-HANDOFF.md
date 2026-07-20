@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -1620,10 +1620,12 @@ Rules:
   approval. The working face is a creative, intentionally art-directed poster for a
   non-scientist: one dominant app-native object or moment, one 3–7 word human hook,
   one 6–12 word plain-language promise, and one CTA. Methods, metrics, CAN/CANNOT,
-  provenance, receipts, routes, and suite relationships move below the fold. Suite
-  cohesion comes from the mark, typography, art language, motif family, registry,
-  and in-app Suite panel, not cloned hero layouts. Documentary images require clear
-  provenance; generated art must be visibly stylized rather than pseudo-documentary.
+  provenance, receipts, routes, and suite relationships move below the fold. The
+  later owner-approved Suite Living Poster V1 contract supersedes this entry's
+  “not cloned hero layouts” clause: all companions now share one structural frame
+  while their art, palette, copy, crop, and scientific boundary remain app-native.
+  Documentary images require clear provenance; generated art must be visibly
+  stylized rather than pseudo-documentary.
   A separate validated 1200 × 630 social composition remains required.
 - **Driver decision/non-impact:** Plant common-grain richness,
   native/introduced/unknown cover, cross-scale occurrence, reference completeness,
@@ -1665,7 +1667,7 @@ Rules:
   begin another app until Vegetation is production-verified and its lessons are
   vendored back here.
 
-### 2026-07-19 18:16 MST - Small Mammal in-app Living Poster / documentary Pages checkpoint (artistic Pages parity superseded) / root
+### 2026-07-19 18:16 MST - Small Mammal documentary V4 dual-surface checkpoint (superseded by Cover V5) / root
 
 - **Changed/classification:** updated only this handoff, the suite learning loop,
   revamp plan, and reusable playbook. The central Pass 1 row and priority brief now
@@ -1680,16 +1682,17 @@ Rules:
   `8d650b787075bb548d17f8380060597f5a8ff7f9` is the later repository identity. The
   production manifest records R 4.5.2, 91 packages, 118 files, and SHA-256
   `90c1366fcd51c507cb786a45a60dd59607a6980f97fc2e4d2e21b29af326d28e`.
-- **Product/public evidence (corrected by the closeout below):** Connect deployment
-  #122 reported exact `bdf56b0` at 2026-07-19 18:00 MST and opened with the artistic
-  in-app Living Poster: a large real USGS Sherman-trap photograph, “One trap night.
+- **Product/public evidence (corrected by the closeouts below):** Connect deployment
+  #122 reported exact `bdf56b0` at 2026-07-19 18:00 MST and opened with the concise
+  documentary V4 first-run panel: a large real USGS Sherman-trap photograph, “One trap night.
   A whole population story.”, “Follow tagged small mammals across years of return
   visits.”, and “Pick a place”. Desktop, 390 x 844, and 320 x 800 browser checks
   found no root overflow; the app shell stayed on one row at 320. Pages run
   `29710189059` passed on attempt 3 after attempts 1 and 2 failed only on GitHub
   HTTP 503 responses, but it still served documentary V4 and is not artistic
-  dual-surface evidence. Final artistic Pages parity arrived later in PR #85 / merge
-  `eb9e1a3`; the exact four-run receipt is recorded in the correction below.
+  dual-surface evidence. Brief documentary Pages parity arrived later in PR #85 /
+  merge `eb9e1a3`; neither release shipped the owner-selected screenprint. Cover V5
+  / PR #86 below is the first valid artistic dual-surface receipt.
 - **Learned:** a public showcase and its launched app are one first-impression
   contract even though their implementations differ. Updating only Pages can leave
   the in-app pre-selection state looking like the retired cover, so each release
@@ -1730,7 +1733,7 @@ Rules:
   through its complete app-local release and vendor its new evidence here before
   starting another app.
 
-### 2026-07-19 21:58 MST - Small Mammal Pages correction and Vegetation Pass-4 core handoff / root
+### 2026-07-19 21:58 MST - Small Mammal documentary Pages correction and Vegetation Pass-4 core handoff / root
 
 - **Changed/classification:** corrected the Small Mammal artistic-Pages identity;
   vendored the Vegetation official-source, science, promotion, Living Poster, and
@@ -1741,16 +1744,15 @@ Rules:
   NO DRIVER DATA BYTE CHANGE**. This tranche changes documentation only: no Driver
   app code, source lock, estimator, generated artifact, manifest, or public surface
   changes.
-- **Small Mammal correction:** the prior 2026-07-19 handoff incorrectly cited Pages
-  run `29710189059` as artistic dual-surface proof. That run remains a valid
-  documentary-V4 release receipt but did not publish the final artistic Pages
-  cover. The accurate Pages receipt is PR #85, merge
+- **Small Mammal correction (superseded by Cover V5 below):** the prior 2026-07-19
+  handoff incorrectly cited Pages run `29710189059` as artistic dual-surface proof.
+  That run remains a valid documentary-V4 receipt. PR #85 / merge
   `eb9e1a3e9e91096a1c1a82ebf116bf85d33405e3`, PR CI `29711968094`, main CI
   `29712103176`, Pages build `29712102838`, and production semantic run
-  `29712103164`. Connect deployment #122 on `bdf56b0` remains the exact in-app
-  artistic-poster receipt. Both independent surfaces carry the same hook, promise,
-  CTA, and real USGS Sherman-trap photograph; the corrected identities avoid
-  pretending that one commit or run published both implementations.
+  `29712103164` established concise documentary Pages parity with Connect #122 on
+  `bdf56b0`: both surfaces carried the same real USGS photograph and old copy. They
+  were not the owner-selected artistic poster; PR #86 / `c4c46fce` below replaces
+  them as current cover authority.
 - **Vegetation source/science receipt:** Pass 4 targets NEON
   `DP1.10098.001`, official `RELEASE-2026`, provisional data excluded, DOI
   `10.48443/pypa-qf12`, across 42 sites. Raw family SHA-256 is
@@ -2067,6 +2069,61 @@ Rules:
   above. The owner has paused program execution before Ground Beetle Pass 5; do not
   begin another companion app until the owner deliberately resumes it.
 
+### 2026-07-20 09:15 MST - Small Mammal Cover V5 correction and shared-frame handoff / root
+
+- **Changed/classification:** corrected the central handoff, suite register, revamp
+  plan, and playbook so PR #85 / `eb9e1a3` and Connect #122 / `bdf56b0` remain
+  documentary Cover V4 history rather than false artistic proof. Vendored the real
+  Cover V5 release and made Suite Living Poster V1 the canonical shared frame.
+  Classification is `suite-platform`; ecological Driver implication is explicitly
+  **NONE / CONTEXT ONLY / NO DRIVER BYTE CHANGE**. No Driver runtime surface changed.
+- **Sibling identity/evidence:** Small Mammal head `3e66ddca` passed exact-head R
+  4.5.2 run `29755133857`. PR #86 merged as `c4c46fce3725126231504d8f9610f52e8f929ef8`;
+  main CI `29755368217`, semantic smoke `29755368297`, and Pages `29755366998`
+  passed. Its canonical manifest is 91 packages / 120 files, SHA-256
+  `3fdf334febde34f93f75430bd5ef7daa61cc36f1d6ef7f540578051bee24d3fc`.
+  Connect #125 published exact `c4c46fce`, supplied all packages, and resolved
+  `wk 0.9.5` through the complete HTTPS CRAN tarball URL. App-local closeout PR #87
+  passed run `29758319410` and merged as `047204e7fcca253ab24ee416654dc59e4ccca266`.
+  Its docs-only main CI `29758617689`, semantic health `29758618145`, and Pages
+  deployment `29758615636` also passed.
+- **Product/public evidence:** Pages and Connect now use “Who moves after dark?”,
+  “Meet the tiny lives reshaping the landscape.”, “Meet the mammals”, and the same
+  owner-selected editorial screenprint with a dominant metal box trap and
+  recognizable mouse. Both expose exactly one Driver route and a visible
+  illustration/data boundary. Desktop/390/320 and responsive-seam checks found
+  byte-matched art and zero root overflow. The CTA focused the 46-site picker; JORN
+  loaded all ten tabs; species-composition and environmental-driver bar clicks worked.
+- **Reusable frame contract:** every companion Pages and in-app first-run surface
+  shares DDL identity, exactly one Driver route, an app/unofficial eyebrow, a
+  3–7-word hook, a 6–12-word promise, one contextual CTA, one dominant responsive
+  editorial artwork, a visible art/data boundary, and a compact
+  scope/honesty/Source/Feedback footer. Metric bands, methods, receipts, second
+  marketing bridges, and the full suite directory stay off the companion face.
+  Driver carries the full registry; each app owns its art, palette, crop, words,
+  CTA noun, and scientific limitation.
+- **Science/Driver non-impact:** Cover V5 changed cover UI, CSS, art, and manifest
+  inventory only. The physical-event resolver, opportunity/detection contracts,
+  46/604/604 indexes, 145-species inventory, bundles, estimators, exports, source
+  pins, Driver adapters, and all five canonical Driver artifacts are unchanged.
+  Small Mammal remains `CONTEXT`; no inferential vote is added.
+- **Test process/result:** from clean `origin/master` with no rebuild lock, read the
+  complete handoff, suite loop, revamp plan, and playbook; audited the app-local V5
+  release; and changed only four Markdown authorities. `git diff --check`, strict
+  UTF-8/LF/no-BOM/control/fence checks, the 13-row register-shape gate, stale-current-
+  receipt scan, exact five-file Driver rehash, and no-lock check all passed. Driver
+  R/build/browser gates are N/A because no runtime input or output changed.
+- **Evidence invalidated:** only current claims that PR #85 / Connect #122 were the
+  artistic proof and that companions should avoid one shared frame. Their documentary
+  receipts remain factual history. No Driver release/science evidence is invalidated.
+- **Artifacts/failure/cleanup:** no generation, promotion, lock, stage, backup,
+  pending artifact, credential, or temporary project data was created. Two benign
+  Small Mammal Plotly initialization warnings remain documented; both click paths
+  were verified live.
+- **Residual risk/next action:** browser coverage is finite and this docs-only branch
+  still requires static validation, review, green CI, and merge. Then keep the owner
+  pause before Ground Beetle Pass 5; resume from this entry without repeating V5.
+
 ### 2026-07-19 23:11 MST - site-explorer provenance receipt and scientific corrections / root
 
 - **Changed/classification:** work is confined to `prototypes/site-explorer/**`. Added
@@ -2286,4 +2343,62 @@ Rules:
 - **Residual risk:** ledger entries from the two sessions are append-ordered rather than
   strictly clock-ordered. If more sessions run concurrently, designate one coordinating
   editor as rule 7 requires, rather than relying on merge resolution after the fact.
+- **Next action:** owner review of PR #40.
+
+### 2026-07-20 - site-explorer index pass 1 and second concurrent merge / root
+
+- **Changed/classification:** `prototypes/site-explorer/{index.html,walk.html,plot.html,PROGRESS.md}`
+  plus a second merge of `origin/master`. Classification `app-local` and
+  `scientific-contract` (it corrects how uncertainty is displayed to the public).
+  Ecological Driver implication explicitly **NONE**. No Driver app code, estimator,
+  source lock, workflow, generated artifact, or manifest changed. The five canonical
+  files are unchanged: cascade `47b98e48...`, search `a11a072d...`, meta
+  `00120c52...`, codebook `a79cc754...`, manifest `92b46277...`.
+- **Two display defects corrected on the index page.** (1) Driver cards drew a SOLID
+  bar of width `|r|` and labelled the p-value "confidence". A solid bar reads as a
+  firm result, and a lay reader takes "confidence 0.88" to mean 88% confident, which
+  is close to the inverse. The bundle carries a plausible interval for all 162 links
+  and 133 of them straddle zero, none of which was visible. Replaced with a
+  zero-centred interval whisker whose verdict word is derived from the interval
+  itself; `p` moved into the drawer relabelled "how easily chance alone could produce
+  a pattern this strong - higher means more easily". (2) The year wheel gave the three
+  featured sites "Rhythm sketch for this site." in place of "(schematic, not measured
+  monthly data)", and the page boots on SRER, so the default view was the one missing
+  its caveat while implying site-specific measurement. The bundle is annual and no
+  month on that wheel was measured at any site, so the wheel and its hand-authored
+  inputs were removed rather than re-captioned.
+- **Learned:** a caveat that is correct in the general branch and dropped in the
+  special-cased branch is worse than no caveat, because the special case is usually
+  the default view. Also: hand-authored per-biome templates presented beside real
+  per-site data are indistinguishable to a reader; 43 of 46 sites were showing the
+  same generated sentence twice on one screen without any indication it was generic.
+  The replacement rule that generalises: derive the sentence from the site's own
+  numbers, and let "nothing here is clean enough to call" be a legitimate result.
+- **Test process/result:** JS syntax checked on index.html and walk.html
+  (`node --check` on the extracted app block); plot.html rebuilt; grep confirmed zero
+  dangling references to `WALK_URL`, `WALKABLE`, `drawWheel`, `player`, `polar` or
+  `WHEEL`. The interval whisker was verified headlessly by lifting `pos()`/`whisker()`
+  out of the page and running them over all 162 drivers in `site-data.json`: 0
+  geometry failures, 133/162 straddling zero, and 0 mismatches between the derived
+  verdict word and the interval. `siteAnswer()` was exercised over all 46 sites (22
+  with a readable link, 23 reporting nothing clean, 1 with insufficient data) with no
+  empty or malformed output. Link resolution was tested for both the repo case and the
+  artifact-host case. Expected and actual matched throughout.
+- **Also fixed:** the prototype's own navigation did not work when opened from the
+  repository. `index.html` had no reference to `plot.html` at all and pinned the walk
+  link to a private artifact URL; both now resolve relatively and fall back to the
+  artifact URLs only when served from that host. `walk.html`'s back-link had the same
+  defect and the same fix. The dead `WALKABLE` list was replaced with the real
+  seven-site LiDAR set, verified against the committed `lidar-*.json` grids.
+- **Merge resolution (second concurrent collision, AGENTS.md rule 7):** merged
+  `origin/master` `646764a` (PR #41, "Record the Small Mammal V5 suite contract"). One
+  conflict, in this file's ledger; `NEON-SUITE-LEARNING-LOOP.md` auto-merged and my
+  prototype backlog row survived intact. Resolved as before: their entry kept verbatim
+  and my entries appended after, never interleaved or overwritten.
+- **Residual risk:** this is the third concurrent-session collision on these two
+  documents in one day. Rule 7 asks for a designated coordinating editor when sessions
+  overlap; resolving after the fact has worked so far only because the tranches touched
+  different records. The remaining index work (field card, masthead, solid-versus-null
+  pair, the weather/plants/animals chain from the 20 unused `signals`) is recorded in
+  `prototypes/site-explorer/PROGRESS.md` rung 22.
 - **Next action:** owner review of PR #40.
