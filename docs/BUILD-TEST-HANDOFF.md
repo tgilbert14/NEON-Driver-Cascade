@@ -1628,7 +1628,8 @@ Rules:
 - **Driver decision/non-impact:** Plant common-grain richness,
   native/introduced/unknown cover, cross-scale occurrence, reference completeness,
   and support are **CONTEXT / NO DRIVER BYTE CHANGE**. Composition is not phenology
-  or standing stock, and richness is not productivity. Reconsider ingestion only
+  or slow standing-structure context, and richness is not productivity. Reconsider
+  ingestion only
   after one complete matching future receipt across all 46 bundles plus
   `site_index.rds`, an explicit sampled-opportunity ledger, recurrent/common-grain
   support, and a measured eligible Driver site-year join. Phenology remains held as
@@ -1664,7 +1665,7 @@ Rules:
   begin another app until Vegetation is production-verified and its lessons are
   vendored back here.
 
-### 2026-07-19 18:16 MST - Small Mammal dual-surface Living Poster production handoff / root
+### 2026-07-19 18:16 MST - Small Mammal in-app Living Poster / documentary Pages checkpoint (artistic Pages parity superseded) / root
 
 - **Changed/classification:** updated only this handoff, the suite learning loop,
   revamp plan, and reusable playbook. The central Pass 1 row and priority brief now
@@ -1679,14 +1680,16 @@ Rules:
   `8d650b787075bb548d17f8380060597f5a8ff7f9` is the later repository identity. The
   production manifest records R 4.5.2, 91 packages, 118 files, and SHA-256
   `90c1366fcd51c507cb786a45a60dd59607a6980f97fc2e4d2e21b29af326d28e`.
-- **Product/public evidence:** Connect deployment #122 reported exact `bdf56b0` at
-  2026-07-19 18:00 MST. Both Connect and Pages now open with the same artistic
-  Living Poster promise: a large real USGS Sherman-trap photograph, “One trap
-  night. A whole population story.”, “Follow tagged small mammals across years of
-  return visits.”, and “Pick a place”. Desktop, 390 x 844, and 320 x 800 browser
-  checks found no root overflow; the app shell stayed on one row at 320. Pages run
+- **Product/public evidence (corrected by the closeout below):** Connect deployment
+  #122 reported exact `bdf56b0` at 2026-07-19 18:00 MST and opened with the artistic
+  in-app Living Poster: a large real USGS Sherman-trap photograph, “One trap night.
+  A whole population story.”, “Follow tagged small mammals across years of return
+  visits.”, and “Pick a place”. Desktop, 390 x 844, and 320 x 800 browser checks
+  found no root overflow; the app shell stayed on one row at 320. Pages run
   `29710189059` passed on attempt 3 after attempts 1 and 2 failed only on GitHub
-  HTTP 503 responses.
+  HTTP 503 responses, but it still served documentary V4 and is not artistic
+  dual-surface evidence. Final artistic Pages parity arrived later in PR #85 / merge
+  `eb9e1a3`; the exact four-run receipt is recorded in the correction below.
 - **Learned:** a public showcase and its launched app are one first-impression
   contract even though their implementations differ. Updating only Pages can leave
   the in-app pre-selection state looking like the retired cover, so each release
@@ -1726,6 +1729,343 @@ Rules:
   checks, and merge. After that docs-only closeout, continue Vegetation Structure
   through its complete app-local release and vendor its new evidence here before
   starting another app.
+
+### 2026-07-19 21:58 MST - Small Mammal Pages correction and Vegetation Pass-4 core handoff / root
+
+- **Changed/classification:** corrected the Small Mammal artistic-Pages identity;
+  vendored the Vegetation official-source, science, promotion, Living Poster, and
+  core production evidence into the central register, revamp plan, playbook, Data
+  Takeaways, and Expert Review; and recorded the explicit pause before Pass 5.
+  Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting`. The exact Vegetation disposition is **HOLD / CONTEXT ONLY /
+  NO DRIVER DATA BYTE CHANGE**. This tranche changes documentation only: no Driver
+  app code, source lock, estimator, generated artifact, manifest, or public surface
+  changes.
+- **Small Mammal correction:** the prior 2026-07-19 handoff incorrectly cited Pages
+  run `29710189059` as artistic dual-surface proof. That run remains a valid
+  documentary-V4 release receipt but did not publish the final artistic Pages
+  cover. The accurate Pages receipt is PR #85, merge
+  `eb9e1a3e9e91096a1c1a82ebf116bf85d33405e3`, PR CI `29711968094`, main CI
+  `29712103176`, Pages build `29712102838`, and production semantic run
+  `29712103164`. Connect deployment #122 on `bdf56b0` remains the exact in-app
+  artistic-poster receipt. Both independent surfaces carry the same hook, promise,
+  CTA, and real USGS Sherman-trap photograph; the corrected identities avoid
+  pretending that one commit or run published both implementations.
+- **Vegetation source/science receipt:** Pass 4 targets NEON
+  `DP1.10098.001`, official `RELEASE-2026`, provisional data excluded, DOI
+  `10.48443/pypa-qf12`, across 42 sites. Raw family SHA-256 is
+  `e8d78dd776fa4188c3f237548b7d2ab185eb5c03bc7b220991d03753ebca3e29`;
+  bundle family SHA-256 is
+  `3e62514de12b0d7b11cbe8aa53dde76d9f05f65c0174418a3df64e1261a88ffb`.
+  The event-first family preserves source `uid`, exact `mapping_source_uid`, every
+  measurement row, every published opportunity row, supported sampled-absence
+  zeros, channel-specific area/support, and plot uncertainty. Forty-nine
+  measurement-only plot-events / 4,365 rows / 11 sites are retained as
+  `held_opportunity_source_missing`; the app invents no opportunity ID, date,
+  effort, presence, absence, design, coordinates, area, or denominator and excludes
+  those events from scaling and derived summaries.
+- **Physical-channel boundary:** `tree_dbh` is bole cross-section at breast height;
+  `shrub_sapling_basal` is shrub/sapling stem-base cross-section. Both can use
+  m²/ha, but their
+  measurement height, threshold, sampled area, and physical meaning remain
+  disjoint. The exact 42-site x two-channel index carries the selected channel into
+  the app; no cross-channel rank, pooled magnitude, forest/shrub classification, or
+  annualization is authorized.
+- **Candidate/promotion identity:** exact reviewed candidate head
+  `a8ccb56e95f643ba9343ca13d176782ebc050017` passed run `29715249829` and emitted
+  candidate artifact
+  `vegetation-release-candidate-a8ccb56e95f643ba9343ca13d176782ebc050017-29715249829`
+  (artifact ID `8450700945`, 28,378,366 bytes) plus raw artifact ID `8450530222`
+  (29,782,052 bytes). Independent inspection verified 55 files / 54 payloads, 42
+  sites, 68 runtime files, 91 packages, R 4.5.2, exact source-gap counts, and exact
+  geo-package URL pins. Promotion commit
+  `800bd5ea64d5aa4f2eab194c1b16dcbee5a0638e` has the candidate head as its direct
+  parent, changes exactly the 54 ledger payload paths, and every committed blob
+  independently matches its artifact checksum.
+- **Core release/publication identity:** final PR #4 head
+  `5c7456b16abae2569d037bb3b731a9e5065b0906` passed exact-head CI
+  `29716974286`; diagnostic artifact
+  `vegetation-structure-derived-5c7456b16abae2569d037bb3b731a9e5065b0906-29716974286`
+  is artifact ID `8450993821` (92,307 bytes). PR #4 merged as
+  `987c102b84de98f18c11dd98de6c8113ab7f4c8c`; Pages run `29717224521` passed and
+  Connect deployment #55 successfully fetched and serves that exact merge under R
+  4.5.2 with all 91 packages provided, including `wk 0.9.5`. This closes the earlier
+  malformed dependency-URL failure mode for the core release.
+- **Product/public result:** Pages and Connect now lead with the responsive
+  screenprint Living Poster “Tagged. Measured. Still changing.”, promise “Follow
+  real trees and shrubs through years of change.”, and CTA “Pick a place”. The
+  source/art disclosure and suite bridge remain below the brief poster face. Public
+  Pages desktop geometry, canonical metadata, disclosure, Driver link, and no root
+  overflow passed; Connect opened the same entry promise and the 42-place gateway.
+- **Open correction / no premature closeout:** Connect deployment #55 logs exposed
+  one non-scientific landing-state warning: the hidden `baBar` Plotly source was
+  queried before registration. A gated event listener correction is in PR #5. Its
+  merge commit, main CI, final Connect deployment, clean post-landing logs, bar-click
+  interaction, and full mobile receipt remain intentionally pending. Therefore this
+  entry says **core merged / production closeout pending** rather than converting a
+  known warning into an inferred PASS.
+- **Driver decision/non-impact:** current Driver bytes remain unchanged. The
+  released app contributes channel-qualified slow standing-structure context and a
+  stricter observation/opportunity contract; it does not contribute annual
+  productivity, biomass, carbon, a causal edge, or a vote. The existing strict
+  `WOOD` hold remains. Any future field requires a separately reviewed adapter and
+  Driver rebuild from the exact promoted source with channel/support fields,
+  measured eligible joins, and old/new parity.
+- **Reusable learning:** use one brief hook/promise/CTA across independently tested
+  entry surfaces; serve checksum- and dimension-declared responsive art; build an
+  event ledger before summaries; retain source and mapping UIDs; treat missing
+  opportunity source as held rather than zero; keep equal-unit physical channels
+  disjoint; independently reconstruct derived outputs; and promote only an artifact
+  bound to an exact reviewed head, direct-parent commit, path ledger, and checksum
+  proof.
+- **Validation/non-impact:** documentation scope, UTF-8/LF/control-character,
+  Markdown fence, table-shape, stale-receipt, and `git diff --check` gates passed.
+  The first stale-state assertion omitted the app name and therefore matched other
+  apps' legitimate `PASS PENDING` rows; it changed no file, and the app-scoped
+  Vegetation rerun passed.
+  Rehashing confirmed canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  Driver R/build/browser gates are N/A because no runtime input or output changed.
+- **Next action:** after coordinating-owner review, add the exact PR #5/main/final
+  Connect receipts, close the Vegetation app-local production record, merge this
+  docs-only Driver tranche, and pause. Do not begin Ground Beetle or any other app
+  until the owner deliberately resumes the program.
+
+### 2026-07-19 - Vegetation Pass-4 runtime release and reset-picker hold / root
+
+- **Changed/classification:** vendored the exact Vegetation warning fix, runtime
+  enhancement, science-boundary checks, export checks, and the newly discovered
+  reset-path defect into the central learning record. Classification is
+  `suite-platform`, `scientific-contract`, and `Driver-impacting`. The decision
+  remains **HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE**. This Driver tranche
+  changes documentation only; no Driver code, source lock, estimator, generated
+  artifact, data file, manifest, or publication surface changed.
+- **Plotly warning correction:** the gated server listener fix passed exact-head CI
+  `29718292956` at head `5baa6a023a9763d03e15d2341985b8d492e36755`
+  after expected manifest-only run `29717387935`. Its diagnostic artifact was ID
+  `8451426404` (92,308 bytes). PR #5 merged as
+  `91a7814c9e1275c5a890aed4a9c186485f614e60`; main CI `29718542229`
+  produced artifact ID `8451506471` (92,308 bytes), Pages run `29718541621`
+  passed, and Connect deployment #56 served exact `91a7814` under R 4.5.2 with all
+  91 packages. Fresh landing and repeated bar-click checks were clean.
+- **Runtime release identity:** PR #6 added an accessible loading focus boundary,
+  idempotent start/completion handling, focus restoration, reduced-motion tour,
+  byte-shared active-channel plot-summary CSV/ZIP export, a Size Lab-local eligible
+  plant selector, and keyboard-operable named pin groups. Implementation commit
+  `7c1ced5c68e2ab32bb698f2f1a913f22a46541f9` was followed by exact manifest
+  promotion `e5a12add8b1227453a904ff14741b92a5a435759`; the archived candidate
+  inspector is pinned by SHA-256
+  `819eca6d2f9a9b0663b8ad075796b0c558c5af07f740d3f5aa780826257416c5`.
+  Expected manifest-only run `29719846128` uploaded artifact ID `8452015013`; the
+  promoted manifest SHA-256 is
+  `c9356c29aaa1f6bf869442ceb44eca81c5128c86c9352a1256fbae8c374fac6b`.
+  Exact-head run `29720142868` passed with artifact ID `8452100740` (92,307
+  bytes; archive SHA-256
+  `6eb1b916e029c7c61d8e25b83a2b09c9cbfff3aa2962bcf5e50e2b0dfb4083cc`).
+  PR #6 merged as `433bbd25acbe48224a75368c9edd6504e55271bd`.
+- **Merged/public identity:** main CI `29720341082` passed and emitted artifact ID
+  `8452189687` (92,307 bytes; SHA-256
+  `c4c84cf70f069fab6d086738e35b6c95c117244a0b9833fcfb5e78b717aa7d49`).
+  Pages run `29720340743` passed with artifact ID `8452121645` and deployment
+  `5517445662`. Connect deployment #57 successfully published exact `433bbd25`
+  under R 4.5.2 with all 91 packages.
+- **Science-boundary QA:** BART loaded both physical channels and preserved their
+  separate summaries. The standalone BART shrub/sapling plot-summary CSV was
+  byte-identical to `plot_summary_latest.csv` in the eight-file site ZIP (both
+  SHA-256
+  `fddca062b6e9a69ed72dd7f00b27725adc45d773755878fb39f3ec8614259a7e`);
+  PDF, full/flag-specific QC, plant CSV, plant/QC cards, and pinned-chart PNG paths
+  also produced valid files. JORN's 50 exported tree contexts split into 25
+  supported `sampled_absence` zeros and 25 `held_sampling_impractical` contexts;
+  the UI reported 25 supported plots, zero live trees/species/stems/area, and no
+  enabled plant or champion action. WOOD remains held-only: all 50 contexts are
+  held (14 source-missing plus 36 opportunity-unknown), its 452 shrub/sapling rows
+  include 411 live records, and neither physical channel has a supported context.
+  These cases prove that supported zero, held, and missing are not interchangeable.
+- **Open runtime defect / no premature closeout:** post-release QA found that after
+  a loaded site, **Change site** returned to the Living Poster but did not repopulate
+  the server-backed Selectize choices. A fresh session worked, so this is a reset
+  lifecycle defect rather than missing site data. The reusable fix must refresh the
+  picker on both initialization and reset and carry a browser regression gate.
+  At this checkpoint the reset-picker PR/head, exact-head CI/artifact, merge, main
+  CI, Pages, Connect deployment, and clean-log/mobile matrix remained open; the
+  2026-07-20 closeout below supplies those exact identities. PR #6 / deployment #57
+  remains exact evidence for the capabilities above, but it is not final Pass-4
+  production-closeout proof.
+- **Interim learning, superseded below:** loaded application and inferred
+  output/source state appeared sufficient to gate `plotly::event_data()`, but the
+  later #58 server logs disproved that assumption and the final entry records the
+  raw-event contract. Stateful server-backed pickers need explicit initialization
+  and reset contracts; making their container visible is not enough. Export QA
+  should compare the same promised table byte-for-byte across standalone and archive
+  paths.
+- **Driver decision/non-impact:** Vegetation remains channel-qualified slow
+  standing-structure context: tree-DBH bole cross-section and shrub/sapling
+  stem-base cross-section stay disjoint, supported zero remains distinct from held,
+  and no annual productivity, biomass, carbon, causal edge, or vote is added. Gate
+  1–7 app-local source/science/release requirements are satisfied; gate 8—the
+  separately reviewed Driver adapter/rebuild with exact source, support, measured
+  joins, and old/new parity—remains closed.
+- **Artifacts/non-impact:** canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  Driver runtime/build/browser gates remain N/A because no runtime input or output
+  changed.
+- **Checkpoint next action:** land and production-verify the reset-picker fix, add
+  exact final-runtime evidence, then finish the separate app-local and central
+  documentation closeouts. The 2026-07-20 entry below closes the runtime action,
+  records the later app-local docs publication, and separates its append-only
+  receipt candidate. Pause before Ground Beetle or any other companion app.
+
+### 2026-07-20 - Vegetation Pass-4 production closeout / root
+
+- **Changed/classification:** superseded the pending runtime state above with the
+  exact reset, Plotly-registration, publication, responsive, science-boundary, and
+  clean-log receipts for Vegetation Pass 4. Classification is `suite-platform`,
+  `scientific-contract`, and `Driver-impacting`. Pass 4 is **COMPLETE / PRODUCTION
+  VERIFIED**; its Driver disposition remains **HOLD / CONTEXT ONLY / NO DRIVER DATA
+  BYTE CHANGE**. This central tranche changes documentation only. Vegetation's
+  app-local documentation is published through PR #9 / merge `3391e70`, and its
+  append-only receipt is published through PR #10 / merge `da466ea`. Runtime,
+  documentation, and receipt authority remain separate; neither documentation
+  identity is inferred from or substituted for the authoritative runtime release.
+- **PR #7 reset lifecycle:** implementation
+  `3835451f6945b25eca4ef31b4d0882b6406c07ae` moved both initial and reset population
+  of the complete 42-site server-backed Selectize family through one helper.
+  Promotion `8389c9c2d1a723b03f0e1ab88f64732fe454a134` passed exact-head run
+  `29722349642`; artifact `8452911612` was 92,307 bytes with SHA-256
+  `dde4ae1bac76051758abdd2f70a8d620c562949a907d6e2ed1b631992457af8d`.
+  PR #7 merged as `0709bd021c7c9f142b1f280aa83b2cf3afd49f30`; main run
+  `29722614074` emitted artifact `8453019545` (92,307 bytes; SHA-256
+  `337816a4e4171b9e629119186979c6bd962d30b5daa33aff8fb601af122300a0`).
+  Pages run `29722613509` emitted artifact `8452933484` (3,889,240 bytes;
+  SHA-256
+  `8de384a248795a09547d248e6353f83f2303f4c04291d5531f38ffe7a2ba92f7`)
+  and deployment `5517850060`. Connect deployment #58 served exact `0709bd0` and
+  live BART -> Change site -> search JORN returned one exact result and loaded it.
+- **Failure caught after PR #7:** Connect #58 was visibly functional and its browser
+  console was clean, but fresh worker server logs at 23:48:50, 23:53:51, and
+  23:54:27 MST emitted the plotly warning that `plotly_click` for source `baBar` was
+  not registered. This failed production closeout and invalidated the inference that
+  application/output state checks proved source registration. The source family,
+  picker repair, science checks, and artifact bytes remained valid; the clean-log
+  claim did not.
+- **PR #8 registered-event lifecycle:** plotly R 4.12 registers declared Shiny event
+  IDs only after `renderPlotly()` prepares the widget. Implementation
+  `4ce0cb7b3a7125780a5c7ca60c28a3eae71a88f5` therefore retained explicit
+  `event_register("plotly_click")`, triggered the observer from raw
+  `session$rootScope()$input[["plotly_click-baBar"]]`, and only then called
+  `event_data(..., priority = "event")`. Site state or zero data cannot trigger the
+  read, while event priority preserves repeated identical clicks. Expected
+  manifest-only run `29723373295` emitted artifact `8453312072` (92,307 bytes;
+  SHA-256
+  `986bd3f29a16cd945dedb97f2dc2e26ab750e215a4283c164b066417778d0f72`).
+  Manifest promotion `06904fe227119c2b87f80c9dc8334f19f7f79b05` passed exact-head run
+  `29723718100`; artifact `8453460662` was 92,307 bytes with SHA-256
+  `a37b64aa7bff81a4f963142ee9e19bb2737a5758697d29c222d92e4356229871`.
+- **Authoritative runtime merged/public identity:** PR #8 merged as
+  `d566b30ec8eb52ae984325da402cadfec3f18bc9`. Main run `29724062900`
+  passed and emitted artifact `8453599842` (92,307 bytes; SHA-256
+  `cf0fb363314e40004036652bd8968f8849196e51f9f626492c49e6bc08104f5f`).
+  Pages run `29724062095` passed and emitted artifact `8453482888` (3,889,230
+  bytes; SHA-256
+  `24dda716e7d739d288cbacac2e958ffb587b86cc999ddb0b4e0072f0ac23cba1`)
+  through deployment `5518123037`. Connect deployment #59 fetched and serves exact
+  `d566b30` under R 4.5.2 with all 91 packages; deployment completed in four
+  seconds.
+- **App-local documentation publication identity:** PR #9 exact head
+  `68497de328b2723aa997e7016397bfd266e22337` passed CI `29724891796`; artifact
+  `8453930434` was 92,307 bytes with SHA-256
+  `f92b5a9fc3d7eb1e9dbb70b894bed6882eff9c94d22a5907d3ec0207225684ce`.
+  PR #9 merged as `3391e702e7be80a3f049c905782661f043be8db8`. Main CI
+  `29725238531` passed and emitted artifact `8454053110` (92,307 bytes; SHA-256
+  `71ec40bdfe63c2e2987a622c0759ad6c31bf3a749ef6c10a008a82afc1b9ef7f`).
+  Manifest SHA-256 remained
+  `b497f2e9f4228d772745b220da3f2ba6e9da00b8af4fec61af4272103d2e330c`, and
+  search-index SHA-256 remained
+  `c4d145046d9486d7c7cf2c85339200ba1eaad3cf7e0de22bb2e378c7c944fc4b`.
+  Pages run `29725237988` passed with artifact `8453952616` (3,902,344 bytes;
+  SHA-256
+  `d871b82ae790998f03d8228981bcce3921be5724a97b52eabd27d72ee0948265`)
+  and deployment `5518345576`. Connect deployment #60 fetched and serves exact docs
+  merge `3391e70` under R 4.5.2 with all 91 packages after four seconds. Its server
+  logs contain only benign plotly/shinyjs package-built-under-R-4.5.3 warnings, and
+  fresh public Pages and Connect landings are clean. These governance/publication
+  changes leave the PR #8 runtime family unchanged.
+- **Append-only receipt publication identity:** PR #10 exact head
+  `a606f9217f9110a80eff567e34668349b27d3c9f` passed run `29725664115`. Artifact
+  `vegetation-structure-derived-a606f9217f9110a80eff567e34668349b27d3c9f-29725664115`
+  was ID `8454216674`, 92,307 bytes, with SHA-256
+  `8f75c1f43f6e47fd11ae9aa8894861b846e600c1e01821aedca10bcfb8a45946`.
+  Its manifest and search index were byte-identical to the documentation release.
+  PR #10 merged as `da466ea2495df3b03cb472bc2c6c65930ca5314a`. Main CI
+  `29725954423` passed and emitted artifact
+  `vegetation-structure-derived-da466ea2495df3b03cb472bc2c6c65930ca5314a-29725954423`
+  (ID `8454339056`, 92,307 bytes; SHA-256
+  `2c28c917acee6848bd36ecfaad873d42df1d5a42c26264455362d62d305423ec`).
+  Independently downloaded manifest and search-index files remained byte-identical.
+  Pages run `29725953990` passed with artifact `8454236113` (3,902,883 bytes;
+  SHA-256
+  `8e27e003767947d389ec1f87db9357c24cfe2894e7c0208b1b3afa163833f67d`)
+  and deployment `5518482150`. Connect deployment #61 fetched and serves exact
+  receipt merge `da466ea` under R 4.5.2 with all 91 packages after four seconds.
+  Server logs contain only two benign plotly/shinyjs package-built-under-R-4.5.3
+  warnings and zero `baBar`, `event_data`, not-registered, undefined-event, or
+  Shiny runtime errors. Fresh Connect and Pages landing smoke passed the H1, CTA,
+  picker, suite bridge, disclosure, zero root overflow, and no visible failure.
+  This append-only receipt does not replace authoritative runtime merge `d566b30`
+  or app-local documentation merge `3391e70`.
+- **Final production/browser result:** a fresh #59 session loaded BART and opened
+  the same `baBar` selection twice from two identical clicks. Change site then
+  returned the complete picker, one exact JORN match loaded, JORN retained its
+  supported-zero boundary, and WOOD remained held rather than zero. Landing widths
+  390/375/361/360/320 and loaded widths 320/390 all had zero root horizontal
+  overflow, visible/in-bounds primary controls, and no Shiny error or disconnect.
+  The exact #59 worker's 33-entry browser slice had zero warning/error, zero suspect
+  `baBar`/`event_data`/undefined/Shiny entries, and zero disconnect. After those
+  actions, #59 server logs contained only benign plotly/shinyjs
+  package-built-under-R-4.5.3 warnings and zero `baBar`, `event_data`,
+  not-registered, undefined-event, or Shiny runtime errors.
+- **Science boundary/non-impact:** the final interaction release does not change the
+  official 42-site RELEASE-2026 event/stem family. BART continues to expose the two
+  physical channels separately; JORN preserves supported sampled-absence zeros;
+  WOOD remains held-only; and tree-DBH bole cross-section stays disjoint from
+  shrub/sapling stem-base cross-section. The app adds no annual productivity,
+  biomass, carbon, causal edge, or inferential vote. App-local gates 1–7 and runtime
+  production verification are complete; gate 8 remains the separately reviewed
+  Driver adapter/rebuild with exact source, channel/support fields, measured joins,
+  and old/new parity.
+- **Reusable learning:** server-backed picker state has an initialization-and-reset
+  lifecycle, not merely a visibility state. For server-side Plotly reads, an
+  inferred loaded/output condition is weaker than the raw registered event that can
+  exist only after widget preparation. Every public release needs browser-console
+  and worker-server-log review after fresh load, repeated identical interaction,
+  reset, and re-render; visible success alone cannot close the gate.
+- **Artifacts/non-impact:** canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  Driver runtime/build/browser gates are N/A because no Driver runtime input,
+  output, workflow, or public surface changed.
+- **Validation/cleanup:** documentation scope, UTF-8/LF/no-BOM/control-character,
+  Markdown fence/table shape, stale-current-state, `git diff --check`, historical
+  Small Mammal receipt, and five-file Driver hash guards passed. No Driver build,
+  generation, manifest rewrite, lock, stage, backup, pending artifact, credential,
+  or temporary project data was created.
+- **Residual risk/next action:** app-local runtime, documentation, and receipt
+  publication are complete; browser coverage remains finite. Merge this Driver
+  documentation-only tranche without altering the three authoritative identities
+  above. The owner has paused program execution before Ground Beetle Pass 5; do not
+  begin another companion app until the owner deliberately resumes it.
 
 ### 2026-07-19 23:11 MST - site-explorer provenance receipt and scientific corrections / root
 
@@ -1816,14 +2156,13 @@ Rules:
   finite and the in-app preview strips query strings, so the `?site=` deep-link
   normalization was verified by code inspection and by exercising the switcher, not by a
   real deep-link load.
-- **Next action:** owner review of this prototype tranche. Separately, and independently
-  of the prototype, `docs/NEON-SUITE-LEARNING-LOOP.md` row 4 is now materially stale in
-  every column: the Vegetation Structure sibling completed and production-verified its
-  pass on 2026-07-19/20 (22 commits beyond the pinned `5e73e0d`, pinned to NEON
-  RELEASE-2026, DOI `10.48443/pypa-qf12`), and it has published both
-  `docs/DRIVER-KNOWLEDGE-PACKAGE.md` and `docs/SUITE-LEARNING-HANDOFF.md`. That register
-  row is corrected in the same tranche; vendoring the sibling's full receipt remains a
-  separate task requiring its app-local evidence.
+- **Next action:** owner review of this prototype tranche. NOTE (added at merge time):
+  the register row-4 correction described here was SUPERSEDED before merge. A
+  concurrent `root` session (PR #39, master merge `5370be1`) vendored the full
+  Vegetation Pass-4 receipt and rewrote row 4 to `PASS 4 COMPLETE / PRODUCTION
+  VERIFIED` with app-local evidence I did not have. On merge I kept their row and
+  their backlog entry verbatim and added only my prototype backlog row; my earlier
+  observation-only row 4 was correctly discarded. See the merge-resolution entry below.
 
 ### 2026-07-20 08:16 MST - site-explorer protocol review; a prior-entry caveat reversed / root
 
@@ -1902,3 +2241,49 @@ Rules:
 - **Next action:** owner review. If this surface is ever rebuilt from raw NEON data, pull
   `vst_perplotperyear` and eventID-keyed `vst_apparentindividual` first and replace the
   inferred cover denominator with the recorded sampled area.
+
+### 2026-07-20 - concurrent-session merge resolution (site-explorer x Vegetation Pass 4) / root
+
+- **Changed/classification:** documentation-only merge resolution. Merged `origin/master`
+  `5370be1` (PR #39, "Document Small Mammal and Vegetation Pass 4 handoff", by a
+  concurrent `root` session) into branch `claude/site-explorer-provenance`. Classification
+  `suite-platform`; ecological Driver implication explicitly **NONE**. No Driver app code,
+  estimator, source lock, workflow, generated artifact, or manifest changed by the merge.
+- **Conflicts and how they were resolved (AGENTS.md rule 7 - merge, never overwrite):**
+  two files conflicted, both because the sessions wrote to the same records concurrently.
+  * `docs/NEON-SUITE-LEARNING-LOOP.md` row 4 (Vegetation Structure). **Theirs kept in
+    full, mine discarded.** My row said `PASS APPARENTLY COMPLETE IN THE SIBLING - NOT
+    YET VENDORED HERE`, written from a read-only observation of the sibling's GitHub
+    `main`. Theirs says `PASS 4 COMPLETE / PRODUCTION VERIFIED` and carries the app-local
+    receipt (candidate head `a8ccb56`, run `29715249829`, promotion `800bd5e` with an
+    exact-parent/54-payload ledger proof, core merge `987c102`). Their evidence class is
+    strictly stronger than mine; my row was an outside observation and was correctly
+    superseded.
+  * `docs/NEON-SUITE-LEARNING-LOOP.md` Driver-implication backlog. **Theirs kept
+    verbatim**, including their channel-qualified Vegetation row and their closing
+    paragraph recording that Pass 4 is complete and that program execution is
+    intentionally paused by the owner before Pass 5. I re-inserted only my one unique
+    row (the Site Explorer prototype provenance-receipt pattern, decision `NONE`), which
+    has no counterpart in their tranche.
+  * `docs/BUILD-TEST-HANDOFF.md` ledger. **All four of their entries kept unmodified**,
+    including their revision of the 2026-07-19 18:16 MST Small Mammal entry, which
+    supersedes the version I had merged from. My two site-explorer entries were appended
+    after theirs rather than interleaved: two of their entries carry a date but no clock
+    time, so strict chronological interleaving would have required guessing their
+    position. Heading timestamps preserve the true order.
+- **Evidence invalidated:** the "Next action" of my 2026-07-19 23:11 MST entry, which
+  stated that register row 4 was corrected in that tranche. It was not; theirs
+  superseded it. That line is annotated in place rather than deleted.
+- **Test process/result:** `git merge origin/master`; both conflicts resolved by script
+  so the "keep theirs" halves were byte-preserved rather than retyped; then verified no
+  conflict markers remain in `docs/*.md` (PASS), that row 4 is theirs (PASS), that both
+  the Vegetation and Site Explorer backlog rows are present exactly once each (PASS),
+  that their Pass-4 closing paragraph survived (PASS), that both backlog rows carry the
+  table's 7 pipes (PASS), and `git diff --check` (PASS).
+- **Artifacts/non-impact:** no generation ran; the five canonical files are untouched by
+  the merge and remain cascade `47b98e48...`, search `a11a072d...`, meta `00120c52...`,
+  codebook `a79cc754...`, manifest `92b46277...`.
+- **Residual risk:** ledger entries from the two sessions are append-ordered rather than
+  strictly clock-ordered. If more sessions run concurrently, designate one coordinating
+  editor as rule 7 requires, rather than relying on merge resolution after the fact.
+- **Next action:** owner review of PR #40.

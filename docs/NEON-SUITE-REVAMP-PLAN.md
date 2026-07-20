@@ -1,15 +1,18 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE**
+Status: **ACTIVE — PAUSED BY OWNER BEFORE PASS 5**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
-Progress: Driver baseline, Small Mammal Pass 1, Plant Phenology Pass 2, and Plant
-Diversity Pass 3 are complete and production-verified. Ground Beetle remains the
-Phase 0 outage. The owner-approved artistic Living Poster direction now has its
-first dual-surface production proof in Small Mammal; Vegetation Structure is the
-next scientific pass.
+Progress: Driver baseline, Small Mammal Pass 1, Plant Phenology Pass 2, Plant
+Diversity Pass 3, and Vegetation Structure Pass 4 are complete and
+production-verified. Vegetation's reset lifecycle and Plotly source-registration
+corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
+Ground Beetle remains the Phase 0 outage. The owner has paused the program before
+Pass 5. Vegetation's app-local documentation is published through PR #9 / merge
+`3391e70`; append-only receipt PR #10 is published as `da466ea`. Runtime, docs, and
+receipt authority remain deliberately separate.
 
 ## 1. Outcome
 
@@ -41,8 +44,9 @@ The 2026-07-18 public-cover baseline used dark habitat gradients, constellation
 links, code-native mascots, distinct accent palettes, and clear launch controls.
 That history is factual but is no longer the target: owner review found the covers
 too repetitive and information-heavy. The current direction is the brief artistic
-poster system in section 6, now production-proven across both Small Mammal entry
-surfaces.
+poster system in section 6. Small Mammal and Vegetation now have independently
+verified artistic Pages and in-app entry surfaces, with distinct app-native art
+carrying the same concise first-impression contract.
 
 The release layer is not at the same quality bar.
 
@@ -51,7 +55,7 @@ The release layer is not at the same quality bar.
 | Small Mammal Tracker | **Startup Error -> restored in Pass 1** | 10 -> 0 files | 0 -> 11 fixtures + JS handler gate | physical-event parity and opportunity denominator repaired; exact current-source Driver join remains held |
 | Plant Phenology Explorer | **Startup Error -> restored in Pass 2** | 8 -> 0 files | 1 -> registered science/build/handler/semantic suite | desert green-up opportunity, interval censoring, and visit-cadence comparability are explicit; exact current-source Driver join remains held |
 | Plant Diversity | **production verified in Pass 3** | 13 -> 0 files | 1 -> registered science/build/handler/cover/semantic suite | nested grain, opportunity, recurrent panels, Chao2, unknown nativity, reference scope, and `legacy-partial` source limits are release-verified; Driver remains context only |
-| Vegetation Structure Explorer | available | 8 files | 1 | shared `stand_site()` contract can drift from Driver; state must not be presented as annual flux |
+| Vegetation Structure Explorer | **Pass 4 complete / production verified** | 8 -> 0 files | 1 -> registered source/science/parity/export/runtime/manifest/browser suite | official RELEASE-2026 event/opportunity family is verified; tree-DBH bole and shrub/sapling stem-base cross-section channels remain separate slow standing-structure context, never annual flux; reset and Plotly registration lifecycles are production-verified |
 | Ground Beetle Tracker | **Startup Error** | 8 files | 0 | catch-conditioned effort omits zero-carabid bouts; cover copy overstates ecosystem-health meaning |
 | Mosquito Pulse | available | 7 files | 0 | expansion, zero-catch effort, day/night support, and seasonal aggregation need fixture coverage |
 | Birds | available | 8 files | 1 | annual opportunity/zero-detection support and method/flyover handling need stronger contracts |
@@ -63,29 +67,31 @@ tracked runtime file. Small Mammal Pass 1 has now closed its drift and independe
 validated R 4.5.2 / 91-package / 118-file release family. Plant Phenology Pass 2
 then closed its drift with a pinned R 4.5.2 / 92-package / 60-runtime-file release.
 Plant Diversity Pass 3 closed its drift with R 4.5.2 / 91 packages / 150 manifest
-files and exact runtime, source-limit, export, responsive, and semantic receipts;
-the other six companions remain at their baseline state. A future companion deploy can otherwise publish a different
-app than the repository appears to describe, or fail at startup.
+files and exact runtime, source-limit, export, responsive, and semantic receipts.
+Vegetation Pass 4 now has an exact R 4.5.2 / 91-package / 68-runtime-file manifest
+and a verified official 42-site RELEASE-2026 family; the other five companions
+remain at their baseline state. A future companion deploy can otherwise publish a
+different app than the repository appears to describe, or fail at startup.
 
 Additional suite-wide findings (baseline unless a later pass update is stated):
 
 - At baseline, only the Driver repository had `AGENTS.md` and a durable
-  `docs/BUILD-TEST-HANDOFF.md`. Small Mammal, Phenology, and Plant Diversity now
-  have app-local governance, handoff, and Driver knowledge-package artifacts; the
-  other six companions still lack them.
+  `docs/BUILD-TEST-HANDOFF.md`. Small Mammal, Phenology, Plant Diversity, and
+  Vegetation now have app-local governance, handoff, and Driver knowledge-package
+  artifacts; the other five companions still lack them.
 - At baseline, four companions had one helper test script and five had none. Small
-  Mammal, Phenology, and Plant Diversity now run product-specific science,
-  portability, client-handler, exact-release, and semantic-health gates; the other
-  six retain their baseline test debt.
+  Mammal, Phenology, Plant Diversity, and Vegetation now run product-specific
+  science, portability, client-handler, exact-release, and semantic-health gates;
+  the other five retain their baseline test debt.
 - Most companion workflows use moving action tags and a moving package snapshot,
   combine build/validation/publish in one write-enabled job, and do not reproduce
   the Driver's loaded BLAS/thread receipt.
 - Weekly scheduled runs can finish successfully in seconds because a date gate
   skipped the work. That is a skip, not fresh release-health evidence.
-- Baseline post-deploy checks were not content-aware. Small Mammal, Phenology, and
-  Plant Diversity now require app-specific semantic markers and exact release
-  receipts while rejecting Posit error pages; the pattern remains to be ported to
-  the other six companions.
+- Baseline post-deploy checks were not content-aware. Small Mammal, Phenology,
+  Plant Diversity, and Vegetation now require app-specific semantic markers and
+  exact release receipts while rejecting Posit error pages; the pattern remains to
+  be ported to the other five companions.
 - The suite registry and relationship copy are duplicated in each static cover,
   creating ten sources of truth.
 - Mosquito Pulse and My Little Inverts reference `og-image.png` without committing
@@ -106,8 +112,9 @@ Complete before declaring any scientific app pass finished.
 
 1. Freeze automatic publish-on-push where validation and publication are not
    separated.
-2. Restore Small Mammal Tracker and Ground Beetle Tracker from clean, verified
-   manifests; do not treat an HTTP-only probe as proof.
+2. Keep the production-verified Small Mammal restoration closed and restore Ground
+   Beetle Tracker from a clean, verified manifest; do not treat an HTTP-only probe
+   as proof.
 3. Add a semantic live check that requires an app-specific ready marker and rejects
    Posit startup/error pages even when the response is 200.
 4. Verify every manifest's file list and checksums before deployment. Compare
@@ -134,9 +141,9 @@ The pass order is intentionally not alphabetical:
 |---:|---|---|
 | 1 | Small Mammal Tracker | **COMPLETE / PRODUCTION VERIFIED**; restored the outage, established the companion release template, and closed physical-event contract parity without changing Driver bytes |
 | 2 | Plant Phenology Explorer | **COMPLETE / PRODUCTION VERIFIED**; corrected plant-year opportunity, onset unavailability/censoring, deterministic derived artifacts, and release trust without changing Driver bytes |
-| 3 | Plant Diversity | **COMPLETE / PRODUCTION VERIFIED**; separated composition, invasion, richness, cover, and productivity; closed nested-grain/opportunity/panel/source-limit contracts without changing Driver bytes |
-| 4 | Vegetation Structure Explorer | supplies the slow standing-stock floor and the shared `stand_site()` contract |
-| 5 | Ground Beetle Tracker | currently unavailable; effort-complete zero-catch support determines whether activity-density can leave context-only status |
+| 3 | Plant Diversity | **COMPLETE / PRODUCTION VERIFIED**; separated composition, invasion, richness, and cover from unsupported productivity inference; closed nested-grain/opportunity/panel/source-limit contracts without changing Driver bytes |
+| 4 | Vegetation Structure Explorer | **COMPLETE / PRODUCTION VERIFIED**; rebuilt from official RELEASE-2026 with event-atomic opportunity, separate physical channels, exact release promotion, an artistic Living Poster, accessible/export/pin enhancements, a complete reset contract, and a raw registered-event Plotly gate; Driver remains `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE` |
+| 5 | Ground Beetle Tracker | **PAUSED BY OWNER before this pass**; currently unavailable, and effort-complete zero-catch support will determine whether activity-density can leave context-only status |
 | 6 | Mosquito Pulse | strongest seasonal consumer candidate; requires opportunity-complete trap effort and biome-aware temperature/precipitation framing |
 | 7 | Birds | important consumer context, but method, flyover, zero-detection, and annual-support constraints limit Driver use |
 | 8 | Water Chemistry | well-powered condition record and best control case for honest statistics; not itself a trophic hinge |
@@ -264,7 +271,7 @@ Use roles, not decorative causal arrows:
 | Suite group | Products | Honest relationship |
 |---|---|---|
 | Integrator | Driver Response Atlas | compares registered directional evidence and context |
-| Plant timing and state | Phenology, Plant Diversity, Vegetation Structure | timing, composition, and slow standing stock are distinct constructs |
+| Plant timing and state | Phenology, Plant Diversity, Vegetation Structure | timing, composition, and slow standing-structure context are distinct constructs |
 | Terrestrial consumers | Small Mammals, Ground Beetles, Mosquitoes, Birds | activity, detection, and community indices with product-specific effort |
 | Aquatic condition and consumers | Water Chemistry, My Little Inverts | chemistry is condition/context; invertebrates are method- and water-type-stratified consumers |
 | Candidate hinge | HydroPulse or Aquatic Producers | added only if the gap audit supports it |
@@ -305,9 +312,12 @@ revalidate the pattern against their own product, art, shell, and user job.
   into one cascade/integration gesture. This is a visual relationship, not a causal
   claim.
 - Small Mammal's documentary V4 evolved into the first dual-surface Living Poster
-  production release. Phenology/Plant generated-art releases remain factual
-  baselines and must be reviewed against this stronger pattern before suite-wide
-  art is standardized.
+  production release. Its artistic Pages proof is PR #85 / merge `eb9e1a3`, not
+  the earlier documentary Pages run. Vegetation then proved that a more abstract,
+  measurement-led screenprint can carry the same brief hook/promise/CTA system
+  without copying Mammal's shell. Phenology/Plant generated-art releases remain
+  factual baselines and must be reviewed against this stronger pattern before
+  suite-wide art is standardized.
 - Compose and validate a separate 1200×630 social image; never treat a hero crop as
   the social design by default.
 
@@ -374,8 +384,11 @@ Suggested palette families remain distinct but related:
   no root overflow, local image/social assets, stable navigation/touch targets, and
   a one-row app shell at 320. At that viewport the framework left 305 usable layout
   pixels, so the proof measures generated shell geometry rather than assuming the
-  nominal viewport. Pages run `29710189059` passed on attempt 3 after two GitHub
-  HTTP 503-only attempts.
+  nominal viewport. The final artistic Pages release is PR #85, merge
+  `eb9e1a3e9e91096a1c1a82ebf116bf85d33405e3`, with PR CI `29711968094`, main CI
+  `29712103176`, Pages `29712102838`, and production semantic verification
+  `29712103164`. Pages run `29710189059` remains a valid documentary-V4 receipt,
+  but is superseded as evidence of artistic dual-surface parity.
 
 ### Plant Phenology Explorer — second pass COMPLETE / production verified
 
@@ -439,18 +452,130 @@ Suggested palette families remain distinct but related:
   requires a complete matching future receipt, sampled-opportunity ledger, and
   measured eligible site-year join; no productivity vote or per-site climate edge.
 
-### Vegetation Structure Explorer — fourth pass
+### Vegetation Structure Explorer — fourth pass COMPLETE / production verified
 
-- Protect the forest DBH versus shrub basal-diameter paradigm and structural-NA
-  semantics.
-- Add cross-repository contract IDs and fixtures for `stand_site()`; require a
-  Driver rebuild when the contract version changes.
-- Keep basal area as a slow site-level state with plot-level uncertainty, never an
-  annual climate response.
-- Verify no-stand/single-census sites and distributed-versus-tower design paths.
-- Consider recruitment and basal-area increment as app-local additions only after
-  the state estimator remains stable.
-- Driver disposition: `CONTEXT` slow producer floor; no annual vote.
+- Rebuilt the app around NEON `DP1.10098.001` official `RELEASE-2026`, DOI
+  `10.48443/pypa-qf12`, with 42 event-keyed site bundles, retained source and
+  mapping UIDs, event-atomic opportunity, deterministic indexes/exports, and an
+  independently reconstructed release verifier.
+- Preserved all published measurement rows. The 49 plot-events / 4,365 rows / 11
+  sites without matching opportunity-source rows are explicitly
+  `held_opportunity_source_missing`; no area, effort, absence, opportunity date,
+  or denominator is manufactured and none enters scaling or derived summaries.
+- Registered two disjoint channels: `tree_dbh` tree-DBH bole cross-section and
+  `shrub_sapling_basal` shrub/sapling stem-base cross-section. Shared m²/ha units
+  do not make their heights, thresholds, sampled areas, or physical meanings
+  interchangeable.
+  Supported sampled absence is a real zero; held and unsupported states remain NA.
+- Exact-head candidate run `29715249829` produced the reviewed 54-payload family;
+  promotion commit `800bd5ea64d5aa4f2eab194c1b16dcbee5a0638e` has the candidate
+  head as its direct parent and every promoted blob matches the artifact ledger.
+  Final PR #4 head `5c7456b` passed CI `29716974286`; merge
+  `987c102b84de98f18c11dd98de6c8113ab7f4c8c` passed Pages run `29717224521` and
+  Connect deployment #55 serves that exact commit under R 4.5.2 / 91 packages.
+- PR #5 introduced the first server-side Plotly state gate. Exact head
+  `5baa6a023a9763d03e15d2341985b8d492e36755` passed CI `29718292956`; merge
+  `91a7814c9e1275c5a890aed4a9c186485f614e60` passed main CI `29718542229`,
+  Pages `29718541621`, and Connect deployment #56. That intermediate release
+  removed the originally observed eager path but did not establish the final
+  render-registration contract; later exact server-log evidence superseded that
+  broader inference.
+- PR #6 added accessible loading/focus management, a reduced-motion tour,
+  byte-shared active-channel plot-summary CSV/ZIP export, a Size Lab-local eligible
+  plant selector, and keyboard-operable named pin groups. Exact-head CI
+  `29720142868` passed at `e5a12add8b1227453a904ff14741b92a5a435759`; merge
+  `433bbd25acbe48224a75368c9edd6504e55271bd` passed main CI `29720341082` and
+  Pages `29720340743`; Connect deployment #57 serves exact `433bbd25` under R
+  4.5.2 / 91 packages.
+- PR #7 restored the complete 42-choice server-backed site picker on both session
+  initialization and reset through one helper. Implementation
+  `3835451f6945b25eca4ef31b4d0882b6406c07ae` promoted as exact head
+  `8389c9c2d1a723b03f0e1ab88f64732fe454a134`;
+  run `29722349642` / artifact `8452911612` passed. PR #7 merged as
+  `0709bd021c7c9f142b1f280aa83b2cf3afd49f30`; main CI `29722614074` /
+  artifact `8453019545`, Pages `29722613509` / artifact `8452933484` /
+  deployment `5517850060`, and Connect #58 all served that exact merge. Live BART
+  -> Change site -> search JORN returned one exact choice and loaded correctly.
+- Connect #58 nevertheless failed the final server-log gate: fresh loads emitted
+  the `plotly_click` / `baBar` not-registered warning although visible behavior and
+  the browser console were clean. PR #8 fixed the actual plotly R 4.12 lifecycle:
+  keep `event_register("plotly_click")`, trigger from raw
+  `session$rootScope()$input[["plotly_click-baBar"]]`, and only then read
+  `event_data(..., priority = "event")`. Implementation
+  `4ce0cb7b3a7125780a5c7ca60c28a3eae71a88f5` produced the expected
+  manifest-only run `29723373295` / artifact `8453312072`; promotion
+  `06904fe227119c2b87f80c9dc8334f19f7f79b05` passed exact run
+  `29723718100` / artifact `8453460662`. PR #8 merged as
+  `d566b30ec8eb52ae984325da402cadfec3f18bc9`; main CI `29724062900` /
+  artifact `8453599842` and Pages `29724062095` / artifact `8453482888` /
+  deployment `5518123037` passed. Connect #59 serves exact `d566b30` under R
+  4.5.2 with all 91 packages after a four-second deployment.
+- Replaced the dense cover with the responsive screenprint Living Poster:
+  “Tagged. Measured. Still changing.”, “Follow real trees and shrubs through years
+  of change.”, and “Pick a place”. Pages and Connect both expose the concise entry
+  promise, source/art disclosure, and suite bridge without moving methods onto the
+  poster face.
+- BART live QA passed both channels, opened the same bar selection from two
+  identical clicks, and passed search/compare, keyboard pin motion/resize/close,
+  dark mode, and the promised export paths. Its standalone shrub/sapling
+  plot-summary CSV exactly matched the ZIP copy. JORN's 50
+  tree contexts split into 25 supported sampled-absence zeros and 25
+  `held_sampling_impractical` contexts; the UI reported 25 supported plots and zero
+  live trees. WOOD remained held-only across all 50 contexts (14 source-missing plus
+  36 opportunity-unknown), with 452 shrub/sapling rows / 411 live records and zero
+  supported contexts in either physical channel. Final Connect #59 QA also passed
+  the exact BART -> reset -> JORN path, JORN supported-zero behavior, WOOD held-only
+  behavior, viewport widths 390/375/361/360/320 plus loaded-state 320/390, and zero
+  horizontal overflow. Its 33-entry browser slice had no warning, error, suspect
+  Plotly/Shiny message, or disconnect. Server logs contained only benign
+  plotly/shinyjs package-built-under-R-4.5.3 warnings and zero `baBar`,
+  `event_data`, not-registered, undefined-event, or Shiny runtime errors.
+- Pass 4 runtime production closeout remains anchored to PR #8 merge
+  `d566b30ec8eb52ae984325da402cadfec3f18bc9`. App-local documentation PR #9 head
+  `68497de328b2723aa997e7016397bfd266e22337` passed CI `29724891796` with artifact
+  `8453930434` (92,307 bytes; SHA-256
+  `f92b5a9fc3d7eb1e9dbb70b894bed6882eff9c94d22a5907d3ec0207225684ce`) and merged
+  as `3391e702e7be80a3f049c905782661f043be8db8`. Main CI `29725238531` passed with
+  artifact `8454053110` (92,307 bytes; SHA-256
+  `71ec40bdfe63c2e2987a622c0759ad6c31bf3a749ef6c10a008a82afc1b9ef7f`). The
+  runtime manifest and search index remained exactly
+  `b497f2e9f4228d772745b220da3f2ba6e9da00b8af4fec61af4272103d2e330c` and
+  `c4d145046d9486d7c7cf2c85339200ba1eaad3cf7e0de22bb2e378c7c944fc4b`.
+  Pages run `29725237988` passed with artifact `8453952616` (3,902,344 bytes;
+  SHA-256
+  `d871b82ae790998f03d8228981bcce3921be5724a97b52eabd27d72ee0948265`)
+  and deployment `5518345576`. Connect #60 serves exact docs merge `3391e70` under
+  R 4.5.2 / 91 packages after four seconds; logs contain only benign
+  plotly/shinyjs package-built-under-R-4.5.3 warnings, and public Pages/Connect
+  landings are clean.
+- Append-only receipt PR #10 head
+  `a606f9217f9110a80eff567e34668349b27d3c9f` passed run `29725664115`. Artifact
+  `vegetation-structure-derived-a606f9217f9110a80eff567e34668349b27d3c9f-29725664115`
+  was ID `8454216674`, 92,307 bytes, with SHA-256
+  `8f75c1f43f6e47fd11ae9aa8894861b846e600c1e01821aedca10bcfb8a45946`;
+  manifest and search bytes were identical to the documentation release. PR #10
+  merged as receipt authority `da466ea2495df3b03cb472bc2c6c65930ca5314a`.
+  Main CI `29725954423` passed with artifact
+  `vegetation-structure-derived-da466ea2495df3b03cb472bc2c6c65930ca5314a-29725954423`
+  (ID `8454339056`, 92,307 bytes; SHA-256
+  `2c28c917acee6848bd36ecfaad873d42df1d5a42c26264455362d62d305423ec`),
+  and downloaded manifest/search files remained byte-identical. Pages run
+  `29725953990` passed with artifact `8454236113` (3,902,883 bytes; SHA-256
+  `8e27e003767947d389ec1f87db9357c24cfe2894e7c0208b1b3afa163833f67d`)
+  and deployment `5518482150`. Connect #61 serves exact `da466ea` under R 4.5.2 /
+  91 packages after four seconds. Server logs contain only the two benign
+  plotly/shinyjs package-version warnings and zero `baBar`, `event_data`, or related
+  runtime errors. Fresh Connect and Pages landing smoke passed H1, CTA, picker,
+  suite bridge, disclosure, zero overflow, and no visible failure.
+- The three identities remain separate: authoritative runtime `d566b30`, app-local
+  documentation `3391e70`, and append-only receipt `da466ea`. Pass 4, its app-local
+  documentation, and receipt publication are complete.
+- Driver disposition: `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE`.
+  Vegetation supplies channel-qualified slow standing-structure context and design
+  evidence, not annual productivity, biomass, carbon, a causal edge, or an annual
+  vote. App-local gates 1–7 are satisfied; gate 8, the separately reviewed Driver
+  adapter/rebuild, remains closed. Program execution is paused by the owner before
+  Ground Beetle Pass 5.
 
 ### Ground Beetle Tracker — fifth pass
 
