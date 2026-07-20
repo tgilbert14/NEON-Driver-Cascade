@@ -189,6 +189,19 @@
   .cp-fold>summary:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
   .cp-cue{text-transform:none;letter-spacing:0;color:#ffffff70}
   .cp-foldbody{padding-bottom:.2rem}
+  .cp-search{width:100%;box-sizing:border-box;margin:.2rem 0 .5rem;padding:.5rem .7rem;min-height:40px;
+    background:#0e0d0a;border:1px solid #ffffff2a;border-radius:8px;color:#f4efe3;font:inherit;font-size:.82rem}
+  .cp-search:focus-visible{outline:2px solid #e6c78a;outline-offset:1px}
+  .cp-list{display:grid;gap:.15rem;max-height:min(46vh,22rem);overflow-y:auto;overscroll-behavior:contain}
+  .pl-grp{font-family:var(--mono);font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;color:#e6c78a;
+    margin:.5rem 0 .1rem}
+  .pl-grp .pl-n{color:#ffffff70}
+  .pl-row{display:flex;flex-direction:column;gap:.05rem;text-align:left;width:100%;cursor:pointer;
+    background:#ffffff0d;border:1px solid transparent;border-radius:7px;padding:.4rem .6rem;min-height:44px;color:#f4efe3}
+  .pl-row:hover{background:#ffffff1a}
+  .pl-row:focus-visible{outline:2px solid #e6c78a;outline-offset:1px}
+  .pl-id{font-family:var(--mono);font-size:.78rem;color:#f4efe3}
+  .pl-meta{font-family:var(--mono);font-size:.66rem;color:#f4efe3a8}
 </style>
 <div id="loading">Reconstructing the plot&hellip;</div>
 <div id="scene"></div>
@@ -741,6 +754,12 @@ function pick(e){
   if(!hit){card.style.display="none";selRing.visible=false;selPlant=null;return;}
   var o=hit.object; while(o&&!(o.userData&&o.userData.p))o=o.parent;
   if(!o){card.style.display="none";selRing.visible=false;selPlant=null;return;}
+  showRecord(o,{x:e.clientX,y:e.clientY});
+}
+// The whole payload - 179 real records - was reachable only by raycasting a canvas, i.e.
+// pointer-only. showRecord() is the shared path the raycast and the keyboard list both
+// call, so a plant can be selected from either.
+function showRecord(o,at){
   var p=o.userData.p, dead=p.status==="dead";
   selPlant=o; var selr=Math.max(0.5,(p.cr||0.6)*0.5)+0.2;   // highlight ring on the picked plant
   selRing.position.set(o.position.x,0.09,o.position.z); selRing.scale.set(selr,selr,1); selRing.visible=true;
@@ -762,9 +781,26 @@ function pick(e){
   if(cx)cx.addEventListener("click",function(){
     card.style.display="none"; selRing.visible=false; selPlant=null;});
   card.style.display="block";
+  card.setAttribute("role","dialog"); card.setAttribute("aria-live","polite");
   var cw=card.offsetWidth,chh=card.offsetHeight;
-  card.style.left=Math.min(window.innerWidth-cw-12,Math.max(12,e.clientX+14))+"px";
-  card.style.top=Math.min(window.innerHeight-chh-12,Math.max(12,e.clientY+14))+"px";
+  var ax=at&&at.x!=null?at.x:window.innerWidth/2, ay=at&&at.y!=null?at.y:window.innerHeight/2;
+  card.style.left=Math.min(window.innerWidth-cw-12,Math.max(12,ax+14))+"px";
+  card.style.top=Math.min(window.innerHeight-chh-12,Math.max(12,ay+14))+"px";
+}
+// Select a plant by individualID (the keyboard path). Brings it on screen in whichever
+// view is active, then shows its record.
+function selectById(id){
+  for(var i=0;i<plants.length;i++){
+    var g=plants[i]; if(g.userData.p.id!==id)continue;
+    if(hidden[g.userData.p.tx]){hidden[g.userData.p.tx]=false;
+      var chip=document.querySelector('.lg[data-tx="'+g.userData.p.tx+'"]');
+      if(chip){chip.classList.remove("off");chip.setAttribute("aria-pressed","true");}
+      applyVis();}
+    if(MODE==="sky"){sky.x=g.position.x; sky.z=g.position.z; sky.half=Math.max(6,(g.userData.p.cr||1)*4); sizeOrtho();}
+    showRecord(g,null);
+    return true;
+  }
+  return false;
 }
 
 // ---- legend ----
@@ -776,7 +812,7 @@ var lg=document.getElementById("legend"), TXNAME={};
   if(rb)rb.addEventListener("click",function(){resetView();rb.blur();});})();
 DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;
   var d=document.createElement("button"); d.type="button"; d.className="lg";
-  d.setAttribute("aria-pressed","true");
+  d.setAttribute("aria-pressed","true"); d.setAttribute("data-tx",l.tx);
   d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].mk)||"#8fae78")+'"></i>'+(l.common||l.tx)+' &times;'+l.n;
   d.title="Show or hide "+(l.common||l.tx)+" on the map";
   d.addEventListener("click",function(){
@@ -856,6 +892,14 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
       '<div class="cp-sub">'+c.cactiMapped.n+' plants across '+c.cactiMapped.species.length+
       ' species &mdash; positions only</div><div class="cp-note">'+c.cactiMapped.note+'</div>';
   }
+  // Every plant reachable without a pointer: a searchable list that fires the same
+  // selectById() the map click does. Grouped by species so 179 entries stay navigable.
+  h+='<details class="cp-fold" id="browseFold"><summary>Browse all '+P.length+
+     ' plants <span class="cp-cue">(keyboard-reachable)</span></summary><div class="cp-foldbody">'+
+     '<input class="cp-search" id="plantSearch" type="search" placeholder="Filter by species or tag id" '+
+     'aria-label="Filter the plant list">'+
+     '<div class="cp-list" id="plantList"></div></div></details>';
+
   // The ground layer and the provenance receipt are reference material, not the headline.
   // They were roughly half the panel's height and pushed the plot's own numbers out of
   // view, so both fold away behind a summary and open only on request.
@@ -900,6 +944,36 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
     h+='</div></details>';
   }
   coverPanel.innerHTML=h;
+  (function(){
+    var list=document.getElementById("plantList"), search=document.getElementById("plantSearch");
+    if(!list)return;
+    function render(q){
+      q=(q||"").toLowerCase().trim();
+      var groups={}, order=[];
+      P.forEach(function(p){
+        var hay=((p.common||"")+" "+p.sci+" "+p.tx+" "+p.id).toLowerCase();
+        if(q&&hay.indexOf(q)<0)return;
+        if(!groups[p.tx]){groups[p.tx]=[];order.push(p.tx);}
+        groups[p.tx].push(p);
+      });
+      if(!order.length){list.innerHTML='<div class="cp-note">No plant matches &ldquo;'+
+        q.replace(/[<>&]/g,"")+'&rdquo;.</div>';return;}
+      var out="";
+      order.forEach(function(tx){
+        out+='<div class="pl-grp">'+(TXNAME[tx]||tx)+' <span class="pl-n">'+groups[tx].length+'</span></div>';
+        groups[tx].forEach(function(p){
+          out+='<button class="pl-row" type="button" data-id="'+p.id+'">'+
+            '<span class="pl-id">'+p.id+'</span>'+
+            '<span class="pl-meta">tagged '+(p.date||"").slice(0,4)+' &middot; '+
+            (p.realh?p.h+' m':"size not measured")+(p.status==="dead"?' &middot; dead':'')+'</span></button>';
+        });
+      });
+      list.innerHTML=out;
+    }
+    render("");
+    if(search)search.addEventListener("input",function(){render(search.value);});
+    list.addEventListener("click",function(e){var b=e.target.closest(".pl-row"); if(b)selectById(b.dataset.id);});
+  })();
   var tf=document.getElementById("tagFilterBtn");
   if(tf){tf.innerHTML=SY[syi][1]; tf.addEventListener("click",function(){surveyBtn.click();});}
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
