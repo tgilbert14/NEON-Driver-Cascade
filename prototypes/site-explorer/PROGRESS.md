@@ -70,7 +70,8 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 A new direction (owner's idea): instead of a statistical/procedural impression, reconstruct **one real
 NEON plot plant-by-plant**. Test build: **SRER_048** (Santa Rita, Sonoran desert) — **179 real tagged
 plants** from Vegetation Structure (DP1.10098.001), each at its **real mapped position** (pointID +
-stemDistance + stemAzimuth, point coords from the locations API), sized by real height/crown, live vs
+stemDistance + stemAzimuth, point coords from the locations API), drawn at real height/crown **for the
+104 NEON measured** (the other 75 at a species-typical size, marked with an open ring), live vs
 standing-dead, and **click a plant to read its actual NEON record** (species, individualID, tag year,
 measured height/crown, status). 9 species, 104 measured heights, 5 whole plants dead of the 104 assessed. See `build_plot.md`. Live
 artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
@@ -125,7 +126,8 @@ shrubs in the aerial but no records). Boundary = a 40 × 40 amber survey-tape re
 re-anchored to the plot centre (HW 25 → 50 m window) and re-validated (plants still land on the real shrubs).
 
 **Map-first default (done):** the primary view is the top-down **map** — the real NEON aerial with each plant
-as a crisp species-coloured **ring** at its real crown size, inside the 40×40 boundary. The 3D plant figures
+as a crisp species-coloured **ring** — a solid disc at NEON's measured crown size, or an open ring at a
+species-typical size where NEON did not measure the plant — inside the 40×40 boundary. The 3D plant figures
 are **on by default** in the map (seen from above); the **"3D plants"** toggle hides them for a clean
 rings-on-aerial view, and **"Enter the plot (3D)"** is the first-person walk. Marker/legend/panel colours share
 one bright data-viz palette (`SP[tx].mk`).
@@ -473,6 +475,34 @@ index higher. Settling it needs `subplotID` per record — which the committed f
 NEON records these areas per `plotID` × `eventID`, they can be NULL when a growth form is not scheduled,
 and at SRER *Prosopis velutina* changed channel in 2020 — so the channel must be read per record, never
 per species. Recorded in the file as `contractGaps`.
+
+## No-guessing audit — what remained, and what still needs raw NEON data
+
+A full sweep for values or visuals not backed by real per-plant data. Three remained; two are now
+closed, one cannot be without re-pulling raw NEON tables.
+
+**Closed — 75 plants were drawn at species-typical sizes with no visual marker.** The 3D/map view sized
+every plant from `p.h`/`p.cr`, but for 75 of 179 those are per-species *defaults*, not measurements
+(`realh !== true`). They were disclosed on click ("~X m typical") and greyed in the colour modes, but
+the default view drew them at full fidelity as if real. They now render as an **open ring** (measured
+plants keep a solid disc), the About card introduces the distinction, and the at-a-glance panel states
+"104 measured · 75 species-typical". Docs that claimed "sized by its real height/crown" for all plants
+(build_plot.md, PROGRESS.md ×2) are corrected to scope it to the 104 measured.
+
+**Closed — the "eastern half was not surveyed" framing was wrong and partly circular.** The eastern half
+is the *sampling design* — NEON samples two of the four 20×20 m subplots of a 40×40 m base plot (protocol
+Table 10), and `area_trees = 800 m²` confirms it — not a survey that skipped the west. And "eastern" was
+inferred from where the plants sit, so it is stated as "where the two sampled subplots are", not asserted
+as an independently verified selection. Reframed in `surveyNote`, `mappedExtent`, and build_plot.md.
+
+**Open — needs raw NEON data I do not have.** The 800 m² denominator assumes the woody plants were
+searched across the full selected subplots rather than nested subplots; if nested, the denominator is
+smaller and the index higher. Settling it needs `subplotID` per record. More broadly, no plant record
+carries `growthForm`, `subplotID` or `eventID` (the `contractGaps`), which assign the measurement channel
+and pin the denominator. Closing these requires re-running `build_plot.py` — which needs the raw VST CSVs
+and a NEON API token, neither committed. **This is stated as unresolved on the page rather than guessed.**
+Until the raw pull is redone, the index carries its on-screen "unresolved" caveat and must not be
+presented as settled.
 
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 

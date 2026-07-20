@@ -93,6 +93,7 @@
   .acard .eyebrow{margin:0}
   .acard .ttl{font-family:var(--serif);font-size:1.28rem;line-height:1.15;margin:0}
   .acard .sub{font-size:.86rem;line-height:1.5;color:#f4efe3e0;max-width:none;margin:0}
+  .acard .sz{display:block;margin-top:.4rem;font-size:.8rem;color:#f4efe3b8}
   .afacts{display:grid;gap:.28rem;font-family:var(--mono);font-size:.68rem;color:#f4efe3c4}
   .afacts .fr{display:flex;gap:.55rem}
   .afacts .fr b{color:#e6c78a;font-weight:600;min-width:6.2rem;flex:0 0 auto}
@@ -290,7 +291,9 @@ var GTEX=""; try{GTEX=JSON.parse(document.getElementById("groundTex").textConten
 // of prose was what made it need one.
 document.getElementById("sub").innerHTML=
   "Every one of these <b>"+DATA.n+"</b> plants is real — an individually tagged NEON plant, "+
-  "drawn where it actually stands. Tap any one to read its record.";
+  "drawn where it actually stands. Tap any one to read its record. "+
+  "<span class=\"sz\">Solid rings are drawn at NEON’s measured size; open rings are drawn at a "+
+  "species-typical size, because NEON did not measure those plants.</span>";
 (function(){
   var d=Math.round(DATA.plotDim||40), pv=DATA.provenance||{}, f=[];
   function row(k,v){f.push('<div class="fr"><b>'+k+'</b><span>'+v+'</span></div>');}
@@ -566,11 +569,17 @@ function buildPlant(p,seed){
   // ground marker — a crisp species-coloured RING at the real crown size, so the map reads as a
   // survey overlay (you see the actual shrub inside the ring). Kept when the 3D models are hidden.
   var mr=Math.max(0.35,cr*0.5), mkCol=dead?DEADMK:spCol(p,"mk");
-  var mk=new THREE.Mesh(new THREE.RingGeometry(mr*0.74,mr,22),
-    new THREE.MeshBasicMaterial({color:new THREE.Color(mkCol),transparent:true,opacity:0.95,side:THREE.DoubleSide,depthWrite:false}));
+  // A plant with no measured crown (realh!==true) is drawn at a SPECIES-TYPICAL size, not
+  // a real one. That must be visible in the scene itself, not only on click: its ring is
+  // a thin OUTLINE with a dashed inner mark, so measured plants (solid disc) and
+  // typical-size plants (open ring) are distinguishable at a glance in the map view.
+  var typ=(p.realh!==true);
+  var mk=new THREE.Mesh(new THREE.RingGeometry(typ?mr*0.9:mr*0.74,mr,22),
+    new THREE.MeshBasicMaterial({color:new THREE.Color(mkCol),transparent:true,
+      opacity:typ?0.6:0.95,side:THREE.DoubleSide,depthWrite:false}));
   mk.rotation.x=-Math.PI/2; mk.position.y=0.05;
   if(cr90&&cr&&cr90<cr) mk.scale.y=Math.max(0.5,cr90/cr);   // elliptical crown footprint
-  mk.userData.keep=1; g.add(mk); MARKERS.push(mk);
+  mk.userData.keep=1; mk.userData.typ=typ; g.add(mk); MARKERS.push(mk);
   g.userData={p:p,foliage:foliage,mk:mk};
   if(!dead&&soft)CANOPY.push(foliage);       // only soft-tissue plants sway
   return g;
@@ -812,6 +821,8 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
   // they are not in the denominator — "of 179" would silently claim otherwise.
   var assessed=0;P.forEach(function(p){if(p.stems)assessed++;});
   h+=stat("whole plants dead",fullyDead+" of "+assessed+" assessed");
+  var nReal=P.filter(function(p){return p.realh===true;}).length;
+  h+=stat("sizes drawn", nReal+" measured &middot; "+(P.length-nReal)+" species-typical");
   var ub=(DATA.provenance||{}).unmeasured_breakdown;
   if(ub)h+='<div class="cp-note">'+ub.total+' plants have a mapped position but no structural record: '+
     ub.cacti+' cacti and '+ub.woody+' woody plants. NEON&rsquo;s standard woody protocol does not map cacti at '+

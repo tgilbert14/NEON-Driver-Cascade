@@ -2,7 +2,9 @@
 
 `plot.html` reconstructs one real NEON plot (**SRER_048**, Santa Rita Experimental Range,
 Sonoran desert) **plant by plant**: every plant is a real tagged individual placed at its
-real mapped position, sized by its real height/crown, coloured live vs standing-dead, and
+real mapped position, coloured live vs standing-dead, and — for the 104 plants NEON actually
+measured — drawn at its real height and crown; the other 75 (70 cacti plus 5 unmeasured woody) are
+drawn at a species-typical size and marked with an open ring, and
 **clickable to read its actual NEON record** (species, individualID, tag year, measured
 height/crown, status).
 
@@ -167,27 +169,37 @@ window (`HW=25`) centred on the plot.
 
 ## Ground cover & species (the "Cover & species" panel)
 
-- **This plot (from our VST crowns):** estimated woody canopy cover, broken down by species. The exact
-  formula is
+- **This plot (from our VST crowns): a woody crown area INDEX, not a cover percentage.** The panel reports
 
   ```
-  cover = Σ π · (cr / 2) · (cr90 / 2)   over LIVE plants only
-          ────────────────────────────
-                  790 m²               (= ex × ey, the surveyed strip)
+  crown area index = Σ π · (cr / 2) · (cr90 / 2)   over the 99 live woody plants NEON MEASURED
+                     ──────────────────────────────
+                            800 m²                  (the two 20 × 20 m subplots NEON sampled)
+                   = 370 m² / 800 m² = 0.46 m² of crown per m² of ground
   ```
 
-  giving **~53.9%**, creosote-dominated. Three things this formula makes explicit that an earlier
-  version left unstated:
+  This replaced an earlier "~53.9% canopy cover" that was wrong three ways (all recorded in
+  `PROGRESS.md`):
 
-  1. **Live only.** The 5 whole-dead plants (5.0 m² of crown) are excluded.
-  2. **Elliptical.** Crowns use both measured axes (`cr` × `cr90`), not a circle on `cr`.
-  3. **Divided by the surveyed area, not the plot.** VST mapped only the **eastern half** of the
-     40 × 40 m base plot. Dividing by the full 1600 m² would count 810 m² of never-surveyed ground as
-     measured zero cover, which understates cover (the same crowns give ~26.6% that way). The panel
-     shows the whole-plot figure only as a labelled aside.
+  1. **13% of the numerator was invented.** The 75 plants with no crown measurement carry a
+     *per-species constant* (`cr90` absent), and the old sum gated on `status == "live"` rather than on
+     whether a crown was measured, so those defaults were summed as data. The index gates on `cr90`
+     being present.
+  2. **The denominator is 800 m² by design, not a 790 m² bounding box.** A 40 × 40 m base plot is
+     sampled in two of its four 20 × 20 m subplots, randomly selected (protocol Table 10). The mapped
+     plants fall in the eastern half because that is where the two sampled subplots are — it is the
+     sampling design, **not** ground that was skipped. `area_trees = 800 m²` in the Vegetation
+     Structure bundle confirms it.
+  3. **It is not a cover percentage.** Crowns overlap (a sum is not a union), and each crown is
+     measured from its two *maximum* diameters at right angles, so the ellipse circumscribes an open
+     desert crown. It is reported as an index in m²/m², never a percentage of ground.
 
-  Crowns can overlap, so this is **summed crown area, not a union** — and therefore `100 − cover` is
-  **not** open interspace and must never be reported as such.
+  **Cacti are excluded entirely** — NEON measures them under a separate Cactus SOP against a different
+  sampled area, and Santa Rita maps only large-stature individuals, so they are a mapped subset, not a
+  census. They are reported as a count and species list. **Unresolved and stated on the page:** the
+  800 m² assumes the woody plants were searched across the full selected subplots; if they came from
+  nested subplots the denominator is smaller and the index higher. Settling it needs `subplotID` per
+  record, which the committed file does not carry.
 - **SRER ground layer (site diversity):** SRER_048 is a VST plot and is **never** a plant-diversity plot, so
   `div-srer.py` aggregates SRER **site-level** plant diversity (DP1.10058.001, 2024 growing season) into
   `div-srer.json` — ground categories (litter ~57%, bare soil ~26%, rock, biocrust) and top understory species
@@ -210,8 +222,9 @@ mapped positions against the aerial / canopy layers.
   recruitment, mortality or turnover. The UI control is labelled "First tagged" for that reason, and shows
   an explanatory note whenever it is narrowed.
 - **Legend chips are filters** — click any species chip to show/hide it; the chip dims + strikes through.
-- **Unmapped-area shade** — a light dark plane over the plot's western half makes it obvious that side was never
-  surveyed (VST mapped only the eastern half), rather than looking like missing data.
+- **Unmapped-area shade** — a light dark plane over the plot's western half makes it obvious that NEON
+  sampled two of the four 20×20 m subplots (here, the eastern pair), rather than the west looking like
+  missing data. It is the sampling design, not a survey that skipped that half.
 - **This plot at a glance** — the "Cover & species" panel opens with a live analysis block (tagged plants +
   species, per-campaign tallies, density per 100 m² surveyed, mean/tallest height, total/live/dead stems, whole
   plants dead), all computed from the VST records in the browser.
