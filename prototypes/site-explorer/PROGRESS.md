@@ -111,11 +111,17 @@ not the 20 × 40 plant bounding box. The scene is now anchored to the **true plo
 shrubs in the aerial but no records). Boundary = a 40 × 40 amber survey-tape rectangle. The AOP crop was
 re-anchored to the plot centre (HW 25 → 50 m window) and re-validated (plants still land on the real shrubs).
 
-**Map-first default (done):** the primary view is now the top-down **map** — the real NEON aerial with each
-plant drawn as a crisp species-coloured **ring** at its real crown size (you see the shrub inside), inside the
-40×40 boundary, click-to-inspect. The 3D plant figures are the optional **"augmented"** layer: default off,
-turned on by the **"3D plants"** toggle or by **"Enter the plot (3D)"** (which drops you into the first-person
-walk). Marker/legend colours are a bright, distinct data-viz palette (`SP[tx].mk`).
+**Map-first default (done):** the primary view is the top-down **map** — the real NEON aerial with each plant
+as a crisp species-coloured **ring** at its real crown size, inside the 40×40 boundary. The 3D plant figures
+are **on by default** in the map (seen from above); the **"3D plants"** toggle hides them for a clean
+rings-on-aerial view, and **"Enter the plot (3D)"** is the first-person walk. Marker/legend/panel colours share
+one bright data-viz palette (`SP[tx].mk`).
+
+**Map interactions (done):** (1) **hover tooltip** on any plant (species · tag · height); (2) click →
+**pulsing white selection ring** + the full record card; (3) the bottom **legend chips are filters** — click a
+species to show/hide it on the map (chip dims + strikethrough); (4) an **"About"** button toggles a readable
+dark backdrop behind the top-left plot notes (default off so the map is clean first). Fast hover/click use a
+per-plant proxy pick-list (`PICK`).
 
 **Plant-model toggle (done):** the "3D plants: on/off" button hides the 3D models (keeping the ground rings +
 click-inspect) so you can compare our mapped positions against the aerial / canopy layers.

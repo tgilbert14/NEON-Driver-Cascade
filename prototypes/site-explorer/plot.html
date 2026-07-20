@@ -26,6 +26,16 @@
   .lg{font-family:var(--mono);font-size:.66rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;
     padding:.28rem .6rem;backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:.4rem}
   .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .lg{cursor:pointer;user-select:none;transition:opacity .15s,border-color .15s}
+  .lg:hover{border-color:#ffffff55}
+  .lg.off{opacity:.4;text-decoration:line-through}
+  .lg.off i{filter:grayscale(1) brightness(.7)}
+  .top.readable{background:#0b0b0ad9;border:1px solid #ffffff1f;border-radius:14px;padding:.85rem 1.05rem;
+    backdrop-filter:blur(8px);box-shadow:0 8px 30px #0006}
+  #tip{position:fixed;z-index:4;pointer-events:none;display:none;font-family:var(--mono);font-size:.68rem;color:#f4efe3;
+    background:#12110deb;border:1px solid #ffffff2a;border-radius:8px;padding:.28rem .5rem;backdrop-filter:blur(6px);
+    box-shadow:0 6px 20px #0008;white-space:nowrap}
+  #tip b{color:#e6c78a}
   #card{position:fixed;z-index:4;max-width:19rem;background:#12110dEE;border:1px solid #ffffff2a;border-left:3px solid #d98a3d;
     border-radius:12px;padding:.7rem .85rem;backdrop-filter:blur(8px);pointer-events:none;display:none;box-shadow:0 8px 30px #000a}
   #card .c-sci{font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.15}
@@ -69,12 +79,14 @@
       <button class="walk" id="layerBtn" type="button" style="background:#3a352b;color:#f4efe3">Ground: stylized</button>
       <button class="walk" id="plantsBtn" type="button" style="background:#2b3326;color:#f4efe3">Plants: on</button>
       <button class="walk" id="coverBtn" type="button" style="background:#2e2a33;color:#f4efe3">Cover &amp; species</button>
+      <button class="walk" id="infoBtn" type="button" style="background:#20242a;color:#f4efe3">&#9432; About</button>
       <span class="hint" id="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
     </div>
     <div class="legend" id="legend"></div>
   </div>
 </div>
 <div id="card"></div>
+<div id="tip"></div>
 <div id="coverPanel"></div>
 <div id="compass"><span class="ar">&#8593;</span>N</div>
 <a class="backlink" href="./index.html">&larr; back to the map</a>
@@ -203,6 +215,7 @@ function rnd(seed){var a=seed>>>0;return function(){a=a+0x6D2B79F5|0;var t=Math.
 var PROXYMAT=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,colorWrite:false});
 
 var CANOPY=[];  // swayable foliage groups (soft-tissue plants only)
+var PICK=[];    // per-plant pick proxies (fast hover/click raycast targets)
 function buildPlant(p,seed){
   var g=new THREE.Group(); g.position.set(p.x,0,-p.y);   // scene north = -Z (so top-down reads north-up/east-right)
   var R=rnd(seed), dead=p.status==="dead", tx=p.tx;
@@ -330,7 +343,7 @@ function buildPlant(p,seed){
   g.rotation.y=R()*6.283;                                   // stable crown orientation (azimuth unrecorded)
   // transparent pick proxy so every plant — even thin cacti — is reliably clickable
   var pr=Math.max(0.28,cr*0.5), ph=Math.max(0.35,h);
-  var proxy=new THREE.Mesh(new THREE.CylinderGeometry(pr,pr,ph,6),PROXYMAT); proxy.position.y=ph/2; proxy.userData.keep=1; g.add(proxy);
+  var proxy=new THREE.Mesh(new THREE.CylinderGeometry(pr,pr,ph,6),PROXYMAT); proxy.position.y=ph/2; proxy.userData.keep=1; proxy.userData.proxy=1; g.add(proxy); PICK.push(proxy);
   // ground marker — a crisp species-coloured RING at the real crown size, so the map reads as a
   // survey overlay (you see the actual shrub inside the ring). Kept when the 3D models are hidden.
   var mr=Math.max(0.35,cr*0.5), mkCol=dead?DEADMK:spCol(p,"mk");
@@ -347,6 +360,19 @@ function buildPlant(p,seed){
 var plants=[], seedbase=1;
 DATA.plants.forEach(function(p){var g=buildPlant(p,seedbase++); scene.add(g); plants.push(g);});
 
+// selection highlight ring (moved onto the clicked plant, gently pulsing)
+var selRing=new THREE.Mesh(new THREE.RingGeometry(0.86,1.0,32),
+  new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.95,side:THREE.DoubleSide,depthWrite:false}));
+selRing.rotation.x=-Math.PI/2; selRing.position.y=0.09; selRing.visible=false; selRing.renderOrder=5; scene.add(selRing);
+var selPlant=null;
+// species filter state
+var hidden={};   // tx -> hidden
+function applyVis(){for(var i=0;i<plants.length;i++){var g=plants[i],on=!hidden[g.userData.p.tx];
+  g.visible=on; var ch=g.children;
+  for(var j=0;j<ch.length;j++){var c=ch[j];
+    if(c.userData.proxy||c.userData.keep) c.visible=on; else c.visible=on&&showPlants;}}
+  if(selPlant&&hidden[selPlant.userData.p.tx]){selRing.visible=false;selPlant=null;}}
+
 // ---- controls (first-person walk + top-down sky cam) ----
 var MODE="walk";
 var keys={},yaw=0.0,pitch=-0.05,px=8,pz=((DATA.plotDim||40)/2+4),walking=false,drag=false,lx=0,ly=0,moved=0,downx=0,downy=0;
@@ -356,7 +382,7 @@ var cv=renderer.domElement;
 cv.addEventListener("pointerdown",function(e){drag=true;moved=0;lx=e.clientX;ly=e.clientY;downx=e.clientX;downy=e.clientY;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
 cv.addEventListener("pointerup",function(e){drag=false; if(moved<6)pick(e);});
 cv.addEventListener("pointercancel",function(){drag=false;});
-cv.addEventListener("pointermove",function(e){if(!drag)return;var dx=e.clientX-lx,dy=e.clientY-ly;moved+=Math.abs(dx)+Math.abs(dy);
+cv.addEventListener("pointermove",function(e){if(!drag){hover(e);return;}var dx=e.clientX-lx,dy=e.clientY-ly;moved+=Math.abs(dx)+Math.abs(dy);
   if(MODE==="sky"){var r=cv.getBoundingClientRect(),wpp=(ortho.right-ortho.left)/r.width;  // grab-drag pan (north-up/east-right)
     sky.x=Math.max(-70,Math.min(70,sky.x-dx*wpp)); sky.z=Math.max(-70,Math.min(70,sky.z+dy*wpp)); sizeOrtho();}
   else{yaw-=dx*0.004;pitch-=dy*0.004;pitch=Math.max(-1.2,Math.min(0.5,pitch));}
@@ -379,17 +405,32 @@ function setMode(mode){MODE=mode;walking=false;walkBtn.innerHTML="&#9654; Walk";
     hintEl.innerHTML="drag to look &middot; W A S D to move &middot; click a plant to read its tag";}}
 skyBtn.addEventListener("click",function(){setMode(MODE==="sky"?"walk":"sky");});
 
-// ---- pick / inspect ----
-var ray=new THREE.Raycaster(), card=document.getElementById("card"), reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+// ---- hover tooltip + pick / inspect ----
+var ray=new THREE.Raycaster(), card=document.getElementById("card"), tip=document.getElementById("tip"), reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function hover(e){
+  var r=cv.getBoundingClientRect();
+  var nx=((e.clientX-r.left)/r.width)*2-1, ny=-((e.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera({x:nx,y:ny},MODE==="sky"?ortho:camera);
+  var hit=ray.intersectObjects(PICK,false)[0], o=hit&&hit.object;
+  while(o&&!(o.userData&&o.userData.p))o=o.parent;
+  if(!o){tip.style.display="none";cv.style.cursor="";return;}
+  var p=o.userData.p;
+  tip.innerHTML='<b>'+(p.common||p.tx)+'</b> &middot; NEON&hellip;'+p.id+(p.realh?' &middot; '+p.h+' m':'');
+  tip.style.display="block"; cv.style.cursor="pointer";
+  tip.style.left=Math.min(window.innerWidth-tip.offsetWidth-8,e.clientX+15)+"px";
+  tip.style.top=(e.clientY+16)+"px";
+}
 function pick(e){
   var r=cv.getBoundingClientRect();
   var nx=((e.clientX-r.left)/r.width)*2-1, ny=-((e.clientY-r.top)/r.height)*2+1;
   ray.setFromCamera({x:nx,y:ny},MODE==="sky"?ortho:camera);
-  var hit=ray.intersectObjects(plants,true)[0];
-  if(!hit){card.style.display="none";return;}
+  var hit=ray.intersectObjects(PICK,false)[0];
+  if(!hit){card.style.display="none";selRing.visible=false;selPlant=null;return;}
   var o=hit.object; while(o&&!(o.userData&&o.userData.p))o=o.parent;
-  if(!o){card.style.display="none";return;}
+  if(!o){card.style.display="none";selRing.visible=false;selPlant=null;return;}
   var p=o.userData.p, dead=p.status==="dead";
+  selPlant=o; var selr=Math.max(0.5,(p.cr||0.6)*0.5)+0.2;   // highlight ring on the picked plant
+  selRing.position.set(o.position.x,0.09,o.position.z); selRing.scale.set(selr,selr,1); selRing.visible=true;
   var SN={hemi:"half-sphere",oblate:"oblate half-sphere",cone:"inverted cone",ellipsoid:"ellipsoid",cyl:"cylinder"};
   var crown=p.cr90?(p.cr+" × "+p.cr90+" m"):(p.cr+" m");
   var det=""; if(p.bd)det+='<br>'+(p.stems?p.stems+' stems · mean &#8960; '+p.bd+' cm':'basal stem &#8960; '+p.bd+' cm');
@@ -412,7 +453,10 @@ function pick(e){
 // ---- legend ----
 var lg=document.getElementById("legend"), TXNAME={};
 DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;var d=document.createElement("span");d.className="lg";
-  d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].mk)||"#8fae78")+'"></i>'+(l.common||l.tx)+' ×'+l.n;lg.appendChild(d);});
+  d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].mk)||"#8fae78")+'"></i>'+(l.common||l.tx)+' &times;'+l.n;
+  d.title="Click to show/hide "+(l.common||l.tx)+" on the map";
+  d.addEventListener("click",function(){hidden[l.tx]=!hidden[l.tx];d.classList.toggle("off",!!hidden[l.tx]);applyVis();});
+  lg.appendChild(d);});
 
 // ---- ground cover & species panel ----
 var coverBtn=document.getElementById("coverBtn"), coverPanel=document.getElementById("coverPanel");
@@ -438,15 +482,17 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
 })();
 coverBtn.addEventListener("click",function(){coverPanel.classList.toggle("open");});
+// "About" toggles a readable dark backdrop behind the top-left plot notes (default off, so the map is clean first)
+var infoBtn=document.getElementById("infoBtn"), topEl=document.querySelector(".top");
+infoBtn.addEventListener("click",function(){var on=topEl.classList.toggle("readable");infoBtn.style.background=on?"#3d4a57":"#20242a";});
 
 // ---- default to the MAP-FIRST view: top-down over the real aerial with the plant markers.
 //      The 3D plant figures are the optional "augmented" layer (toggle Plants on, or Enter the plot). ----
-function setPlants(on){showPlants=on;
-  for(var i=0;i<plants.length;i++){var ch=plants[i].children;for(var j=0;j<ch.length;j++){if(!ch[j].userData.keep)ch[j].visible=on;}}
-  plantsBtn.innerHTML="3D plants: "+(on?"on":"off");}
-plantsBtn.innerHTML="3D plants: off";
-if(GEO&&GEO.ortho){setMode("sky"); setLayer(1); setPlants(false);
-  skyBtn.innerHTML="&#9654; Enter the plot (3D)";}
+function setPlants(on){showPlants=on; applyVis(); plantsBtn.innerHTML="3D plants: "+(on?"on":"off");}
+// default: the MAP is the hero — top-down over the real aerial, 3D plant figures ON (from above),
+// clickable species rings. "3D plants" toggles the figures; "Enter the plot (3D)" is the first-person walk.
+if(GEO&&GEO.ortho){setMode("sky"); setLayer(1); setPlants(true);
+  skyBtn.innerHTML="&#9654; Enter the plot (3D)";}else{setPlants(true);}
 
 // ---- loop ----
 function resize(){var w=host.clientWidth||innerWidth,h=host.clientHeight||innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();sizeOrtho();}
@@ -456,6 +502,7 @@ function loop(t){requestAnimationFrame(loop);
   var dt=Math.min(0.05,((t-last)/1000)||0);last=t;
   if(!reduce){var gz=Math.sin(t*0.0006)*0.02+Math.sin(t*0.0013)*0.01;
     for(var i=0;i<CANOPY.length;i++)CANOPY[i].rotation.z=gz;}
+  if(selRing.visible)selRing.material.opacity=0.55+0.4*Math.abs(Math.sin(t*0.005));   // pulse the selection ring
   if(MODE==="sky"){
     sun.position.set(sky.x+28,60,sky.z+16); sun.target.position.set(sky.x,0,sky.z); sun.target.updateMatrixWorld();
     renderer.render(scene,ortho); return;
