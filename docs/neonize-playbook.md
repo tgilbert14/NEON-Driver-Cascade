@@ -56,23 +56,31 @@ these from the flagship and adapt the data layer:
 
 ### 2a. Design system & chrome — vendor a pinned version, then adapt
 
-- `docs/index.html` **and the in-app first-run surface**: make one Living Poster
-  promise across both entry points—one dominant app-native object, one 3–7 word
-  hook, one 6–12 word plain-language promise, and one CTA—adapted to each shell
-  rather than forced into pixel identity. Put routes, role, facts, CAN/CANNOT,
-  methods, provenance, receipts, and suite relationships below the fold or behind
-  progressive disclosure. Updating only either entry surface can leave the other
-  serving a retired or generic first impression, so release QA must verify both
-  surfaces. Prefer a licensed, provenance-tracked documentary image only when
-  field realism earns trust; use an explicitly stylized illustration when
+- `docs/index.html` **and the in-app first-run surface**: use **Suite Living Poster
+  V1**, the required shared frame. Both entry points carry a focusable skip target;
+  DDL identity plus exactly one Driver route; an app/unofficial eyebrow; one 3–7
+  word hook; one 6–12 word plain-language promise; one contextual CTA; one dominant
+  responsive editorial artwork; a visible art/data boundary; and a compact
+  scope/honesty/Source/Feedback footer. A companion poster face has no metric band,
+  methods block, release receipt, second marketing bridge, or full suite directory.
+  Driver is the suite ambassador; the complete registry belongs in Driver and the
+  in-app Suite/About panel.
+  The scaffold is shared while visual/content variables remain app-native: palette,
+  motif, crop, wording, CTA noun, focal position, and scientific limit. Pages and
+  Connect share copy, art authority, disclosure, Driver route, and CTA intent even
+  when their framework geometry differs. Updating only either entry surface can
+  leave the other serving a retired or generic first impression, so release QA must
+  verify both surfaces. Prefer a licensed, provenance-tracked documentary image only
+  when field realism earns trust; use an explicitly stylized illustration when
   abstraction is the point.
   Serve raster art through a responsive `<picture>` family with declared natural
   dimensions, checksums, and byte budgets; retain an intentional fallback. Verify
   both entry URLs cache-busted at desktop, 390, and 320 rather than accepting one
   cached surface as proof for the other.
-  Cohesion comes from suite mark, typography, art language, motif family, registry,
-  and in-app Suite panel—not identical heroes, forced constellations/mascots, or
-  generic prose.
+  Cohesion comes from the same frame, suite mark, typography, art language, motif
+  family, registry, and in-app Suite panel; identity comes from the app-native
+  visual/content variables rather than forced constellations, mascots, or generic
+  prose.
 - `global.R`: semantic tokens (`accent`, `signal`, `warning`, `ink`, `muted`,
   `surface`, `line`) mapped to an app-specific palette; `app_theme` (bslib bs5 + a
   system/local font stack); `asset_url()` (mtime cache-bust); and the validated
@@ -296,6 +304,17 @@ release receipt.
   visual font size, restore the icon size, and prove a 44 × 44 target. Plant's
   prevention matrix is 390/375/361/360/320 px because the status/help/theme grid
   begins at 360.
+- **An approved cover concept is not a shipped asset.** Preserve the selected
+  concept, production source or prompt, derivative hashes/dimensions/byte budgets,
+  social composition, provenance, and validators together. Small Mammal's chosen
+  screenprint existed in a concept board while PR #85 still shipped documentary
+  Cover V4; only PR #86 / `c4c46fce` made it production evidence.
+- **Pages and Connect are one invitation on two surfaces.** Validate cache-busted
+  desktop/390/320 layouts and actual framework seams, exact copy/action counts,
+  versioned assets, keyboard/focus, reduced/forced-color behavior, CTA-to-picker
+  focus, browser console, and worker logs. Remove retired runtime media after its
+  provenance remains recoverable; otherwise every deployment keeps carrying dead
+  cover bytes.
 
 ---
 
@@ -390,8 +409,9 @@ Data bundles: `data/sites/*.rds` present + valid (loadable, non-empty) · `data/
 Automation: `.github/workflows/refresh-data.yml` on the product's documented schedule · separates
 producer/validator/publisher authority · records calendar-gated work as skipped, not refreshed ·
 `manifest.json` coherent · GitHub **remote** exists · `docs/index.html`
-`APP_URL` is live. NEONization: cover/landing splash · **in-app sibling links** + `docs` cross-promo
-grid covering the WHOLE suite · mobile-responsive CSS (`@media`, prefers-reduced-motion) · **QC-flag
+`APP_URL` is live. NEONization: Suite Living Poster V1 · exactly one Driver route on a
+companion `docs` face · full registry in Driver and the in-app Suite/About panel ·
+mobile-responsive CSS (`@media`, prefers-reduced-motion) · **QC-flag
 system** (§ below) · metadata/codebook view · comprehensive downloads (CSV + card PNG + report PDF) ·
 entity pin-cards · current shared chrome (styles.css + app.js + pincards.js).
 
@@ -428,11 +448,12 @@ and the Across NEON panel carries the exploratory cross-site summary and its sen
 **Sibling links + cover page:** Driver owns one versioned suite registry (app ID,
 name, role, field motif/art direction, palette, DPID, repository, showcase URL,
 live URL, release state, and Driver disposition). Generate below-fold suite
-destinations, metadata, release state, and the in-app Suite panel from that registry,
-then vendor a pinned copy in every independent app. The registry does not force a
-relationship map, constellation, or mascot onto the artistic poster face. CI verifies
-the declared registry version so a new app or URL cannot drift across ten hand-edited
-copies.
+destinations, metadata, release state, the complete Driver registry, and the in-app
+Suite/About panel from that registry, then vendor a pinned copy in every independent
+app. Generate exactly one companion-poster route back to Driver rather than a full
+cover directory. The registry does not force a relationship map, constellation, or
+mascot onto the poster face. CI verifies the declared registry version so a new app
+or URL cannot drift across ten hand-edited copies.
 
 ## 8. Suite learning and Driver feedback
 
