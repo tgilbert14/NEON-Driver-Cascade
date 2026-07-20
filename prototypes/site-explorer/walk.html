@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Step inside — NEON Field Sites</title>
 <style>
   :root{ --ink:#f4efe3; --panel:#0e0d0acc; --line:#ffffff26; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -44,12 +46,20 @@
     border-radius:999px;padding:.35rem .75rem;backdrop-filter:blur(6px);pointer-events:auto;color:var(--ink)}
   .tod input[type=range]{-webkit-appearance:none;appearance:none;width:92px;height:4px;border-radius:999px;
     background:linear-gradient(90deg,#2b3a5e,#8fb0cf,#ffe0a8,#e58a4b,#141a2e);outline:none;cursor:pointer;margin:0}
+  /* outline:none above removes the UA focus ring; put a visible one back for keyboard
+     users (WCAG 2.4.7 Focus Visible) without restoring it for mouse clicks. */
+  .tod input[type=range]:focus-visible{outline:2px solid #f4efe3;outline-offset:3px}
   .tod input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
     background:#f4efe3;border:1px solid #00000066;cursor:pointer}
   .tod input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#f4efe3;
     border:1px solid #00000066;cursor:pointer}
   .tod #todLabel{font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;color:#ffffffcc;min-width:8ch}
   .tod #todIcon{font-size:.9rem;width:1.1em;text-align:center}
+  .chiplab{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+    color:#ffffffa8;align-self:center;margin-right:.15rem}
+  .noplot{font-family:var(--mono);font-size:.66rem;color:#ffffff8c}
+  .plotchip{text-decoration:none}
+  .plotchip .cn{opacity:.7;font-size:.92em}
   .backlink{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
     font-family:var(--mono);font-size:.7rem;color:#f4efe3cc;text-decoration:none;background:var(--panel);
     border:1px solid var(--line);border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(6px)}
@@ -77,7 +87,7 @@
     <div class="note" id="note"></div>
   </div>
 </div>
-<a class="backlink" id="backlink" href="./index.html">&larr; back to the map</a>
+<a class="backlink" id="backlink" href="./index.html">&larr; the network map</a>
 
 <script>/**
  * @license
@@ -150,15 +160,35 @@
     }else{P.sky=["#9fbfcf","#dfe6e0"];P.ground="#5a6a3a";
       P.trees={n:Math.round(Math.min(500,Math.max(60,ba*10))),hMin:4,hMax:6+ba*0.4,trunk:"#5f4a2c",canopy:"#3f7a4b",shape:"round"};
       P.grass={n:1500,color:"#4d6b34"};}
-    P.note="Built from "+w.name+"’s biome"+(w.ba!=null?" and measured standing wood ("+w.ba+" m²/ha)":"")+
-      " — a procedural impression, not a scan.";
+    // Honesty rail: only claim the scene was built from measured standing wood when the
+    // bucket actually READ `ba`. The tundra branch ignores it entirely (NIWO carries
+    // ba=31.1 but renders as treeless tundra), and the grassland branch ignores it below
+    // its ba>2 threshold. Claiming it anyway would describe vegetation that is not there.
+    var usedBa=(w.ba!=null)&&(b==="forest"||b==="dryland"||(b==="grassland"&&ba>2)||
+      (b!=="forest"&&b!=="grassland"&&b!=="dryland"&&b!=="tundra"));
+    P.note="Built from "+w.name+"’s biome"+(usedBa?" and measured standing wood ("+w.ba+" m²/ha)":"")+
+      " — a procedural impression, not a scan."+
+      ((w.ba!=null&&!usedBa)?" This site records "+w.ba+" m²/ha of standing wood, but its "+
+        b+" scene is drawn from ground cover alone, so that measurement is not shown here.":"");
     return P;
   }
   function resolve(code){var f=FEATURED[code];if(f)return f;var w=ALL[code];
     if(!w)return FEATURED.WREF; w.code=code; return paramsFor(w);}
 
   var host=document.getElementById("scene");
-  var renderer=new THREE.WebGLRenderer({antialias:true});
+  // WebGLRenderer throws outright where WebGL is unavailable or blocked. Catching it
+  // here (rather than letting the script die) is what lets the loading panel below be
+  // replaced with an explanation and a way back, instead of hanging forever.
+  var renderer;
+  try{
+    renderer=new THREE.WebGLRenderer({antialias:true});
+  }catch(glErr){
+    var lo0=document.getElementById("loading");
+    if(lo0)lo0.innerHTML='<div style="max-width:30rem;text-align:center;line-height:1.6">'+
+      '<b>This scene could not be drawn.</b><br>It needs WebGL, which this browser or device '+
+      'has turned off or blocked.<br><a href="index.html" style="color:inherit">&larr; back to the map</a></div>';
+    throw glErr;
+  }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;   // soft sun shadows ground the scene
   renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12;  // filmic highlight rolloff + contrast
@@ -223,7 +253,10 @@
     _sd.set(a.dir[0]+(b.dir[0]-a.dir[0])*f,a.dir[1]+(b.dir[1]-a.dir[1])*f,a.dir[2]+(b.dir[2]-a.dir[2])*f).normalize();
     skyUni.sund.value.copy(_sd); sun.position.copy(_sd).multiplyScalar(150);
     sun.castShadow=_sd.y>0.05;                              // shadows while the sun is up (long at dawn/dusk, off at night)
-    sun.color.copy(sc); sun.intensity=si*1.35; hemi.intensity=hi*0.66; hemi.color.copy(baseSky0);  // key-dominant: shadows read
+    // hemi sky colour follows the interpolated sky (`top`), not the fixed daytime palette:
+    // copying baseSky0 poured daylight blue down onto night scenes while the ground half
+    // below was already time-aware.
+    sun.color.copy(sc); sun.intensity=si*1.35; hemi.intensity=hi*0.66; hemi.color.copy(top);  // key-dominant: shadows read
     skyUni.sunI.value=si;                                   // clouds brighten in day, dim at night
     hemi.groundColor.copy(baseGround).multiplyScalar(0.55+0.45*grd);
     if(scene.fog)scene.fog.color.copy(bot);
@@ -287,8 +320,13 @@
 
   // canopy from a height grid (real AOP CHM when available; a labelled synthetic field here)
   function buildField(L,hex){
-    var n=L.n,cell=L.cell_m,grid=L.grid,off=n/2,maxh=L.max_h||45,cells=[];
+    // off=(n-1)/2 centres the cell CENTRES on the origin. n/2 leaves the field half a
+    // cell off-centre, so the walker does not spawn at the true tile centre.
+    var n=L.n,cell=L.cell_m,grid=L.grid,off=(n-1)/2,maxh=L.max_h||45,cells=[];
     for(var i=0;i<n;i++)for(var j=0;j<n;j++){var h=grid[i][j];if(h>2)cells.push([i,j,h]);}
+    // A tile whose canopy never clears 2 m yields no cells; InstancedMesh then leaves
+    // instanceColor null and the needsUpdate below would throw, stranding the loader.
+    if(!cells.length)return;
     var canopy=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),
       new THREE.MeshStandardMaterial({roughness:1,flatShading:true}),cells.length);
     var base=new THREE.Color(hex);
@@ -296,7 +334,8 @@
       dummy.position.set(x,h*0.8,z);dummy.scale.set(cell*0.92,Math.max(cell*0.7,h*0.26),cell*0.92);
       dummy.rotation.set(0,(c[0]*0.7+c[1]*1.3)%6.2832,0);dummy.updateMatrix();canopy.setMatrixAt(k,dummy.matrix);
       var col=base.clone();col.offsetHSL((Math.random()-0.5)*0.03,0,0.16-(h/maxh)*0.32);canopy.setColorAt(k,col);}
-    canopy.instanceColor.needsUpdate=true; canopy.castShadow=true; canopy.receiveShadow=true; world.add(canopy);
+    if(canopy.instanceColor)canopy.instanceColor.needsUpdate=true;
+    canopy.castShadow=true; canopy.receiveShadow=true; world.add(canopy);
     // stems are FAR sparser than canopy cells — pick well-spaced local highs (tallest first) so the forest is
     // walkable with sightlines, not a grid-wall of trunks. Greedy Poisson-ish thinning + off-grid jitter.
     var cand=cells.filter(function(c){return c[2]>6;}).sort(function(a,b){return b[2]-a[2];});
@@ -485,8 +524,11 @@
   window.addEventListener("keyup",function(e){keys[e.code]=false;});
   var cv=renderer.domElement;
   cv.addEventListener("pointerdown",function(e){drag=true;lx=e.clientX;ly=e.clientY;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
-  cv.addEventListener("pointerup",function(){drag=false;});
-  cv.addEventListener("pointercancel",function(){drag=false;});
+  // Release on window, not the canvas: pointer capture is optional-chained above, and
+  // the overlay panels sit over the canvas. Releasing above a panel would otherwise
+  // leave drag=true and whip the camera on the next move.
+  window.addEventListener("pointerup",function(){drag=false;});
+  window.addEventListener("pointercancel",function(){drag=false;});
   cv.addEventListener("pointermove",function(e){if(!drag)return;
     yaw-=(e.clientX-lx)*0.0042;pitch-=(e.clientY-ly)*0.0042;
     pitch=Math.max(-1.2,Math.min(0.45,pitch));lx=e.clientX;ly=e.clientY;});
@@ -530,24 +572,57 @@
     var sci=document.getElementById("sciLine"); sci.className="sci "+(sc.tone||"none"); sci.textContent=sc.line;
     curBucket=(ALL[site.code]&&ALL[site.code].bucket)||"forest"; if(soundOn)setBiomeSound(curBucket);
     document.getElementById("note").innerHTML=document.getElementById("lidar"+site.code)?LIDAR_NOTE:site.note;
-    Array.prototype.forEach.call(btnHost.children,function(b){b.setAttribute("aria-pressed",b.dataset.code===site.code?"true":"false");});
+    renderPlotChips(site.code);
   }
-  ["WREF","HARV","GUAN","TEAK","GRSM","SOAP","KONZ","CPER","SRER","JORN","MOAB","TOOL","NIWO"].filter(function(c){return ALL[c]||FEATURED[c];}).forEach(function(code){
-    var w=ALL[code]||{},f=FEATURED[code],dot=(f&&f.dot)||BUCKETDOT[w.bucket]||"#8a8a8a",nm=(f&&f.name)||w.name||code;
-    var b=document.createElement("button");b.className="sbtn";b.type="button";b.dataset.code=code;
-    b.innerHTML='<i style="background:'+dot+'"></i>'+(code==="TEAK"?"Teakettle":code==="GRSM"?"Smokies":nm.split(" ")[0])+
-      (code==="SRER"?" (Sonoran)":code==="JORN"?" (Chihuahuan)":code==="TEAK"?" (Sierra)":code==="GRSM"?" (Appalachian)":code==="SOAP"?" (foothills)":"");
-    b.addEventListener("click",function(){go(code);});
-    btnHost.appendChild(b);
-  });
-  var startCode=new URLSearchParams(location.search).get("site");
-  go((startCode&&(ALL[startCode]||FEATURED[startCode]))?startCode:"WREF");
-  document.getElementById("loading").style.display="none";
+  /* ---- the chip row is a PLOT picker, not a site switcher ------------------------
+     The walk is now reached from one site at a time, so offering fourteen other sites
+     here was a lateral move out of the place the visitor just chose. These chips are
+     the plots reconstructed AT this site, which is the step further in. The registry
+     is per-site so this scales: a second SRER plot is one entry.                    */
+  var PLOTS={ SRER:[{id:"SRER_048", label:"SRER_048", note:"179 tagged plants"}] };
+  function renderPlotChips(code){
+    btnHost.innerHTML="";
+    var list=PLOTS[code]||[];
+    if(!list.length){
+      btnHost.innerHTML='<span class="noplot">No plot here has been reconstructed plant by plant yet.</span>';
+      return;
+    }
+    var lab=document.createElement("span"); lab.className="chiplab";
+    lab.textContent=list.length===1?"Plot mapped here:":"Plots mapped here:";
+    btnHost.appendChild(lab);
+    list.forEach(function(p){
+      var a=document.createElement("a"); a.className="sbtn plotchip";
+      a.href="./plot.html?plot="+encodeURIComponent(p.id);
+      a.innerHTML='<i style="background:#e6c78a"></i>'+p.label+' <span class="cn">'+p.note+'</span>';
+      btnHost.appendChild(a);
+    });
+  }
+  // Site keys are uppercase; a deep link of ?site=srer would otherwise miss both maps
+  // and land silently on Wind River wearing correct-looking chrome.
+  var startCode=(new URLSearchParams(location.search).get("site")||"").trim().toUpperCase();
+  onTOD();   // the slider can be restored by the browser across a soft reload; read it
+             // before the first build so scene, label and soundscape agree with the control
+  try{
+    go((startCode&&(ALL[startCode]||FEATURED[startCode]))?startCode:"WREF");
+    document.getElementById("loading").style.display="none";
+  }catch(err){
+    // Never strand the visitor behind an opaque loading panel: it sits above the only
+    // in-page way back to the map.
+    var lo=document.getElementById("loading");
+    if(lo)lo.innerHTML='<div style="max-width:30rem;text-align:center;line-height:1.6">'+
+      '<b>This scene could not be drawn.</b><br>It needs WebGL, which this browser or device '+
+      'has turned off or blocked.<br><a href="index.html" style="color:inherit">&larr; back to the map</a></div>';
+    throw err;
+  }
 
   // back-link: return to wherever we came from; fall back to the hosted map
   // (a production Pages deploy would just use the relative ./index.html)
   var bl=document.getElementById("backlink");
-  bl.href="https://claude.ai/code/artifact/ae959cc7-7728-4445-a4e1-bc5e79671755";
+  // Relative by default so the prototype works from the repo; the published artifact URL
+  // only when we are actually served from that host.
+  bl.href=/(^|\.)claude\.ai$/.test(location.hostname)
+    ? "https://claude.ai/code/artifact/ae959cc7-7728-4445-a4e1-bc5e79671755"
+    : "./index.html";
   bl.addEventListener("click",function(e){if(history.length>1){e.preventDefault();history.back();}});
 })();
 </script>

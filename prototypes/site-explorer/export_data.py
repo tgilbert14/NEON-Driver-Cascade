@@ -33,6 +33,46 @@ def clean_name(nm):
 
 p = rdata.read_rds(BUNDLE)
 signals = p["signals"]; site_meta = p["site_meta"]; sl = p["suite_links"]; pooled = p["pooled"]
+bmeta = p["meta"]
+
+
+def scalar(v):
+    """Unwrap a length-1 R vector that rdata surfaces as a numpy array."""
+    try:
+        return v.item() if hasattr(v, "item") and getattr(v, "size", 0) == 1 else v
+    except Exception:
+        return v
+
+
+def bundle_sha256():
+    import hashlib
+    h = hashlib.sha256()
+    with open(BUNDLE, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def source_products():
+    """The exact sibling commits this bundle was generated from.
+
+    ``scripts/build_cascade.R`` records one row per source product; CI re-reads the
+    same table to fetch each sibling detached at that commit. Surfacing it here is
+    what lets a reader of the Site Explorer say *which* vintage of each sibling app
+    produced the numbers on screen.
+    """
+    sp = bmeta.get("source_products")
+    if sp is None:
+        return []
+    rows = []
+    for _, r in sp.iterrows():
+        rows.append({
+            "product": s(r["product"]), "repo": s(r["repo"]), "origin": s(r["origin"]),
+            "commit": s(r["commit"]), "clean": bool(r["clean"]),
+            "n_site_files": num(r["n_site_files"]),
+        })
+    rows.sort(key=lambda x: x["product"] or "")
+    return rows
 
 def s(x):
     if x is None: return None
@@ -144,7 +184,12 @@ for _, sm in site_meta.iterrows():
         "lat": nm.get("lat"), "lon": nm.get("lon"), "domain_name": nm.get("domainName"),
         "biome_label": label, "biome_class": s(sm["biome_class"]),
         "bucket": biome_bucket(label),
+        # veg_ba_se and veg_design_status travel with veg_ba_ha so the walk can say how
+        # certain the standing-wood figure is, and whether the site's design is supported
+        # at all. veg_type is the DBH-vs-basal-diameter paradigm tag: tree and shrub
+        # basal areas are a difference in kind, not degree, and must never be pooled.
         "veg_ba_ha": num(sm["veg_ba_ha"]), "veg_type": s(sm["veg_type"]),
+        "veg_ba_se": num(sm["veg_ba_se"]), "veg_design_status": s(sm["veg_design_status"]),
         "n_testable": len(drivers), "featured": code in FEATURED,
         "drivers": drivers[:5],
     })
@@ -157,13 +202,39 @@ out = {
                 "bundle (data/cascade.rds). Single-site values are exploratory: no short series is "
                 "significant on its own; only the pooled network result carries significance.",
         "generated_by": "prototypes/site-explorer/export_data.py",
+        # --- provenance receipt -------------------------------------------------
+        # Which exact bytes, built when, from which exact sibling commits. Without
+        # this a reader cannot tell one vintage of a revised NEON product from
+        # another, and nothing on screen is falsifiable against its source.
+        "provenance": {
+            "bundle": "data/cascade.rds",
+            "bundle_sha256": bundle_sha256(),
+            "schema_version": scalar(bmeta.get("schema_version")),
+            "built_when": scalar(bmeta.get("built_when")),
+            "n_sites": num(scalar(bmeta.get("n_sites"))),
+            "min_year": num(scalar(bmeta.get("min_year"))),
+            "last_complete_year": num(scalar(bmeta.get("last_complete_year"))),
+            "tier_rule": scalar(bmeta.get("tier_rule")),
+            "prior_family_version": scalar(bmeta.get("prior_family_version")),
+            "prior_family_status": scalar(bmeta.get("prior_family_status")),
+            "source_snapshot_method": scalar(bmeta.get("source_snapshot_method")),
+            "source_products": source_products(),
+            "vintage_note": "These are the sibling-app commits frozen into this bundle. Sibling "
+                            "repositories continue to evolve; a newer sibling release does not "
+                            "change these bytes and is not reflected here. The Driver bundle is "
+                            "byte-frozen and is not rebuilt by this prototype.",
+        },
     },
     "network": network,
     "signals": SIG,
     "sites": sites_out,
 }
-with open(OUT, "w", encoding="utf-8") as f:
+# newline="" suppresses Windows' "\n" -> "\r\n" translation. .gitattributes pins this
+# file to eol=lf, and without this the same script emits different bytes on Windows and
+# Linux — the exact class of cross-platform drift the Driver's release gate exists to catch.
+with open(OUT, "w", encoding="utf-8", newline="") as f:
     json.dump(out, f, ensure_ascii=False, indent=1)
+    f.write("\n")
 
 # --- console summary ---
 print("sites:", len(sites_out), "| featured:", sum(1 for x in sites_out if x["featured"]))

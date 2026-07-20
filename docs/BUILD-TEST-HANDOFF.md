@@ -2123,3 +2123,282 @@ Rules:
 - **Residual risk/next action:** browser coverage is finite and this docs-only branch
   still requires static validation, review, green CI, and merge. Then keep the owner
   pause before Ground Beetle Pass 5; resume from this entry without repeating V5.
+
+### 2026-07-19 23:11 MST - site-explorer provenance receipt and scientific corrections / root
+
+- **Changed/classification:** work is confined to `prototypes/site-explorer/**`. Added
+  `assemble_index.py`; modified `export_data.py`, `assemble_plot.py`, `index.html`,
+  `walk.html`, `plot.src.html`, `plot.html`, `site-data.json`, `plot-srer048.json`,
+  `div-srer.json`, `PROGRESS.md`, `README.md`, `build_plot.md`. Classification is
+  `app-local` plus `suite-platform` (the provenance-receipt pattern is reusable).
+  Ecological Driver implication is explicitly **NONE**. No Driver app code, estimator,
+  scientific pin, source lock, workflow, generated artifact, or manifest changed.
+  `prototypes/` is outside `manifest.json`'s allowlist and outside the rebuild's
+  captured code surface, so no rebuild was required or run.
+- **Artifacts/non-impact:** no generation or promotion ran. All five canonical files
+  were rehashed at the end of this session and are UNCHANGED: cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, manifest
+  `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Learned (promoted to the prototype's honesty rails):** a derived figure needs its
+  *denominator* recorded, not only its formula. The prototype reported plot canopy
+  cover over the full 1600 m2 base plot while reporting density over the 790 m2
+  actually surveyed - two denominators for one plot in one panel. Vegetation Structure
+  mapped only the eastern half of SRER_048, so the whole-plot divisor silently counts
+  810 m2 of never-surveyed ground as measured zero cover. Second reusable lesson: a
+  build script that omits explicit `encoding=` and `newline=` is not portable. On this
+  Windows host Python defaults to cp1252 and translates LF to CRLF, so `export_data.py`
+  emitted 4380 CRLF into a file `.gitattributes` pins to `eol=lf`, and `assemble_plot.py`
+  would have decoded UTF-8 page text as cp1252. This is the same cross-platform byte-drift
+  class the release gate exists to catch, reaching a prototype that CI does not cover.
+- **Scientific corrections (recomputed independently from `plot-srer048.json` before any
+  edit):** all-live plants 23 -> **19** (5 + 80 + 23 = 108 exceeded the 104 records that
+  carry stem data); stem median 10 -> **11**; the retired "28 dead" removed from two
+  further places; whole-plant mortality "5 of 179" -> **"5 of 104 assessed"** (75 cacti
+  carry no `vst_apparentindividual` record and are live by construction); canopy cover
+  26.6% over 1600 m2 -> **53.9% over the 790 m2 surveyed strip**, with the previously
+  unstated formula now written out (summed **live-only** elliptical crowns
+  `pi*(cr/2)*(cr90/2)`, summed not unioned, so `100 - cover` is not open interspace).
+  An honesty-rail break was also closed: NIWO (tundra bucket, `veg_ba_ha` 31.1) rendered
+  treeless while its caption claimed the scene was "built from measured standing wood";
+  the tundra branch never reads `ba`. The claim is now made only when the bucket used the
+  measurement, and the unused figure is disclosed rather than asserted.
+- **Provenance added:** `export_data.py` now reads the bundle's existing `source_products`
+  table and stamps `site-data.json.meta.provenance` with the bundle SHA-256, schema
+  version, build time, tier rule, prior-family status and the exact commit for all seven
+  source products; the explorer footer renders it behind a disclosure. `plot-srer048.json`
+  and `div-srer.json` gained `provenance` objects, surfaced on The Plot. Fields that
+  cannot be recovered are recorded as `UNKNOWN` **with the reason** (the Plot was built
+  from a live API query, so no release tag or DOI was captured, and `build_plot.py` is
+  uncommitted, so those records are not reproducible from this repository alone). The
+  Plot is now labelled a **two-bout composite** (2016 n=88, 2021 n=91), not a census.
+- **Test process/environment:** cwd `D:\Git\NEON-Driver-Cascade`; Windows PowerShell/Git
+  Bash; Python 3.10 with `rdata` 0.11.2 installed for the read-only bundle reader
+  (`pip install rdata`, as README documents); Node 24 for `node --check`; the in-app
+  browser for render checks. Gates run and results: independent recomputation of every
+  corrected statistic directly from `plot-srer048.json` (expected: confirm or refute the
+  claimed values; actual: all six confirmed before editing); `node --check` on the
+  authored script block of `index.html` and `walk.html` (PASS); all 14 committed JSON
+  files parsed (PASS); CRLF/UTF-8 sweep over every text file in the directory (PASS after
+  the `export_data.py` fix); `export_data.py` run twice with identical SHA-256
+  (`ada2943c...`) and `assemble_plot.py` run twice with identical SHA-256
+  (`241608ef...`), establishing determinism for both; `assemble_index.py` re-run reported
+  "already current", establishing idempotency; `site-data.json` diffed field-by-field
+  against its pre-change copy (expected: only the two new veg keys added and no science
+  value moved; actual: exactly that, plus one latent bug fixed - WOOD's `veg_type` had
+  been the literal string `"<NA>"` and is now `null`, with `veg_design_status`
+  `unsupported-unmatched-plots` now carried through, matching this document's locked WOOD
+  pins); browser render of all three pages with zero console errors, 46 sites, and no
+  horizontal overflow at 320 px.
+- **Evidence invalidated:** none of the Driver's build, determinism, manifest, boot,
+  browser, or release evidence. The completion matrix is untouched because no row's
+  subject changed. Superseded are the prototype's own stale claims listed above.
+- **Failure/cleanup:** one real defect was found by attempting to verify rather than
+  assuming - none of the three prototype pages carried `<meta name="viewport">` or
+  `<meta charset>`. Without the viewport tag mobile browsers lay out at ~980 px and scale
+  down, so every responsive rule in all three pages was dead on a real phone; this was
+  invisible until a 320 px viewport reported `clientWidth` 980. Both tags were added and
+  the 320 px re-check passed. No lock, stage, backup, pending file, credential, or
+  scratch residue remains; the `.neon_token` present in the sibling checkout was never
+  read, used, or recorded.
+- **Residual risk:** the Plot's NEON release vintage is unrecoverable and is now labelled
+  `UNKNOWN` rather than silently absent - it cannot be resolved without rebuilding from a
+  pinned release. The walk's `veg_ba_ha` is computed by the Driver's own adapter from the
+  sibling's tables at pinned commit `5e73e0d`; whether the sibling's RELEASE-2026 family
+  would move any site is **UNKNOWN and must not be asserted either way**, because
+  determining it would require a Driver rebuild that the sibling's own disposition
+  (`HOLD / CONTEXT ONLY / NO DRIVER BYTE CHANGE`) forbids. Browser coverage remains
+  finite and the in-app preview strips query strings, so the `?site=` deep-link
+  normalization was verified by code inspection and by exercising the switcher, not by a
+  real deep-link load.
+- **Next action:** owner review of this prototype tranche. NOTE (added at merge time):
+  the register row-4 correction described here was SUPERSEDED before merge. A
+  concurrent `root` session (PR #39, master merge `5370be1`) vendored the full
+  Vegetation Pass-4 receipt and rewrote row 4 to `PASS 4 COMPLETE / PRODUCTION
+  VERIFIED` with app-local evidence I did not have. On merge I kept their row and
+  their backlog entry verbatim and added only my prototype backlog row; my earlier
+  observation-only row 4 was correctly discarded. See the merge-resolution entry below.
+
+### 2026-07-20 08:16 MST - site-explorer protocol review; a prior-entry caveat reversed / root
+
+- **Changed/classification:** confined to `prototypes/site-explorer/**` (`plot-srer048.json`,
+  `plot.src.html`, `plot.html`, `build_plot.md`, `PROGRESS.md`). Classification `app-local`
+  plus `scientific-contract` (it corrects published claims about a NEON product).
+  Ecological Driver implication explicitly **NONE**. No Driver app code, estimator,
+  scientific pin, source lock, workflow, generated artifact, or manifest changed.
+- **Evidence invalidated - THIS ENTRY REVERSES A CLAIM MADE IN THE PRECEDING ENTRY.** The
+  2026-07-19 23:11 MST entry recorded that The Plot had been labelled "a two-bout composite,
+  not a census", reasoning that pooling the 2016 and 2021 survey campaigns conflicted with
+  the sibling's rule against pooling repeated events. **That reasoning was wrong and the
+  label has been withdrawn.** The remaining corrections in that entry (cover denominator,
+  19 all-live, median 11, 5-of-104, NIWO, viewport/charset, encoding) all stand.
+- **Learned - the causal error:** `vst_mappingandtagging` is a ONE-ROW-PER-INDIVIDUAL tagging
+  table. Its date is when a plant's tag went on, not when the plot was surveyed. Individuals
+  are tagged once and re-measured in later bouts. Therefore grouping the 179 plants by that
+  date CANNOT produce a plant appearing twice: the "two disjoint cohorts with zero shared
+  individualIDs" that was read as a finding is arithmetically forced by the table's
+  structure. The generalisable rule: before drawing an inference from a grouping, establish
+  whether the grouping key can even vary within the entity being grouped. A zero-overlap
+  result on a one-row-per-entity key is a diagnostic that the wrong table was joined, not a
+  result. Verified by two independent specialist reviews against primary sources
+  (NEON.DOC.000987 VST protocol, the DP1.10098.001 user guide, and the Cactus SOP
+  NEON.DOC.001715), which converged.
+- **Scientific corrections made (each re-verified locally against the committed file before
+  editing):** (1) the two date groups are FIRST-TAG COHORTS, not re-surveys - the UI control
+  "Survey: 2016+2021" is now "First tagged", and narrowing it raises a note stating that no
+  plant can appear in both years and that absence from a year is not absence from the plot;
+  (2) "75 plants (the cacti) have no VST record" was wrong - it is **70 cacti plus 5 woody**
+  (3 mesquite, 2 creosote); (3) the "9 species" headline is a MAPPING count - among measured
+  plants the species count is **2 -> 4**, because NEON's standard woody protocol does not map
+  cacti at all, Santa Rita (Domain 14) carries a site-specific exception to map large-stature
+  cacti that postdates the 2016 bout, and cacti are measured under a separate Cactus SOP into
+  a different table; (4) the condition rendered is approximately a **2021 snapshot**, not the
+  tag year - 2016-tagged velvet mesquite carry basal diameter, but SRER measured mesquite at
+  basal diameter only from 2020 onward (as a tree at DBH before), which indicates the builder
+  joined each plant's latest measurement; (5) the 790 m2 cover divisor is the bounding box of
+  the mapped plants, not NEON's recorded sampled area, so it is a lower bound and the
+  percentage an UPPER bound - now labelled approximate. The page additionally records that
+  saplings are never mapped, so this is a map of tagged individuals rather than of every
+  plant present.
+- **Claims now explicitly forbidden on this surface** (recorded in `plot-srer048.json`
+  `provenance.cannot_show` and in the prototype's honesty rails): recruitment or ingrowth;
+  mortality between visits; turnover; rising species richness; and any statement that a
+  2016-tagged plant is gone. NEON records death as `standing dead` / `lost, presumed dead`,
+  never as an absent row.
+- **Test process/environment:** cwd `D:\Git\NEON-Driver-Cascade`; Python 3.10; Node 24; the
+  in-app browser. Every specialist claim was independently re-derived from the committed
+  `plot-srer048.json` before any edit was made (expected: confirm or refute; actual: all four
+  load-bearing claims confirmed - the seven-date decomposition, the 70+5 split, the 2->4
+  measured-species count, and basal diameter present on 2016-tagged mesquite). Then
+  `node --check` on the rebuilt plot app block (PASS); `assemble_plot.py` rebuild (PASS,
+  956,933 bytes); browser check that the control cycles all/2016/2021, that the explanatory
+  note shows only when narrowed, that the corrected 70+5 text renders, and that the approximate
+  cover caveat and revised provenance render (all PASS, zero console errors).
+- **Artifacts/non-impact:** no generation or promotion ran. The five canonical files are
+  unchanged: cascade `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`,
+  search `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, manifest
+  `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Failure/cleanup:** the failure was analytical, not operational - a wrong inference reached
+  a commit and is corrected here rather than being silently overwritten. No lock, stage,
+  backup, pending file, or credential residue; no sibling repository or working tree was
+  modified.
+- **Residual risk:** growth, survival, true recruitment, and the NEON-recorded sampled area
+  remain **UNKNOWN** and are labelled as such on the page. Settling them requires
+  `vst_perplotperyear` (recorded sampled area, which growth forms were surveyed per bout) and
+  `vst_apparentindividual` keyed on `eventID` (each plant's full measurement career); neither
+  is committed here, and the builder that could fetch them is scratchpad-only. The inference
+  that the SRER cactus-mapping exception postdates the 2016 bout is well supported by
+  convergent evidence (no cactus carries a 2016 tag; NEON's API shows no spring sampling month
+  at SRER before 2019) but was not confirmed against the specific superseded protocol revision,
+  and is worded as an inference on the page.
+- **Next action:** owner review. If this surface is ever rebuilt from raw NEON data, pull
+  `vst_perplotperyear` and eventID-keyed `vst_apparentindividual` first and replace the
+  inferred cover denominator with the recorded sampled area.
+
+### 2026-07-20 - concurrent-session merge resolution (site-explorer x Vegetation Pass 4) / root
+
+- **Changed/classification:** documentation-only merge resolution. Merged `origin/master`
+  `5370be1` (PR #39, "Document Small Mammal and Vegetation Pass 4 handoff", by a
+  concurrent `root` session) into branch `claude/site-explorer-provenance`. Classification
+  `suite-platform`; ecological Driver implication explicitly **NONE**. No Driver app code,
+  estimator, source lock, workflow, generated artifact, or manifest changed by the merge.
+- **Conflicts and how they were resolved (AGENTS.md rule 7 - merge, never overwrite):**
+  two files conflicted, both because the sessions wrote to the same records concurrently.
+  * `docs/NEON-SUITE-LEARNING-LOOP.md` row 4 (Vegetation Structure). **Theirs kept in
+    full, mine discarded.** My row said `PASS APPARENTLY COMPLETE IN THE SIBLING - NOT
+    YET VENDORED HERE`, written from a read-only observation of the sibling's GitHub
+    `main`. Theirs says `PASS 4 COMPLETE / PRODUCTION VERIFIED` and carries the app-local
+    receipt (candidate head `a8ccb56`, run `29715249829`, promotion `800bd5e` with an
+    exact-parent/54-payload ledger proof, core merge `987c102`). Their evidence class is
+    strictly stronger than mine; my row was an outside observation and was correctly
+    superseded.
+  * `docs/NEON-SUITE-LEARNING-LOOP.md` Driver-implication backlog. **Theirs kept
+    verbatim**, including their channel-qualified Vegetation row and their closing
+    paragraph recording that Pass 4 is complete and that program execution is
+    intentionally paused by the owner before Pass 5. I re-inserted only my one unique
+    row (the Site Explorer prototype provenance-receipt pattern, decision `NONE`), which
+    has no counterpart in their tranche.
+  * `docs/BUILD-TEST-HANDOFF.md` ledger. **All four of their entries kept unmodified**,
+    including their revision of the 2026-07-19 18:16 MST Small Mammal entry, which
+    supersedes the version I had merged from. My two site-explorer entries were appended
+    after theirs rather than interleaved: two of their entries carry a date but no clock
+    time, so strict chronological interleaving would have required guessing their
+    position. Heading timestamps preserve the true order.
+- **Evidence invalidated:** the "Next action" of my 2026-07-19 23:11 MST entry, which
+  stated that register row 4 was corrected in that tranche. It was not; theirs
+  superseded it. That line is annotated in place rather than deleted.
+- **Test process/result:** `git merge origin/master`; both conflicts resolved by script
+  so the "keep theirs" halves were byte-preserved rather than retyped; then verified no
+  conflict markers remain in `docs/*.md` (PASS), that row 4 is theirs (PASS), that both
+  the Vegetation and Site Explorer backlog rows are present exactly once each (PASS),
+  that their Pass-4 closing paragraph survived (PASS), that both backlog rows carry the
+  table's 7 pipes (PASS), and `git diff --check` (PASS).
+- **Artifacts/non-impact:** no generation ran; the five canonical files are untouched by
+  the merge and remain cascade `47b98e48...`, search `a11a072d...`, meta `00120c52...`,
+  codebook `a79cc754...`, manifest `92b46277...`.
+- **Residual risk:** ledger entries from the two sessions are append-ordered rather than
+  strictly clock-ordered. If more sessions run concurrently, designate one coordinating
+  editor as rule 7 requires, rather than relying on merge resolution after the fact.
+- **Next action:** owner review of PR #40.
+
+### 2026-07-20 - site-explorer index pass 1 and second concurrent merge / root
+
+- **Changed/classification:** `prototypes/site-explorer/{index.html,walk.html,plot.html,PROGRESS.md}`
+  plus a second merge of `origin/master`. Classification `app-local` and
+  `scientific-contract` (it corrects how uncertainty is displayed to the public).
+  Ecological Driver implication explicitly **NONE**. No Driver app code, estimator,
+  source lock, workflow, generated artifact, or manifest changed. The five canonical
+  files are unchanged: cascade `47b98e48...`, search `a11a072d...`, meta
+  `00120c52...`, codebook `a79cc754...`, manifest `92b46277...`.
+- **Two display defects corrected on the index page.** (1) Driver cards drew a SOLID
+  bar of width `|r|` and labelled the p-value "confidence". A solid bar reads as a
+  firm result, and a lay reader takes "confidence 0.88" to mean 88% confident, which
+  is close to the inverse. The bundle carries a plausible interval for all 162 links
+  and 133 of them straddle zero, none of which was visible. Replaced with a
+  zero-centred interval whisker whose verdict word is derived from the interval
+  itself; `p` moved into the drawer relabelled "how easily chance alone could produce
+  a pattern this strong - higher means more easily". (2) The year wheel gave the three
+  featured sites "Rhythm sketch for this site." in place of "(schematic, not measured
+  monthly data)", and the page boots on SRER, so the default view was the one missing
+  its caveat while implying site-specific measurement. The bundle is annual and no
+  month on that wheel was measured at any site, so the wheel and its hand-authored
+  inputs were removed rather than re-captioned.
+- **Learned:** a caveat that is correct in the general branch and dropped in the
+  special-cased branch is worse than no caveat, because the special case is usually
+  the default view. Also: hand-authored per-biome templates presented beside real
+  per-site data are indistinguishable to a reader; 43 of 46 sites were showing the
+  same generated sentence twice on one screen without any indication it was generic.
+  The replacement rule that generalises: derive the sentence from the site's own
+  numbers, and let "nothing here is clean enough to call" be a legitimate result.
+- **Test process/result:** JS syntax checked on index.html and walk.html
+  (`node --check` on the extracted app block); plot.html rebuilt; grep confirmed zero
+  dangling references to `WALK_URL`, `WALKABLE`, `drawWheel`, `player`, `polar` or
+  `WHEEL`. The interval whisker was verified headlessly by lifting `pos()`/`whisker()`
+  out of the page and running them over all 162 drivers in `site-data.json`: 0
+  geometry failures, 133/162 straddling zero, and 0 mismatches between the derived
+  verdict word and the interval. `siteAnswer()` was exercised over all 46 sites (22
+  with a readable link, 23 reporting nothing clean, 1 with insufficient data) with no
+  empty or malformed output. Link resolution was tested for both the repo case and the
+  artifact-host case. Expected and actual matched throughout.
+- **Also fixed:** the prototype's own navigation did not work when opened from the
+  repository. `index.html` had no reference to `plot.html` at all and pinned the walk
+  link to a private artifact URL; both now resolve relatively and fall back to the
+  artifact URLs only when served from that host. `walk.html`'s back-link had the same
+  defect and the same fix. The dead `WALKABLE` list was replaced with the real
+  seven-site LiDAR set, verified against the committed `lidar-*.json` grids.
+- **Merge resolution (second concurrent collision, AGENTS.md rule 7):** merged
+  `origin/master` `646764a` (PR #41, "Record the Small Mammal V5 suite contract"). One
+  conflict, in this file's ledger; `NEON-SUITE-LEARNING-LOOP.md` auto-merged and my
+  prototype backlog row survived intact. Resolved as before: their entry kept verbatim
+  and my entries appended after, never interleaved or overwritten.
+- **Residual risk:** this is the third concurrent-session collision on these two
+  documents in one day. Rule 7 asks for a designated coordinating editor when sessions
+  overlap; resolving after the fact has worked so far only because the tranches touched
+  different records. The remaining index work (field card, masthead, solid-versus-null
+  pair, the weather/plants/animals chain from the 20 unused `signals`) is recorded in
+  `prototypes/site-explorer/PROGRESS.md` rung 22.
+- **Next action:** owner review of PR #40.

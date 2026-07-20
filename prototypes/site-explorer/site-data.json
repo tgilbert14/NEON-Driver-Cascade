@@ -1,7 +1,79 @@
 {
  "meta": {
   "note": "Real per-site direction screens from the committed NEON Driver Response Atlas bundle (data/cascade.rds). Single-site values are exploratory: no short series is significant on its own; only the pooled network result carries significance.",
-  "generated_by": "prototypes/site-explorer/export_data.py"
+  "generated_by": "prototypes/site-explorer/export_data.py",
+  "provenance": {
+   "bundle": "data/cascade.rds",
+   "bundle_sha256": "47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe",
+   "schema_version": "2026-07-source-contract-support-v6",
+   "built_when": "2026-07-03 17:52:46 UTC",
+   "n_sites": 46.0,
+   "min_year": 2013.0,
+   "last_complete_year": 2025.0,
+   "tier_rule": "2026-07-calendar-gap-aware-circular-block-v5",
+   "prior_family_version": "2026-07-literature-motivated-exploratory-v2",
+   "prior_family_status": "exploratory: directions and lags are literature-motivated and locked for this build, but the family evolved alongside inspection of the analyzed data; not preregistered or confirmatory",
+   "source_snapshot_method": "git-archive-recorded-commit-v1",
+   "source_products": [
+    {
+     "product": "beetle",
+     "repo": "NEON-Ground-Beetle-Tracker",
+     "origin": "github.com/tgilbert14/neon-ground-beetle-tracker",
+     "commit": "0ac67f842642e552153ddaf728798759744fc15d",
+     "clean": true,
+     "n_site_files": 46.0
+    },
+    {
+     "product": "bird",
+     "repo": "NEON-Breeding-Birds",
+     "origin": "github.com/tgilbert14/neon-breeding-birds",
+     "commit": "efda16ec27c745efbb738c9e920c72fd85373664",
+     "clean": true,
+     "n_site_files": 46.0
+    },
+    {
+     "product": "mammal",
+     "repo": "App-NEON-Small-Mammal-Tracker",
+     "origin": "github.com/tgilbert14/neon-small-mammal-tracker-app",
+     "commit": "d2a53282637e4dbd7e5ebef7f64665fa27028531",
+     "clean": true,
+     "n_site_files": 46.0
+    },
+    {
+     "product": "mosq",
+     "repo": "NEON-Mosquito-Pulse",
+     "origin": "github.com/tgilbert14/neon-mosquito-pulse",
+     "commit": "79244c8bc252bed1f6c00ca2a76f049fadfa80ed",
+     "clean": true,
+     "n_site_files": 46.0
+    },
+    {
+     "product": "phe",
+     "repo": "NEON-Plant-Phenology",
+     "origin": "github.com/tgilbert14/neon-plant-phenology-explorer",
+     "commit": "81e339e9ed6f34d3d04ca45a7030fea51c4147a5",
+     "clean": true,
+     "n_site_files": 46.0
+    },
+    {
+     "product": "plant",
+     "repo": "NEON-Plant-Diversity",
+     "origin": "github.com/tgilbert14/neon-plant-diversity",
+     "commit": "73c92c6c67f7c982eaae76950f718ce932ff7a52",
+     "clean": true,
+     "n_site_files": 46.0
+    },
+    {
+     "product": "veg",
+     "repo": "NEON-Veg-Structure",
+     "origin": "github.com/tgilbert14/neon-vegetation-structure-explorer",
+     "commit": "5e73e0dde5cc9cb1936dc0c589475ca23b5ee8df",
+     "clean": true,
+     "n_site_files": 42.0
+    }
+   ],
+   "vintage_note": "These are the sibling-app commits frozen into this bundle. Sibling repositories continue to evolve; a newer sibling release does not change these bytes and is not reflected here. The Driver bundle is byte-frozen and is not rebuilt by this prototype."
+  }
  },
  "network": {
   "solid": {
@@ -159,6 +231,8 @@
    "bucket": "grassland",
    "veg_ba_ha": 7.2432887470401015,
    "veg_type": "forest",
+   "veg_ba_se": 2.977393122740699,
+   "veg_design_status": "supported",
    "n_testable": 9,
    "featured": true,
    "drivers": [
@@ -277,6 +351,8 @@
    "bucket": "forest",
    "veg_ba_ha": 27.731925827617193,
    "veg_type": "forest",
+   "veg_ba_se": 2.22343280146543,
+   "veg_design_status": "supported",
    "n_testable": 9,
    "featured": true,
    "drivers": [
@@ -395,6 +471,8 @@
    "bucket": "dryland",
    "veg_ba_ha": 5.092245854811449,
    "veg_type": "shrubland",
+   "veg_ba_se": 0.692531628389963,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": true,
    "drivers": [
@@ -513,6 +591,8 @@
    "bucket": "grassland",
    "veg_ba_ha": 0.4050464470559821,
    "veg_type": "shrubland",
+   "veg_ba_se": 0.1295030446919571,
+   "veg_design_status": "supported",
    "n_testable": 11,
    "featured": false,
    "drivers": [
@@ -631,6 +711,8 @@
    "bucket": "forest",
    "veg_ba_ha": 11.686829624858603,
    "veg_type": "forest",
+   "veg_ba_se": 1.1026323475660857,
+   "veg_design_status": "supported",
    "n_testable": 10,
    "featured": false,
    "drivers": [
@@ -749,6 +831,8 @@
    "bucket": "grassland",
    "veg_ba_ha": 14.117737435735046,
    "veg_type": "forest",
+   "veg_ba_se": 1.5379429787607573,
+   "veg_design_status": "supported",
    "n_testable": 9,
    "featured": false,
    "drivers": [
@@ -867,6 +951,8 @@
    "bucket": "forest",
    "veg_ba_ha": 32.9416300218895,
    "veg_type": "forest",
+   "veg_ba_se": 2.1445622414046017,
+   "veg_design_status": "supported",
    "n_testable": 8,
    "featured": false,
    "drivers": [
@@ -984,7 +1070,9 @@
    "biome_class": "temperature-limited",
    "bucket": "grassland",
    "veg_ba_ha": null,
-   "veg_type": "<NA>",
+   "veg_type": null,
+   "veg_ba_se": null,
+   "veg_design_status": "unsupported-unmatched-plots",
    "n_testable": 8,
    "featured": false,
    "drivers": [
@@ -1103,6 +1191,8 @@
    "bucket": "forest",
    "veg_ba_ha": 56.26787382431158,
    "veg_type": "forest",
+   "veg_ba_se": 4.502186478416775,
+   "veg_design_status": "supported",
    "n_testable": 7,
    "featured": false,
    "drivers": [
@@ -1221,6 +1311,8 @@
    "bucket": "forest",
    "veg_ba_ha": 29.595322324095868,
    "veg_type": "forest",
+   "veg_ba_se": 1.4924893507490573,
+   "veg_design_status": "supported",
    "n_testable": 6,
    "featured": false,
    "drivers": [
@@ -1339,6 +1431,8 @@
    "bucket": "forest",
    "veg_ba_ha": 27.422213611387612,
    "veg_type": "forest",
+   "veg_ba_se": 1.5088727290728736,
+   "veg_design_status": "supported",
    "n_testable": 6,
    "featured": false,
    "drivers": [
@@ -1457,6 +1551,8 @@
    "bucket": "forest",
    "veg_ba_ha": 26.239885667071754,
    "veg_type": "forest",
+   "veg_ba_se": 4.777482507670599,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -1575,6 +1671,8 @@
    "bucket": "forest",
    "veg_ba_ha": 15.848407419529446,
    "veg_type": "forest",
+   "veg_ba_se": 2.9785622285520423,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -1693,6 +1791,8 @@
    "bucket": "grassland",
    "veg_ba_ha": 5.339000906343433,
    "veg_type": "forest",
+   "veg_ba_se": 1.2285144158161085,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -1811,6 +1911,8 @@
    "bucket": "forest",
    "veg_ba_ha": 38.04771229052303,
    "veg_type": "forest",
+   "veg_ba_se": 3.2196450030591843,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -1929,6 +2031,8 @@
    "bucket": "forest",
    "veg_ba_ha": 11.979112157969727,
    "veg_type": "forest",
+   "veg_ba_se": 1.0050870213140866,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2047,6 +2151,8 @@
    "bucket": "forest",
    "veg_ba_ha": 35.406609026930205,
    "veg_type": "forest",
+   "veg_ba_se": 2.6841937147178276,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2165,6 +2271,8 @@
    "bucket": "forest",
    "veg_ba_ha": 28.07026207764179,
    "veg_type": "forest",
+   "veg_ba_se": 1.6381639700429462,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2283,6 +2391,8 @@
    "bucket": "grassland",
    "veg_ba_ha": null,
    "veg_type": null,
+   "veg_ba_se": null,
+   "veg_design_status": null,
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2401,6 +2511,8 @@
    "bucket": "forest",
    "veg_ba_ha": 37.245200792019006,
    "veg_type": "forest",
+   "veg_ba_se": 2.0174494799648888,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2519,6 +2631,8 @@
    "bucket": "forest",
    "veg_ba_ha": 24.44988828918409,
    "veg_type": "forest",
+   "veg_ba_se": 1.6310730136448068,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2637,6 +2751,8 @@
    "bucket": "tundra",
    "veg_ba_ha": null,
    "veg_type": null,
+   "veg_ba_se": null,
+   "veg_design_status": null,
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2755,6 +2871,8 @@
    "bucket": "forest",
    "veg_ba_ha": 25.235328026393354,
    "veg_type": "forest",
+   "veg_ba_se": 1.943193422476665,
+   "veg_design_status": "supported",
    "n_testable": 5,
    "featured": false,
    "drivers": [
@@ -2873,6 +2991,8 @@
    "bucket": "forest",
    "veg_ba_ha": 14.014102139349774,
    "veg_type": "forest",
+   "veg_ba_se": 1.9496232552729227,
+   "veg_design_status": "supported",
    "n_testable": 4,
    "featured": false,
    "drivers": [
@@ -2971,6 +3091,8 @@
    "bucket": "forest",
    "veg_ba_ha": 17.0497687607796,
    "veg_type": "shrubland",
+   "veg_ba_se": 1.8895599680746982,
+   "veg_design_status": "supported",
    "n_testable": 4,
    "featured": false,
    "drivers": [
@@ -3069,6 +3191,8 @@
    "bucket": "dryland",
    "veg_ba_ha": 12.916422575785415,
    "veg_type": "forest",
+   "veg_ba_se": 4.722248502507408,
+   "veg_design_status": "supported",
    "n_testable": 4,
    "featured": false,
    "drivers": [
@@ -3167,6 +3291,8 @@
    "bucket": "grassland",
    "veg_ba_ha": 7.458548384919431,
    "veg_type": "forest",
+   "veg_ba_se": 1.191237672036102,
+   "veg_design_status": "supported",
    "n_testable": 4,
    "featured": false,
    "drivers": [
@@ -3265,6 +3391,8 @@
    "bucket": "grassland",
    "veg_ba_ha": null,
    "veg_type": null,
+   "veg_ba_se": null,
+   "veg_design_status": null,
    "n_testable": 3,
    "featured": false,
    "drivers": [
@@ -3343,6 +3471,8 @@
    "bucket": "dryland",
    "veg_ba_ha": 11.495107154439138,
    "veg_type": "forest",
+   "veg_ba_se": 3.7895533420910295,
+   "veg_design_status": "supported",
    "n_testable": 3,
    "featured": false,
    "drivers": [
@@ -3421,6 +3551,8 @@
    "bucket": "forest",
    "veg_ba_ha": 25.072298407904782,
    "veg_type": "forest",
+   "veg_ba_se": 2.2915557104637787,
+   "veg_design_status": "supported",
    "n_testable": 3,
    "featured": false,
    "drivers": [
@@ -3499,6 +3631,8 @@
    "bucket": "other",
    "veg_ba_ha": null,
    "veg_type": null,
+   "veg_ba_se": null,
+   "veg_design_status": null,
    "n_testable": 3,
    "featured": false,
    "drivers": [
@@ -3577,6 +3711,8 @@
    "bucket": "dryland",
    "veg_ba_ha": 0.3667393162039483,
    "veg_type": "shrubland",
+   "veg_ba_se": 0.04550639199635815,
+   "veg_design_status": "supported",
    "n_testable": 2,
    "featured": false,
    "drivers": [
@@ -3635,6 +3771,8 @@
    "bucket": "forest",
    "veg_ba_ha": 3.9024716680736775,
    "veg_type": "forest",
+   "veg_ba_se": 1.7349179121743972,
+   "veg_design_status": "supported",
    "n_testable": 2,
    "featured": false,
    "drivers": [
@@ -3693,6 +3831,8 @@
    "bucket": "tundra",
    "veg_ba_ha": 31.13944596202978,
    "veg_type": "forest",
+   "veg_ba_se": 4.275196988188189,
+   "veg_design_status": "supported",
    "n_testable": 2,
    "featured": false,
    "drivers": [
@@ -3751,6 +3891,8 @@
    "bucket": "grassland",
    "veg_ba_ha": 0.06200963936948917,
    "veg_type": "shrubland",
+   "veg_ba_se": 0.056741624695208034,
+   "veg_design_status": "supported",
    "n_testable": 2,
    "featured": false,
    "drivers": [
@@ -3809,6 +3951,8 @@
    "bucket": "dryland",
    "veg_ba_ha": 16.862564647315615,
    "veg_type": "forest",
+   "veg_ba_se": 1.8959049750947183,
+   "veg_design_status": "supported",
    "n_testable": 2,
    "featured": false,
    "drivers": [
@@ -3867,6 +4011,8 @@
    "bucket": "tundra",
    "veg_ba_ha": null,
    "veg_type": null,
+   "veg_ba_se": null,
+   "veg_design_status": null,
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -3905,6 +4051,8 @@
    "bucket": "forest",
    "veg_ba_ha": 41.298902672334805,
    "veg_type": "forest",
+   "veg_ba_se": 1.7102998812975845,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -3943,6 +4091,8 @@
    "bucket": "grassland",
    "veg_ba_ha": 0.16835188132006895,
    "veg_type": "shrubland",
+   "veg_ba_se": 0.047033331053850276,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -3981,6 +4131,8 @@
    "bucket": "forest",
    "veg_ba_ha": 5.585103477801692,
    "veg_type": "forest",
+   "veg_ba_se": 0.8307961575879537,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -4019,6 +4171,8 @@
    "bucket": "forest",
    "veg_ba_ha": 27.99897544127693,
    "veg_type": "forest",
+   "veg_ba_se": 1.6351669368522912,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -4057,6 +4211,8 @@
    "bucket": "tundra",
    "veg_ba_ha": 2.669099923483329,
    "veg_type": "forest",
+   "veg_ba_se": 1.854466859770881,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -4095,6 +4251,8 @@
    "bucket": "forest",
    "veg_ba_ha": 23.414834099057497,
    "veg_type": "forest",
+   "veg_ba_se": 2.8443735143495554,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -4133,6 +4291,8 @@
    "bucket": "forest",
    "veg_ba_ha": 17.944109118191577,
    "veg_type": "forest",
+   "veg_ba_se": 2.093117489520977,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -4171,6 +4331,8 @@
    "bucket": "forest",
    "veg_ba_ha": 19.686054987940068,
    "veg_type": "forest",
+   "veg_ba_se": 1.3430733787393427,
+   "veg_design_status": "supported",
    "n_testable": 1,
    "featured": false,
    "drivers": [
@@ -4209,6 +4371,8 @@
    "bucket": "forest",
    "veg_ba_ha": 50.80249457633981,
    "veg_type": "forest",
+   "veg_ba_se": 5.054032068334808,
+   "veg_design_status": "supported",
    "n_testable": 0,
    "featured": false,
    "drivers": []

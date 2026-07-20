@@ -25,20 +25,57 @@ needed), use the scratchpad recipes documented in build_plot.md:
   - geo_plot.py   -> the AOP crops        (needs the raw ortho/CHM GeoTIFF tiles)
 Those three stay in scratchpad because they need bulk raw data that is not committed.
 """
-import os, json
+import os, json, sys, argparse
 
 D = os.path.dirname(os.path.abspath(__file__))
 
-old = open(os.path.join(D, "plot.html")).read()
-src = open(os.path.join(D, "plot.src.html")).read()
+# Encoding and line endings are explicit on purpose. Python's default text mode uses
+# the locale encoding (cp1252 on this Windows host) and translates "\n" to "\r\n" on
+# write. Either would corrupt this build: the pages carry UTF-8 (em dashes, degree
+# signs, times signs) and .gitattributes pins these files to `eol=lf`. Reading as
+# cp1252 mangles the text; writing without newline="" rewrites every line ending and
+# makes the output differ byte-for-byte between Windows and Linux.
+def read_text(path):
+    with open(path, encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+def write_text(path, text):
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+
+
+old = read_text(os.path.join(D, "plot.html"))
+src = read_text(os.path.join(D, "plot.src.html"))
+
+# --- which plot? ------------------------------------------------------------
+# The build was hard-wired to SRER_048. It now takes a plot id so a second plot is a
+# build argument rather than an edit. The DATA file is plot-<lowercased id>.json to
+# match the existing plot-srer048.json.
+ap = argparse.ArgumentParser(description="assemble the self-contained plot page")
+ap.add_argument("--plot", default="SRER_048",
+                help="plot id to inline, e.g. SRER_048 (default: %(default)s)")
+ap.add_argument("--out", default="plot.html", help="output file (default: %(default)s)")
+args = ap.parse_args()
+
+PLOT_ID = args.plot
+data_path = os.path.join(D, "plot-%s.json" % PLOT_ID.lower().replace("_", ""))
+if not os.path.exists(data_path):
+    sys.exit("no data file for plot %s (looked for %s)" % (PLOT_ID, os.path.basename(data_path)))
 
 # --- editable content (small, committed JSON) -------------------------------
-data_obj = json.loads(open(os.path.join(D, "plot-srer048.json")).read())
+data_obj = json.loads(read_text(data_path))
+if data_obj.get("plot") and data_obj["plot"] != PLOT_ID:
+    sys.exit("plot id mismatch: asked for %s, %s contains %s"
+             % (PLOT_ID, os.path.basename(data_path), data_obj["plot"]))
 try:
-    data_obj["siteDiv"] = json.load(open(os.path.join(D, "div-srer.json")))  # SRER site-level ground/herb cover
+    data_obj["siteDiv"] = json.loads(read_text(os.path.join(D, "div-srer.json")))  # SRER site-level ground/herb cover
 except Exception as e:
     print("  (no div-srer.json:", e, ")")
-data = json.dumps(data_obj)
+# ensure_ascii=False keeps the UTF-8 text as UTF-8 (matching the page's charset)
+# rather than expanding it into \uXXXX escapes; sort_keys makes the embed stable
+# so re-running with unchanged inputs is a no-op diff.
+data = json.dumps(data_obj, ensure_ascii=False, sort_keys=True)
 
 # --- heavy embeds: reuse verbatim from the existing plot.html ---------------
 def script_body(html, opener):
@@ -47,10 +84,16 @@ def script_body(html, opener):
     j = html.index("</script>", i)
     return html[i:j]
 
-# THREE: the first bare <script>...</script> after the sky-view backlink anchor
-anchor = "&larr; back to the map</a>"
-tj_open = old.index("<script>", old.index(anchor)) + len("<script>")
-three = old[tj_open:old.index("</script>", tj_open)]
+# THREE: locate the runtime STRUCTURALLY, not by neighbouring prose. This previously
+# keyed off the literal string "back to the map</a>", so the moment that link was
+# reworded the assembler stopped being able to find Three.js at all - a rebuild loop
+# that breaks when unrelated copy changes is not a build step.
+import re as _re
+_bare = [m for m in _re.finditer(r"<script>(.*?)</script>", old, _re.DOTALL)]
+_cands = [m.group(1) for m in _bare if len(m.group(1)) > 100000 and "THREE" in m.group(1)]
+if not _cands:
+    raise SystemExit("could not find the inlined Three.js runtime in plot.html")
+three = max(_cands, key=len)
 
 gtex = script_body(old, '<script id="groundTex" type="application/json">')
 geo = script_body(old, '<script id="geoLayers" type="application/json">')
@@ -70,6 +113,6 @@ out = (src.replace("__THREE__", three)
 for ph in ("<script>__THREE__</script>", ">__PLOTDATA__<", ">__GROUNDTEX__<", ">__GEOLAYERS__<"):
     assert ph not in out, "placeholder tag %s not replaced" % ph
 
-open(os.path.join(D, "plot.html"), "w").write(out)
-print("wrote plot.html: %d bytes (three=%d, data=%d, gtex=%d, geo=%d)" % (
-    len(out), len(three), len(data), len(gtex), len(geo)))
+write_text(os.path.join(D, args.out), out)
+print("wrote %s: %s, %d bytes (three=%d, data=%d, gtex=%d, geo=%d)" % (
+    args.out, PLOT_ID, len(out), len(three), len(data), len(gtex), len(geo)))

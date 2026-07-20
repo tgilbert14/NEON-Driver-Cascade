@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Plot — SRER_048, plant by plant</title>
 <style>
   :root{--ink:#f4efe3;--panel:#0e0d0acc;--line:#ffffff26;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -6,8 +8,23 @@
   body{margin:0;overflow:hidden;background:#0b0b0a;font-family:var(--sans);color:var(--ink)}
   #scene{position:fixed;inset:0;z-index:0}
   #scene canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+  /* The overlay is a fixed-height column. Without min-height:0 the top panel cannot
+     shrink, so once top + bottom exceed the viewport the species legend is simply pushed
+     off-screen (it was, at any window under ~700px tall). The top panel now scrolls
+     inside its own share instead of shoving the legend off the bottom. */
   #ui{position:fixed;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;
-    padding:clamp(.8rem,3vw,1.6rem)}
+    gap:.75rem;padding:clamp(.8rem,3vw,1.6rem);overflow:hidden}
+  /* margin-bottom:auto keeps the bottom stack pinned to the bottom when the top panel is
+     hidden; with plain space-between and one child gone the survivor jumps to the top. */
+  /* The About panel is a self-contained card, not a stretchy flex child. It starts
+     CLOSED, so it never competes with the scene for height, and its content is written
+     short enough to fit without a scrollbar - the scroll was only ever there because the
+     panel was open by default and could outgrow the viewport. */
+  #ui > .top{flex:0 0 auto;pointer-events:auto;max-width:min(34rem,92vw)}
+  #ui > .top[hidden]{display:none}
+  #ui > .reopen{flex:0 0 auto}
+  #ui > .geocredit{flex:0 0 auto;margin-top:auto}   /* pins the rest to the bottom */
+  #ui > .bottom{flex:0 0 auto;min-height:0}
   .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:#ffffffb0;text-shadow:0 1px 6px #000a}
   .ttl{font-family:var(--serif);font-weight:600;font-size:clamp(1.5rem,4.5vw,2.4rem);line-height:1.05;margin:.15rem 0;text-shadow:0 2px 16px #000b}
   .sub{font-size:.9rem;color:#fdf8eecc;max-width:44ch;text-shadow:0 1px 10px #000a}
@@ -18,20 +35,77 @@
     font-family:var(--mono);font-size:.66rem;color:#f4efe3;text-align:center;text-shadow:0 1px 6px #000b;line-height:1}
   #compass .ar{font-size:1.15rem;display:block}
   .top{max-width:52ch}
+  /* the toggle sits with the title it controls, not adrift in the bottom button row */
+  .reopen{position:static;align-self:flex-start;
+    font:inherit;font-size:.8rem;cursor:pointer;color:#f4efe3;background:#12110deb;border:1px solid #ffffff2a;
+    border-radius:999px;padding:.45rem .9rem;pointer-events:auto;backdrop-filter:blur(8px);
+    box-shadow:0 6px 20px #0007;min-height:36px}
+  .reopen:hover{border-color:#ffffff55}
+  .reopen:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .reopen[hidden]{display:none}
   .bottom{display:flex;flex-direction:column;gap:.6rem}
-  .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;pointer-events:auto}
+  /* pointer-events on the CONTAINER made the whole flex row - including every gap and
+     the empty space it stretches across - swallow drags and taps meant for the canvas.
+     On a 390px screen that blocked most of the viewport while the hint said "drag to
+     pan". The controls themselves take the events; the row lets them through. */
+  .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;pointer-events:none}
+  .row > *{pointer-events:auto}
   .walk{font:inherit;font-size:.85rem;cursor:pointer;color:#111;background:#f4efe3;border:none;border-radius:999px;padding:.45rem 1rem;font-weight:650}
+  .seg{display:inline-flex;pointer-events:auto;border:1px solid #ffffff33;border-radius:999px;overflow:hidden;
+    background:#12110dcc;backdrop-filter:blur(6px)}
+  .segb{font:inherit;font-size:.85rem;font-weight:650;cursor:pointer;border:none;background:transparent;
+    color:#f4efe3;padding:.5rem 1rem;min-height:44px}
+  .segb.on{background:#f4efe3;color:#111}
+  .segb:focus-visible{outline:2px solid #e6c78a;outline-offset:-3px}
+  .menuwrap{position:relative;pointer-events:auto}
+  .menu{position:absolute;bottom:calc(100% + .45rem);left:0;z-index:5;min-width:14rem;
+    background:#12110df7;border:1px solid #ffffff2a;border-radius:12px;padding:.5rem;
+    backdrop-filter:blur(10px);box-shadow:0 10px 30px #0008;display:grid;gap:.3rem}
+  .menu[hidden]{display:none}
+  .mrow{display:flex;align-items:center;justify-content:space-between;gap:.8rem}
+  .mlab{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:#ffffffa8}
+  .mbtn{font:inherit;font-size:.82rem;cursor:pointer;color:#111;background:#f4efe3;border:none;
+    border-radius:999px;padding:.35rem .8rem;min-height:36px;min-width:6.5rem;font-weight:600}
+  .mbtn:hover{background:#fff}
+  .mbtn:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
   .hint{font-family:var(--mono);font-size:.66rem;color:#ffffff99;text-shadow:0 1px 6px #000a}
-  .legend{display:flex;gap:.4rem;flex-wrap:wrap;pointer-events:auto;max-width:60ch}
-  .lg{font-family:var(--mono);font-size:.66rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+  /* the legend is also the species filter, so it must stay reachable: cap it and let it
+     scroll rather than let it run past the bottom of the window */
+  .legendrow{display:flex;gap:.5rem;align-items:flex-start;flex-wrap:wrap}
+  .legend{display:flex;gap:.4rem;flex-wrap:wrap;pointer-events:none;max-width:60ch;
+    max-height:min(34vh,10.5rem);overflow-y:auto;overscroll-behavior:contain;padding-right:.2rem}
+  .lg{pointer-events:auto;font-family:var(--mono);font-size:.66rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;
     padding:.28rem .6rem;backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:.4rem}
   .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .legend.nokey .lg i{background:none !important;border:1px solid #ffffff66}
+  .lg:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .lg:active{transform:scale(.96)}
+  .resetb{pointer-events:auto;font:inherit;font-family:var(--mono);font-size:.66rem;cursor:pointer;
+    color:#111;background:#e6c78a;border:none;border-radius:999px;padding:.34rem .8rem;min-height:36px;font-weight:650}
+  .resetb[hidden]{display:none}
+  .resetb:focus-visible{outline:2px solid #f4efe3;outline-offset:2px}
   .lg{cursor:pointer;user-select:none;transition:opacity .15s,border-color .15s}
   .lg:hover{border-color:#ffffff55}
   .lg.off{opacity:.4;text-decoration:line-through}
   .lg.off i{filter:grayscale(1) brightness(.7)}
-  .top.readable{background:#0b0b0ad9;border:1px solid #ffffff1f;border-radius:14px;padding:.85rem 1.05rem;
-    backdrop-filter:blur(8px);box-shadow:0 8px 30px #0006}
+  .acard{background:#12110df2;border:1px solid #ffffff26;border-radius:16px;padding:1rem 1.1rem 0.9rem;
+    backdrop-filter:blur(10px);box-shadow:0 14px 40px #0009;display:grid;gap:.55rem}
+  .acard .eyebrow{margin:0}
+  .acard .ttl{font-family:var(--serif);font-size:1.28rem;line-height:1.15;margin:0}
+  .acard .sub{font-size:.86rem;line-height:1.5;color:#f4efe3e0;max-width:none;margin:0}
+  .acard .sz{display:block;margin-top:.4rem;font-size:.8rem;color:#f4efe3b8}
+  .afacts{display:grid;gap:.28rem;font-family:var(--mono);font-size:.68rem;color:#f4efe3c4}
+  .afacts .fr{display:flex;gap:.55rem}
+  .afacts .fr b{color:#e6c78a;font-weight:600;min-width:6.2rem;flex:0 0 auto}
+  .aground{font-size:.78rem;line-height:1.5;color:#f4efe3c4;border-top:1px solid #ffffff1a;padding-top:.55rem}
+  .aground b{color:#e6c78a;font-weight:600}
+  .aclose{margin-top:.15rem;font:inherit;font-size:.86rem;font-weight:650;cursor:pointer;
+    color:#111;background:#f4efe3;border:none;border-radius:999px;padding:.6rem 1rem;min-height:44px;width:100%}
+  .aclose:hover{background:#fff}
+  .aclose:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .gcmore{font:inherit;font-size:.92em;cursor:pointer;background:none;border:none;padding:0 0 0 .3rem;
+    color:#e6c78a;text-decoration:underline;min-height:32px}
+  .gcmore:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
   #tip{position:fixed;z-index:4;pointer-events:none;display:none;font-family:var(--mono);font-size:.68rem;color:#f4efe3;
     background:#12110deb;border:1px solid #ffffff2a;border-radius:8px;padding:.28rem .5rem;backdrop-filter:blur(6px);
     box-shadow:0 6px 20px #0008;white-space:nowrap}
@@ -39,64 +113,168 @@
   .cscale{display:none;align-items:center;gap:.5rem;pointer-events:none;font-family:var(--mono);font-size:.62rem;
     color:#f4efe3cc;text-shadow:0 1px 6px #000a;max-width:60ch}
   .cscale .grad{width:120px;height:9px;border-radius:5px;border:1px solid #ffffff40}
+  .cscale .nm{display:inline-flex;align-items:center;gap:.32rem;color:#f4efe3cc}
+  .cscale .nm i{width:9px;height:9px;border-radius:2px;display:inline-block;border:1px solid #ffffff40}
   .cscale b{color:#f4efe3}
-  #card{position:fixed;z-index:4;max-width:19rem;background:#12110dEE;border:1px solid #ffffff2a;border-left:3px solid #d98a3d;
+  /* shown only while the first-tagged filter is narrowed, where the wrong reading is tempting */
+  /* A caveat nobody can read is a caveat that was not shipped. These were 9-10px. */
+  .tagnote{max-width:58ch;margin-top:.45rem;padding:.5rem .7rem;border-left:2px solid #e6c78a80;
+    background:#0e0d0ae8;border-radius:0 6px 6px 0;font-family:var(--sans);font-size:.8rem;
+    line-height:1.5;color:#f4efe3ee;pointer-events:none}
+  .tagnote b{color:#f4efe3}
+  #card{pointer-events:auto;position:fixed;z-index:6;max-width:19rem;background:#12110dEE;border:1px solid #ffffff2a;border-left:3px solid #d98a3d;
     border-radius:12px;padding:.7rem .85rem;backdrop-filter:blur(8px);pointer-events:none;display:none;box-shadow:0 8px 30px #000a}
   #card .c-sci{font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.15}
   #card .c-common{font-size:.9rem;color:#fdf8ee;margin-top:.05rem}
   #card .c-meta{font-family:var(--mono);font-size:.68rem;color:#ffffffb0;margin-top:.45rem;line-height:1.5}
   #card .c-tag{color:#e0a24e}
   #card .c-dead{color:#c98a7a}
+  .plotwarn{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100% - 4.6rem);z-index:7;
+    max-width:min(30rem,92vw);background:#3a2a12f2;border:1px solid #e6c78a66;border-radius:12px;
+    padding:.6rem .85rem;font-size:.8rem;line-height:1.45;color:#f4efe3;pointer-events:auto;
+    box-shadow:0 10px 30px #0009;top:4.6rem;bottom:auto}
+  .plotwarn b{color:#e6c78a}
+  .crumbs{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
+    display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;justify-content:flex-end;max-width:min(30rem,72vw);
+    font-family:var(--mono);font-size:.68rem;background:#12110deb;border:1px solid #ffffff2a;
+    border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(8px);box-shadow:0 6px 20px #0007}
+  .crumbs a{color:#f4efe3;text-decoration:none;min-height:32px;display:inline-flex;align-items:center}
+  .crumbs a:hover{text-decoration:underline}
+  .crumbs a:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
+  .crumbs b{color:#e6c78a;font-weight:600}
+  .crumbs .sep{opacity:.45}
+  .crumbs .cw{opacity:.6}
+  @media (max-width:520px){.crumbs .cw{display:none}}
   .backlink{position:fixed;top:clamp(.8rem,3vw,1.6rem);right:clamp(.8rem,3vw,1.6rem);z-index:3;pointer-events:auto;
     font-family:var(--mono);font-size:.7rem;color:#f4efe3cc;text-decoration:none;background:var(--panel);border:1px solid var(--line);
     border-radius:999px;padding:.4rem .8rem;backdrop-filter:blur(6px)}
   #loading{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:#0b0b0a;color:#f4efe3;
     font-family:var(--serif);font-size:1.1rem;font-style:italic}
+  .cp-head{position:sticky;top:0;z-index:2;background:#12110df7;margin:-1.1rem -1.15rem .4rem;
+    padding:1.1rem 1.15rem .6rem;border-bottom:1px solid #ffffff1a}
   #coverPanel{position:fixed;top:0;right:0;bottom:0;z-index:4;width:min(21rem,88vw);overflow-y:auto;pointer-events:auto;
     background:#12110df7;border-left:1px solid #ffffff22;backdrop-filter:blur(10px);padding:1.1rem 1.15rem 2.5rem;
     transform:translateX(101%);transition:transform .28s ease;box-shadow:-12px 0 40px #0007}
   #coverPanel.open{transform:translateX(0)}
   .cp-h{font-family:var(--serif);font-size:1.18rem;margin:0 0 .1rem}
-  .cp-x{position:absolute;top:.9rem;right:1rem;cursor:pointer;color:#f4efe3aa;font-family:var(--mono);font-size:.66rem}
+  /* the close was a 10px <div>; on a phone this panel covers 88vw so it needs a real
+     target and a sticky header that does not scroll away */
+  .cp-x{position:absolute;top:.7rem;right:.8rem;cursor:pointer;color:#f4efe3;background:#ffffff1f;
+    border:1px solid #ffffff33;border-radius:999px;font:inherit;font-family:var(--mono);font-size:.68rem;
+    padding:.4rem .8rem;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+  .cp-x:hover{background:#ffffff33}
+  .cp-x:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .c-x{position:absolute;top:.4rem;right:.4rem;cursor:pointer;background:#ffffff1a;border:1px solid #ffffff33;
+    color:#f4efe3;border-radius:999px;width:32px;height:32px;line-height:1;font-size:1rem}
+  .c-x:hover{background:#ffffff33}
+  .c-x:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
   .cp-sec{font-family:var(--mono);font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:#e6c78a;margin:1.15rem 0 .55rem}
-  .cp-big{font-family:var(--serif);font-size:1.55rem;line-height:1;margin:.1rem 0 .1rem}
+  .cp-big{font-family:var(--serif);font-size:1.55rem;line-height:1.1;margin:.1rem 0 .1rem}
+  .cp-per{font-family:var(--sans);font-size:.8rem;color:#f4efe3b0;font-style:normal}
+  .cp-sub{font-family:var(--mono);font-size:.72rem;color:#f4efe3d9;margin:.2rem 0 .1rem}
   .cp-row{margin:.34rem 0;font-family:var(--mono);font-size:.68rem}
   .cp-row .lab{display:flex;justify-content:space-between;gap:.6rem;color:#f4efe3cc}
   .cp-row .lab b{color:#f4efe3;font-weight:600}
   .cp-bar{height:6px;border-radius:3px;background:#ffffff14;margin-top:.22rem;overflow:hidden}
   .cp-bar i{display:block;height:100%;border-radius:3px}
-  .cp-note{font-family:var(--mono);font-size:.58rem;color:#ffffff8c;line-height:1.55;margin-top:.7rem}
+  .cp-note{font-family:var(--sans);font-size:.78rem;color:#f4efe3d9;line-height:1.55;margin-top:.7rem}
+  .cp-filter{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin:.5rem 0 .2rem}
+  .cp-fold{margin-top:1.15rem;border-top:1px solid #ffffff1f;padding-top:.55rem}
+  .cp-fold>summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;
+    text-transform:uppercase;color:#e6c78a;padding:.25rem 0;min-height:32px;display:flex;align-items:center;gap:.4rem}
+  .cp-fold>summary::-webkit-details-marker{display:none}
+  .cp-fold>summary::before{content:"▸";display:inline-block;transition:transform .15s;color:#e6c78a99}
+  .cp-fold[open]>summary::before{transform:rotate(90deg)}
+  .cp-fold>summary:hover{color:#f0d9a8}
+  .cp-fold>summary:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
+  .cp-cue{text-transform:none;letter-spacing:0;color:#ffffff70}
+  .cp-foldbody{padding-bottom:.2rem}
+  .cp-search{width:100%;box-sizing:border-box;margin:.2rem 0 .5rem;padding:.5rem .7rem;min-height:40px;
+    background:#0e0d0a;border:1px solid #ffffff2a;border-radius:8px;color:#f4efe3;font:inherit;font-size:.82rem}
+  .cp-search:focus-visible{outline:2px solid #e6c78a;outline-offset:1px}
+  .cp-list{display:grid;gap:.15rem;max-height:min(46vh,22rem);overflow-y:auto;overscroll-behavior:contain}
+  .pl-grp{font-family:var(--mono);font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;color:#e6c78a;
+    margin:.5rem 0 .1rem}
+  .pl-grp .pl-n{color:#ffffff70}
+  .pl-row{display:flex;flex-direction:column;gap:.05rem;text-align:left;width:100%;cursor:pointer;
+    background:#ffffff0d;border:1px solid transparent;border-radius:7px;padding:.4rem .6rem;min-height:44px;color:#f4efe3}
+  .pl-row:hover{background:#ffffff1a}
+  .pl-row:focus-visible{outline:2px solid #e6c78a;outline-offset:1px}
+  .pl-id{font-family:var(--mono);font-size:.78rem;color:#f4efe3}
+  .pl-meta{font-family:var(--mono);font-size:.66rem;color:#f4efe3a8}
 </style>
 <div id="loading">Reconstructing the plot&hellip;</div>
 <div id="scene"></div>
 <div id="ui">
-  <div class="top">
-    <div class="eyebrow">The plot &middot; a real-data reconstruction</div>
-    <div class="ttl">SRER_048 &mdash; plant by plant</div>
-    <div class="sub" id="sub"></div>
-    <div class="geocredit" id="geoCredit"></div>
+  <div class="top" id="topBox" hidden>
+    <div class="acard">
+      <div class="eyebrow">A real-data reconstruction</div>
+      <div class="ttl" id="aTitle">SRER_048 &mdash; plant by plant</div>
+      <div class="sub" id="sub"></div>
+      <div class="afacts" id="aFacts"></div>
+      <div class="aground" id="aGround" hidden></div>
+      <button class="aclose" id="infoBtn" type="button" aria-expanded="true" aria-controls="topBox">
+        &times; Close &mdash; show the whole plot</button>
+    </div>
   </div>
+  <button class="reopen" id="infoReopen" type="button">&#9432; About this plot</button>
+  <!-- The NEON aerial/CHM attribution must NOT live inside the collapsible info panel:
+       hiding that panel and then switching to the real orthophoto left a NEON image on
+       screen with no credit and no vintage. It sits with the scene instead. -->
+  <div class="geocredit" id="geoCredit"></div>
   <div class="bottom">
+    <!-- Seven peer pills gave equal weight to the primary view switch and to three blind
+         cycle buttons, with the brightest pill on the least consequential control. Now:
+         one segmented view switch, one Layers menu holding the three appearance cycles,
+         and one button that opens the data panel. The First-tagged filter moved INTO
+         that panel, next to the paragraph explaining what it does and does not mean. -->
     <div class="row">
-      <button class="walk" id="walkBtn" type="button">&#9654; Walk</button>
-      <button class="walk" id="skyBtn" type="button" style="background:#26231d;color:#f4efe3">&#9723; Sky view</button>
-      <button class="walk" id="layerBtn" type="button" style="background:#3a352b;color:#f4efe3">Ground: stylized</button>
-      <button class="walk" id="plantsBtn" type="button" style="background:#2b3326;color:#f4efe3">Plants: on</button>
-      <button class="walk" id="colorBtn" type="button" style="background:#2b2f38;color:#f4efe3">Colour: species</button>
-      <button class="walk" id="surveyBtn" type="button" style="background:#33302b;color:#f4efe3">Survey: 2016+2021</button>
-      <button class="walk" id="coverBtn" type="button" style="background:#2e2a33;color:#f4efe3">Cover &amp; species</button>
-      <button class="walk" id="infoBtn" type="button" style="background:#20242a;color:#f4efe3">&#9432; About</button>
+      <div class="seg" role="group" aria-label="View">
+        <button class="segb on" id="mapBtn" type="button" aria-pressed="true">&#9723; Map</button>
+        <button class="segb" id="inBtn" type="button" aria-pressed="false">&#9650; Walk in</button>
+      </div>
+      <div class="menuwrap">
+        <button class="walk" id="layersBtn" type="button" aria-expanded="false" aria-controls="layersMenu"
+          style="background:#3a352b;color:#f4efe3">Layers &#9662;</button>
+        <div class="menu" id="layersMenu" hidden>
+          <div class="mrow"><span class="mlab">Ground</span>
+            <button class="mbtn" id="layerBtn" type="button">stylized</button></div>
+          <div class="mrow"><span class="mlab">3D plants</span>
+            <button class="mbtn" id="plantsBtn" type="button">on</button></div>
+          <div class="mrow"><span class="mlab">Colour by</span>
+            <button class="mbtn" id="colorBtn" type="button">species</button></div>
+        </div>
+      </div>
+      <button class="walk" id="walkBtn" type="button" hidden>&#9654; Walk</button>
+      <button class="walk" id="skyBtn" type="button" hidden>&#9723; Sky view</button>
+      <button class="walk" id="surveyBtn" type="button" hidden>First tagged: all</button>
+      <button class="walk" id="coverBtn" type="button" style="background:#2e2a33;color:#f4efe3" aria-expanded="false" aria-controls="coverPanel">&#9432; Plot data</button>
       <span class="hint" id="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
     </div>
+    <div class="tagnote" id="tagNote" style="display:none">Showing plants by the year their <b>tag went on</b>.
+      This is not a before-and-after survey &mdash; every plant is tagged once, then re-measured later, so no
+      plant can appear in both years. A plant missing from a year was not absent; it just wasn&rsquo;t tagged yet.</div>
     <div class="cscale" id="cscale"></div>
-    <div class="legend" id="legend"></div>
+    <div class="legendrow">
+      <div class="legend" id="legend"></div>
+      <button class="resetb" id="resetBtn" type="button" hidden>&#8634; Reset view</button>
+    </div>
   </div>
 </div>
 <div id="card"></div>
 <div id="tip"></div>
 <div id="coverPanel"></div>
 <div id="compass"><span class="ar">&#8593;</span>N</div>
-<a class="backlink" href="./index.html">&larr; back to the map</a>
+<!-- The plot is the deepest rung, so it must offer BOTH ways back out: the site it
+     belongs to (the walk) and the network map. A single "back" was ambiguous once the
+     walk existed as a separate place. -->
+<nav class="crumbs" aria-label="Where you are">
+  <a href="./index.html">&larr; Network</a>
+  <span class="sep">&middot;</span>
+  <a id="crumbSite" href="./walk.html?site=SRER">Santa Rita <span class="cw">(walk the site)</span></a>
+  <span class="sep">&middot;</span>
+  <b id="crumbPlot">SRER_048</b>
+</nav>
 <script>__THREE__</script>
 <script id="plotData" type="application/json">__PLOTDATA__</script>
 <script id="groundTex" type="application/json">__GROUNDTEX__</script>
@@ -105,8 +283,40 @@
 (function(){
 "use strict";
 var DATA=JSON.parse(document.getElementById("plotData").textContent);
+/* ---- ?plot=<ID> -----------------------------------------------------------------
+   This page ships ONE plot inlined, so it is self-contained and needs no network. The
+   walk links here as ./plot.html?plot=SRER_048, and a future plot is built with
+   `assemble_plot.py --plot <ID>`. Until more than one plot exists, honour the parameter
+   by VALIDATING it rather than ignoring it: silently showing SRER_048 to someone who
+   asked for a different plot would be the page lying about what it is showing. */
+(function(){
+  var want=(new URLSearchParams(location.search).get("plot")||"").trim().toUpperCase();
+  if(!want || want===String(DATA.plot||"").toUpperCase())return;
+  var b=document.createElement("div"); b.className="plotwarn";
+  b.innerHTML="Showing <b>"+(DATA.plot||"this plot")+"</b>. You asked for <b>"+
+    want.replace(/[<>&]/g,"")+"</b>, which has not been built yet — "+
+    "so far only "+(DATA.plot||"one plot")+" has been reconstructed plant by plant.";
+  document.addEventListener("DOMContentLoaded",function(){document.body.appendChild(b);});
+  if(document.body)document.body.appendChild(b);
+})();
 var GTEX=""; try{GTEX=JSON.parse(document.getElementById("groundTex").textContent);}catch(e){}
-document.getElementById("sub").innerHTML=DATA.n+" real tagged plants from NEON Vegetation Structure (DP1.10098.001), each at its mapped position in the "+Math.round(DATA.plotDim||40)+"&thinsp;×&thinsp;"+Math.round(DATA.plotDim||40)+"&thinsp;m plot SRER_048 (amber boundary). The woody plants were mapped only in the eastern half — the <b>shaded western half was not surveyed</b>. Santa Rita Experimental Range · Sonoran desert.";
+// Short lead + structured facts: the panel has to fit without a scrollbar, and a wall
+// of prose was what made it need one.
+document.getElementById("sub").innerHTML=
+  "Every one of these <b>"+DATA.n+"</b> plants is real — an individually tagged NEON plant, "+
+  "drawn where it actually stands. Tap any one to read its record. "+
+  "<span class=\"sz\">Solid rings are drawn at NEON’s measured size; open rings are drawn at a "+
+  "species-typical size, because NEON did not measure those plants.</span>";
+(function(){
+  var d=Math.round(DATA.plotDim||40), pv=DATA.provenance||{}, f=[];
+  function row(k,v){f.push('<div class="fr"><b>'+k+'</b><span>'+v+'</span></div>');}
+  row("plot", "SRER_048 &middot; "+d+"&thinsp;×&thinsp;"+d+"&thinsp;m (amber boundary)");
+  row("where", "Santa Rita Experimental Range &middot; Sonoran desert");
+  row("source", (pv.product||"DP1.10098.001")+" &middot; NEON Vegetation Structure");
+  row("dates", "the year each plant's tag went on, not a re-survey");
+  if(DATA.surveyNote)row("surveyed", DATA.surveyNote+" — the shaded half was not mapped");
+  document.getElementById("aFacts").innerHTML=f.join("");
+})();
 
 var host=document.getElementById("scene");
 var renderer=new THREE.WebGLRenderer({antialias:true});
@@ -163,9 +373,22 @@ var CREDIT={
  1:"Ground: <b>NEON AOP aerial orthophoto</b> (DP3.30010.001), Santa Rita 2021 flight. Plants are placed at their NEON stem-map coordinates (≈ sub-metre precision) and many were tagged in 2016, so the overlay shows our plot on its real ground — alignment is approximate, not a surveyed per-plant registration.",
  2:"Ground: <b>NEON AOP LiDAR canopy height</b> (DP3.30015.001), Santa Rita 2021. The 1 m grid barely resolves sub-metre desert shrubs, so it reads mostly as bare ground vs taller woody canopy."};
 function setLayer(n){LAYER=n; if(drapes.length){drapes[0].visible=(n===1); drapes[1].visible=(n===2);}
-  layerBtn.innerHTML="Ground: "+(n===0?"stylized":n===1?"aerial photo":"canopy height");
-  var gc=document.getElementById("geoCredit");
-  if(CREDIT[n]){gc.innerHTML=CREDIT[n];gc.style.display="block";}else{gc.style.display="none";}}
+  // the menu row supplies the name; the button carries only the current value
+  layerBtn.innerHTML=(n===0?"stylized":n===1?"aerial photo":"canopy height");
+  // The FULL provenance paragraph folds into the About card, as asked. But a NEON image
+  // on screen must never be uncredited and About can be closed - so a short credit stays
+  // beside the scene whenever a real NEON layer is showing. Detail in the panel,
+  // attribution always.
+  var ag=document.getElementById("aGround"), gc=document.getElementById("geoCredit");
+  if(CREDIT[n]){
+    ag.innerHTML=CREDIT[n]; ag.hidden=false;
+    gc.innerHTML=(n===1?"Ground: NEON AOP aerial, Santa Rita 2021"
+                       :"Ground: NEON AOP LiDAR canopy height, 2021")+
+      ' <button class="gcmore" type="button" id="gcMore">what is this?</button>';
+    gc.style.display="block";
+    var more=document.getElementById("gcMore");
+    if(more)more.addEventListener("click",function(){setInfo(true);});
+  }else{ ag.hidden=true; ag.innerHTML=""; gc.style.display="none"; }}
 
 // ---- plot boundary: the TRUE 40 × 40 m NEON base plot (plants were mapped in its eastern half) ----
 var PDIM=DATA.plotDim||40, bx=PDIM/2, bz=PDIM/2;
@@ -188,8 +411,13 @@ var capG=new THREE.SphereGeometry(0.11,8,6), capM=new THREE.MeshStandardMaterial
 [[-bx,-bz],[bx,-bz],[-bx,bz],[bx,bz]].forEach(function(c){
   var po=new THREE.Mesh(postG,postM);po.position.set(c[0],0,c[1]);po.castShadow=true;scene.add(po);
   var cp=new THREE.Mesh(capG,capM);cp.position.set(c[0],1.4,c[1]);scene.add(cp);});
-// dim the part of the plot that was NOT surveyed (VST mapped woody plants only in the eastern half)
-var mapXmin=Math.min.apply(null,DATA.plants.map(function(p){return p.x;}));
+// Dim the part of the plot that was NOT surveyed. This previously inferred the gap from
+// the minimum plant x alone, i.e. it assumed the unmapped strip is always on the WEST.
+// A plot mapped in a different half would have been shaded wrongly and silently, so the
+// data may supply an explicit mapped extent; the inference is only the fallback.
+var mapXmin=(DATA.mappedExtent&&DATA.mappedExtent.xmin!=null)
+  ? DATA.mappedExtent.xmin
+  : Math.min.apply(null,DATA.plants.map(function(p){return p.x;}));
 if(mapXmin-(-bx)>2){var wW=mapXmin+bx, shG=new THREE.PlaneGeometry(wW,bz*2); shG.rotateX(-Math.PI/2);
   var sh=new THREE.Mesh(shG,new THREE.MeshBasicMaterial({color:0x0a0d12,transparent:true,opacity:0.4,depthWrite:false}));
   sh.position.set((-bx+mapXmin)/2,0.055,0); scene.add(sh);}
@@ -354,11 +582,17 @@ function buildPlant(p,seed){
   // ground marker — a crisp species-coloured RING at the real crown size, so the map reads as a
   // survey overlay (you see the actual shrub inside the ring). Kept when the 3D models are hidden.
   var mr=Math.max(0.35,cr*0.5), mkCol=dead?DEADMK:spCol(p,"mk");
-  var mk=new THREE.Mesh(new THREE.RingGeometry(mr*0.74,mr,22),
-    new THREE.MeshBasicMaterial({color:new THREE.Color(mkCol),transparent:true,opacity:0.95,side:THREE.DoubleSide,depthWrite:false}));
+  // A plant with no measured crown (realh!==true) is drawn at a SPECIES-TYPICAL size, not
+  // a real one. That must be visible in the scene itself, not only on click: its ring is
+  // a thin OUTLINE with a dashed inner mark, so measured plants (solid disc) and
+  // typical-size plants (open ring) are distinguishable at a glance in the map view.
+  var typ=(p.realh!==true);
+  var mk=new THREE.Mesh(new THREE.RingGeometry(typ?mr*0.9:mr*0.74,mr,22),
+    new THREE.MeshBasicMaterial({color:new THREE.Color(mkCol),transparent:true,
+      opacity:typ?0.6:0.95,side:THREE.DoubleSide,depthWrite:false}));
   mk.rotation.x=-Math.PI/2; mk.position.y=0.05;
   if(cr90&&cr&&cr90<cr) mk.scale.y=Math.max(0.5,cr90/cr);   // elliptical crown footprint
-  mk.userData.keep=1; g.add(mk); MARKERS.push(mk);
+  mk.userData.keep=1; mk.userData.typ=typ; g.add(mk); MARKERS.push(mk);
   g.userData={p:p,foliage:foliage,mk:mk};
   if(!dead&&soft)CANOPY.push(foliage);       // only soft-tissue plants sway
   return g;
@@ -374,44 +608,122 @@ selRing.rotation.x=-Math.PI/2; selRing.position.y=0.09; selRing.visible=false; s
 var selPlant=null;
 // filters: species (legend chips) + survey campaign (year)
 var hidden={}, surveyYear="all";
+// Filters could empty the map completely with no count, no message and no way back
+// except un-clicking nine chips by hand.
+function updateShownCount(){
+  var n=0; for(var i=0;i<plants.length;i++) if(shown(plants[i].userData.p))n++;
+  var h=document.getElementById("hint"), r=document.getElementById("resetBtn");
+  if(r)r.hidden=(n===DATA.plants.length);
+  if(h){
+    if(n===0)h.innerHTML='<b>Nothing is showing</b> &mdash; every plant is filtered out.';
+    else if(n<DATA.plants.length)h.innerHTML="showing <b>"+n+"</b> of "+DATA.plants.length+" plants";
+    else h.innerHTML=HINT_BASE;
+  }
+  return n;
+}
+function resetView(){
+  hidden={}; surveyYear="all"; syi=0;
+  var sb=document.getElementById("surveyBtn"); if(sb)sb.innerHTML="First tagged: all";
+  if(typeof syncTagFilter==="function")syncTagFilter();
+  Array.prototype.forEach.call(document.querySelectorAll(".lg"),function(d){d.classList.remove("off");
+    d.setAttribute("aria-pressed","true");});
+  applyVis();
+}
 function shown(p){return !hidden[p.tx] && (surveyYear==="all" || (p.date||"").slice(0,4)===surveyYear);}
 function applyVis(){for(var i=0;i<plants.length;i++){var g=plants[i],on=shown(g.userData.p);
   g.visible=on; var ch=g.children;
   for(var j=0;j<ch.length;j++){var c=ch[j];
     if(c.userData.proxy||c.userData.keep) c.visible=on; else c.visible=on&&showPlants;}}
-  if(selPlant&&!shown(selPlant.userData.p)){selRing.visible=false;selPlant=null;}}
+  // The card asserts a specific plant. If a filter hides that plant, the card was left
+  // on screen describing something no longer visible.
+  if(selPlant&&!shown(selPlant.userData.p)){
+    selRing.visible=false; selPlant=null;
+    var cd=document.getElementById("card"); if(cd)cd.style.display="none";}
+  updateShownCount();}
 
 // ---- controls (first-person walk + top-down sky cam) ----
-var MODE="walk";
+var MODE="walk", HINT_BASE="";
 var keys={},yaw=0.0,pitch=-0.05,px=8,pz=((DATA.plotDim||40)/2+4),walking=false,drag=false,lx=0,ly=0,moved=0,downx=0,downy=0;
 window.addEventListener("keydown",function(e){keys[e.code]=true;});
 window.addEventListener("keyup",function(e){keys[e.code]=false;});
 var cv=renderer.domElement;
 cv.addEventListener("pointerdown",function(e){drag=true;moved=0;lx=e.clientX;ly=e.clientY;downx=e.clientX;downy=e.clientY;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
-cv.addEventListener("pointerup",function(e){drag=false; if(moved<6)pick(e);});
+cv.addEventListener("pointerup",function(e){drag=false;
+  // moved was accumulated PATH LENGTH, which only ever grows, so a thumb that wobbles
+  // while stationary defeated the tap test. downx/downy were already captured and never
+  // read - use straight-line displacement, with a looser threshold for touch.
+  // pinching also ends in a pointerup, and must not be read as a tap on a plant.
+  if(pinching){pinching=false;return;}
+  var far=(e.pointerType==="touch")?12:6;
+  if(Math.hypot(e.clientX-downx,e.clientY-downy)<far)pick(e);});
 cv.addEventListener("pointercancel",function(){drag=false;});
 cv.addEventListener("pointermove",function(e){if(!drag){hover(e);return;}var dx=e.clientX-lx,dy=e.clientY-ly;moved+=Math.abs(dx)+Math.abs(dy);
   if(MODE==="sky"){var r=cv.getBoundingClientRect(),wpp=(ortho.right-ortho.left)/r.width;  // grab-drag pan (north-up/east-right)
     sky.x=Math.max(-70,Math.min(70,sky.x-dx*wpp)); sky.z=Math.max(-70,Math.min(70,sky.z+dy*wpp)); sizeOrtho();}
   else{yaw-=dx*0.004;pitch-=dy*0.004;pitch=Math.max(-1.2,Math.min(0.5,pitch));}
   lx=e.clientX;ly=e.clientY;});
+function zoomSky(f){sky.half=Math.max(4,Math.min(60,sky.half*f)); sizeOrtho();}
 cv.addEventListener("wheel",function(e){if(MODE!=="sky")return;e.preventDefault();
-  sky.half=Math.max(4,Math.min(60,sky.half*(1+(e.deltaY>0?1:-1)*0.12))); sizeOrtho();},{passive:false});
+  zoomSky(1+(e.deltaY>0?1:-1)*0.12);},{passive:false});
+// The canvas sets touch-action:none, which kills native pinch, and zoom was wheel-only -
+// so the default overhead view could not be zoomed at all on a phone. Track two pointers
+// and drive the same clamp.
+var pts=new Map(), pinch0=0, pinching=false;
+function span(){var a=[...pts.values()]; return (a.length<2)?0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
+cv.addEventListener("pointerdown",function(e){pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2){pinch0=span();drag=false;pinching=true;}});
+cv.addEventListener("pointermove",function(e){
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2&&MODE==="sky"){var d=span();
+    if(pinch0>0&&d>0){zoomSky(pinch0/d);pinch0=d;}
+    e.preventDefault();}},{passive:false});
+function dropPt(e){pts.delete(e.pointerId); if(pts.size<2)pinch0=0;}
+cv.addEventListener("pointerup",dropPt); cv.addEventListener("pointercancel",dropPt);
 var walkBtn=document.getElementById("walkBtn"), skyBtn=document.getElementById("skyBtn"), hintEl=document.getElementById("hint"), layerBtn=document.getElementById("layerBtn");
 walkBtn.addEventListener("click",function(){walking=!walking;walkBtn.innerHTML=walking?"&#10074;&#10074; Stop":"&#9654; Walk";});
-if(GEO&&GEO.ortho){layerBtn.addEventListener("click",function(){setLayer((LAYER+1)%3);});}else{layerBtn.style.display="none";}
+if(GEO&&GEO.ortho){layerBtn.addEventListener("click",function(){setLayer((LAYER+1)%3);});}else{var lr=layerBtn.closest(".mrow"); if(lr)lr.style.display="none"; else layerBtn.style.display="none";}
 // toggle the 3D plant models on/off (keep the ground dots + pickability) to compare with the aerial/canopy layers
 var plantsBtn=document.getElementById("plantsBtn"), showPlants=true;
 plantsBtn.addEventListener("click",function(){setPlants(!showPlants);});
 function setMode(mode){MODE=mode;walking=false;walkBtn.innerHTML="&#9654; Walk";
+  if(typeof syncSeg==="function")syncSeg();
   var comp=document.getElementById("compass");
+  var touch=(navigator.maxTouchPoints||0)>0;
   if(mode==="sky"){scene.fog=null;sky.x=0;sky.z=0;sky.half=(DATA.plotDim||40)/2+4;sizeOrtho();
     skyBtn.innerHTML="&#9654; Enter the plot (3D)";walkBtn.style.display="none";comp.style.display="block";
-    hintEl.innerHTML="map &middot; north up &middot; drag to pan &middot; scroll to zoom &middot; click a plant to read its tag";}
+    HINT_BASE="map &middot; north up &middot; drag to pan &middot; "+(touch?"pinch":"scroll")+
+      " to zoom &middot; "+(touch?"tap":"click")+" a plant to read its tag";}
   else{scene.fog=SKYFOG;skyBtn.innerHTML="&#9723; Map view";walkBtn.style.display="";comp.style.display="none";
     if(!showPlants)setPlants(true);   // entering the 3D walk turns the plant figures on
-    hintEl.innerHTML="drag to look &middot; W A S D to move &middot; click a plant to read its tag";}}
+    HINT_BASE=touch?"drag to look &middot; tap a plant to read its tag"
+                   :"drag to look &middot; W A S D to move &middot; click a plant to read its tag";}
+  if(typeof updateShownCount==="function")updateShownCount(); else hintEl.innerHTML=HINT_BASE;}
 skyBtn.addEventListener("click",function(){setMode(MODE==="sky"?"walk":"sky");});
+
+/* ---- the visible controls -------------------------------------------------------
+   The old buttons stay in the DOM (hidden) so every existing handler keeps working;
+   these drive them, which keeps this change to the control SURFACE rather than the
+   behaviour underneath it. */
+var mapBtn=document.getElementById("mapBtn"), inBtn=document.getElementById("inBtn"),
+    layersBtn=document.getElementById("layersBtn"), layersMenu=document.getElementById("layersMenu");
+function syncSeg(){var sky=(MODE==="sky");
+  mapBtn.classList.toggle("on",sky); inBtn.classList.toggle("on",!sky);
+  mapBtn.setAttribute("aria-pressed",String(sky)); inBtn.setAttribute("aria-pressed",String(!sky));
+  // Colour and 3D-plants do nothing legible at ankle height in the walk, so say so
+  // rather than leaving two live controls with no visible effect.
+  ["plantsBtn","colorBtn"].forEach(function(id){var b=document.getElementById(id);
+    b.disabled=!sky; b.style.opacity=sky?"":"0.45"; b.style.cursor=sky?"":"default";
+    b.title=sky?"":"Only affects the map view";});
+}
+mapBtn.addEventListener("click",function(){if(MODE!=="sky")setMode("sky"); syncSeg();});
+inBtn .addEventListener("click",function(){if(MODE!=="walk")setMode("walk"); syncSeg();});
+function closeMenu(){layersMenu.hidden=true; layersBtn.setAttribute("aria-expanded","false");}
+layersBtn.addEventListener("click",function(e){e.stopPropagation();
+  var open=layersMenu.hidden; layersMenu.hidden=!open; layersBtn.setAttribute("aria-expanded",String(open));});
+document.addEventListener("click",function(e){if(!layersMenu.hidden&&!layersMenu.contains(e.target)&&e.target!==layersBtn)closeMenu();});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!layersMenu.hidden){closeMenu();layersBtn.focus();}});
+syncSeg();
 
 // ---- hover tooltip + pick / inspect ----
 var ray=new THREE.Raycaster(), card=document.getElementById("card"), tip=document.getElementById("tip"), reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -436,6 +748,12 @@ function pick(e){
   if(!hit){card.style.display="none";selRing.visible=false;selPlant=null;return;}
   var o=hit.object; while(o&&!(o.userData&&o.userData.p))o=o.parent;
   if(!o){card.style.display="none";selRing.visible=false;selPlant=null;return;}
+  showRecord(o,{x:e.clientX,y:e.clientY});
+}
+// The whole payload - 179 real records - was reachable only by raycasting a canvas, i.e.
+// pointer-only. showRecord() is the shared path the raycast and the keyboard list both
+// call, so a plant can be selected from either.
+function showRecord(o,at){
   var p=o.userData.p, dead=p.status==="dead";
   selPlant=o; var selr=Math.max(0.5,(p.cr||0.6)*0.5)+0.2;   // highlight ring on the picked plant
   selRing.position.set(o.position.x,0.09,o.position.z); selRing.scale.set(selr,selr,1); selRing.visible=true;
@@ -451,64 +769,246 @@ function pick(e){
   card.innerHTML='<div class="c-sci">'+p.sci+'</div>'+(p.common?'<div class="c-common">'+p.common+'</div>':'')+
     '<div class="c-meta"><span class="c-tag">NEON.PLA…'+p.id+'</span> · tagged '+(p.date||'').slice(0,4)+
     '<br>height '+(p.realh?p.h+' m (measured)':'~'+p.h+' m (typical)')+' · crown '+crown+det+
-    '<br>'+statusTxt+' · '+p.tx+'</div>';
+    '<br>'+statusTxt+' · '+p.tx+'</div>'+
+    '<button class="c-x" id="cardX" type="button" aria-label="Close this record">&times;</button>';
+  var cx=document.getElementById("cardX");
+  if(cx)cx.addEventListener("click",function(){
+    card.style.display="none"; selRing.visible=false; selPlant=null;});
   card.style.display="block";
+  card.setAttribute("role","dialog"); card.setAttribute("aria-live","polite");
   var cw=card.offsetWidth,chh=card.offsetHeight;
-  card.style.left=Math.min(window.innerWidth-cw-12,Math.max(12,e.clientX+14))+"px";
-  card.style.top=Math.min(window.innerHeight-chh-12,Math.max(12,e.clientY+14))+"px";
+  var ax=at&&at.x!=null?at.x:window.innerWidth/2, ay=at&&at.y!=null?at.y:window.innerHeight/2;
+  card.style.left=Math.min(window.innerWidth-cw-12,Math.max(12,ax+14))+"px";
+  card.style.top=Math.min(window.innerHeight-chh-12,Math.max(12,ay+14))+"px";
+}
+// Select a plant by individualID (the keyboard path). Brings it on screen in whichever
+// view is active, then shows its record.
+function selectById(id){
+  for(var i=0;i<plants.length;i++){
+    var g=plants[i]; if(g.userData.p.id!==id)continue;
+    if(hidden[g.userData.p.tx]){hidden[g.userData.p.tx]=false;
+      var chip=document.querySelector('.lg[data-tx="'+g.userData.p.tx+'"]');
+      if(chip){chip.classList.remove("off");chip.setAttribute("aria-pressed","true");}
+      applyVis();}
+    if(MODE==="sky"){sky.x=g.position.x; sky.z=g.position.z; sky.half=Math.max(6,(g.userData.p.cr||1)*4); sizeOrtho();}
+    showRecord(g,null);
+    return true;
+  }
+  return false;
 }
 
 // ---- legend ----
 var lg=document.getElementById("legend"), TXNAME={};
-DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;var d=document.createElement("span");d.className="lg";
+// These chips are the primary species filter, so they are <button>s with aria-pressed,
+// not <span>s with click handlers: as spans they were unreachable by keyboard entirely
+// and announced as nothing.
+(function(){var rb=document.getElementById("resetBtn");
+  if(rb)rb.addEventListener("click",function(){resetView();rb.blur();});})();
+DATA.legend.slice(0,9).forEach(function(l){TXNAME[l.tx]=l.common||l.tx;
+  var d=document.createElement("button"); d.type="button"; d.className="lg";
+  d.setAttribute("aria-pressed","true"); d.setAttribute("data-tx",l.tx);
   d.innerHTML='<i style="background:'+((SP[l.tx]&&SP[l.tx].mk)||"#8fae78")+'"></i>'+(l.common||l.tx)+' &times;'+l.n;
-  d.title="Click to show/hide "+(l.common||l.tx)+" on the map";
-  d.addEventListener("click",function(){hidden[l.tx]=!hidden[l.tx];d.classList.toggle("off",!!hidden[l.tx]);applyVis();});
+  d.title="Show or hide "+(l.common||l.tx)+" on the map";
+  d.addEventListener("click",function(){
+    hidden[l.tx]=!hidden[l.tx];
+    d.classList.toggle("off",!!hidden[l.tx]);
+    d.setAttribute("aria-pressed",String(!hidden[l.tx]));
+    applyVis();});
   lg.appendChild(d);});
 
 // ---- ground cover & species panel ----
 var coverBtn=document.getElementById("coverBtn"), coverPanel=document.getElementById("coverPanel");
-function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><span>'+lab+'</span><b>'+val+'%</b></div>'+
+function cbar(lab,val,max,col,unit){return '<div class="cp-row"><div class="lab"><span>'+lab+'</span><b>'+val+(unit||'%')+'</b></div>'+
   '<div class="cp-bar"><i style="width:'+Math.max(2,Math.min(100,val/(max||1)*100))+'%;background:'+col+'"></i></div></div>';}
+// Derived from the plants themselves. Hard-coding 2016/2021 meant plot #2's tag years
+// would simply never appear in the filter.
+var TAGYEARS=(function(){var seen={},out=[];
+  DATA.plants.forEach(function(p){var y=(p.date||"").slice(0,4); if(y&&!seen[y]){seen[y]=1;out.push(y);}});
+  return out.sort();})();
+var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})), syi=0;
 (function buildCover(){
-  var h='<div class="cp-x" id="coverX">&times; close</div><div class="cp-h">Plot data &amp; analysis</div>';
+  var h='<div class="cp-head"><div class="cp-h">Plot data &amp; analysis</div>'+
+        '<button class="cp-x" id="coverX" type="button" aria-label="Close this panel">&times; close</button></div>';
   // --- plot at a glance (computed from the real records) ---
-  var P=DATA.plants,hs=[],totStem=0,deadStem=0,fullyDead=0,y16=0,y21=0;
+  var P=DATA.plants,hs=[],totStem=0,deadStem=0,fullyDead=0,byYear={};
   P.forEach(function(p){if(p.realh)hs.push(p.h);if(p.stems){totStem+=p.stems;deadStem+=(p.dead||0);}
-    if(p.status==="dead")fullyDead++;var y=(p.date||"").slice(0,4);if(y==="2016")y16++;else if(y==="2021")y21++;});
+    if(p.status==="dead")fullyDead++;
+    var y=(p.date||"").slice(0,4); if(y)byYear[y]=(byYear[y]||0)+1;});
   var meanH=hs.length?hs.reduce(function(a,b){return a+b;},0)/hs.length:0, tall=hs.length?Math.max.apply(null,hs):0;
   var area=(DATA.ex||20)*(DATA.ey||40), dens=area?P.length/area*100:0;
   function stat(k,v){return '<div class="cp-row"><div class="lab"><span>'+k+'</span><b>'+v+'</b></div></div>';}
   h+='<div class="cp-sec">This plot at a glance</div>';
   h+=stat("tagged plants",P.length+" &middot; "+DATA.legend.length+" species");
-  h+=stat("survey campaigns","2016: "+y16+" &middot; 2021: "+y21);
+  h+=stat("first tagged",TAGYEARS.map(function(y){return y+": "+(byYear[y]||0);}).join(" &middot; ")||"&mdash;");
+  // The filter lives HERE, next to the paragraph that constrains it - not in the control
+  // row, where its caveat was a title attribute touch users never see and a note that
+  // only appeared after they had already drawn the wrong conclusion.
+  h+='<div class="cp-filter"><span class="mlab">Show</span>'+
+     '<button class="mbtn" id="tagFilterBtn" type="button">all</button></div>';
+  h+='<div class="cp-note">The year each plant&rsquo;s <b>tag went on</b> &mdash; not a before-and-after '+
+    'survey. Plants are tagged once and re-measured later, so the two groups cannot share a plant. '+
+    'Most 2021 entries are cacti, which NEON only began mapping here under a site-specific exception; '+
+    'they were almost certainly standing in 2016 too.</div>';
   h+=stat("density","~"+dens.toFixed(0)+" / 100 m&sup2; surveyed");
   h+=stat("plant height","mean "+meanH.toFixed(1)+" m &middot; tallest "+tall.toFixed(1)+" m");
   if(totStem)h+=stat("stems mapped",totStem+" &middot; "+(totStem-deadStem)+" live / "+deadStem+" dead");
-  h+=stat("whole plants dead",fullyDead+" of "+P.length);
+  // Mortality is only assessable where a VST apparent-individual record exists (the
+  // woody plants). The cacti carry no such record and are live by construction, so
+  // they are not in the denominator — "of 179" would silently claim otherwise.
+  var assessed=0;P.forEach(function(p){if(p.stems)assessed++;});
+  h+=stat("whole plants dead",fullyDead+" of "+assessed+" assessed");
+  var nReal=P.filter(function(p){return p.realh===true;}).length;
+  h+=stat("sizes drawn", nReal+" measured &middot; "+(P.length-nReal)+" species-typical");
+  var ub=(DATA.provenance||{}).unmeasured_breakdown;
+  if(ub)h+='<div class="cp-note">'+ub.total+' plants have a mapped position but no structural record: '+
+    ub.cacti+' cacti and '+ub.woody+' woody plants. NEON&rsquo;s standard woody protocol does not map cacti at '+
+    'all &mdash; Santa Rita has a site-specific exception to map them, and they are measured under a separate '+
+    'cactus protocol. So live/dead status could not be assessed for these, and this is a status at each '+
+    'plant&rsquo;s own measurement date, not a mortality rate.</div>';
   var c=DATA.cover;
-  if(c){var mx=0;c.bySpecies.forEach(function(s){if(s.pct>mx)mx=s.pct;});
-    h+='<div class="cp-sec">This plot &middot; woody canopy (VST)</div><div class="cp-big">~'+c.canopyPct+'% canopy cover</div>';
-    c.bySpecies.filter(function(s){return s.pct>0;}).forEach(function(s){
-      h+=cbar((TXNAME[s.tx]||s.tx)+' &times;'+s.n,s.pct,mx,(SP[s.tx]&&SP[s.tx].mk)||'#8fae78');});
-    h+='<div class="cp-note">Estimated as summed crown areas &divide; the '+c.plotArea+'&thinsp;m&sup2; plot (crowns can overlap); ~'+Math.round(100-c.canopyPct)+'% is open interspace.</div>';}
+  if(c&&c.metric==="crown_area_index"){
+    var mx=0;(c.bySpecies||[]).forEach(function(sp){if(sp.crownArea_m2>mx)mx=sp.crownArea_m2;});
+    h+='<div class="cp-sec">This plot &middot; woody crowns (VST)</div>'+
+      '<div class="cp-big">'+c.value+' m&sup2;<span class="cp-per"> of crown per m&sup2; of ground</span></div>'+
+      '<div class="cp-sub">'+c.crownArea_m2+'&thinsp;m&sup2; of measured crown over the '+
+      c.sampledArea_m2+'&thinsp;m&sup2; NEON searched &middot; '+c.nPlants+' plants</div>';
+    (c.bySpecies||[]).forEach(function(sp){
+      h+=cbar((TXNAME[sp.tx]||sp.tx)+' &times;'+sp.n, sp.crownArea_m2, mx, (SP[sp.tx]&&SP[sp.tx].mk)||'#8fae78', ' m²');});
+    // This is NOT a cover percentage and must never be shown as one: crowns overlap, and
+    // each is measured from two MAXIMUM diameters at right angles, so the ellipse
+    // circumscribes an open desert crown. 13% of the previous figure was also invented -
+    // the 75 unmeasured plants carry a per-species constant, not a measurement.
+    h+='<div class="cp-note"><b>This is summed crown area, not ground cover.</b> '+c.notCover+' '+
+      c.sampledAreaBasis+'</div>';
+    h+='<div class="cp-note"><b>What is left out.</b> '+c.excludes+'</div>';
+    if(c.unresolved)h+='<div class="cp-note"><b>Unresolved.</b> '+c.unresolved+'</div>';
+    if(c.cactiMapped)h+='<div class="cp-sec">Cacti mapped here</div>'+
+      '<div class="cp-sub">'+c.cactiMapped.n+' plants across '+c.cactiMapped.species.length+
+      ' species &mdash; positions only</div><div class="cp-note">'+c.cactiMapped.note+'</div>';
+  }
+  // Every plant reachable without a pointer: a searchable list that fires the same
+  // selectById() the map click does. Grouped by species so 179 entries stay navigable.
+  h+='<details class="cp-fold" id="browseFold"><summary>Browse all '+P.length+
+     ' plants <span class="cp-cue">(keyboard-reachable)</span></summary><div class="cp-foldbody">'+
+     '<input class="cp-search" id="plantSearch" type="search" placeholder="Filter by species or tag id" '+
+     'aria-label="Filter the plant list">'+
+     '<div class="cp-list" id="plantList"></div></div></details>';
+
+  // The ground layer and the provenance receipt are reference material, not the headline.
+  // They were roughly half the panel's height and pushed the plot's own numbers out of
+  // view, so both fold away behind a summary and open only on request.
   var sd=DATA.siteDiv;
   if(sd){var gm=0;sd.ground.forEach(function(g){if(g.pct>gm)gm=g.pct;});
+    h+='<details class="cp-fold"><summary>Ground &amp; understory &mdash; SRER site-wide '+
+       '<span class="cp-cue">(different product &amp; year)</span></summary><div class="cp-foldbody">';
     h+='<div class="cp-sec">SRER ground layer (site diversity)</div>';
     sd.ground.forEach(function(g){h+=cbar(g.n,g.pct,gm,'#b7a06a');});
     var sm=0;sd.species.forEach(function(s){if(s.pct>sm)sm=s.pct;});
     h+='<div class="cp-sec">Understory plants (site, mean cover)</div>';
     sd.species.forEach(function(s){h+=cbar((s.common||s.name),s.pct,sm,'#7f9e5e');});
-    h+='<div class="cp-note">'+sd.note+'</div>';}
+    h+='<div class="cp-note">'+sd.note+
+      ((sd.provenance&&sd.provenance.ground_pct_sum_note)?' '+sd.provenance.ground_pct_sum_note:'')+
+      ' Different product, scale and year from the woody-canopy figures above &mdash; the two layers are '+
+      'not additive.</div>';
+    h+='</div></details>';}
+  // --- where this data came from -----------------------------------------
+  // NEON products are versioned and revise prior data. A number with no release,
+  // no date and no builder cannot be checked against its source, so say plainly
+  // what is known and what is not, rather than staying silent.
+  var pv=DATA.provenance;
+  if(pv){
+    h+='<details class="cp-fold"><summary>Where this data came from '+
+       '<span class="cp-cue">(source, release, limits)</span></summary><div class="cp-foldbody">';
+    h+=stat("product",pv.product+" &middot; "+(pv.plot||""));
+    h+=stat("obtained",pv.obtained||"&mdash;");
+    h+=stat("accessed","on or before "+(pv.accessed_on_or_before||"unknown"));
+    h+=stat("NEON release",(pv.officialNeonRelease==="UNKNOWN")?"<i>unknown</i>":pv.officialNeonRelease);
+    h+=stat("dates mean",(pv.date_field_meaning?"year first tagged":"&mdash;"));
+    h+=stat("condition shown",(pv.measurement_basis?"latest measurement (~2021)":"&mdash;"));
+    var warn=[];
+    if(pv.officialNeonRelease==="UNKNOWN"&&pv.release_basis)warn.push(pv.release_basis);
+    if(pv.cohort_note)warn.push(pv.cohort_note);
+    if(pv.cacti_scope)warn.push(pv.cacti_scope);
+    if(pv.not_every_plant)warn.push(pv.not_every_plant);
+    if(pv.unresolved_without_raw_tables)warn.push(pv.unresolved_without_raw_tables);
+    if(pv.reproducible_from_repo===false&&pv.builder)warn.push("Built by "+pv.builder+", so these records cannot be regenerated from this repository alone.");
+    if(pv.sibling_current_release&&pv.sibling_current_release.note)
+      warn.push(pv.sibling_current_release.note+" ("+pv.sibling_current_release.officialNeonRelease+")");
+    if(warn.length)h+='<div class="cp-note"><b>Limits.</b> '+warn.join(" ")+'</div>';
+    h+='</div></details>';
+  }
   coverPanel.innerHTML=h;
+  (function(){
+    var list=document.getElementById("plantList"), search=document.getElementById("plantSearch");
+    if(!list)return;
+    function render(q){
+      q=(q||"").toLowerCase().trim();
+      var groups={}, order=[];
+      P.forEach(function(p){
+        var hay=((p.common||"")+" "+p.sci+" "+p.tx+" "+p.id).toLowerCase();
+        if(q&&hay.indexOf(q)<0)return;
+        if(!groups[p.tx]){groups[p.tx]=[];order.push(p.tx);}
+        groups[p.tx].push(p);
+      });
+      if(!order.length){list.innerHTML='<div class="cp-note">No plant matches &ldquo;'+
+        q.replace(/[<>&]/g,"")+'&rdquo;.</div>';return;}
+      var out="";
+      order.forEach(function(tx){
+        out+='<div class="pl-grp">'+(TXNAME[tx]||tx)+' <span class="pl-n">'+groups[tx].length+'</span></div>';
+        groups[tx].forEach(function(p){
+          out+='<button class="pl-row" type="button" data-id="'+p.id+'">'+
+            '<span class="pl-id">'+p.id+'</span>'+
+            '<span class="pl-meta">tagged '+(p.date||"").slice(0,4)+' &middot; '+
+            (p.realh?p.h+' m':"size not measured")+(p.status==="dead"?' &middot; dead':'')+'</span></button>';
+        });
+      });
+      list.innerHTML=out;
+    }
+    render("");
+    if(search)search.addEventListener("input",function(){render(search.value);});
+    list.addEventListener("click",function(e){var b=e.target.closest(".pl-row"); if(b)selectById(b.dataset.id);});
+  })();
+  var tf=document.getElementById("tagFilterBtn");
+  if(tf){tf.innerHTML=SY[syi][1]; tf.addEventListener("click",function(){surveyBtn.click();});}
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
 })();
-coverBtn.addEventListener("click",function(){coverPanel.classList.toggle("open");});
+coverBtn.addEventListener("click",function(){
+  var open=coverPanel.classList.toggle("open");
+  coverBtn.setAttribute("aria-expanded",String(open));});
+// Escape closes the panel - it covers 88vw on a phone and the only other way out was a
+// 10px div.
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&coverPanel.classList.contains("open")){
+    coverPanel.classList.remove("open"); coverBtn.setAttribute("aria-expanded","false"); coverBtn.focus();}});
 // "About": a readable dark backdrop behind the top-left plot notes. Shown on first load for orientation; "Hide info" dismisses it.
-var infoBtn=document.getElementById("infoBtn"), topEl=document.querySelector(".top");
-function setInfo(on){topEl.classList.toggle("readable",on);infoBtn.innerHTML=on?"&#9432; Hide info":"&#9432; About";infoBtn.style.background=on?"#3d4a57":"#20242a";}
-setInfo(true);
-infoBtn.addEventListener("click",function(){setInfo(!topEl.classList.contains("readable"));});
+// "Hide" collapses the WHOLE description panel so the plot itself is unobstructed; a
+// single pill in the same corner brings it back. Previously it only toggled a backdrop,
+// which left the panel's ~340px of height on screen either way.
+var infoBtn=document.getElementById("infoBtn"), topEl=document.getElementById("topBox"),
+    infoReopen=document.getElementById("infoReopen");
+function setInfo(on){
+  topEl.hidden=!on;
+  infoReopen.hidden=on;                       // the pill and the card are never both up
+  infoBtn.setAttribute("aria-expanded",String(on));
+}
+// On a phone the description panel plus the control stack left a sliver of actual plot,
+// so it starts collapsed there. The reopen pill is always present.
+// The breadcrumb names the plot and site actually loaded, ready for ?plot=<ID>.
+var SITENAME={SRER:"Santa Rita"};   // display names for the breadcrumb
+(function(){
+  var cp=document.getElementById("crumbPlot"), cs=document.getElementById("crumbSite");
+  var pid=(DATA.plot||"SRER_048"), site=(DATA.provenance&&DATA.provenance.site)||pid.split("_")[0];
+  if(cp)cp.textContent=pid;
+  if(cs){cs.href="./walk.html?site="+encodeURIComponent(site);
+    cs.innerHTML=(SITENAME[site]||site)+' <span class="cw">(walk the site)</span>';}
+})();
+// Starts CLOSED on every screen: the plot is the point, and the reopen pill is always
+// visible so the panel is one obvious tap away.
+setInfo(false);
+infoBtn.addEventListener("click",function(){setInfo(false);infoReopen.focus({preventScroll:true});});
+infoReopen.addEventListener("click",function(){setInfo(true);infoBtn.focus({preventScroll:true});});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&!topEl.hidden){setInfo(false);infoReopen.focus({preventScroll:true});}});
 
 // ---- "Colour by" analysis modes + survey-campaign filter ----
 var colorBtn=document.getElementById("colorBtn"), surveyBtn=document.getElementById("surveyBtn"), cscale=document.getElementById("cscale");
@@ -521,28 +1021,69 @@ var RH=[[0,[214,198,150]],[0.5,[150,182,92]],[1,[42,92,52]]],   // height
     RD=[[0,[96,204,96]],[0.5,[236,202,72]],[1,[222,72,60]]];    // dead fraction
 function gradCss(R){return"linear-gradient(90deg,"+R.map(function(s){return"rgb("+s[1].join(",")+") "+(s[0]*100)+"%";}).join(",")+")";}
 var CM=["species","height","stems","dead"], cmi=0;
-function applyColor(){var m=CM[cmi];
+// A colour ramp is a claim of measurement. 75 of these 179 plants (42%) carry NO
+// structural record - 70 cacti, which NEON maps but measures under a separate protocol,
+// plus 5 woody plants that were mapped and not measured. Ramping them anyway invented
+// values the panel itself says do not exist: "1 stem" from (p.stems||1), "0% standing
+// dead" from a live-by-construction status, and a species-typical default height
+// rendered on a scale captioned "plant height". Unmeasured plants now render flat grey
+// and are counted in the legend instead.
+var NOMEAS="#6b6a66";
+// Ramp domains come from the loaded plot. Hard-coded 0.3-2.8 m and 1-20 stems were
+// SRER's ranges: a forest plot would peg every ring at maximum while the caption still
+// printed the desert numbers.
+var DOM=(function(){
+  var hs=DATA.plants.filter(function(p){return p.realh===true;}).map(function(p){return p.h;}),
+      ss=DATA.plants.filter(function(p){return p.stems!=null;}).map(function(p){return p.stems;});
+  function rng(a,d){return a.length?[Math.min.apply(null,a),Math.max.apply(null,a)]:d;}
+  return {h:rng(hs,[0,1]), s:rng(ss,[1,2])};
+})();
+function measured(p,m){
+  if(m==="height")return p.realh===true;      // h is a species default unless realh
+  if(m==="stems") return p.stems!=null;
+  if(m==="dead")  return p.stems!=null;       // share-of-stems needs a real stem count
+  return true;
+}
+function applyColor(){var m=CM[cmi],unmeas=0;
   for(var i=0;i<plants.length;i++){var p=plants[i].userData.p,mk=plants[i].userData.mk,col;
     if(m==="species")col=(p.status==="dead")?DEADMK:spCol(p,"mk");
-    else if(m==="height")col=lerp3(RH,(p.h-0.3)/2.5);
-    else if(m==="stems")col=lerp3(RS,((p.stems||1)-1)/19);
-    else col=lerp3(RD,p.stems?(p.dead||0)/p.stems:(p.status==="dead"?1:0));
+    else if(!measured(p,m)){col=NOMEAS;unmeas++;}
+    else if(m==="height")col=lerp3(RH,(p.h-DOM.h[0])/(DOM.h[1]-DOM.h[0]||1));
+    else if(m==="stems")col=lerp3(RS,(p.stems-DOM.s[0])/(DOM.s[1]-DOM.s[0]||1));
+    else col=lerp3(RD,(p.dead||0)/p.stems);
     mk.material.color.set(col);}
-  colorBtn.innerHTML="Colour: "+m;
+  colorBtn.innerHTML=m;
+  // The legend swatches show SPECIES colours. While the rings are coloured by height,
+  // stems or dead-share, those swatches are a second, contradictory key on screen.
+  lg.classList.toggle("nokey", m!=="species");
   if(m==="species"){cscale.style.display="none";return;}
   var R=m==="height"?RH:m==="stems"?RS:RD,
-    L=m==="height"?["ring colour = plant height","0.3 m","2.8 m"]:m==="stems"?["ring colour = stem count","1","&ge;20"]:["ring colour = share of stems standing dead","0%","100%"];
-  cscale.style.display="flex";cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2];}
+    L=m==="height"?["ring colour = plant height",DOM.h[0].toFixed(1)+" m",DOM.h[1].toFixed(1)+" m"]
+     :m==="stems"?["ring colour = stem count",String(DOM.s[0]),String(DOM.s[1])]
+     :["ring colour = share of stems standing dead","0%","100%"];
+  cscale.style.display="flex";
+  cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2]+
+    (unmeas?'&nbsp;&nbsp;<span class="nm"><i style="background:'+NOMEAS+'"></i>not measured ('+unmeas+')</span>':'');}
 colorBtn.addEventListener("click",function(){cmi=(cmi+1)%CM.length;applyColor();});
-var SY=[["all","2016+2021"],["2016","2016 only"],["2021","2021 only"]], syi=0;
-surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=SY[syi][0];surveyBtn.innerHTML="Survey: "+SY[syi][1];applyVis();});
+// "First tagged", not "Survey": the date on each plant is when its tag went on, not when the
+// plot was visited. Every plant is tagged once and re-measured later, so these groups can never
+// share a plant - that is the table's structure, not turnover. Labelling it "Survey 2016 vs 2021"
+// invites a recruitment/mortality reading the data cannot support.
+function syncTagFilter(){var b=document.getElementById("tagFilterBtn"); if(b)b.innerHTML=SY[syi][1];}
+surveyBtn.addEventListener("click",function(){syi=(syi+1)%SY.length;surveyYear=SY[syi][0];surveyBtn.innerHTML="First tagged: "+SY[syi][1];syncTagFilter();
+  var n=document.getElementById("tagNote");
+  if(n)n.style.display=(surveyYear==="all")?"none":"block";
+  applyVis();});
 
 // ---- default to the MAP-FIRST view: top-down over the real aerial with the plant markers.
 //      The 3D plant figures are the optional "augmented" layer (toggle Plants on, or Enter the plot). ----
-function setPlants(on){showPlants=on; applyVis(); plantsBtn.innerHTML="3D plants: "+(on?"on":"off");}
+function setPlants(on){showPlants=on; applyVis(); plantsBtn.innerHTML=(on?"on":"off");}
 // default: the MAP is the hero — top-down over the real aerial, 3D plant figures ON (from above),
 // clickable species rings. "3D plants" toggles the figures; "Enter the plot (3D)" is the first-person walk.
-if(GEO&&GEO.ortho){setMode("sky"); setLayer(1); setPlants(true);
+// Land overhead regardless of whether an aerial exists: a plot shipped without one
+// previously dropped the visitor straight into first-person, contradicting the flow.
+setMode("sky");
+if(GEO&&GEO.ortho){setLayer(1); setPlants(true);
   skyBtn.innerHTML="&#9654; Enter the plot (3D)";}else{setPlants(true);}
 applyColor();
 
@@ -559,7 +1100,8 @@ function loop(t){requestAnimationFrame(loop);
     sun.position.set(sky.x+28,60,sky.z+16); sun.target.position.set(sky.x,0,sky.z); sun.target.updateMatrixWorld();
     renderer.render(scene,ortho); return;
   }
-  var spd=9*dt,mf=0,ms=0;
+  // 9 m/s crossed this 40 m plot in four seconds - a sprint, not a walk.
+  var spd=1.4*dt*(walking?1:3),mf=0,ms=0;
   if(keys.KeyW||keys.ArrowUp)mf+=1;if(keys.KeyS||keys.ArrowDown)mf-=1;
   if(keys.KeyA||keys.ArrowLeft)ms-=1;if(keys.KeyD||keys.ArrowRight)ms+=1;
   if(walking)mf+=1;

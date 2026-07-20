@@ -14,8 +14,13 @@ Last updated: 2026-07-20.
 - **Step inside (3D walk):** https://claude.ai/code/artifact/93dc3028-3d44-4e50-88dd-5ce9b9985918
 
 To update either: republish the **same file path** via the Artifact tool (keeps the URL). From a
-different chat, pass the URL as `url`. The two pages cross-link by hardcoded artifact URL
-(`WALK_URL` in `index.html`; the back-link in `walk.html`) — update those if a URL ever changes.
+different chat, pass the URL as `url`.
+
+**Cross-linking is relative, not hardcoded** (as of rung 22). `index.html` → `./walk.html?site=CODE`
+and `./plot.html`; `walk.html` and `plot.html` → `./index.html`. The published artifact URLs are used
+**only** when the page is actually served from `claude.ai` (`ART` + `ON_ARTIFACT` in `index.html`, and
+the equivalent host test on `walk.html`'s back-link). This is what lets the prototype work opened
+straight from the repo — it previously did not. Update the `ART` map if an artifact URL ever changes.
 
 ## The concept ladder (what's built)
 
@@ -44,7 +49,11 @@ different chat, pass the URL as `url`. The two pages cross-link by hardcoded art
 | 18 | **Richer geometry** — scattered rocks + fallen logs, layered distant hills, rounder tree crowns | DONE | #28 |
 | 19 | **Generated textures** — per-biome ground + bark from an image model, embedded inline, on ground+trunks | DONE | #29 |
 | 20 | **Walkable forests** — real-LiDAR stems thinned from per-cell grid to sparse jittered scatter (sightlines!) | DONE | #30 |
-| 21+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
+| 21 | **Provenance receipt + scientific corrections** — every page now names its source vintage; six wrong/unsourced numbers fixed | DONE | — |
+| 21b | **Protocol review (NEON SOP)** — "Survey campaigns" was a misread; relabelled "First tagged", and three shipped claims corrected | DONE | — |
+| 22 | **Index explorer, pass 1** — driver cards show the plausible range; the invented year wheel is cut; the three pages finally link up | DONE | — |
+| 23 | **Production push, pass 1** — map gated to built sites; The Plot made phone-usable; controls restructured; plot source de-SRER'd | DONE | — |
+| 24+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -61,9 +70,10 @@ Earlier suite PRs (not this track): #5 = the complementary-app gap audit (merged
 A new direction (owner's idea): instead of a statistical/procedural impression, reconstruct **one real
 NEON plot plant-by-plant**. Test build: **SRER_048** (Santa Rita, Sonoran desert) — **179 real tagged
 plants** from Vegetation Structure (DP1.10098.001), each at its **real mapped position** (pointID +
-stemDistance + stemAzimuth, point coords from the locations API), sized by real height/crown, live vs
+stemDistance + stemAzimuth, point coords from the locations API), drawn at real height/crown **for the
+104 NEON measured** (the other 75 at a species-typical size, marked with an open ring), live vs
 standing-dead, and **click a plant to read its actual NEON record** (species, individualID, tag year,
-measured height/crown, status). 9 species, 104 measured heights, 28 dead. See `build_plot.md`. Live
+measured height/crown, status). 9 species, 104 measured heights, 5 whole plants dead of the 104 assessed. See `build_plot.md`. Live
 artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
 (self-contained), `plot-srer048.json` + `div-srer.json` (derived), `plot.src.html` (template),
 **`assemble_plot.py`** (reproducible re-inliner — commits, needs no raw data/token), `build_plot.md` (recipe).
@@ -100,9 +110,11 @@ AOP shares our UTM grid and is the correct, openly-licensed source.
 mariola) is shaped by its own NEON record: mean **basalStemDiameter** → stem/trunk thickness,
 **ninetyCrownDiameter** → **elliptical** crowns, and recorded canopy **shape** → vertical profile.
 
-**Multi-stem correctness (done):** these plants are MULTI-STEM (median 10 stems, up to 45), and `plantStatus`
+**Multi-stem correctness (done):** these plants are MULTI-STEM (median 11 stems, up to 45), and `plantStatus`
 is **per stem**. Old code picked one stem and mislabelled whole plants — the real counts are **5 fully dead,
-80 partially-dead (some stems dead), 23 all-live** (not "28 dead"). `build_plot.py` now aggregates: `stems`
+80 partially-dead (some stems dead), 19 all-live** (not "28 dead") — of the **104** plants that carry a
+VST apparent-individual record. The other 75 (the cacti) have no such record, so their status is not
+assessable and they are not in that denominator. `build_plot.py` now aggregates: `stems`
 (count), `dead` (dead-stem count), status = dead only if EVERY stem is dead. Creosote renders its real stem
 count with the dead fraction as bare grey stems among green live ones; the card reads e.g. "live · 7 of 16
 stems standing dead · some damage".
@@ -114,7 +126,8 @@ shrubs in the aerial but no records). Boundary = a 40 × 40 amber survey-tape re
 re-anchored to the plot centre (HW 25 → 50 m window) and re-validated (plants still land on the real shrubs).
 
 **Map-first default (done):** the primary view is the top-down **map** — the real NEON aerial with each plant
-as a crisp species-coloured **ring** at its real crown size, inside the 40×40 boundary. The 3D plant figures
+as a crisp species-coloured **ring** — a solid disc at NEON's measured crown size, or an open ring at a
+species-typical size where NEON did not measure the plant — inside the 40×40 boundary. The 3D plant figures
 are **on by default** in the map (seen from above); the **"3D plants"** toggle hides them for a clean
 rings-on-aerial view, and **"Enter the plot (3D)"** is the first-person walk. Marker/legend/panel colours share
 one bright data-viz palette (`SP[tx].mk`).
@@ -129,7 +142,9 @@ per-plant proxy pick-list (`PICK`).
 click-inspect) so you can compare our mapped positions against the aerial / canopy layers.
 
 **Cover & species panel (done):** a "Cover & species" side panel shows the plot's **estimated woody canopy
-cover (~26.6%)** by species (from the real crowns ÷ 1600 m²), plus **SRER site-level ground cover** from plant
+cover (~53.9%)** by species (summed live crown ellipses π(cr÷2)(cr90÷2) ÷ the **790 m² surveyed**
+strip, not the full 1600 m² plot — VST mapped only the eastern half, so the unsurveyed west is
+excluded from the denominator rather than counted as measured zero cover), plus **SRER site-level ground cover** from plant
 diversity (litter 57% / bare soil 26% / rock 8% …) and the understory species (Lehmann lovegrass, black grama,
 tanglehead, burroweed, fairy duster). SRER_048 is not itself a diversity plot, so the ground/understory layer
 is site-level context (`div-srer.py` → `div-srer.json`, 2024 growing season), clearly labelled.
@@ -160,11 +175,349 @@ have no VST apparent record → species defaults). Positions unchanged, so the A
 plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,
 more plots.
 
+## Rung 21 — the provenance receipt (and the numbers it exposed)
+
+The prototype's data was **correct but unfalsifiable**: nothing on any page said *which* vintage of a
+versioned, revised NEON product it came from. A review against the sibling Vegetation Structure
+Explorer — which has since pinned itself to **RELEASE-2026** (DOI `10.48443/pypa-qf12`) with an exact
+raw digest — made the gap concrete. Fixed in two halves.
+
+**The receipt.** `export_data.py` now reads the `source_products` table that
+`scripts/build_cascade.R` already writes into the bundle, and stamps it into `site-data.json.meta.provenance`
+together with the bundle's SHA-256, schema version, build time and tier rule. The explorer footer renders
+it: bundle `47b98e48…` · built 2026-07-03 · and, behind a disclosure, the **exact sibling commit for all
+seven source products** (veg is pinned at `5e73e0d`). `plot-srer048.json` and `div-srer.json` gained a
+`provenance` object each, and The Plot's panel now has a "Where this data came from" section. Where a
+field genuinely cannot be recovered it says **UNKNOWN with the reason** rather than staying silent —
+the release tag was never captured because the build queried the live API, and `build_plot.py` is not
+committed, so those records are not reproducible from this repo alone. Both facts are now stated on the
+page instead of being invisible.
+
+**What the receipt exposed.** Writing down the formula forced four published numbers to be corrected:
+
+- **Canopy cover was normalised to the wrong denominator.** Cover divided by the full 1600 m² plot
+  while density, eleven lines earlier, divided by the 790 m² *surveyed* strip — two denominators for
+  one plot in one panel. VST mapped only the eastern half, so the whole-plot divisor counts 810 m² of
+  never-surveyed ground as measured zero cover. Now **53.9% over the surveyed area**, with the formula
+  (live-only, elliptical) written out and the whole-plot figure kept as a labelled aside.
+- **"23 all-live" was arithmetically impossible** — 5 + 80 + 23 = 108 against 104 records. It is **19**.
+- **Stem median was 10; it is 11.** And the retired **"28 dead"** still survived in two places.
+- **"5 of 179 whole plants dead"** conflated assessed with unassessable: 75 plants carry no VST
+  apparent-individual record and are live by construction. Now **"5 of 104 assessed"**.
+
+**Also fixed in this rung.** A genuine honesty-rail break: **NIWO** (tundra bucket, `ba` 31.1 m²/ha)
+rendered treeless while its caption claimed "built from … measured standing wood" — the tundra branch
+never reads `ba`. The claim is now made only when the bucket actually used the measurement, and the
+unused figure is disclosed instead of asserted. Plus: **no page had a `<meta name="viewport">`**, so
+every responsive rule was dead on real phones (mobile browsers laid out at ~980 px and scaled down);
+added, along with the `<meta charset="utf-8">` all three pages were missing. `assemble_plot.py` read
+and wrote with the platform's locale encoding and newline translation — on this Windows host that is
+cp1252 + CRLF, which would corrupt the UTF-8 text and violate `.gitattributes eol=lf`; now explicit.
+
+## Rung 21b — the protocol review (and the caveat it reversed)
+
+Rung 21 shipped a caveat calling The Plot a "two-bout composite, not a census," reasoning that pooling the
+2016 and 2021 survey campaigns violated the sibling's rule against pooling repeated events. **That reasoning
+was wrong**, and a review against the published NEON VST protocol (NEON.DOC.000987, the DP1.10098.001 user
+guide, and the Cactus SOP NEON.DOC.001715) reversed it. Recorded here because the mistake is more instructive
+than the fix.
+
+**The misread.** `vst_mappingandtagging` is a *one-row-per-individual tagging table*: its date is when a
+plant's tag went on, not when the plot was visited. Plants are tagged once and re-measured in later bouts.
+So grouping 179 individuals by that date can never show the same plant twice — the "zero overlap between two
+disjoint cohorts" that looked like a finding is **arithmetically forced by the table's structure**. It is a
+diagnostic that the wrong column was joined, not evidence about the vegetation.
+
+**What the two groups actually are.** First-tag cohorts under *different survey scopes*:
+
+| tag date | n | measured | what |
+|---|---:|---:|---|
+| 2016-10-26 | 83 | 81 | creosote + mesquite — the woody bout |
+| 2021-10-13/14 | 21 | 21 | more woody |
+| **2021-04-27** | **6** | **0** | Engelmann prickly pear — the spring *Opuntia* campaign |
+| **2021-10-18** | **64** | **0** | cholla, barrel, pincushion, saguaro |
+
+Every cactus carries a 2021 tag and **no** structural measurement. That is protocol: NEON's standard woody
+protocol does not map cacti at all; Santa Rita (Domain 14) has a written site-specific exception to *map*
+large-stature cacti, which postdates the 2016 bout and needs its own spring visit; and cacti are *measured*
+under a separate Cactus SOP into a different table. A saguaro is decades old — it did not arrive in 2021.
+
+**Three shipped claims corrected.** "75 plants (the cacti)" → **70 cacti + 5 woody**. The "9 species"
+headline → 9 *mapped*, but **2 → 4 among measured** species. And the condition on screen is roughly a **2021
+snapshot**, not the tag year: 2016-tagged mesquites carry basal diameter, but SRER only measured mesquite
+that way from 2020 onward, so the build joined each plant's latest record.
+
+**The fix in the UI.** The "Survey: 2016+2021" control — which invited exactly the recruitment reading the
+protocol forbids — is now **"First tagged"**, and narrowing it raises a note explaining that no plant can
+appear in both years and that a plant missing from a year was not absent, just not yet tagged. The cover
+figure is additionally marked approximate: its 790 m² divisor is the bounding box of the mapped plants, not
+NEON's recorded sampled area, which makes it a lower bound and the percentage an upper bound.
+
+**Still UNKNOWN, deliberately.** Growth, survival, true recruitment and the recorded sampled area all need
+`vst_perplotperyear` and `vst_apparentindividual` keyed on `eventID` — neither is committed here. The page
+says so rather than guessing.
+
+## Rung 22 — the index explorer, pass 1
+
+A seven-lens audit found the index was not an outline but **a finished shell around an invented
+middle**: `FEAT` hand-wrote prose and 12-month rain/green/animal curves for 3 sites, `BIOME` supplied
+5 canned templates for the other 43. So the hero and year wheel carried no site-specific information
+for 43 of 46 sites — all 26 forest sites shared one sentence — and `select()` printed that sentence
+**twice on the same screen**.
+
+**Two honesty breaks, both fixed.**
+
+1. Driver cards drew a **solid** bar of width `|r|` and labelled the p-value **"confidence"**. A solid
+   bar reads as a firm result; a non-scientist reads "confidence 0.88" as 88% sure, which is close to
+   the opposite. KONZ's first card has r = −0.22 over an interval of **−1.00 to +0.70** and drew as a
+   confident bar 22% wide. The bundle carries a plausible range for all **162** links and **133 of them
+   straddle zero** — none of which was visible. Replaced with a whisker on a zero-centred −1…+1 axis:
+   hatched band lo→hi, dot at r, and a verdict word derived from the interval itself
+   ("points one way" / "can't tell which way yet"). `p` moved to the drawer, relabelled
+   *"how easily chance alone could produce a pattern this strong — higher means more easily."*
+   Correcting a misread number teaches; hiding it does not.
+2. The year wheel gave featured sites `"Rhythm sketch for this site."` instead of
+   `"(schematic, not measured monthly data)"`. The page boots on SRER, so **the first wheel any
+   visitor saw was the one missing its caveat**, and it said "for this site" — implying measured data.
+   The bundle is annual; no month on that wheel was measured for any of the 46 sites.
+
+**The wheel is cut, not captioned.** Removing it removes the break; captioning only manages it, and
+hanging real units on fabricated rings would make it worse. Gone: the section, its CSS, `drawWheel`,
+the player, and every invented month array and `thesis`/`rhythmText` string. **Kept:** the per-biome
+colour palettes, which are design tokens, not claims.
+
+**The hero sentence is now derived.** `siteAnswer()` reads the site's own intervals: it names the
+strongest link whose range stays one side of zero, or says plainly that none is clean enough to call.
+Across the 46 sites that yields 22 with a readable link, 23 honestly reporting nothing clean, and 1
+(TEAK) with too little data — "an honest gap, not an empty place."
+
+**The three pages are finally one journey.** `index.html` had **no reference to `plot.html` at all**,
+and pinned the walk to a private `claude.ai/code/artifact/…` URL — so opened from the repo, the
+prototype's own navigation did not work. Both now resolve **relatively**, falling back to the artifact
+URLs only when actually served from that host. The dead `WALKABLE` list was replaced with the real
+seven-site LiDAR set, and the walk link now states ground truth: *"this canopy is a real laser scan"*
+for those 7, *"drawn from 5.1 m²/ha of measured wood"* for the 33 with a measurement, *"built from
+ground cover"* for the 6 without. A second rung links The Plot, active on SRER (the default landing
+site) and explicitly disabled elsewhere with "Santa Rita only, so far."
+
+**Still to do** (from the audit, in order): the field card rebuilt from data for all 46; the masthead
+orienting paragraph; the solid-vs-null result pair with map result-mode; the weather→plants→animals
+chain from the 20 unused `signals`. Also unused and worth surfacing: `biome_class` (41
+temperature-limited / 5 water-limited), `veg_ba_se`, `veg_design_status`, `lat`/`lon`, and
+`network.null` — the matched null result (temp_spring→green-up, 8 of 18, p = 0.76) that proves the
+test can fail.
+
+## The goal, and the ladder
+
+The target is **a production-ready product for Santa Rita** that works as the case for building
+this across the whole NEON network. Not a prototype — a showcase whose job is to earn the
+network-wide build. The ladder:
+
+```
+SRER_048 perfected → template → all SRER plots → site-level plan → [decision] → next site → network
+```
+
+Plot #2 is **another SRER plot**, so the hard things (camera, scale, species models, ground layers)
+stay fixed and only plot geometry and the plant list vary.
+
+**What step 2 actually is, measured from the Vegetation Structure bundle:** SRER has **38 plots with
+VST data (~20,000 records)**, 20 distributed and 18 tower. SRER_048 is the richest of all 38 (2,121
+records). Sampled areas **vary per plot** — trees 400–800 m², shrub 200–800 m²; SRER_048 is a tower
+plot at 800/600 m². Plot geometry is therefore per-plot data, already available for all 38, and must
+never be hard-coded. The bundle also carries `area_trees`/`area_shrub`, which is NEON's **recorded**
+sampled area — the value that should eventually replace the inferred cover denominator.
+
+**Two-channel data contract:** the woody plants come from the Vegetation Structure table; the cacti
+do **not** — they are mapped under a site-specific exception and measured under a separate Cactus
+SOP into a different table. SRER_048 has 179 mapped plants but only 114 appear in the woody bundle.
+Any future build must pull both channels or explicitly account for the gap.
+
+## Rung 23 — the production push
+
+**The map is now a build registry.** All 46 sites still render — this is a case for a network-wide
+build and hiding the other 45 would hide the argument — but only built sites are interactive, driven
+by one object:
+
+```js
+var BUILT = { SRER: {plot:"SRER_048", plots:1} };
+```
+
+The map, picker, directory and `select()` all read it, and `select()` guards on it. **Activating the
+next site is one line.** Unbuilt sites are drawn as scenery, not disabled controls: muted, no
+`tabindex`, `role="img"`, and an aria-label saying why. A greyed-out button reads as broken software
+45 times out of 46; a quiet dot on a network map reads as scope.
+
+**The Plot now works on a phone.** Three independent failures: `pointer-events` sat on the *containers*,
+so the control row swallowed drags and taps across most of the viewport while the hint said "drag to
+pan"; the tap-vs-drag gate compared accumulated path length, which only grows, so a wobbling thumb
+defeated it; and the overhead view could not be zoomed at all, because zoom was wheel-only and the
+canvas sets `touch-action:none`. All three fixed, plus the description panel now starts collapsed
+under 768 px.
+
+**Seven peer buttons became four controls** — `[▣ Map | ▲ Walk in]`, `[Layers ▾]`, `[ⓘ Plot data]` —
+with the legacy buttons kept hidden so every existing handler still works. The **First-tagged filter
+moved into the data panel**, directly beneath the paragraph explaining that these are first-tag
+cohorts and not re-surveys: it is the one control that invites a reading the data forbids, and its
+caveat used to live in a `title` attribute touch users never see.
+
+## The scale-out contract — read this before adding plot #2
+
+Adding a plot should cost **one JSON file + one registry line + any missing species models.**
+Anything more is a design failure to fix *before* plot #2, not during it.
+
+**Data contract.** `plot-<PLOTID>.json` matching the SRER_048 shape: `plot, plotDim, ex, ey, n,
+cover{...}, note, plants[], legend[], provenance{}`, plus `surveyNote` and `mappedExtent`. Rules:
+1. **Optional fields must degrade, never crash.** `realh, stems, bd, cr90, shape, canopy, dmg` are
+   absent on all 75 unmeasured plants and the renderer handles it. Absent fields must render as
+   *not measured* — never as a ramp value. (This was a live bug: the colour modes were painting
+   invented values for 42% of the plot.)
+2. **`provenance` is mandatory**, and must carry `officialNeonRelease` even when the value is the
+   literal `UNKNOWN`, with a `release_basis` saying why. The rail is *UNKNOWN and why, never nothing*.
+3. **A species model per `taxonID`** must exist in `SP{}` or the plant falls back to a generic mound —
+   and that fallback must be *labelled*, never silent. A second Sonoran plot reuses most of the 9
+   existing models; a different biome needs a whole new family. **This is the real cost of plot #2.**
+4. **A georeferenced AOP crop, or an explicit `null`.** The page now lands overhead either way.
+
+**Already made data-driven (do not regress these).** Each was a latent honesty bug that would have
+shipped a false sentence at plot #2:
+
+| Was hard-coded | Now |
+|---|---|
+| survey-extent prose ("the eastern half") | `DATA.surveyNote` |
+| unsurveyed shading inferred as always-west | `DATA.mappedExtent.xmin`, inference only as fallback |
+| tag-year filter `["2016","2021"]` | derived from `plants[].date` |
+| at-a-glance year tallies | derived per year |
+| colour ramp domains 0.3–2.8 m, 1–20 stems | computed from the loaded plot *(this also fixed a real bug — stems actually reach 45, so multi-stem plants were saturating)* |
+| cover caveat naming 790 m² and "western half" | assembled from `cover.surveyedArea` + `cover.denominatorBasis` |
+| boot mode conditional on an aerial existing | always lands overhead |
+
+**Freeze now.** One template file keyed by query string (`plot.html?plot=SRER_048`) — never a second
+copy of the source; the control layout above; the `BUILT` registry as the single source of what
+exists; and a plot-picker slot in the breadcrumb from day one, even while it renders as one item.
+
+**Templating — where it actually stands.** `assemble_plot.py` now takes `--plot <ID>` (and `--out`),
+so the build is no longer hard-wired to SRER_048: it resolves `plot-<id>.json`, refuses a mismatch
+between the requested id and the file's own `plot` field, and fails cleanly if the data does not
+exist. The page reads `?plot=<ID>` and **validates** it — if you ask for a plot that has not been
+built, it says so rather than silently showing SRER_048, which would be the page lying about what
+it is displaying.
+
+What is *not* solved, deliberately: the page inlines **one** plot so it stays self-contained and
+needs no network. Inlining all 38 SRER plots would add roughly 2 MB; generating 38 separate pages
+would be roughly 37 MB, since each carries its own copy of Three.js. Neither is acceptable. **The
+production answer is a shell page that fetches `plot-<ID>.json` on demand** (~54 KB each) — that is
+a hosting decision, not a code one, and self-containment was a constraint of artifact hosting rather
+than of the design. Take that decision before plot #2, not during it.
+
+**Still to do before plot #2:** replace the inferred cover denominator with NEON's recorded
+`area_shrub` (600 m² for SRER_048 — the value exists in the Vegetation Structure bundle); and a
+keyboard path to the 179 records, since the payload is still reachable only by pointer.
+
+## Lesson: syntax checking is not a boot check
+
+Three separate runtime-ordering bugs shipped in one day, each of which left `plot.html` frozen on
+"Reconstructing the plot…" — because the loading overlay is only hidden on the **last** line of the
+script, so *any* exception anywhere leaves it up forever.
+
+All three were `var X` declared **after** the top-level code that read it. `var` hoists as
+`undefined`, so the read throws a `TypeError` rather than a `ReferenceError`, and — crucially —
+`node --check` passes every time, because the **syntax is valid**. The bugs were:
+
+| Symbol | Declared | First used | Introduced by |
+|---|---|---|---|
+| `SITENAME` | line 802 | line 774 | the breadcrumb |
+| `TAGYEARS` | line 843 | line 436 | de-SRER'ing the tag-year filter |
+| `SY` / `syi` | line 846 | line 531 | moving the filter into the data panel |
+
+The pattern behind all three: `buildCover()` is an IIFE that runs **immediately**, near the top, but
+kept acquiring references to things declared further down as the file grew.
+
+`check_boot.js` exists because of this. It executes each page's authored script against a stub DOM
+and a Proxy-based THREE, and fails loudly with the offending line. It found two of these three; only
+the first was caught by hand. It cannot prove a page *looks* right — nothing renders — but it proves
+the script runs to completion, and that is exactly the failure mode that had been shipping.
+
+## The cover figure was wrong three ways — what replaced it
+
+The published "~53.9% canopy cover" was wrong in a way that outranked the denominator debate, and the
+fault was mine: **13.1% of the numerator was invented.** All 75 plants without a structural record
+carry a *per-species constant* crown diameter — every one of the 53 Christmas cholla is exactly
+0.7 m, every unmeasured mesquite exactly 3.2 m — distinguishable only by a missing `cr90`. The cover
+sum gated on `status === "live"` rather than on whether a crown was actually measured, so those
+defaults were summed as though they were data. This is the *same* bug recorded as fixed for the
+colour ramps; it was never fixed in the headline number.
+
+| | |
+|---|---|
+| measured woody crowns | **370.0 m²** (99 plants) |
+| placeholder woody | 28.1 m² (5 plants) |
+| placeholder cacti | 27.8 m² (70 plants) |
+| **invented share of the published figure** | **13.1%** |
+
+Two further errors, both confirmed against the protocol:
+
+- **The denominator was a guess when it did not need to be.** 790 m² was the bounding box of the mapped
+  plants. The real figure is **800 m² by design**: protocol Table 10 samples two of the four 20 × 20 m
+  subplots of a 40 × 40 m base plot. The "unsurveyed western half" was the sampling design all along.
+- **The caveat pointed the wrong way.** It said the divisor was a lower bound and the percentage an
+  upper bound. That holds only for the tree channel; for a nested-subplot channel the sampled area can
+  be *smaller* than the bounding box, so the published number could equally have been an under-estimate.
+
+Now reported as a **crown area index in m²/m²**, never a percentage, with cacti held out as a count.
+
+**Still unresolved, and stated on the page:** the 800 m² assumes the measured woody plants were searched
+across the full selected subplots. If they came from nested subplots the denominator is smaller and the
+index higher. Settling it needs `subplotID` per record — which the committed file does not carry.
+
+**Contract gap that must close before plot #2:** no plant record carries `growthForm`, `subplotID` or
+`eventID`. `growthForm` assigns the measurement channel and therefore which sampled area applies;
+`subplotID`/`eventID` pins the denominator. Without them the same ambiguity propagates to 37 more plots.
+NEON records these areas per `plotID` × `eventID`, they can be NULL when a growth form is not scheduled,
+and at SRER *Prosopis velutina* changed channel in 2020 — so the channel must be read per record, never
+per species. Recorded in the file as `contractGaps`.
+
+## No-guessing audit — what remained, and what still needs raw NEON data
+
+A full sweep for values or visuals not backed by real per-plant data. Three remained; two are now
+closed, one cannot be without re-pulling raw NEON tables.
+
+**Closed — 75 plants were drawn at species-typical sizes with no visual marker.** The 3D/map view sized
+every plant from `p.h`/`p.cr`, but for 75 of 179 those are per-species *defaults*, not measurements
+(`realh !== true`). They were disclosed on click ("~X m typical") and greyed in the colour modes, but
+the default view drew them at full fidelity as if real. They now render as an **open ring** (measured
+plants keep a solid disc), the About card introduces the distinction, and the at-a-glance panel states
+"104 measured · 75 species-typical". Docs that claimed "sized by its real height/crown" for all plants
+(build_plot.md, PROGRESS.md ×2) are corrected to scope it to the 104 measured.
+
+**Closed — the "eastern half was not surveyed" framing was wrong and partly circular.** The eastern half
+is the *sampling design* — NEON samples two of the four 20×20 m subplots of a 40×40 m base plot (protocol
+Table 10), and `area_trees = 800 m²` confirms it — not a survey that skipped the west. And "eastern" was
+inferred from where the plants sit, so it is stated as "where the two sampled subplots are", not asserted
+as an independently verified selection. Reframed in `surveyNote`, `mappedExtent`, and build_plot.md.
+
+**Open — needs raw NEON data I do not have.** The 800 m² denominator assumes the woody plants were
+searched across the full selected subplots rather than nested subplots; if nested, the denominator is
+smaller and the index higher. Settling it needs `subplotID` per record. More broadly, no plant record
+carries `growthForm`, `subplotID` or `eventID` (the `contractGaps`), which assign the measurement channel
+and pin the denominator. Closing these requires re-running `build_plot.py` — which needs the raw VST CSVs
+and a NEON API token, neither committed. **This is stated as unresolved on the page rather than guessed.**
+Until the raw pull is redone, the index carries its on-screen "unresolved" caveat and must not be
+presented as settled.
+
 ## Files (all under `prototypes/site-explorer/`, outside the app's build surface)
 
-- `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined).
-- `walk.html` — the 3D scene (Three.js r128 inlined; ~1236 KB; deep-linkable via `?site=CODE`).
-- `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science).
+- `index.html` — the main explorer (self-contained; `site-data.json` + `map-data.json` inlined; ~133 KB).
+- `walk.html` — the 3D scene (Three.js r128 inlined; ~1270 KB; deep-linkable via `?site=CODE`, case-insensitive).
+- `plot.html` — "The Plot", SRER_048 (self-contained; ~952 KB). Built from `plot.src.html` by `assemble_plot.py`.
+- `export_data.py` — reads `data/cascade.rds` + `neon-site-names.json` → `site-data.json` (real science
+  **plus the provenance receipt**: bundle SHA-256, build time, schema, and the seven source-product commits).
+- `assemble_index.py` — re-inlines `site-data.json` + `map-data.json` into `index.html`. Idempotent;
+  replaces only the two tagged block bodies. (This step used to be a manual paste, which is not a build step.)
+- `assemble_plot.py` — re-inlines the scene template + committed JSON into `plot.html` (needs no raw data or token).
+- `check_boot.js` — **runs each page's script for real** against a stub DOM and reports the first
+  exception. `node --check` only validates syntax; this proves the script reaches its end, which is
+  the difference between a working page and one frozen on its loading overlay. Run it before every
+  commit: `node check_boot.js index.html walk.html plot.html`.
 - `build_map.py` — projects a US-states GeoJSON + site coords → `map-data.json`.
 - `build_lidar.py` — a real CHM GeoTIFF (or a synthetic stand-in) → `lidar-<site>.json` height grid.
 - `site-data.json` / `map-data.json` / `neon-site-names.json` — generated/fetched data.
@@ -179,6 +532,42 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
 
 ## Key facts / honesty rails (keep these true)
 
+- **Every number names its vintage.** NEON products are versioned and revise prior data, and the sibling
+  apps this bundle was built from keep moving. "From the committed bundle" is not provenance. The explorer
+  footer carries the bundle SHA-256, build time and all seven source-product commits; The Plot's panel
+  carries its product, access bound, release (currently **UNKNOWN**, with the reason) and bout composition.
+  A field that cannot be recovered says `UNKNOWN` **and why** — never nothing.
+- **The Plot's dates are first-tag dates, and the two groups are NOT re-surveys.**
+  `vst_mappingandtagging` holds one row per individual — the date its tag went on. A plant is tagged once
+  and re-measured in later bouts, so grouping by that date *cannot* show the same plant twice: the zero
+  overlap between the 2016 (88) and 2021 (91) groups is forced by the table's structure and is **not**
+  evidence of recruitment, mortality or turnover. The control is labelled **"First tagged"**, and narrowing
+  it raises an explanatory note. Never call these "survey campaigns" or "re-surveys."
+- **The Plot may not claim recruitment, mortality, turnover, or rising richness.** NEON records death as
+  `standing dead` / `lost, presumed dead`, never as an absent row, so a plant missing from a group is not a
+  plant that died. And the species difference between the groups is survey *scope*: NEON's standard woody
+  protocol does not map cacti at all, Santa Rita has a site-specific exception that postdates the 2016
+  bout, and cacti are measured under a separate Cactus SOP into a different table. Among *measured* plants
+  the species count goes 2 → 4, not 2 → 9.
+- **Condition shown is roughly a 2021 snapshot, not the tag year.** 2016-tagged velvet mesquite carry basal
+  diameter, but SRER measured mesquite at basal diameter only from 2020 onward (as a tree at DBH before) —
+  so the build joined each plant's *latest* measurement. The tag year says when a plant entered the record;
+  it does not date the measurements drawn on screen.
+- **There is no cover percentage, and there must not be one.** The page reports a **woody crown area
+  index — 0.46 m² of crown per m² of ground** (370 m² of measured crown over the 800 m² NEON searched,
+  99 plants). Three independent reasons a percentage would be wrong: crowns **overlap**, so a sum is not a
+  union; each crown is measured from its **two maximum diameters at right angles**, so the ellipse
+  circumscribes an open desert crown; and the measurement "may include live and dead material". The
+  denominator is **800 m² by design** — a 40 × 40 m base plot is sampled in two of its four 20 × 20 m
+  subplots, randomly selected, and at SRER_048 those are the eastern pair. That is *why* the plants fill
+  half the plot; it was never a survey gap. **Cacti are excluded** — NEON measures them under a separate
+  Cactus SOP against a different sampled area, and at Santa Rita only large-stature individuals are
+  mapped, so they are a mapped subset, not a census. They are reported as a count and species list.
+- **This is a map of tagged individuals, not of every plant in the plot.** Saplings are never mapped, and
+  a plant with no stem ≥ 1 cm basal diameter is outside this protocol entirely.
+- **A scene may only claim a measurement it actually used.** The tundra branch ignores `veg_ba_ha`, so
+  NIWO must not say it was "built from measured standing wood" (it renders from ground cover alone); the
+  unused figure is disclosed instead. Same rule for grassland below its `ba > 2` threshold.
 - The science is **real** from the committed bundle: the one solid pooled result is `temp → green-up`,
   **15 of 18 sites, p = 0.004**. Single-site values are framed as *direction, never significance*
   (no short series can be significant); context-only measures are labelled "not counted in the network test".
@@ -262,10 +651,15 @@ rebuild's captured code surface (`R/`, `scripts/`, `www/`, top-level runtime fil
 
 ```bash
 pip install rdata
-python3 prototypes/site-explorer/export_data.py            # -> site-data.json
+python3 prototypes/site-explorer/export_data.py            # -> site-data.json (+ provenance receipt)
 python3 prototypes/site-explorer/build_map.py us.json       # -> map-data.json (us.json = a US-states GeoJSON)
-# then inline site-data.json / map-data.json into index.html's <script id="siteData"> / <script id="mapData">
+python3 prototypes/site-explorer/assemble_index.py          # -> re-inlines both into index.html (idempotent)
+node prototypes/site-explorer/check_boot.js      prototypes/site-explorer/{index,walk,plot}.html        # -> must print BOOT OK for all three
 ```
+
+The re-inline used to be a manual paste. It is a build step now: `assemble_index.py` replaces only the
+bodies of the two tagged `<script>` blocks, parses each JSON first (so a malformed file fails loudly
+instead of shipping), and is a no-op when the data has not changed.
 Verify headlessly with Chromium at `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` via
 `playwright-core` (WebGL needs `--enable-unsafe-swiftshader`). Every rung was checked for 0 console/page
 errors, correct rendering, and no 390 px mobile overflow before merge.

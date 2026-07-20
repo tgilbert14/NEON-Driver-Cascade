@@ -129,7 +129,7 @@ holds annual signals, not measured monthly data — the wheel is labeled as such
 pip install rdata
 python3 prototypes/site-explorer/export_data.py     # reads data/cascade.rds + neon-site-names.json -> site-data.json
 python3 prototypes/site-explorer/build_map.py us.json  # projects a US-states GeoJSON -> map-data.json
-# then inline site-data.json and map-data.json into index.html's <script id="siteData"> / <script id="mapData"> blocks
+python3 prototypes/site-explorer/assemble_index.py    # re-inlines both into index.html (idempotent)
 ```
 
 `export_data.py` only **reads** the committed bundle (it never rebuilds it) and merges the committed
