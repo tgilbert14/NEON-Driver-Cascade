@@ -16,10 +16,15 @@
     gap:.75rem;padding:clamp(.8rem,3vw,1.6rem);overflow:hidden}
   /* margin-bottom:auto keeps the bottom stack pinned to the bottom when the top panel is
      hidden; with plain space-between and one child gone the survivor jumps to the top. */
-  #ui > .top{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto;
-    margin-bottom:auto}
+  /* The About panel is a self-contained card, not a stretchy flex child. It starts
+     CLOSED, so it never competes with the scene for height, and its content is written
+     short enough to fit without a scrollbar - the scroll was only ever there because the
+     panel was open by default and could outgrow the viewport. */
+  #ui > .top{flex:0 0 auto;pointer-events:auto;max-width:min(34rem,92vw)}
+  #ui > .top[hidden]{display:none}
+  #ui > .reopen{flex:0 0 auto}
+  #ui > .geocredit{flex:0 0 auto;margin-top:auto}   /* pins the rest to the bottom */
   #ui > .bottom{flex:0 0 auto;min-height:0}
-  #ui > .geocredit{flex:0 0 auto;margin-top:auto}
   .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:#ffffffb0;text-shadow:0 1px 6px #000a}
   .ttl{font-family:var(--serif);font-weight:600;font-size:clamp(1.5rem,4.5vw,2.4rem);line-height:1.05;margin:.15rem 0;text-shadow:0 2px 16px #000b}
   .sub{font-size:.9rem;color:#fdf8eecc;max-width:44ch;text-shadow:0 1px 10px #000a}
@@ -30,14 +35,8 @@
     font-family:var(--mono);font-size:.66rem;color:#f4efe3;text-align:center;text-shadow:0 1px 6px #000b;line-height:1}
   #compass .ar{font-size:1.15rem;display:block}
   .top{max-width:52ch}
-  .ttlrow{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
   /* the toggle sits with the title it controls, not adrift in the bottom button row */
-  .infotog{font:inherit;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;
-    cursor:pointer;color:#f4efe3;background:#ffffff1a;border:1px solid #ffffff33;border-radius:999px;
-    padding:.3rem .7rem;pointer-events:auto;backdrop-filter:blur(6px);white-space:nowrap;min-height:32px}
-  .infotog:hover{background:#ffffff2e;border-color:#ffffff55}
-  .infotog:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
-  .reopen{position:absolute;top:clamp(.8rem,3vw,1.6rem);left:clamp(.8rem,3vw,1.6rem);
+  .reopen{position:static;align-self:flex-start;
     font:inherit;font-size:.8rem;cursor:pointer;color:#f4efe3;background:#12110deb;border:1px solid #ffffff2a;
     border-radius:999px;padding:.45rem .9rem;pointer-events:auto;backdrop-filter:blur(8px);
     box-shadow:0 6px 20px #0007;min-height:36px}
@@ -81,8 +80,23 @@
   .lg:hover{border-color:#ffffff55}
   .lg.off{opacity:.4;text-decoration:line-through}
   .lg.off i{filter:grayscale(1) brightness(.7)}
-  .top.readable{background:#0b0b0ad9;border:1px solid #ffffff1f;border-radius:14px;padding:.85rem 1.05rem;
-    backdrop-filter:blur(8px);box-shadow:0 8px 30px #0006}
+  .acard{background:#12110df2;border:1px solid #ffffff26;border-radius:16px;padding:1rem 1.1rem 0.9rem;
+    backdrop-filter:blur(10px);box-shadow:0 14px 40px #0009;display:grid;gap:.55rem}
+  .acard .eyebrow{margin:0}
+  .acard .ttl{font-family:var(--serif);font-size:1.28rem;line-height:1.15;margin:0}
+  .acard .sub{font-size:.86rem;line-height:1.5;color:#f4efe3e0;max-width:none;margin:0}
+  .afacts{display:grid;gap:.28rem;font-family:var(--mono);font-size:.68rem;color:#f4efe3c4}
+  .afacts .fr{display:flex;gap:.55rem}
+  .afacts .fr b{color:#e6c78a;font-weight:600;min-width:6.2rem;flex:0 0 auto}
+  .aground{font-size:.78rem;line-height:1.5;color:#f4efe3c4;border-top:1px solid #ffffff1a;padding-top:.55rem}
+  .aground b{color:#e6c78a;font-weight:600}
+  .aclose{margin-top:.15rem;font:inherit;font-size:.86rem;font-weight:650;cursor:pointer;
+    color:#111;background:#f4efe3;border:none;border-radius:999px;padding:.6rem 1rem;min-height:44px;width:100%}
+  .aclose:hover{background:#fff}
+  .aclose:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .gcmore{font:inherit;font-size:.92em;cursor:pointer;background:none;border:none;padding:0 0 0 .3rem;
+    color:#e6c78a;text-decoration:underline;min-height:32px}
+  .gcmore:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
   #tip{position:fixed;z-index:4;pointer-events:none;display:none;font-family:var(--mono);font-size:.68rem;color:#f4efe3;
     background:#12110deb;border:1px solid #ffffff2a;border-radius:8px;padding:.28rem .5rem;backdrop-filter:blur(6px);
     box-shadow:0 6px 20px #0008;white-space:nowrap}
@@ -152,16 +166,18 @@
 <div id="loading">Reconstructing the plot&hellip;</div>
 <div id="scene"></div>
 <div id="ui">
-  <div class="top" id="topBox">
-    <div class="eyebrow">The plot &middot; a real-data reconstruction</div>
-    <div class="ttlrow">
-      <div class="ttl">SRER_048 &mdash; plant by plant</div>
-      <button class="infotog" id="infoBtn" type="button" aria-expanded="true" aria-controls="topBox"
-        title="Hide this panel to see the whole plot">Hide</button>
+  <div class="top" id="topBox" hidden>
+    <div class="acard">
+      <div class="eyebrow">A real-data reconstruction</div>
+      <div class="ttl" id="aTitle">SRER_048 &mdash; plant by plant</div>
+      <div class="sub" id="sub"></div>
+      <div class="afacts" id="aFacts"></div>
+      <div class="aground" id="aGround" hidden></div>
+      <button class="aclose" id="infoBtn" type="button" aria-expanded="true" aria-controls="topBox">
+        &times; Close &mdash; show the whole plot</button>
     </div>
-    <div class="sub" id="sub"></div>
   </div>
-  <button class="reopen" id="infoReopen" type="button" hidden>&#9432; About this plot</button>
+  <button class="reopen" id="infoReopen" type="button">&#9432; About this plot</button>
   <!-- The NEON aerial/CHM attribution must NOT live inside the collapsible info panel:
        hiding that panel and then switching to the real orthophoto left a NEON image on
        screen with no credit and no vintage. It sits with the scene instead. -->
@@ -225,7 +241,21 @@
 "use strict";
 var DATA=JSON.parse(document.getElementById("plotData").textContent);
 var GTEX=""; try{GTEX=JSON.parse(document.getElementById("groundTex").textContent);}catch(e){}
-document.getElementById("sub").innerHTML=DATA.n+" real tagged plants from NEON Vegetation Structure (DP1.10098.001), each at its mapped position in the "+Math.round(DATA.plotDim||40)+"&thinsp;×&thinsp;"+Math.round(DATA.plotDim||40)+"&thinsp;m plot SRER_048 (amber boundary). The woody plants were mapped only in the eastern half — the <b>shaded western half was not surveyed</b>. Santa Rita Experimental Range · Sonoran desert.";
+// Short lead + structured facts: the panel has to fit without a scrollbar, and a wall
+// of prose was what made it need one.
+document.getElementById("sub").innerHTML=
+  "Every one of these <b>"+DATA.n+"</b> plants is real — an individually tagged NEON plant, "+
+  "drawn where it actually stands. Tap any one to read its record.";
+(function(){
+  var d=Math.round(DATA.plotDim||40), pv=DATA.provenance||{}, f=[];
+  function row(k,v){f.push('<div class="fr"><b>'+k+'</b><span>'+v+'</span></div>');}
+  row("plot", "SRER_048 &middot; "+d+"&thinsp;×&thinsp;"+d+"&thinsp;m (amber boundary)");
+  row("where", "Santa Rita Experimental Range &middot; Sonoran desert");
+  row("source", (pv.product||"DP1.10098.001")+" &middot; NEON Vegetation Structure");
+  row("dates", "the year each plant's tag went on, not a re-survey");
+  if(DATA.surveyNote)row("surveyed", DATA.surveyNote+" — the shaded half was not mapped");
+  document.getElementById("aFacts").innerHTML=f.join("");
+})();
 
 var host=document.getElementById("scene");
 var renderer=new THREE.WebGLRenderer({antialias:true});
@@ -284,8 +314,20 @@ var CREDIT={
 function setLayer(n){LAYER=n; if(drapes.length){drapes[0].visible=(n===1); drapes[1].visible=(n===2);}
   // the menu row supplies the name; the button carries only the current value
   layerBtn.innerHTML=(n===0?"stylized":n===1?"aerial photo":"canopy height");
-  var gc=document.getElementById("geoCredit");
-  if(CREDIT[n]){gc.innerHTML=CREDIT[n];gc.style.display="block";}else{gc.style.display="none";}}
+  // The FULL provenance paragraph folds into the About card, as asked. But a NEON image
+  // on screen must never be uncredited and About can be closed - so a short credit stays
+  // beside the scene whenever a real NEON layer is showing. Detail in the panel,
+  // attribution always.
+  var ag=document.getElementById("aGround"), gc=document.getElementById("geoCredit");
+  if(CREDIT[n]){
+    ag.innerHTML=CREDIT[n]; ag.hidden=false;
+    gc.innerHTML=(n===1?"Ground: NEON AOP aerial, Santa Rita 2021"
+                       :"Ground: NEON AOP LiDAR canopy height, 2021")+
+      ' <button class="gcmore" type="button" id="gcMore">what is this?</button>';
+    gc.style.display="block";
+    var more=document.getElementById("gcMore");
+    if(more)more.addEventListener("click",function(){setInfo(true);});
+  }else{ ag.hidden=true; ag.innerHTML=""; gc.style.display="none"; }}
 
 // ---- plot boundary: the TRUE 40 × 40 m NEON base plot (plants were mapped in its eastern half) ----
 var PDIM=DATA.plotDim||40, bx=PDIM/2, bz=PDIM/2;
@@ -769,9 +811,9 @@ document.addEventListener("keydown",function(e){
 var infoBtn=document.getElementById("infoBtn"), topEl=document.getElementById("topBox"),
     infoReopen=document.getElementById("infoReopen");
 function setInfo(on){
-  topEl.hidden=!on; topEl.classList.toggle("readable",on);
-  infoReopen.hidden=on; infoBtn.setAttribute("aria-expanded",String(on));
-  if(!on)infoReopen.focus({preventScroll:true});
+  topEl.hidden=!on;
+  infoReopen.hidden=on;                       // the pill and the card are never both up
+  infoBtn.setAttribute("aria-expanded",String(on));
 }
 // On a phone the description panel plus the control stack left a sliver of actual plot,
 // so it starts collapsed there. The reopen pill is always present.
@@ -784,9 +826,13 @@ var SITENAME={SRER:"Santa Rita"};   // display names for the breadcrumb
   if(cs){cs.href="./walk.html?site="+encodeURIComponent(site);
     cs.innerHTML=(SITENAME[site]||site)+' <span class="cw">(walk the site)</span>';}
 })();
-setInfo(window.innerWidth>=768);
-infoBtn.addEventListener("click",function(){setInfo(false);});
+// Starts CLOSED on every screen: the plot is the point, and the reopen pill is always
+// visible so the panel is one obvious tap away.
+setInfo(false);
+infoBtn.addEventListener("click",function(){setInfo(false);infoReopen.focus({preventScroll:true});});
 infoReopen.addEventListener("click",function(){setInfo(true);infoBtn.focus({preventScroll:true});});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&!topEl.hidden){setInfo(false);infoReopen.focus({preventScroll:true});}});
 
 // ---- "Colour by" analysis modes + survey-campaign filter ----
 var colorBtn=document.getElementById("colorBtn"), surveyBtn=document.getElementById("surveyBtn"), cscale=document.getElementById("cscale");
