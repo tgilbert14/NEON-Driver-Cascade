@@ -8,8 +8,14 @@
   body{margin:0;overflow:hidden;background:#0b0b0a;font-family:var(--sans);color:var(--ink)}
   #scene{position:fixed;inset:0;z-index:0}
   #scene canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+  /* The overlay is a fixed-height column. Without min-height:0 the top panel cannot
+     shrink, so once top + bottom exceed the viewport the species legend is simply pushed
+     off-screen (it was, at any window under ~700px tall). The top panel now scrolls
+     inside its own share instead of shoving the legend off the bottom. */
   #ui{position:fixed;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;
-    padding:clamp(.8rem,3vw,1.6rem)}
+    gap:.75rem;padding:clamp(.8rem,3vw,1.6rem);overflow:hidden}
+  #ui > .top{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto}
+  #ui > .bottom{flex:0 0 auto;min-height:0}
   .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:#ffffffb0;text-shadow:0 1px 6px #000a}
   .ttl{font-family:var(--serif);font-weight:600;font-size:clamp(1.5rem,4.5vw,2.4rem);line-height:1.05;margin:.15rem 0;text-shadow:0 2px 16px #000b}
   .sub{font-size:.9rem;color:#fdf8eecc;max-width:44ch;text-shadow:0 1px 10px #000a}
@@ -20,11 +26,28 @@
     font-family:var(--mono);font-size:.66rem;color:#f4efe3;text-align:center;text-shadow:0 1px 6px #000b;line-height:1}
   #compass .ar{font-size:1.15rem;display:block}
   .top{max-width:52ch}
+  .ttlrow{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+  /* the toggle sits with the title it controls, not adrift in the bottom button row */
+  .infotog{font:inherit;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;
+    cursor:pointer;color:#f4efe3;background:#ffffff1a;border:1px solid #ffffff33;border-radius:999px;
+    padding:.3rem .7rem;pointer-events:auto;backdrop-filter:blur(6px);white-space:nowrap;min-height:32px}
+  .infotog:hover{background:#ffffff2e;border-color:#ffffff55}
+  .infotog:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .reopen{position:absolute;top:clamp(.8rem,3vw,1.6rem);left:clamp(.8rem,3vw,1.6rem);
+    font:inherit;font-size:.8rem;cursor:pointer;color:#f4efe3;background:#12110deb;border:1px solid #ffffff2a;
+    border-radius:999px;padding:.45rem .9rem;pointer-events:auto;backdrop-filter:blur(8px);
+    box-shadow:0 6px 20px #0007;min-height:36px}
+  .reopen:hover{border-color:#ffffff55}
+  .reopen:focus-visible{outline:2px solid #e6c78a;outline-offset:2px}
+  .reopen[hidden]{display:none}
   .bottom{display:flex;flex-direction:column;gap:.6rem}
   .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;pointer-events:auto}
   .walk{font:inherit;font-size:.85rem;cursor:pointer;color:#111;background:#f4efe3;border:none;border-radius:999px;padding:.45rem 1rem;font-weight:650}
   .hint{font-family:var(--mono);font-size:.66rem;color:#ffffff99;text-shadow:0 1px 6px #000a}
-  .legend{display:flex;gap:.4rem;flex-wrap:wrap;pointer-events:auto;max-width:60ch}
+  /* the legend is also the species filter, so it must stay reachable: cap it and let it
+     scroll rather than let it run past the bottom of the window */
+  .legend{display:flex;gap:.4rem;flex-wrap:wrap;pointer-events:auto;max-width:60ch;
+    max-height:min(34vh,10.5rem);overflow-y:auto;overscroll-behavior:contain;padding-right:.2rem}
   .lg{font-family:var(--mono);font-size:.66rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;
     padding:.28rem .6rem;backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:.4rem}
   .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
@@ -74,16 +97,31 @@
   .cp-bar{height:6px;border-radius:3px;background:#ffffff14;margin-top:.22rem;overflow:hidden}
   .cp-bar i{display:block;height:100%;border-radius:3px}
   .cp-note{font-family:var(--mono);font-size:.58rem;color:#ffffff8c;line-height:1.55;margin-top:.7rem}
+  .cp-fold{margin-top:1.15rem;border-top:1px solid #ffffff1f;padding-top:.55rem}
+  .cp-fold>summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;
+    text-transform:uppercase;color:#e6c78a;padding:.25rem 0;min-height:32px;display:flex;align-items:center;gap:.4rem}
+  .cp-fold>summary::-webkit-details-marker{display:none}
+  .cp-fold>summary::before{content:"B8";display:inline-block;transition:transform .15s;color:#e6c78a99}
+  .cp-fold[open]>summary::before{transform:rotate(90deg)}
+  .cp-fold>summary:hover{color:#f0d9a8}
+  .cp-fold>summary:focus-visible{outline:2px solid #e6c78a;outline-offset:2px;border-radius:4px}
+  .cp-cue{text-transform:none;letter-spacing:0;color:#ffffff70}
+  .cp-foldbody{padding-bottom:.2rem}
 </style>
 <div id="loading">Reconstructing the plot&hellip;</div>
 <div id="scene"></div>
 <div id="ui">
-  <div class="top">
+  <div class="top" id="topBox">
     <div class="eyebrow">The plot &middot; a real-data reconstruction</div>
-    <div class="ttl">SRER_048 &mdash; plant by plant</div>
+    <div class="ttlrow">
+      <div class="ttl">SRER_048 &mdash; plant by plant</div>
+      <button class="infotog" id="infoBtn" type="button" aria-expanded="true" aria-controls="topBox"
+        title="Hide this panel to see the whole plot">Hide</button>
+    </div>
     <div class="sub" id="sub"></div>
     <div class="geocredit" id="geoCredit"></div>
   </div>
+  <button class="reopen" id="infoReopen" type="button" hidden>&#9432; About this plot</button>
   <div class="bottom">
     <div class="row">
       <button class="walk" id="walkBtn" type="button">&#9654; Walk</button>
@@ -93,7 +131,6 @@
       <button class="walk" id="colorBtn" type="button" style="background:#2b2f38;color:#f4efe3">Colour: species</button>
       <button class="walk" id="surveyBtn" type="button" style="background:#33302b;color:#f4efe3" title="Filters by the year each plant's tag went on — not a before/after survey">First tagged: all</button>
       <button class="walk" id="coverBtn" type="button" style="background:#2e2a33;color:#f4efe3">Cover &amp; species</button>
-      <button class="walk" id="infoBtn" type="button" style="background:#20242a;color:#f4efe3">&#9432; About</button>
       <span class="hint" id="hint">drag to look &middot; W A S D to move &middot; click a plant to read its tag</span>
     </div>
     <div class="tagnote" id="tagNote" style="display:none">Showing plants by the year their <b>tag went on</b>.
@@ -531,8 +568,13 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
       'not NEON&rsquo;s recorded sampled area &mdash; surveyed ground holding no qualifying stems adds area '+
       'but no plants, so the divisor is a lower bound and this percentage an upper bound. The recorded '+
       'value lives in a NEON table not included here.</div>';}
+  // The ground layer and the provenance receipt are reference material, not the headline.
+  // They were roughly half the panel's height and pushed the plot's own numbers out of
+  // view, so both fold away behind a summary and open only on request.
   var sd=DATA.siteDiv;
   if(sd){var gm=0;sd.ground.forEach(function(g){if(g.pct>gm)gm=g.pct;});
+    h+='<details class="cp-fold"><summary>Ground &amp; understory &mdash; SRER site-wide '+
+       '<span class="cp-cue">(different product &amp; year)</span></summary><div class="cp-foldbody">';
     h+='<div class="cp-sec">SRER ground layer (site diversity)</div>';
     sd.ground.forEach(function(g){h+=cbar(g.n,g.pct,gm,'#b7a06a');});
     var sm=0;sd.species.forEach(function(s){if(s.pct>sm)sm=s.pct;});
@@ -541,14 +583,16 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
     h+='<div class="cp-note">'+sd.note+
       ((sd.provenance&&sd.provenance.ground_pct_sum_note)?' '+sd.provenance.ground_pct_sum_note:'')+
       ' Different product, scale and year from the woody-canopy figures above &mdash; the two layers are '+
-      'not additive.</div>';}
+      'not additive.</div>';
+    h+='</div></details>';}
   // --- where this data came from -----------------------------------------
   // NEON products are versioned and revise prior data. A number with no release,
   // no date and no builder cannot be checked against its source, so say plainly
   // what is known and what is not, rather than staying silent.
   var pv=DATA.provenance;
   if(pv){
-    h+='<div class="cp-sec">Where this data came from</div>';
+    h+='<details class="cp-fold"><summary>Where this data came from '+
+       '<span class="cp-cue">(source, release, limits)</span></summary><div class="cp-foldbody">';
     h+=stat("product",pv.product+" &middot; "+(pv.plot||""));
     h+=stat("obtained",pv.obtained||"&mdash;");
     h+=stat("accessed","on or before "+(pv.accessed_on_or_before||"unknown"));
@@ -565,16 +609,26 @@ function cbar(lab,val,max,col){return '<div class="cp-row"><div class="lab"><spa
     if(pv.sibling_current_release&&pv.sibling_current_release.note)
       warn.push(pv.sibling_current_release.note+" ("+pv.sibling_current_release.officialNeonRelease+")");
     if(warn.length)h+='<div class="cp-note"><b>Limits.</b> '+warn.join(" ")+'</div>';
+    h+='</div></details>';
   }
   coverPanel.innerHTML=h;
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
 })();
 coverBtn.addEventListener("click",function(){coverPanel.classList.toggle("open");});
 // "About": a readable dark backdrop behind the top-left plot notes. Shown on first load for orientation; "Hide info" dismisses it.
-var infoBtn=document.getElementById("infoBtn"), topEl=document.querySelector(".top");
-function setInfo(on){topEl.classList.toggle("readable",on);infoBtn.innerHTML=on?"&#9432; Hide info":"&#9432; About";infoBtn.style.background=on?"#3d4a57":"#20242a";}
+// "Hide" collapses the WHOLE description panel so the plot itself is unobstructed; a
+// single pill in the same corner brings it back. Previously it only toggled a backdrop,
+// which left the panel's ~340px of height on screen either way.
+var infoBtn=document.getElementById("infoBtn"), topEl=document.getElementById("topBox"),
+    infoReopen=document.getElementById("infoReopen");
+function setInfo(on){
+  topEl.hidden=!on; topEl.classList.toggle("readable",on);
+  infoReopen.hidden=on; infoBtn.setAttribute("aria-expanded",String(on));
+  if(!on)infoReopen.focus({preventScroll:true});
+}
 setInfo(true);
-infoBtn.addEventListener("click",function(){setInfo(!topEl.classList.contains("readable"));});
+infoBtn.addEventListener("click",function(){setInfo(false);});
+infoReopen.addEventListener("click",function(){setInfo(true);infoBtn.focus({preventScroll:true});});
 
 // ---- "Colour by" analysis modes + survey-campaign filter ----
 var colorBtn=document.getElementById("colorBtn"), surveyBtn=document.getElementById("surveyBtn"), cscale=document.getElementById("cscale");
