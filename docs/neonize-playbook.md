@@ -55,14 +55,18 @@ mammal/beetle apps — NOT a shared package; independent deploys must stay self-
 these from the flagship and adapt the data layer:
 
 ### 2a. Design system & chrome — vendor a pinned version, then adapt
-- `docs/index.html`: build the above-fold face as an artistic poster for a curious
-  non-scientist—one dominant app-native object, one 3–7 word hook, one 6–12 word
-  plain-language promise, and one CTA. Put routes, role, facts, CAN/CANNOT, methods,
-  provenance, receipts, and suite relationships below the fold. Prefer a licensed,
-  provenance-tracked documentary image only when field realism earns trust; use an
-  explicitly stylized illustration when abstraction is the point. Cohesion comes
-  from suite mark, typography, art language, motif family, registry, and in-app
-  Suite panel—not identical heroes, forced constellations/mascots, or generic prose.
+- `docs/index.html` **and the in-app first-run surface**: make one Living Poster
+  promise across both entry points—one dominant app-native object, one 3–7 word
+  hook, one 6–12 word plain-language promise, and one CTA—adapted to each shell
+  rather than forced into pixel identity. Put routes, role, facts, CAN/CANNOT,
+  methods, provenance, receipts, and suite relationships below the fold or behind
+  progressive disclosure. Updating only Pages leaves launched users with a stale
+  or generic first impression, so release QA must verify both surfaces. Prefer a
+  licensed, provenance-tracked documentary image only when field realism earns
+  trust; use an explicitly stylized illustration when abstraction is the point.
+  Cohesion comes from suite mark, typography, art language, motif family, registry,
+  and in-app Suite panel—not identical heroes, forced constellations/mascots, or
+  generic prose.
 - `global.R`: semantic tokens (`accent`, `signal`, `warning`, `ink`, `muted`,
   `surface`, `line`) mapped to an app-specific palette; `app_theme` (bslib bs5 + a
   system/local font stack); `asset_url()` (mtime cache-bust); and the validated
@@ -182,7 +186,9 @@ release receipt.
   scrollers, allow the body below 320px, and require
   `documentElement.scrollWidth === documentElement.clientWidth` at both 390 and
   320 CSS pixels. A carousel's own larger `scrollWidth` is valid only while the
-  root stays fixed.
+  root stays fixed. Also inspect framework-generated gutters, brand/actions, and
+  top-bar wrapping: Small Mammal's real 320 proof had to keep the bslib shell on one
+  row inside 305 usable pixels, not merely make the poster itself responsive.
 - **In an R list, `$field <- NULL` deletes the field.** If a bundle schema requires
   a named field whose honest unavailable value is `NULL`, preserve it with
   `bundle["field"] <- list(NULL)`. Normalize filtered zero-row derived frames to

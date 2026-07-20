@@ -7,8 +7,9 @@ Scope: Driver Response Atlas plus nine independently deployed companion apps
 
 Progress: Driver baseline, Small Mammal Pass 1, Plant Phenology Pass 2, and Plant
 Diversity Pass 3 are complete and production-verified. Ground Beetle remains the
-Phase 0 outage. Vegetation Structure is the next scientific pass, but its cover
-work waits for owner approval of the new artistic-poster direction.
+Phase 0 outage. The owner-approved artistic Living Poster direction now has its
+first dual-surface production proof in Small Mammal; Vegetation Structure is the
+next scientific pass.
 
 ## 1. Outcome
 
@@ -40,7 +41,8 @@ The 2026-07-18 public-cover baseline used dark habitat gradients, constellation
 links, code-native mascots, distinct accent palettes, and clear launch controls.
 That history is factual but is no longer the target: owner review found the covers
 too repetitive and information-heavy. The current direction is the brief artistic
-poster system in section 6, pending approval from real cover review.
+poster system in section 6, now production-proven across both Small Mammal entry
+surfaces.
 
 The release layer is not at the same quality bar.
 
@@ -58,7 +60,7 @@ The release layer is not at the same quality bar.
 
 At baseline, all nine companion manifests disagreed with at least one currently
 tracked runtime file. Small Mammal Pass 1 has now closed its drift and independently
-validated R 4.5.2 / 91-package / 117-file release family. Plant Phenology Pass 2
+validated R 4.5.2 / 91-package / 118-file release family. Plant Phenology Pass 2
 then closed its drift with a pinned R 4.5.2 / 92-package / 60-runtime-file release.
 Plant Diversity Pass 3 closed its drift with R 4.5.2 / 91 packages / 150 manifest
 files and exact runtime, source-limit, export, responsive, and semantic receipts;
@@ -274,7 +276,7 @@ The third answer may be `context only`.
 
 ## 6. Visual and cover system
 
-### Working direction — pending owner approval
+### Validated direction — first production proof complete
 
 The cover face is an artistic poster for a curious non-scientist, not a compressed
 methods page. Above the fold, use only:
@@ -287,8 +289,9 @@ methods page. Above the fold, use only:
 Do not place metric bands, methods summaries, CAN/CANNOT detail, provenance blocks,
 release receipts, relationship maps, or secondary actions on the poster face. Put
 those trust and science surfaces below the fold, where they remain easy to find and
-screenshot-safe at the point of interpretation. The final direction is not locked
-until the owner approves a real suite cover review.
+screenshot-safe at the point of interpretation. Small Mammal proves the direction
+on both the public Pages showcase and the in-app first-run surface; later apps must
+revalidate the pattern against their own product, art, shell, and user job.
 
 ### Family cohesion without repetition
 
@@ -301,9 +304,10 @@ until the owner approves a real suite cover review.
 - Driver is the master poster and suite ambassador: companion field motifs converge
   into one cascade/integration gesture. This is a visual relationship, not a causal
   claim.
-- Historical Small Mammal documentary V4 and Phenology/Plant generated-art releases
-  remain factual release baselines, but all are subject to the new poster review
-  before suite-wide art is standardized.
+- Small Mammal's documentary V4 evolved into the first dual-surface Living Poster
+  production release. Phenology/Plant generated-art releases remain factual
+  baselines and must be reviewed against this stronger pattern before suite-wide
+  art is standardized.
 - Compose and validate a separate 1200×630 social image; never treat a hero crop as
   the social design by default.
 
@@ -338,9 +342,11 @@ Suggested palette families remain distinct but related:
 
 ### Small Mammal Tracker — first pass COMPLETE / production verified
 
-- Restored Connect production at runtime merge `1615ab4` and closed the original
-  startup outage with a semantic ready-marker check, explicit Last-deployed receipt,
-  fresh JORN interaction, and no first-party console warning/error.
+- Restored and advanced Connect production through runtime merge
+  `bdf56b0482ac76364e7055107361d58d8728d782`; deployment #122 serves exact
+  `bdf56b0` from 2026-07-19 18:00 MST. The documentation-only closeout is
+  `8d650b787075bb548d17f8380060597f5a8ff7f9`. Semantic readiness, a fresh JORN
+  interaction, and no first-party console error remain verified.
 - Shipped the reviewed physical-event resolver: exact six status tokens, canonical
   A-J x 1-10 events, strict multi-capture collapse, two documented double-trap
   exceptions, explicit placeholder uncertainty, and fail-closed ambiguity.
@@ -353,21 +359,23 @@ Suggested palette families remain distinct but related:
 - Shipped tidy event/capture and monthly MNKA/CPUE/N-hat/p-hat exports with a
   codebook, exact 46-site/145-species framing, accessibility contracts, all-suite
   About navigation, and a versioned 1200×630 habitat social card.
-- Validated the canonical R 4.5.2 / 91-package / 117-file manifest, including the
+- Validated the canonical R 4.5.2 / 91-package / 118-file manifest, including the
   distinction between installed URL-package provenance and Connect's absolute-CRAN
   network contract. Final SHA-256 is
-  `f6c4a5ff74053b95e22fac7394f1930d2fe2329663737031b1c32f7a1f70bc54`.
+  `90c1366fcd51c507cb786a45a60dd59607a6980f97fc2e4d2e21b29af326d28e`.
 - Driver disposition is `CONTEXT / NO BYTE CHANGE`: contract parity is closed, but
   exact eligible-source site-year join/support remains held for suite synthesis.
-- Cover V4 replaced the generic generated habitat scene with a provenance-tracked
-  USGS public-domain field photograph of a Pacific pocket mouse emerging from a
-  Sherman trap. Its question-led routes, concise method/claim boundary, release
-  receipt, and complete suite navigation make documentary credibility and user
-  intent lead the story rather than decorative product prose.
-- Final Pages/browser QA passed desktop, 390 x 844, and 320 x 800 with no page-level
-  overflow, local image and social-card assets loaded, stable navigation/touch
-  targets, and all suite destinations present. Repository closeout is `b05cecc`;
-  the scientific Connect runtime remains the separately verified `1615ab4`.
+- The Living Poster now converges both first impressions around a large, real USGS
+  Sherman-trap photograph, hook “One trap night. A whole population story.”,
+  promise “Follow tagged small mammals across years of return visits.”, and CTA
+  “Pick a place”. Detail, methods, provenance, release receipt, and suite navigation
+  remain progressively disclosed rather than competing with the poster face.
+- Final Connect and Pages browser QA passed desktop, 390 x 844, and 320 x 800 with
+  no root overflow, local image/social assets, stable navigation/touch targets, and
+  a one-row app shell at 320. At that viewport the framework left 305 usable layout
+  pixels, so the proof measures generated shell geometry rather than assuming the
+  nominal viewport. Pages run `29710189059` passed on attempt 3 after two GitHub
+  HTTP 503-only attempts.
 
 ### Plant Phenology Explorer — second pass COMPLETE / production verified
 
