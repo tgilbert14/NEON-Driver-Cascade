@@ -65,8 +65,10 @@ stemDistance + stemAzimuth, point coords from the locations API), sized by real 
 standing-dead, and **click a plant to read its actual NEON record** (species, individualID, tag year,
 measured height/crown, status). 9 species, 104 measured heights, 28 dead. See `build_plot.md`. Live
 artifact: https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e . Committed: `plot.html`
-(self-contained), `plot-srer048.json` (derived), `plot.src.html` (template), `build_plot.md` (recipe);
-raw VST CSVs + token + `build_plot.py` stay in scratchpad.
+(self-contained), `plot-srer048.json` + `div-srer.json` (derived), `plot.src.html` (template),
+**`assemble_plot.py`** (reproducible re-inliner — commits, needs no raw data/token), `build_plot.md` (recipe).
+Rebuild loop: edit `plot.src.html` → `python3 assemble_plot.py` → `plot.html`. The from-scratch data builders
+(`build_plot.py`, `div_srer.py`, `geo_plot.py`) stay in scratchpad (they need raw NEON CSVs/tiles + token).
 
 **Botanical models (done):** each of the 9 species now has a research-accurate low-poly model keyed on
 the real `taxonID` (built from SEINet/FNA/USDA/ASDM/LBJWC descriptions) — creosote open see-through vase,

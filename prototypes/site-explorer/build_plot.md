@@ -28,6 +28,31 @@ common name, and writes the derived **`plot-srer048.json`** (committed). `plot.s
 scene template; the shipped `plot.html` is `plot.src.html` with Three.js r128, `plot-srer048.json`,
 and the desert ground texture inlined.
 
+## Rebuilding / handoff (works in a fresh clone)
+
+The everyday loop is just **edit the scene template, then re-inline**:
+
+```bash
+# after editing plot.src.html
+python3 prototypes/site-explorer/assemble_plot.py    # -> plot.html (self-contained)
+```
+
+`assemble_plot.py` is **committed** and depends only on files in this directory: it fills the four
+template placeholders (`__THREE__`, `__PLOTDATA__`, `__GROUNDTEX__`, `__GEOLAYERS__`) by **reusing the
+heavy embeds verbatim from the existing `plot.html`** (the Three.js runtime, the ground texture, and the
+NEON AOP layers) plus the small committed JSON (`plot-srer048.json` + `div-srer.json`). It needs **no raw
+NEON data, no image tiles, and no API token**, so any session can iterate on the scene and regenerate the
+shipped page. (It reproduces the current `plot.html` byte-for-byte.)
+
+Only the **from-scratch data builders** stay in scratchpad (they pull bulk raw NEON downloads that are not
+committed) — recipes are in this doc:
+- `build_plot.py` → `plot-srer048.json` (raw VST `vst_mapping`/`vst_apparent` CSVs + an `X-API-Token`).
+- `div_srer.py` → `div-srer.json` (the SRER plant-diversity CSV + token).
+- `geo_plot.py` → the georeferenced AOP crops that feed `__GEOLAYERS__` (raw ortho/CHM GeoTIFF tiles + token).
+
+Verify headlessly with Chromium + swiftshader (WebGL) and confirm **0 console/page errors** before shipping
+(the same rhythm the rest of the site-explorer uses).
+
 Plant models are **botanically accurate per species**, keyed on the real NEON `taxonID` and
 built from sourced descriptions (SEINet / Flora of North America / USDA PLANTS / ASDM / Lady
 Bird Johnson WC) so each reads as that actual plant:
