@@ -53,7 +53,9 @@ straight from the repo — it previously did not. Update the `ART` map if an art
 | 21b | **Protocol review (NEON SOP)** — "Survey campaigns" was a misread; relabelled "First tagged", and three shipped claims corrected | DONE | — |
 | 22 | **Index explorer, pass 1** — driver cards show the plausible range; the invented year wheel is cut; the three pages finally link up | DONE | — |
 | 23 | **Production push, pass 1** — map gated to built sites; The Plot made phone-usable; controls restructured; plot source de-SRER'd | DONE | — |
-| 24+ | Optional — more real-LiDAR forests; TOD-linked bark/ground variation; higher-res textures on the reload | PLANNED | — |
+| 24 | **Standouts** — the Plot-data panel names the real tallest / widest-crown / most-partial-death / lone-saguaro individuals, each a tap-to-fly-there record | DONE | — |
+| 25 | **A real second plot — SRER_056** — built end-to-end from real NEON data (own AOP georeference), reachable via a plot switcher; cover denominator now PINNED from real subplotID | DONE | — |
+| 26+ | Optional — more plots (recipe proven); more real-LiDAR forests; TOD-linked bark/ground variation | PLANNED | — |
 
 > **Rung 4 blocker — RESOLVED.** The owner supplied a NEON API token; the `/api/v0/data/` route was a
 > **token gate**, not an IP block (200 with `X-API-Token`). Wind River's canopy is now built from a
@@ -170,6 +172,35 @@ the VST records. Verified headless (0 errors; buttons cycle; shade covers the we
 
 Extra JSON fields (`stems`, `dead`, `bd`, `cr90`, `shape`, `canopy`, `dmg`) come from `build_plot.py` (cacti
 have no VST apparent record → species defaults). Positions unchanged, so the AOP georeference is intact.
+
+> **Parts of this rung-20 block were later reversed/corrected in rungs 21–23 (PR #40) — read those for the
+> current behaviour.** Specifically: the About panel now **starts collapsed** (not open); the tag-year filter
+> is **"First tagged" cohorts, not "re-surveys"** (the dates are when a tag went on, not a before/after);
+> and the cover figure became a **crown-area index over the surveyed strip**, not a whole-plot cover %.
+
+**Standouts (done, rung 24):** the "Plot data & analysis" panel opens with a short **Standouts** list — the real
+**tallest** (measured), **widest crown** (measured), **most partial death** (the living plant with the highest
+share of standing-dead stems — the "a dead branch is not a dead plant" case), and **the lone saguaro** (flagged
+*mapped, not measured*). Each row is a button that closes the panel and calls the existing `selectById` to fly
+the map to that individual and open its NEON record. All values are read straight from the records — nothing
+invented, heights labelled measured-only.
+
+**A real second plot — SRER_056 (done, rung 25):** the multi-plot architecture is now proven end-to-end with a
+genuine second plot. **SRER_056** (Santa Rita, in the same AOP tile as 048) — **147 tagged plants, 6 species,
+113 measured** — a distinctly different, mesquite-richer community (creosote ×89, velvet mesquite ×26, Christmas
+cholla ×26, prickly pears, one barrel), tag cohorts 2016/2017/2021. Built with scratchpad `build_plot2.py`
+(parameterised, current schema) + `geo_plot2.py` (reuses the SRER AOP tiles, re-cropped to 056's centre; georef
+validated — mean CHM under mesquites 2.03 m). **Honesty improvement over 048:** 056 carries the real `subplotID`
++ `growthForm` per measured plant (the three fields 048 flagged as a contract gap), so its **cover denominator is
+PINNED from the records** — the four 100 m² nested shrub subplots NEON actually sampled (400 m²) — rather than
+inferred. `assemble_plot.py` gained `--geo` to bootstrap a new plot's AOP layers and resolves the plot id into a
+`__PLOTID__` title placeholder; the page carries a **plot switcher** (top breadcrumb: "also SRER_048/056",
+relative in-repo, artifact URL when served). Live artifacts: SRER_048
+https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e · **SRER_056**
+https://claude.ai/code/artifact/fc6de1aa-76e8-4bf3-bef3-df371876f0fd . Committed: `plot-srer056.json` + the
+self-contained `plot-srer056.html`. Rebuild: `python3 assemble_plot.py --plot SRER_056 --out plot-srer056.html`
+(reuses 056's geo from the committed page). The 048-only assumptions (title, About heading, plot row, the
+"shaded area" survey note) are now all data-driven so nothing on 056 mislabels it as 048.
 
 **Deferred:** phenology (animate the year — owner: "pheno is another area, not tied to these plots; max out this
 plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,

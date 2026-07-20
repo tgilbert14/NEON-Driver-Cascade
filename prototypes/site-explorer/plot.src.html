@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Plot — SRER_048, plant by plant</title>
+<title>The Plot — __PLOTID__, plant by plant</title>
 <style>
   :root{--ink:#f4efe3;--panel:#0e0d0acc;--line:#ffffff26;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
     --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--serif:"Iowan Old Style",Palatino,Georgia,serif;}
@@ -202,6 +202,8 @@
   .pl-row:focus-visible{outline:2px solid #e6c78a;outline-offset:1px}
   .pl-id{font-family:var(--mono);font-size:.78rem;color:#f4efe3}
   .pl-meta{font-family:var(--mono);font-size:.66rem;color:#f4efe3a8}
+  .so-list{display:flex;flex-direction:column;gap:.3rem}
+  .so-k{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#e6c78a}
 </style>
 <div id="loading">Reconstructing the plot&hellip;</div>
 <div id="scene"></div>
@@ -209,7 +211,7 @@
   <div class="top" id="topBox" hidden>
     <div class="acard">
       <div class="eyebrow">A real-data reconstruction</div>
-      <div class="ttl" id="aTitle">SRER_048 &mdash; plant by plant</div>
+      <div class="ttl" id="aTitle">__PLOTID__ &mdash; plant by plant</div>
       <div class="sub" id="sub"></div>
       <div class="afacts" id="aFacts"></div>
       <div class="aground" id="aGround" hidden></div>
@@ -310,11 +312,17 @@ document.getElementById("sub").innerHTML=
 (function(){
   var d=Math.round(DATA.plotDim||40), pv=DATA.provenance||{}, f=[];
   function row(k,v){f.push('<div class="fr"><b>'+k+'</b><span>'+v+'</span></div>');}
-  row("plot", "SRER_048 &middot; "+d+"&thinsp;×&thinsp;"+d+"&thinsp;m (amber boundary)");
+  row("plot", (DATA.plot||"SRER_048")+" &middot; "+d+"&thinsp;×&thinsp;"+d+"&thinsp;m (amber boundary)");
   row("where", "Santa Rita Experimental Range &middot; Sonoran desert");
   row("source", (pv.product||"DP1.10098.001")+" &middot; NEON Vegetation Structure");
   row("dates", "the year each plant's tag went on, not a re-survey");
-  if(DATA.surveyNote)row("surveyed", DATA.surveyNote+" — the shaded half was not mapped");
+  if(DATA.surveyNote){
+    // Only claim a "shaded area" when one is actually drawn (same test as the scene shade,
+    // below): a plot whose plants span the whole boundary has no shaded strip to explain.
+    var _pd=DATA.plotDim||40, _xmin=(DATA.mappedExtent&&DATA.mappedExtent.xmin!=null)
+      ? DATA.mappedExtent.xmin : Math.min.apply(null,DATA.plants.map(function(p){return p.x;}));
+    row("surveyed", DATA.surveyNote+(((_xmin+_pd/2)>2)?" — the shaded area was not mapped":""));
+  }
   document.getElementById("aFacts").innerHTML=f.join("");
 })();
 
@@ -865,6 +873,29 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
     'all &mdash; Santa Rita has a site-specific exception to map them, and they are measured under a separate '+
     'cactus protocol. So live/dead status could not be assessed for these, and this is a status at each '+
     'plant&rsquo;s own measurement date, not a mortality rate.</div>';
+  // --- standouts: real individuals worth a look (each flies to + opens its record) ---
+  // Only the actual records: heights/crowns are the *measured* plants, the partial-death
+  // row is the "a dead branch is not a dead plant" case, and the saguaro is flagged
+  // mapped-not-measured so nothing here asserts a number the record does not carry.
+  var meas=P.filter(function(p){return p.realh===true;});
+  function argmax(arr,f){var best=null,bv=-Infinity;arr.forEach(function(p){var v=f(p);if(v>bv){bv=v;best=p;}});return best;}
+  var sTall=argmax(meas,function(p){return p.h;});
+  var sWide=argmax(meas,function(p){return (p.cr||0)*(p.cr90||p.cr||0);});
+  var sPart=argmax(P.filter(function(p){return p.stems&&p.status!=="dead"&&p.dead;}),function(p){return p.dead/p.stems;});
+  var sagu=P.filter(function(p){return p.tx==="CAGI10";});
+  var stand=[];
+  if(sTall)stand.push([sTall,"Tallest","measured "+sTall.h+" m &middot; "+(sTall.common||sTall.tx)]);
+  if(sWide&&sWide!==sTall)stand.push([sWide,"Widest crown",(sWide.cr90?sWide.cr+"&times;"+sWide.cr90:sWide.cr)+" m &middot; "+(sWide.common||sWide.tx)]);
+  if(sPart)stand.push([sPart,"Most partial death",sPart.dead+" of "+sPart.stems+" stems dead, still alive &middot; "+(sPart.common||sPart.tx)]);
+  if(sagu.length===1)stand.push([sagu[0],"The lone saguaro","one juvenile &middot; mapped, not measured"]);
+  if(stand.length){
+    h+='<div class="cp-sec">Standouts <span class="cp-cue">(tap to fly there)</span></div><div class="so-list">';
+    stand.forEach(function(s){
+      h+='<button class="pl-row so-row" type="button" data-id="'+s[0].id+'">'+
+         '<span class="so-k">'+s[1]+'</span>'+
+         '<span class="pl-meta">'+s[2]+'</span></button>';});
+    h+='</div>';
+  }
   var c=DATA.cover;
   if(c&&c.metric==="crown_area_index"){
     var mx=0;(c.bySpecies||[]).forEach(function(sp){if(sp.crownArea_m2>mx)mx=sp.crownArea_m2;});
@@ -968,6 +999,12 @@ var SY=[["all","all"]].concat(TAGYEARS.map(function(y){return [y,y+" only"];})),
     if(search)search.addEventListener("input",function(){render(search.value);});
     list.addEventListener("click",function(e){var b=e.target.closest(".pl-row"); if(b)selectById(b.dataset.id);});
   })();
+  // Standouts fly to the plant: close the panel so the framed individual is visible.
+  Array.prototype.forEach.call(coverPanel.querySelectorAll(".so-row"),function(b){
+    b.addEventListener("click",function(){
+      coverPanel.classList.remove("open"); coverBtn.setAttribute("aria-expanded","false");
+      selectById(b.dataset.id);});
+  });
   var tf=document.getElementById("tagFilterBtn");
   if(tf){tf.innerHTML=SY[syi][1]; tf.addEventListener("click",function(){surveyBtn.click();});}
   document.getElementById("coverX").addEventListener("click",function(){coverPanel.classList.remove("open");});
@@ -1001,6 +1038,19 @@ var SITENAME={SRER:"Santa Rita"};   // display names for the breadcrumb
   if(cp)cp.textContent=pid;
   if(cs){cs.href="./walk.html?site="+encodeURIComponent(site);
     cs.innerHTML=(SITENAME[site]||site)+' <span class="cw">(walk the site)</span>';}
+  // --- plot switcher: other built plots at this site (relative in-repo, artifact URL when served) ---
+  var PLOTS=[
+    {id:"SRER_048", file:"plot.html",         art:"https://claude.ai/code/artifact/acf46a2b-594f-4da6-ae59-be37dc57195e"},
+    {id:"SRER_056", file:"plot-srer056.html", art:"https://claude.ai/code/artifact/fc6de1aa-76e8-4bf3-bef3-df371876f0fd"}
+  ];
+  var onArt=/(^|\.)claude\.ai$/.test(location.hostname);
+  var others=PLOTS.filter(function(p){return p.id!==pid && p.art.indexOf("__ART_")<0;});
+  if(others.length && cp && cp.parentNode){
+    var sw=document.createElement("span"); sw.className="plotsw";
+    sw.innerHTML=' <span class="cw">also</span> '+others.map(function(p){
+      return '<a href="'+(onArt?p.art:("./"+p.file))+'">'+p.id+'</a>';}).join(' ');
+    cp.parentNode.appendChild(sw);
+  }
 })();
 // Starts CLOSED on every screen: the plot is the point, and the reopen pill is always
 // visible so the panel is one obvious tap away.

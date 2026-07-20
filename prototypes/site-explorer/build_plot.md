@@ -74,6 +74,29 @@ committed) — recipes are in this doc:
 Verify headlessly with Chromium + swiftshader (WebGL) and confirm **0 console/page errors** before shipping
 (the same rhythm the rest of the site-explorer uses).
 
+## Building another plot (proven with SRER_056)
+
+The build is parameterised, so a second real plot is data + three build steps, not a rewrite. SRER_056 (a
+mesquite-richer neighbour in the same AOP tile as 048) was built this way:
+
+1. **Data** — `python3 build_plot2.py SRER_056` (scratchpad) joins `vst_mappingandtagging` + `vst_apparentindividual`
+   for that plot, resolves point coords from the locations API (anchored to the plot centre), and writes
+   `plot-srer056.json` in the current schema. It **carries `subplotID` + `growthForm` per measured plant** — the
+   three contract-gap fields SRER_048 lacked — so the cover denominator is **pinned from the real subplots** NEON
+   sampled (here four 100 m² nested shrub subplots = 400 m²) instead of inferred. Pick an in-tile plot whose
+   `vst_apparentindividual` records are in the site download, or re-pull them.
+2. **Georeference** — `python3 geo_plot2.py SRER_056` reuses the SRER AOP tiles (`srer_ortho.tif` / `srer_chm.tif`,
+   tile `515000_3530000`), re-crops a 50 m window on the new plot's centre, validates against measured heights,
+   and writes `geo-srer_056.json` (inline data-URIs). A plot in a different 1 km tile needs that tile downloaded.
+3. **Assemble** — `python3 assemble_plot.py --plot SRER_056 --out plot-srer056.html --geo <scratch>/geo-srer_056.json`
+   bootstraps the page (shared Three.js + ground texture reused from `plot.html`, 056's own AOP layers injected via
+   `--geo`, plot id resolved into the `__PLOTID__` title/heading). After that, rebuilds are just
+   `assemble_plot.py --plot SRER_056 --out plot-srer056.html` (geo reused from the committed page).
+
+Then register the plot in the **switcher** (the `PLOTS` array in `plot.src.html`: `{id, file, art}` — the `art`
+artifact URL is filled after first publish), and update the index badge count. Commit `plot-<id>.json` +
+`plot-<id>.html`; the raw CSVs/tiles/token and `build_plot2.py`/`geo_plot2.py` stay in scratchpad.
+
 Plant models are **botanically accurate per species**, keyed on the real NEON `taxonID` and
 built from sourced descriptions (SEINet / Flora of North America / USDA PLANTS / ASDM / Lady
 Bird Johnson WC) so each reads as that actual plant:
