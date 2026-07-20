@@ -111,7 +111,28 @@ Creosote renders its real stem count with the dead fraction as bare grey stems a
 reads e.g. "16 stems · mean ⌀ 2.8 cm … live · 7 of 16 stems standing dead · some damage". Positions are
 untouched, so the AOP georeference stays valid. The surveyed extent is marked in-scene by an amber boundary.
 
+## Plot geometry
+
+The SRER base plot is **40 × 40 m** (confirmed via `locations/SRER_048.basePlot.vst`), centred at UTM
+(515517.4, 3530803.0). The scene is anchored to that plot centre, so plant coordinates are `E−CX, N−CY`
+(no cloud recentring). The woody plants were mapped in the plot's **eastern half**; the AOP crop is a 50 m
+window (`HW=25`) centred on the plot.
+
+## Ground cover & species (the "Cover & species" panel)
+
+- **This plot (from our VST crowns):** estimated woody canopy cover `= Σ crown ellipse areas ÷ 1600 m²`
+  (~26.6%, creosote-dominated), broken down by species. Crowns can overlap, so it's an estimate; ~73% is
+  open interspace.
+- **SRER ground layer (site diversity):** SRER_048 is a VST plot and is **never** a plant-diversity plot, so
+  `div-srer.py` aggregates SRER **site-level** plant diversity (DP1.10058.001, 2024 growing season) into
+  `div-srer.json` — ground categories (litter ~57%, bare soil ~26%, rock, biocrust) and top understory species
+  (Lehmann lovegrass, black grama, tanglehead, burroweed, fairy duster). Clearly labelled as site-level context
+  for the interspaces, not this exact plot. `assemble_plot.py` inlines it as `DATA.siteDiv`.
+
+A **"Plants: on/off"** toggle hides the 3D models (keeping the ground dots + click-inspect) to compare the
+mapped positions against the aerial / canopy layers.
+
 ## Planned expansions (see chat brainstorm)
 
-Plant diversity (% cover → ground/understory), phenology (animate leaf-out/flower/senescence through
-the year per individual), a link from the travel-map/desert walk into the plot, and more plots.
+Phenology (animate leaf-out/flower/senescence through the year per individual), a link from the
+travel-map/desert walk into the plot, and more plots.

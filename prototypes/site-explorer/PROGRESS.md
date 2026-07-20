@@ -105,9 +105,26 @@ is **per stem**. Old code picked one stem and mislabelled whole plants — the r
 count with the dead fraction as bare grey stems among green live ones; the card reads e.g. "live · 7 of 16
 stems standing dead · some damage".
 
-**Plot boundary (done):** a bright amber "survey tape" rectangle + low fence + capped corner posts mark the
-~20 × 40 m mapped extent (with the size in the subtitle), so you can see what area is surveyed in both walk
-and sky.
+**Plot geometry corrected (done):** the NEON base plot is really **40 × 40 m** (confirmed via the locations API),
+not the 20 × 40 plant bounding box. The scene is now anchored to the **true plot centre** UTM
+(515517.399, 3530802.996); plants sit in the **eastern half** (that's where VST mapped them — the west half has
+shrubs in the aerial but no records). Boundary = a 40 × 40 amber survey-tape rectangle. The AOP crop was
+re-anchored to the plot centre (HW 25 → 50 m window) and re-validated (plants still land on the real shrubs).
+
+**Map-first default (done):** the primary view is now the top-down **map** — the real NEON aerial with each
+plant drawn as a crisp species-coloured **ring** at its real crown size (you see the shrub inside), inside the
+40×40 boundary, click-to-inspect. The 3D plant figures are the optional **"augmented"** layer: default off,
+turned on by the **"3D plants"** toggle or by **"Enter the plot (3D)"** (which drops you into the first-person
+walk). Marker/legend colours are a bright, distinct data-viz palette (`SP[tx].mk`).
+
+**Plant-model toggle (done):** the "3D plants: on/off" button hides the 3D models (keeping the ground rings +
+click-inspect) so you can compare our mapped positions against the aerial / canopy layers.
+
+**Cover & species panel (done):** a "Cover & species" side panel shows the plot's **estimated woody canopy
+cover (~26.6%)** by species (from the real crowns ÷ 1600 m²), plus **SRER site-level ground cover** from plant
+diversity (litter 57% / bare soil 26% / rock 8% …) and the understory species (Lehmann lovegrass, black grama,
+tanglehead, burroweed, fairy duster). SRER_048 is not itself a diversity plot, so the ground/understory layer
+is site-level context (`div-srer.py` → `div-srer.json`, 2024 growing season), clearly labelled.
 
 **LiDAR layer cleanup (done):** the canopy-height drape is now a smoothed sand→green **heatmap** over the real
 height range (not per-pixel camo). **Load speed:** capped creosote stems + trimmed tufts cut load-to-interactive

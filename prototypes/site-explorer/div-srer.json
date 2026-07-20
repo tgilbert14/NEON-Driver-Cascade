@@ -1,0 +1,82 @@
+{
+"bout": "2024-08",
+"plots": 4,
+"subplots": 24,
+"ground": [
+{
+"n": "litter",
+"pct": 56.9
+},
+{
+"n": "bare soil",
+"pct": 26.1
+},
+{
+"n": "rock",
+"pct": 7.7
+},
+{
+"n": "biocrust",
+"pct": 6.5
+},
+{
+"n": "wood",
+"pct": 1.8
+},
+{
+"n": "standing dead (herb.)",
+"pct": 1.8
+}
+],
+"species": [
+{
+"tx": "LATR2",
+"name": "Larrea tridentata",
+"common": "creosote bush",
+"pct": 3.7
+},
+{
+"tx": "ISTE2",
+"name": "Isocoma tenuisecta",
+"common": "burroweed",
+"pct": 1.6
+},
+{
+"tx": "ERLE",
+"name": "Eragrostis lehmanniana",
+"common": "Lehmann lovegrass",
+"pct": 1.4
+},
+{
+"tx": "CAER",
+"name": "Calliandra eriophylla",
+"common": "fairy duster",
+"pct": 1.4
+},
+{
+"tx": "BOER4",
+"name": "Bouteloua eriopoda",
+"common": "black grama",
+"pct": 1.3
+},
+{
+"tx": "MATA",
+"name": "Machaeranthera tagetina",
+"common": "tansyaster",
+"pct": 1.3
+},
+{
+"tx": "HECO10",
+"name": "Heteropogon contortus",
+"common": "tanglehead",
+"pct": 1.2
+},
+{
+"tx": "CHENO",
+"name": "Chenopodium sp.",
+"common": "goosefoot",
+"pct": 0.9
+}
+],
+"note": "SRER site-level plant diversity (DP1.10058.001, 2024 growing season). SRER_048 is a Vegetation-Structure plot and is not itself a diversity plot, so this is the site's ground + herbaceous layer as context for the interspaces."
+}
