@@ -244,6 +244,18 @@ headless harness drive the walk camera and spawn extra individuals through the r
 Developed in a scratchpad Three.js harness then ported into `plot.src.html`. Next: work through the rest of the
 species fleet — creosote ×93 (biggest visual impact) → velvet mesquite ×13 → the remaining cacti.
 
+A later reference-driven pass (owner critique + 2 art-critic agent rounds) made the saguaro flutes organic
+(drifted/warped/depth-varied so the shadow-lines wander, not machined), gave the arms a true candelabra sweep
+(5-pt spline, staggered heights, spread azimuths), and added per-plant base pinch/swell + girth. A **crested
+(cristate)** variant was tried and **scrapped** (owner: "terrible" — the fused-lobe fan read as a mushroom/
+shaving-brush, not brain-coral). **Known issue (not yet fixed, owner deferred):** every saguaro (trunk + arms)
+ends in a slightly **POINTY tip** — the `saguaroFlesh` `closeEnd` dome tapers radius to 0 at t=1 (hemisphere →
+a point). Real saguaro apices are blunt/rounded, sometimes with an apical depression. Fix candidate: floor the
+cap radius and round it (or a small blunt cap disc) rather than closing to a point. **Owner's stated next step
+before more plant work: stand up Blender / asset-creation subagents (Fable 5), then use them** — NB Blender is
+NOT installed in the remote CCR container (only `xvfb-run`); resolve the toolchain/output-format question first
+(see the architecture note when we pick this up).
+
 **Deferred:** phenology (animate the year — owner: "pheno is another area, not tied to these plots; max out this
 plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,
 more plots.
