@@ -110,12 +110,18 @@
     background:#12110deb;border:1px solid #ffffff2a;border-radius:8px;padding:.28rem .5rem;backdrop-filter:blur(6px);
     box-shadow:0 6px 20px #0008;white-space:nowrap}
   #tip b{color:#e6c78a}
-  .cscale{display:none;align-items:center;gap:.5rem;pointer-events:none;font-family:var(--mono);font-size:.62rem;
-    color:#f4efe3cc;text-shadow:0 1px 6px #000a;max-width:60ch}
+  /* Always in flow with a reserved height: toggling the ramp on/off must NOT change the
+     bottom stack's height, or the control row above it bounces. Empty in species mode. */
+  .cscale{display:flex;height:1.4rem;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;align-items:center;gap:.5rem;pointer-events:none;
+    font-family:var(--mono);font-size:.62rem;color:#f4efe3cc;text-shadow:0 1px 6px #000a;max-width:min(90ch,94vw)}
   .cscale .grad{width:120px;height:9px;border-radius:5px;border:1px solid #ffffff40}
   .cscale .nm{display:inline-flex;align-items:center;gap:.32rem;color:#f4efe3cc}
   .cscale .nm i{width:9px;height:9px;border-radius:2px;display:inline-block;border:1px solid #ffffff40}
   .cscale b{color:#f4efe3}
+  /* canopy-height key beside the ground credit (only when the LiDAR layer is on) */
+  .chmkey{font-family:var(--mono);font-size:.6rem;color:#f4efe3cc;white-space:nowrap}
+  .chmgrad{display:inline-block;width:56px;height:8px;border-radius:4px;vertical-align:middle;
+    border:1px solid #ffffff55;background:linear-gradient(90deg,rgb(206,190,150),rgb(120,158,80),rgb(38,78,44))}
   /* shown only while the first-tagged filter is narrowed, where the wrong reading is tempting */
   /* A caveat nobody can read is a caveat that was not shipped. These were 9-10px. */
   .tagnote{max-width:58ch;margin-top:.45rem;padding:.5rem .7rem;border-left:2px solid #e6c78a80;
@@ -392,6 +398,7 @@ function setLayer(n){LAYER=n; if(drapes.length){drapes[0].visible=(n===1); drape
     ag.innerHTML=CREDIT[n]; ag.hidden=false;
     gc.innerHTML=(n===1?"Ground: NEON AOP aerial, Santa Rita 2021"
                        :"Ground: NEON AOP LiDAR canopy height, 2021")+
+      (n===2?' &nbsp;<span class="chmkey">bare&nbsp;<span class="chmgrad"></span>&nbsp;tall canopy</span>':'')+
       ' <button class="gcmore" type="button" id="gcMore">what is this?</button>';
     gc.style.display="block";
     var more=document.getElementById("gcMore");
@@ -1106,12 +1113,12 @@ function applyColor(){var m=CM[cmi],unmeas=0;
   // The legend swatches show SPECIES colours. While the rings are coloured by height,
   // stems or dead-share, those swatches are a second, contradictory key on screen.
   lg.classList.toggle("nokey", m!=="species");
-  if(m==="species"){cscale.style.display="none";return;}
+  // Empty the ramp, but keep it in flow (CSS reserves its height) so nothing above reflows.
+  if(m==="species"){cscale.innerHTML="";return;}
   var R=m==="height"?RH:m==="stems"?RS:RD,
     L=m==="height"?["ring colour = plant height",DOM.h[0].toFixed(1)+" m",DOM.h[1].toFixed(1)+" m"]
      :m==="stems"?["ring colour = stem count",String(DOM.s[0]),String(DOM.s[1])]
      :["ring colour = share of stems standing dead","0%","100%"];
-  cscale.style.display="flex";
   cscale.innerHTML='<b>'+L[0]+'</b>&nbsp; '+L[1]+' <span class="grad" style="background:'+gradCss(R)+'"></span> '+L[2]+
     (unmeas?'&nbsp;&nbsp;<span class="nm"><i style="background:'+NOMEAS+'"></i>not measured ('+unmeas+')</span>':'');}
 colorBtn.addEventListener("click",function(){cmi=(cmi+1)%CM.length;applyColor();});

@@ -202,6 +202,14 @@ self-contained `plot-srer056.html`. Rebuild: `python3 assemble_plot.py --plot SR
 (reuses 056's geo from the committed page). The 048-only assumptions (title, About heading, plot row, the
 "shaded area" survey note) are now all data-driven so nothing on 056 mislabels it as 048.
 
+**Canopy-layer readability + no-bounce toolbar (done):** two polish fixes. (1) The **LiDAR canopy-height
+ground layer** was a smeared cloud (256 px + GaussianBlur 2.4) with no key — now 512 px with a light
+final blur and a higher-contrast ramp, so canopy blobs read as distinct from bare ground, plus an
+on-screen **height key** ("bare → tall canopy") beside the ground credit whenever that layer is on
+(`geo_plot2.py` CHM change, regenerated for both plots). (2) The **Colour-by** control no longer makes the
+toolbar bounce: the colour-scale legend now has a fixed one-line height (nowrap + clip) so toggling it
+never reflows the control row above (verified: `.row` top constant across all four colour modes).
+
 **Deferred:** phenology (animate the year — owner: "pheno is another area, not tied to these plots; max out this
 plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,
 more plots.
