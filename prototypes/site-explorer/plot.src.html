@@ -504,6 +504,13 @@ function skinMat(hex,repX,repY,ns){
   if("anisotropy" in n)n.anisotropy=4; n.repeat.set(repX||2,repY||3);
   m.normalMap=n; if(m.normalScale)m.normalScale.set(ns||0.7,ns||0.7); return m;
 }
+// A curved tube that TAPERS from rBase→rTip along its path (TubeGeometry is constant-radius).
+function taperedTube(curve,segs,rBase,rTip,radial){
+  var g=new THREE.TubeGeometry(curve,segs,rBase,radial,false), pos=g.attributes.position, per=radial+1;
+  for(var i=0;i<pos.count;i++){var ring=Math.floor(i/per), t=ring/segs, c=curve.getPoint(t), sc=(rBase+(rTip-rBase)*t)/rBase;
+    pos.setXYZ(i, c.x+(pos.getX(i)-c.x)*sc, c.y+(pos.getY(i)-c.y)*sc, c.z+(pos.getZ(i)-c.z)*sc);}
+  g.computeVertexNormals(); return g;
+}
 // One saguaro arm: a smooth CURVED tube (candelabra) that CONNECTS to the trunk via a shoulder blend.
 function saguaroArm(g,az,ay,trunkR,colH,m,R){
   var armR=trunkR*(0.52+R()*0.12), maturity=R(), frost=(R()<0.05), ex=Math.cos(az), ez=Math.sin(az);
@@ -515,7 +522,7 @@ function saguaroArm(g,az,ay,trunkR,colH,m,R){
     new V(bx+ex*out*0.55, ay+out*0.12, bz+ez*out*0.55),
     new V(bx+ex*out, ay+out*(frost?-0.1:0.42), bz+ez*out),
     new V(bx+ex*out*(frost?1.15:0.92), ay+out*(frost?-0.1:0.42)+up, bz+ez*out*(frost?1.15:0.92))]); curve.tension=0.5;
-  var arm=new THREE.Mesh(new THREE.TubeGeometry(curve,16,armR,12,false),m); arm.castShadow=true; g.add(arm);
+  var arm=new THREE.Mesh(taperedTube(curve,18,armR*1.05,armR*0.6,12),m); arm.castShadow=true; g.add(arm);
   var sh=new THREE.Mesh(new THREE.SphereGeometry(armR*1.4,12,9),m);   // shoulder blend into the trunk
   sh.position.set(ex*trunkR*0.75,ay,ez*trunkR*0.75); sh.scale.set(1,1.25,1); sh.castShadow=true; g.add(sh);
   var tip=curve.getPoint(1);                                         // domed growing tip
