@@ -3,6 +3,17 @@
 These instructions apply to the entire repository. User and platform instructions
 take precedence.
 
+This repository is worked by more than one agent — ChatGPT/Codex via this file and Claude
+Code via `CLAUDE.md`. The tool-neutral source of truth is `docs/neonize-playbook.md`,
+`docs/NEON-SUITE-LEARNING-LOOP.md`, `docs/NEON-SUITE-REVAMP-PLAN.md`, and
+`docs/BUILD-TEST-HANDOFF.md`; read those first and keep tool-specific notes to this file.
+Close every session with a dated `BUILD-TEST-HANDOFF.md` entry tagged with your tool
+(`[Codex]` / `[Claude]`) and a one-line next action. Before coding: plan, question, and
+challenge the work, and always surface at least one improvement — see the flagship
+`NEON-Small-Mammal-Tracker-App` playbook §9. Branch defaults are split across the suite:
+**this repo is `master`** (Connect Cloud watches it); Small Mammal and Vegetation are
+`main` — never assume.
+
 ## Mandatory entry point
 
 Before inspecting, changing, testing, rebuilding, or reporting on this repository,
