@@ -477,21 +477,49 @@ function ribbedColumn(rTop,rBot,len,ribs,segY,amp){
 }
 // One saguaro arm: a short near-horizontal elbow off the upper trunk, then a long vertical rise (candelabra).
 // maturity picks the age: fresh arms are rounded softball "nubbins", old arms are long upswept columns.
-function saguaroArm(g,az,ay,trunkR,colH,ribsN,amp,m,R){
-  var armR=trunkR*(0.5+R()*0.13), ribs=Math.max(8,ribsN-4), maturity=R(), frost=(R()<0.06);
-  var bx=Math.cos(az)*trunkR*0.72, bz=Math.sin(az)*trunkR*0.72;
-  var elbowTilt=frost?(2.1+R()*0.4):(1.18+R()*0.26), elbowLen=armR*(1.3+R()*0.9+maturity*0.7);
-  var e=new THREE.Mesh(ribbedColumn(armR*0.9,armR,elbowLen,ribs,3,amp*0.9),m);
-  e.position.set(bx,ay,bz); e.rotation.set(Math.cos(az)*elbowTilt,az,Math.sin(az)*elbowTilt); e.castShadow=true; g.add(e);
-  var tx=bx+Math.cos(az)*Math.sin(elbowTilt)*elbowLen, tz=bz+Math.sin(az)*Math.sin(elbowTilt)*elbowLen, ty=ay+Math.cos(elbowTilt)*elbowLen;
-  var knee=new THREE.Mesh(new THREE.SphereGeometry(armR*0.98,ribs,6),m); knee.position.set(tx,ty,tz); knee.castShadow=true; g.add(knee);
-  if(maturity<0.26){var nub=new THREE.Mesh(new THREE.SphereGeometry(armR*(0.95+maturity*0.6),ribs,6),m);
-    nub.position.set(tx+Math.cos(az)*armR*0.25,ty+armR*0.5,tz+Math.sin(az)*armR*0.25); nub.scale.y=1.2; nub.castShadow=true; g.add(nub);
-  }else{var upLen=(0.55+maturity*1.1)*colH*(0.24+R()*0.2), lean=frost?(-0.55-R()*0.4):(0.04+R()*0.09);
-    var u=new THREE.Mesh(ribbedColumn(armR*0.8,armR*0.96,upLen,ribs,5,amp*0.9),m);
-    u.position.set(tx,ty,tz); u.rotation.set(Math.cos(az)*lean,az,Math.sin(az)*lean); u.castShadow=true; g.add(u);
-    var utx=tx+Math.cos(az)*Math.sin(lean)*upLen, utz=tz+Math.sin(az)*Math.sin(lean)*upLen, uty=ty+Math.cos(lean)*upLen;
-    var dm=new THREE.Mesh(new THREE.SphereGeometry(armR*0.8,ribs,6,0,6.283,0,1.3),m); dm.position.set(utx,uty,utz); dm.scale.y=0.82; dm.castShadow=true; g.add(dm);}
+// Canvas-generated CACTUS-SKIN normal map (waxy skin + areole stipple). CSP-safe, ~0 bytes, built once.
+var _skinN=null;
+function cactusSkinNormal(){
+  if(_skinN)return _skinN;
+  var N=128, H=new Float32Array(N*N), s=99117;
+  function rr(){s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296;}
+  for(var i=0;i<N*N;i++) H[i]=0.5+0.05*rr();
+  for(var cx=0;cx<7;cx++)for(var cy=0;cy<12;cy++){        // areoles on a rib-crest grid, jittered
+    var px=Math.floor(((cx+0.5)/7+(rr()-0.5)*0.05)*N), py=Math.floor(((cy+0.5)/12+(rr()-0.5)*0.06)*N), rad=2.3+rr()*1.5, amp=0.4+rr()*0.3;
+    for(var dy=-4;dy<=4;dy++)for(var dx=-4;dx<=4;dx++){var xx=((px+dx)%N+N)%N, yy=((py+dy)%N+N)%N, d=Math.hypot(dx,dy);
+      if(d<rad) H[yy*N+xx]+=amp*(1-d/rad)*(1-d/rad);}
+  }
+  var nc=document.createElement("canvas"); nc.width=nc.height=N; var nx=nc.getContext("2d"), im=nx.createImageData(N,N), nd=im.data, str=2.6;
+  for(var y=0;y<N;y++)for(var x=0;x<N;x++){
+    var hl=H[y*N+((x-1+N)%N)], hR=H[y*N+((x+1)%N)], hu=H[((y-1+N)%N)*N+x], hd=H[((y+1)%N)*N+x];
+    var nX=(hl-hR)*str, nY=(hu-hd)*str, nZ=1, l=Math.hypot(nX,nY,nZ); nX/=l;nY/=l;nZ/=l;
+    var j=(y*N+x)*4; nd[j]=(nX*.5+.5)*255; nd[j+1]=(nY*.5+.5)*255; nd[j+2]=(nZ*.5+.5)*255; nd[j+3]=255;
+  }
+  nx.putImageData(im,0,0); _skinN=nc; return _skinN;
+}
+// Smooth (non-flat) textured cactus material so the rounded ribs + skin normal read under the low sun.
+function skinMat(hex,repX,repY,ns){
+  var m=new THREE.MeshStandardMaterial({color:new THREE.Color(hex),roughness:0.78,flatShading:false});
+  var n=new THREE.CanvasTexture(cactusSkinNormal()); n.wrapS=n.wrapT=THREE.RepeatWrapping;
+  if("anisotropy" in n)n.anisotropy=4; n.repeat.set(repX||2,repY||3);
+  m.normalMap=n; if(m.normalScale)m.normalScale.set(ns||0.7,ns||0.7); return m;
+}
+// One saguaro arm: a smooth CURVED tube (candelabra) that CONNECTS to the trunk via a shoulder blend.
+function saguaroArm(g,az,ay,trunkR,colH,m,R){
+  var armR=trunkR*(0.52+R()*0.12), maturity=R(), frost=(R()<0.05), ex=Math.cos(az), ez=Math.sin(az);
+  var bx=ex*trunkR*0.6, bz=ez*trunkR*0.6;                          // base INSIDE the trunk surface → no gap
+  var out=armR*(2.2+R()*1.6+maturity*1.4);
+  var up=frost?-(armR*2+maturity*colH*0.12):(maturity<0.3?armR*(1.4+maturity*3):(0.5+maturity)*colH*(0.24+R()*0.18));
+  var V=THREE.Vector3;
+  var curve=new THREE.CatmullRomCurve3([new V(bx,ay,bz),
+    new V(bx+ex*out*0.55, ay+out*0.12, bz+ez*out*0.55),
+    new V(bx+ex*out, ay+out*(frost?-0.1:0.42), bz+ez*out),
+    new V(bx+ex*out*(frost?1.15:0.92), ay+out*(frost?-0.1:0.42)+up, bz+ez*out*(frost?1.15:0.92))]); curve.tension=0.5;
+  var arm=new THREE.Mesh(new THREE.TubeGeometry(curve,16,armR,12,false),m); arm.castShadow=true; g.add(arm);
+  var sh=new THREE.Mesh(new THREE.SphereGeometry(armR*1.4,12,9),m);   // shoulder blend into the trunk
+  sh.position.set(ex*trunkR*0.75,ay,ez*trunkR*0.75); sh.scale.set(1,1.25,1); sh.castShadow=true; g.add(sh);
+  var tip=curve.getPoint(1);                                         // domed growing tip
+  var dm=new THREE.Mesh(new THREE.SphereGeometry(armR*0.98,12,9,0,6.283,0,1.7),m); dm.position.copy(tip); dm.castShadow=true; g.add(dm);
 }
 // One small red/green obovoid cholla berry (fatter than the pencil-thin stem), occasional 2–3-berry chain.
 function chollaFruit(g,x,y,z,rad,R,fruitM,greenM){
@@ -616,12 +644,13 @@ function buildPlant(p,seed){
     var ribsN=Math.round(12+mature*12+R()*3);                     // juv ~12–15, adult ~21–27
     var samp=0.055+(1-mature)*0.045+R()*0.02;                     // juveniles more deeply fluted (+ hydration jitter)
     var srr=Math.max(0.03,Math.min(cr*0.5,0.026+h*0.028)), colH=h*0.94;
-    var trunk=new THREE.Mesh(ribbedColumn(srr*0.85,srr,colH,ribsN,8,samp),m); trunk.castShadow=true; foliage.add(trunk);
-    var sapex=new THREE.Mesh(new THREE.SphereGeometry(srr*0.86,ribsN,7,0,6.283,0,1.2),m); sapex.position.y=colH; sapex.scale.y=0.7; sapex.castShadow=true; foliage.add(sapex);
+    var sm=dead?m:skinMat(spCol(p,"fol"),2,Math.max(2,Math.round(colH*1.4)),0.75);   // cactus-skin texture, rounded ribs
+    var trunk=new THREE.Mesh(ribbedColumn(srr*0.86,srr,colH,ribsN,10,samp),sm); trunk.castShadow=true; foliage.add(trunk);
+    var sapex=new THREE.Mesh(new THREE.SphereGeometry(srr*0.88,ribsN,8,0,6.283,0,1.25),sm); sapex.position.y=colH; sapex.scale.y=0.72; sapex.castShadow=true; foliage.add(sapex);
     if(h>2.4){var maxArms=Math.min(8,Math.floor((h-1.6)/1.0));    // armless until well over 2–3 m; many adults still armless
       var arms=Math.max(0,Math.floor(R()*(maxArms+1))-(R()<0.3?1:0));
       if(R()<0.02)arms+=6+Math.floor(R()*6);                      // rare many-armed "monster"
-      for(var ia=0;ia<arms;ia++) saguaroArm(foliage,R()*6.283,colH*(0.4+R()*0.36),srr,colH,ribsN,samp,m,R);}
+      for(var ia=0;ia<arms;ia++) saguaroArm(foliage,R()*6.283,colH*(0.4+R()*0.34),srr,colH,sm,R);}
   }else{                            // fallback low mound
     var b=new THREE.Mesh(ico(cr*0.4),m); b.position.y=h*0.35; b.scale.set(1.2,0.7,1.2); b.castShadow=true; foliage.add(b);
   }
