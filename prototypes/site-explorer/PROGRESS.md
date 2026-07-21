@@ -210,6 +210,26 @@ on-screen **height key** ("bare → tall canopy") beside the ground credit whene
 toolbar bounce: the colour-scale legend now has a fixed one-line height (nowrap + clip) so toggling it
 never reflows the control row above (verified: `.row` top constant across all four colour modes).
 
+**Botanical model revamp — saguaro + Christmas cholla (done, the "1-day proof"):** the first two species of a
+planned per-species model upgrade (the direction both research studies endorsed: keep the data-driven
+procedural geometry, sharpen the per-species archetype from real references). Both were rebuilt from deep,
+cross-checked botanical briefs (FNA, ASDM, NPS, llifle, iNat/GBIF) with **tasteful per-individual variation**
+off the existing seed so no two look alike:
+- **Saguaro (CAGI10):** a genuinely **fluted** column (`ribbedColumn` helper — a cylinder rippled per rib);
+  ribs + fluting depth scale with age (juvenile ~12–15 deep flutes → adult ~21–27 shallow), very slender,
+  near-vertical. **Candelabra arms** emerge only when tall (>2.4 m) from the upper trunk at random azimuths,
+  with a **mix of ages on one plant** — fresh rounded "nubbins", young horizontal, long upswept old (arm count
+  is ~85% random per the literature; many adults stay armless "spears"). SRER's on-plot individual is a 0.5 m
+  juvenile (armless), but the model spans juvenile→giant for the fleet.
+- **Christmas cholla (CYLE8):** a **pencil-thin (~4 mm) see-through wiry tangle** (recursive `chollaSeg`),
+  near-90° branchlets, long solitary spines, small **obovoid red fruit** with unripe-green mixed in and
+  occasional 2–3-berry chains, and a browner woody base. Per-plant density/canes/spine-load/fruit-count vary.
+  Segment budget is capped for perf (≈53 instances/plot; load stayed ~2.0 s).
+
+Reusable helpers (`ribbedColumn`, `saguaroArm`, `chollaSeg`, `chollaFruit`) sit beside the other model builders;
+the per-individual data pipeline is unchanged. Developed in a scratchpad Three.js harness then ported into
+`plot.src.html`. Next: work through the rest of the species fleet.
+
 **Deferred:** phenology (animate the year — owner: "pheno is another area, not tied to these plots; max out this
 plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,
 more plots.
