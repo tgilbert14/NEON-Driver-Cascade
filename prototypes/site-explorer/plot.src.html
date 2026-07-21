@@ -468,16 +468,7 @@ var PICK=[];    // per-plant pick proxies (fast hover/click raycast targets)
 var MARKERS=[]; // per-plant ground rings (recoloured by the "Color by" analysis modes)
 
 // ── cactus helpers (saguaro + cholla), driven per-individual by the record + a stable seed ──
-// A fluted column: a cylinder whose radius ripples with angle → vertical ribs (flatShading reads them).
-function ribbedColumn(rTop,rBot,len,ribs,segY,amp){
-  var g=new THREE.CylinderGeometry(rTop,rBot,len,ribs*2,Math.max(1,segY||1)), pos=g.attributes.position;
-  for(var i=0;i<pos.count;i++){var x=pos.getX(i),z=pos.getZ(i),ang=Math.atan2(z,x),f=1+(amp==null?0.075:amp)*Math.cos(ribs*ang);
-    pos.setX(i,x*f); pos.setZ(i,z*f);}
-  g.computeVertexNormals(); g.translate(0,len/2,0); return g;
-}
-// One saguaro arm: a short near-horizontal elbow off the upper trunk, then a long vertical rise (candelabra).
-// maturity picks the age: fresh arms are rounded softball "nubbins", old arms are long upswept columns.
-// Canvas-generated CACTUS-SKIN normal map (waxy skin + areole stipple). CSP-safe, ~0 bytes, built once.
+// Canvas-generated CACTUS-SKIN normal map (waxy skin + areole stipple in vertical rows). CSP-safe, ~0 bytes, built once.
 var _skinN=null;
 function cactusSkinNormal(){
   if(_skinN)return _skinN;
@@ -497,36 +488,75 @@ function cactusSkinNormal(){
   }
   nx.putImageData(im,0,0); _skinN=nc; return _skinN;
 }
-// Smooth (non-flat) textured cactus material so the rounded ribs + skin normal read under the low sun.
-function skinMat(hex,repX,repY,ns){
-  var m=new THREE.MeshStandardMaterial({color:new THREE.Color(hex),roughness:0.78,flatShading:false});
+// Unified saguaro FLESH: a RIBBED, TAPERED tube swept along a curve (trunk OR arm) via Frenet frames,
+// far end rounded to a fluted DOME, near end optionally capped watertight; per-vertex COLOUR baked in
+// (corky brown base → sage-green body → golden crown, with rib-valley AO). One function gives ribs that
+// break the silhouette + smooth candelabra curves + no bottle-cap seam. opt fields:
+//   radiusFn(t)->radius · ribCount · ribAmp · ribPow · radial · segs · capT · closeEnd · capStart · colorFn(worldY,t,th)->[r,g,b]
+function saguaroFlesh(curve,o){
+  var segs=o.segs||24, radial=o.radial||16, ribCount=o.ribCount||16, ribAmp=o.ribAmp||0.08;
+  var capT=o.capT||0.88, ribPow=o.ribPow||1.4;
+  var fr=curve.computeFrenetFrames(segs,false), pts=[], N=fr.normals, B=fr.binormals;
+  for(var i=0;i<=segs;i++)pts.push(curve.getPoint(i/segs));
+  var per=radial+1, verts=[], cols=[], uvs=[], idx=[], hasC=!!o.colorFn;
+  for(var i=0;i<=segs;i++){var t=i/segs, c=pts[i], r0=o.radiusFn(t);
+    if(o.closeEnd&&t>capT){var k=(t-capT)/(1-capT); r0*=Math.sqrt(Math.max(0,1-k*k));}  // hemispherical dome close
+    for(var j=0;j<=radial;j++){var th=j/radial*6.28318;
+      var rib=1+ribAmp*Math.pow(0.5+0.5*Math.cos(ribCount*th),ribPow);   // rounded rib crests, defined valleys
+      var r=r0*rib, nx=Math.cos(th), ny=Math.sin(th);
+      verts.push(c.x+(nx*N[i].x+ny*B[i].x)*r, c.y+(nx*N[i].y+ny*B[i].y)*r, c.z+(nx*N[i].z+ny*B[i].z)*r);
+      uvs.push(j/radial, t);
+      if(hasC){var col=o.colorFn(c.y,t,th); cols.push(col[0],col[1],col[2]);}
+    }
+  }
+  for(var i=0;i<segs;i++)for(var j=0;j<radial;j++){var a=i*per+j,b=a+per; idx.push(a,b,a+1, b,b+1,a+1);}
+  if(o.capStart){                                                  // flat fan closing the near (base) ring → watertight
+    var c0=pts[0], ci=verts.length/3;
+    verts.push(c0.x,c0.y,c0.z); uvs.push(0.5,0);
+    if(hasC){var cc=o.colorFn(c0.y,0,0); cols.push(cc[0],cc[1],cc[2]);}
+    for(var j=0;j<radial;j++) idx.push(ci, j, j+1);                // wind so the cap normal faces down/outward
+  }
+  var g=new THREE.BufferGeometry();
+  g.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
+  g.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
+  if(hasC)g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));
+  g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+// per-vertex colour ramp: corky brown base → waxy sage/blue-green body → lighter golden crown, rib valleys darkened
+function sagColorFn(H,tint,ribCount){
+  var brown=[0.36,0.29,0.20], green=[0.27,0.40,0.29], crown=[0.40,0.50,0.34];
+  return function(wy,t,th){
+    var f=Math.max(0,Math.min(1,wy/H)), r,gg,b;
+    if(f<0.09){var k=f/0.09; r=brown[0]+(green[0]-brown[0])*k; gg=brown[1]+(green[1]-brown[1])*k; b=brown[2]+(green[2]-brown[2])*k;}
+    else if(f<0.80){r=green[0]; gg=green[1]; b=green[2];}
+    else{var k=(f-0.80)/0.20; r=green[0]+(crown[0]-green[0])*k; gg=green[1]+(crown[1]-green[1])*k; b=green[2]+(crown[2]-green[2])*k;}
+    var rib=0.5+0.5*Math.cos(ribCount*th), ao=0.70+0.30*rib;        // dark in the flutes, bright on the crests
+    return [r*ao+tint[0], gg*ao+tint[1], b*ao+tint[2]];
+  };
+}
+// vertex-coloured skin material — one material serves the trunk and every arm
+function sagMat(dead,repY){
+  if(dead)return matR(DEADCOL,1);
+  var m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:0.8,flatShading:false});
   var n=new THREE.CanvasTexture(cactusSkinNormal()); n.wrapS=n.wrapT=THREE.RepeatWrapping;
-  if("anisotropy" in n)n.anisotropy=4; n.repeat.set(repX||2,repY||3);
-  m.normalMap=n; if(m.normalScale)m.normalScale.set(ns||0.7,ns||0.7); return m;
+  if("anisotropy" in n)n.anisotropy=4; n.repeat.set(3,repY||10);
+  m.normalMap=n; if(m.normalScale)m.normalScale.set(1.15,1.15); return m;
 }
-// A curved tube that TAPERS from rBase→rTip along its path (TubeGeometry is constant-radius).
-function taperedTube(curve,segs,rBase,rTip,radial){
-  var g=new THREE.TubeGeometry(curve,segs,rBase,radial,false), pos=g.attributes.position, per=radial+1;
-  for(var i=0;i<pos.count;i++){var ring=Math.floor(i/per), t=ring/segs, c=curve.getPoint(t), sc=(rBase+(rTip-rBase)*t)/rBase;
-    pos.setXYZ(i, c.x+(pos.getX(i)-c.x)*sc, c.y+(pos.getY(i)-c.y)*sc, c.z+(pos.getZ(i)-c.z)*sc);}
-  g.computeVertexNormals(); return g;
-}
-// One saguaro arm: a smooth CURVED tube (candelabra) that CONNECTS to the trunk via a shoulder blend.
-function saguaroArm(g,az,ay,trunkR,colH,m,R){
-  var armR=trunkR*(0.52+R()*0.12), maturity=R(), frost=(R()<0.05), ex=Math.cos(az), ez=Math.sin(az);
-  var bx=ex*trunkR*0.6, bz=ez*trunkR*0.6;                          // base INSIDE the trunk surface → no gap
-  var out=armR*(2.2+R()*1.6+maturity*1.4);
-  var up=frost?-(armR*2+maturity*colH*0.12):(maturity<0.3?armR*(1.4+maturity*3):(0.5+maturity)*colH*(0.24+R()*0.18));
-  var V=THREE.Vector3;
-  var curve=new THREE.CatmullRomCurve3([new V(bx,ay,bz),
-    new V(bx+ex*out*0.55, ay+out*0.12, bz+ez*out*0.55),
-    new V(bx+ex*out, ay+out*(frost?-0.1:0.42), bz+ez*out),
-    new V(bx+ex*out*(frost?1.15:0.92), ay+out*(frost?-0.1:0.42)+up, bz+ez*out*(frost?1.15:0.92))]); curve.tension=0.5;
-  var arm=new THREE.Mesh(taperedTube(curve,18,armR*1.05,armR*0.6,12),m); arm.castShadow=true; g.add(arm);
-  var sh=new THREE.Mesh(new THREE.SphereGeometry(armR*1.4,12,9),m);   // shoulder blend into the trunk
-  sh.position.set(ex*trunkR*0.75,ay,ez*trunkR*0.75); sh.scale.set(1,1.25,1); sh.castShadow=true; g.add(sh);
-  var tip=curve.getPoint(1);                                         // domed growing tip
-  var dm=new THREE.Mesh(new THREE.SphereGeometry(armR*0.98,12,9,0,6.283,0,1.7),m); dm.position.copy(tip); dm.castShadow=true; g.add(dm);
+// One saguaro arm: a CURVED, RIBBED, tapered candelabra tube that grows OUT of the trunk (base embedded)
+// then bends up and rises parallel to the trunk to ~90% of the apex — "Y not T". Ribs continue onto it; tip domes off.
+function saguaroArm(g,az,ay,trunkR,colH,m,R,tint,ribCount){
+  var armR=trunkR*(0.60+R()*0.10), V=THREE.Vector3, ex=Math.cos(az), ez=Math.sin(az);
+  var run=trunkR*(2.4+R()*1.3)+armR;                               // clears the trunk → opens a candelabra "U"
+  var apexTarget=colH*(0.90+R()*0.07), rise=Math.max(colH*0.22,apexTarget-ay);
+  var P0=new V(ex*trunkR*0.28, ay, ez*trunkR*0.28);                // base DEEP inside the trunk → grows out, no seam
+  var P1=new V(ex*run, ay+rise*0.05, ez*run);                     // elbow: reach OUT, barely up (rounded bend)
+  var P2=new V(ex*run*1.02, ay+rise*0.45, ez*run*1.02);           // knee: turn up, ascend parallel to trunk
+  var P3=new V(ex*run*0.99, ay+rise, ez*run*0.99);                // tip: vertical, near the apex
+  var curve=new THREE.CatmullRomCurve3([P0,P1,P2,P3]); curve.tension=0.5;
+  var armRibs=Math.max(9,Math.round(ribCount*0.62));               // arms carry fewer, softer ribs than the trunk
+  var geo=saguaroFlesh(curve,{segs:30,radial:armRibs*2,ribCount:armRibs,ribAmp:0.05,ribPow:1.3,capT:0.82,closeEnd:true,
+    radiusFn:function(t){return armR*(1.06-0.30*t);}, colorFn:sagColorFn(colH,tint,armRibs)});
+  var arm=new THREE.Mesh(geo,m); arm.castShadow=true; g.add(arm);
 }
 // One small red/green obovoid cholla berry (fatter than the pencil-thin stem), occasional 2–3-berry chain.
 function chollaFruit(g,x,y,z,rad,R,fruitM,greenM){
@@ -646,18 +676,22 @@ function buildPlant(p,seed){
     for(var i=0;i<bumps;i++){var a=R()*6.283, br2=rr*0.6*R();
       var bp=new THREE.Mesh(ico(rr*(0.30+R()*0.16)),m);
       bp.position.set(Math.cos(a)*br2,rr*(0.55+R()*0.35),Math.sin(a)*br2); bp.scale.y=0.7; bp.castShadow=true; foliage.add(bp);}
-  }else if(tx==="CAGI10"){         // ── Saguaro: fluted slender column; candelabra arms (mixed ages) only when tall
+  }else if(tx==="CAGI10"){         // ── Saguaro: ribbed vertex-coloured column; candelabra arms (mixed ages) only when tall
     var mature=Math.min(1,Math.max(0,(h-0.4)/6));                 // 0 = knee-high juvenile, 1 = tall adult
-    var ribsN=Math.round(12+mature*12+R()*3);                     // juv ~12–15, adult ~21–27
-    var samp=0.055+(1-mature)*0.045+R()*0.02;                     // juveniles more deeply fluted (+ hydration jitter)
+    var ribsN=Math.round(13+mature*9+R()*2);                      // juv ~13–15, adult ~22–24 flutes
     var srr=Math.max(0.03,Math.min(cr*0.5,0.026+h*0.028)), colH=h*0.94;
-    var sm=dead?m:skinMat(spCol(p,"fol"),2,Math.max(2,Math.round(colH*1.4)),0.75);   // cactus-skin texture, rounded ribs
-    var trunk=new THREE.Mesh(ribbedColumn(srr*0.86,srr,colH,ribsN,10,samp),sm); trunk.castShadow=true; foliage.add(trunk);
-    var sapex=new THREE.Mesh(new THREE.SphereGeometry(srr*0.88,ribsN,8,0,6.283,0,1.25),sm); sapex.position.y=colH; sapex.scale.y=0.72; sapex.castShadow=true; foliage.add(sapex);
+    var tint=[(R()-0.5)*0.05,(R()-0.5)*0.04,(R()-0.5)*0.04];      // faint per-plant hue jitter
+    var sm=sagMat(dead,Math.max(4,Math.round(colH*1.5)));
+    var lean=(R()-0.5)*0.10, bow=(R()-0.5)*0.05, Vs=THREE.Vector3, y0=-0.25;   // slight lean/bow; base buried, capped
+    var spine=new THREE.CatmullRomCurve3([new Vs(0,y0,0), new Vs(bow*colH,colH*0.35,0),
+      new Vs((bow+lean*0.4)*colH,colH*0.70,0), new Vs(lean*colH,colH,0)]);
+    var trunk=new THREE.Mesh(saguaroFlesh(spine,{segs:30,radial:ribsN*2,ribCount:ribsN,ribAmp:0.07,ribPow:1.4,capT:0.86,closeEnd:true,capStart:true,
+      radiusFn:function(t){return srr*(1+0.30*Math.exp(-t*9))*(1-0.12*Math.pow(t,2.2));},   // full body + basal swell + domed top
+      colorFn:sagColorFn(colH,tint,ribsN)}),sm); trunk.castShadow=true; foliage.add(trunk);
     if(h>2.4){var maxArms=Math.min(8,Math.floor((h-1.6)/1.0));    // armless until well over 2–3 m; many adults still armless
       var arms=Math.max(0,Math.floor(R()*(maxArms+1))-(R()<0.3?1:0));
       if(R()<0.02)arms+=6+Math.floor(R()*6);                      // rare many-armed "monster"
-      for(var ia=0;ia<arms;ia++) saguaroArm(foliage,R()*6.283,colH*(0.4+R()*0.34),srr,colH,sm,R);}
+      for(var ia=0;ia<arms;ia++) saguaroArm(foliage,R()*6.283,colH*(0.55+R()*0.20),srr,colH,sm,R,tint,ribsN);}
   }else{                            // fallback low mound
     var b=new THREE.Mesh(ico(cr*0.4),m); b.position.y=h*0.35; b.scale.set(1.2,0.7,1.2); b.castShadow=true; foliage.add(b);
   }
@@ -1249,5 +1283,9 @@ function loop(t){requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 document.getElementById("loading").style.display="none";
+// headless-render hook (gated behind ?dbg): lets a screenshot harness drive the walk camera and
+// spawn extra plants through the real buildPlant path. No effect on the shipped page (default view).
+if(location.search.indexOf("dbg")>=0)window.__P={scene:scene,camera:camera,DATA:DATA,buildPlant:buildPlant,
+  setMode:setMode,cam:function(x,z,y,pi){setMode("walk");px=x;pz=z;yaw=y;pitch=pi;}};
 })();
 </script>
