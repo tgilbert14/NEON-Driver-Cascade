@@ -524,7 +524,7 @@ function saguaroFlesh(curve,o){
 }
 // per-vertex colour ramp: corky brown base → waxy sage/blue-green body → lighter golden crown, rib valleys darkened
 function sagColorFn(H,tint,ribCount){
-  var brown=[0.36,0.29,0.20], green=[0.27,0.40,0.29], crown=[0.40,0.50,0.34];
+  var brown=[0.36,0.29,0.20], green=[0.25,0.40,0.31], crown=[0.38,0.50,0.36];   // glaucous blue-green body
   return function(wy,t,th){
     var f=Math.max(0,Math.min(1,wy/H)), r,gg,b;
     if(f<0.09){var k=f/0.09; r=brown[0]+(green[0]-brown[0])*k; gg=brown[1]+(green[1]-brown[1])*k; b=brown[2]+(green[2]-brown[2])*k;}
@@ -545,7 +545,7 @@ function sagMat(dead,repY){
 // One saguaro arm: a CURVED, RIBBED, tapered candelabra tube that grows OUT of the trunk (base embedded)
 // then bends up and rises parallel to the trunk to ~90% of the apex — "Y not T". Ribs continue onto it; tip domes off.
 function saguaroArm(g,az,ay,trunkR,colH,m,R,tint,ribCount){
-  var armR=trunkR*(0.60+R()*0.10), V=THREE.Vector3, ex=Math.cos(az), ez=Math.sin(az);
+  var armR=trunkR*(0.66+R()*0.12), V=THREE.Vector3, ex=Math.cos(az), ez=Math.sin(az);
   var run=trunkR*(2.4+R()*1.3)+armR;                               // clears the trunk → opens a candelabra "U"
   var apexTarget=colH*(0.90+R()*0.07), rise=Math.max(colH*0.22,apexTarget-ay);
   var P0=new V(ex*trunkR*0.28, ay, ez*trunkR*0.28);                // base DEEP inside the trunk → grows out, no seam
@@ -554,8 +554,8 @@ function saguaroArm(g,az,ay,trunkR,colH,m,R,tint,ribCount){
   var P3=new V(ex*run*0.99, ay+rise, ez*run*0.99);                // tip: vertical, near the apex
   var curve=new THREE.CatmullRomCurve3([P0,P1,P2,P3]); curve.tension=0.5;
   var armRibs=Math.max(9,Math.round(ribCount*0.62));               // arms carry fewer, softer ribs than the trunk
-  var geo=saguaroFlesh(curve,{segs:30,radial:armRibs*2,ribCount:armRibs,ribAmp:0.05,ribPow:1.3,capT:0.82,closeEnd:true,
-    radiusFn:function(t){return armR*(1.06-0.30*t);}, colorFn:sagColorFn(colH,tint,armRibs)});
+  var geo=saguaroFlesh(curve,{segs:30,radial:armRibs*2,ribCount:armRibs,ribAmp:0.06,ribPow:1.3,capT:0.80,closeEnd:true,
+    radiusFn:function(t){return armR*(1.04-0.18*t);}, colorFn:sagColorFn(colH,tint,armRibs)});   // columnar arm, blunt tip
   var arm=new THREE.Mesh(geo,m); arm.castShadow=true; g.add(arm);
 }
 // A whole cholla is dozens of tiny cylinders/berries; to keep it cheap on a plot of ~53, each joint's
@@ -578,11 +578,11 @@ function mergeGeos(geos){                                           // concat in
   if(nor.length)m.setAttribute("normal",new THREE.Float32BufferAttribute(nor,3));
   m.setIndex(idx); return m;
 }
-// One small red/green obovoid cholla berry (fatter than the pencil-thin stem), occasional 2–3-berry chain.
+// One smooth obovoid cholla berry (fatter than the pencil-thin stem, wider at the free end), occasional 2–3-berry chain.
 function chollaFruit(B,x,y,z,rad,R){
   var n=(R()<0.24)?(2+(R()<0.4?1:0)):1, fr0=Math.max(0.006,rad*2.2);
   for(var i=0;i<n;i++){var ripe=!(R()<0.20);
-    (ripe?B.fruit:B.unripe).push(bakeGeo(ico(fr0*(0.9+R()*0.3)),x,y+i*fr0*1.7,z,null,0.9,1.25,0.9));}
+    (ripe?B.fruit:B.unripe).push(bakeGeo(new THREE.IcosahedronGeometry(fr0*(0.9+R()*0.3),1),x,y+i*fr0*1.8,z,null,0.82,1.34,0.82));}
 }
 // Recursive wiry cholla tangle: the first child of a low joint CONTINUES the axis (cohesion/upright), later
 // children fork at wide angles into pencil-thin branchlets; long solitary spines; terminal/node red fruit.
@@ -593,14 +593,14 @@ function chollaSeg(B,x,y,z,az,tilt,len,rad,depth,budget,R,dead){
   var woody=depth===0, dir=chDir(az,tilt), q=new THREE.Quaternion().setFromUnitVectors(CH_UP,dir);
   (woody?B.wood:B.green).push(bakeGeo(stemGeo(rad*0.82,rad,len,7),x,y,z,q));  // only the short base joint is woody/brown
   var tx=x+dir.x*len, ty=y+dir.y*len, tz=z+dir.z*len;
-  if(!woody){var ns=(R()<0.75?1:0)+(R()<0.3?1:0);                    // 0–2 long pale spines, angled out from the joint
-    for(var s=0;s<ns;s++){var sa=R()*6.283, st=0.9+R()*0.7, f=0.35+R()*0.5, sl=len*(0.5+R()*0.5);
+  if(!dead&&!woody){var ns=1+(R()<0.4?1:0);                         // ~1 long pale solitary spine per green node (one areole)
+    for(var s=0;s<ns;s++){var sa=R()*6.283, st=0.9+R()*0.7, f=0.3+R()*0.55, sl=len*(0.55+R()*0.5);
       var sq=new THREE.Quaternion().setFromUnitVectors(CH_UP,chDir(sa,st));
       B.spine.push(bakeGeo(stemGeo(0.00025,rad*0.28,sl,3),x+dir.x*len*f,y+dir.y*len*f,z+dir.z*len*f,sq));}}
   var kids=depth===0?2:(depth<4?(2+(R()<0.45?1:0)):(R()<0.55?1:0));  // fork early + often → a fuller wiry tangle
   for(var k=0;k<kids;k++){var straight=(depth<3&&k===0);            // axis-continuing child stays near-vertical → cohesion
-    var ka=straight?az+(R()-0.5)*0.7:az+(R()<0.5?-1:1)*(0.7+R()*0.8);
-    var kt=straight?tilt*0.55+R()*0.3:0.55+R()*0.85, kl=len*(0.76+R()*0.18);
+    var ka=straight?az+(R()-0.5)*0.7:az+(R()*2-1)*1.5;              // side branches roll freely around the axis → 3D, not coplanar
+    var kt=straight?tilt*0.55+R()*0.3:0.5+R()*0.9, kl=len*(0.76+R()*0.18);
     chollaSeg(B,tx,ty,tz,ka,kt,kl,rad*0.88,depth+1,budget,R,dead);}
   if(!dead){ if(kids===0&&R()<0.74) chollaFruit(B,tx,ty,tz,rad,R);
     else if(depth>=2&&R()<0.28) chollaFruit(B,tx,ty,tz,rad,R); }
@@ -634,9 +634,10 @@ function buildPlant(p,seed){
     }
   }else if(tx==="CYLE8"){              // ── Christmas cholla: pencil-thin wiry tangle, long spines, red winter fruit
     // ~4–8 mm stems, wide-angle branchlets, long solitary spines, red+unripe obovoid fruit, short woody base — see chollaSeg.
-    var cols={green:m, wood:matR(dead?DEADCOL:"#6f5a3e",1), spine:matR("#e6d8b8",1),
+    var deadW="#716655";                                          // weathered grey-brown skeleton (opaque woody sticks)
+    var cols={green:dead?matR(deadW,1):m, wood:matR(dead?deadW:"#6f5a3e",1), spine:matR("#e6d8b8",1),
               fruit:mat(spCol(p,"fruit")), unripe:matR("#8a9a5b",1)};
-    var rad0=0.004+cr*0.004*R()+0.001;
+    var rad0=(0.004+cr*0.004*R()+0.001)*(dead?1.25:1);            // ~4–8 mm live; a touch thicker + woody when dead
     var budget={n:Math.round(30+h*30+R()*12)}, canes=1+Math.floor(R()*2);   // merged per material → dense tangle stays cheap
     var baseLen=h*0.13, B={green:[],wood:[],spine:[],fruit:[],unripe:[]};
     for(var c=0;c<canes;c++){var ca=R()*6.283, r0=cr*0.06*R();
@@ -712,8 +713,8 @@ function buildPlant(p,seed){
     var lean=(R()-0.5)*0.10, bow=(R()-0.5)*0.05, Vs=THREE.Vector3, y0=-0.25;   // slight lean/bow; base buried, capped
     var spine=new THREE.CatmullRomCurve3([new Vs(0,y0,0), new Vs(bow*colH,colH*0.35,0),
       new Vs((bow+lean*0.4)*colH,colH*0.70,0), new Vs(lean*colH,colH,0)]);
-    var trunk=new THREE.Mesh(saguaroFlesh(spine,{segs:30,radial:ribsN*2,ribCount:ribsN,ribAmp:0.07,ribPow:1.4,capT:0.86,closeEnd:true,capStart:true,
-      radiusFn:function(t){return srr*(1+0.30*Math.exp(-t*9))*(1-0.12*Math.pow(t,2.2));},   // full body + basal swell + domed top
+    var trunk=new THREE.Mesh(saguaroFlesh(spine,{segs:30,radial:ribsN*2,ribCount:ribsN,ribAmp:0.09,ribPow:1.35,capT:0.84,closeEnd:true,capStart:true,
+      radiusFn:function(t){return srr*(1+0.16*Math.exp(-t*10))*(1-0.06*Math.pow(t,2.5));},   // columnar body, modest basal swell, blunt domed top
       colorFn:sagColorFn(colH,tint,ribsN)}),sm); trunk.castShadow=true; foliage.add(trunk);
     if(h>2.4){var maxArms=Math.min(8,Math.floor((h-1.6)/1.0));    // armless until well over 2–3 m; many adults still armless
       var arms=Math.max(0,Math.floor(R()*(maxArms+1))-(R()<0.3?1:0));
