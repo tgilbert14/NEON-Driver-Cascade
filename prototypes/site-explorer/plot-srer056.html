@@ -472,6 +472,154 @@ var PROXYMAT=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:
 var CANOPY=[];  // swayable foliage groups (soft-tissue plants only)
 var PICK=[];    // per-plant pick proxies (fast hover/click raycast targets)
 var MARKERS=[]; // per-plant ground rings (recoloured by the "Color by" analysis modes)
+
+// ── cactus helpers (saguaro + cholla), driven per-individual by the record + a stable seed ──
+// Canvas-generated CACTUS-SKIN normal map (waxy skin + areole stipple in vertical rows). CSP-safe, ~0 bytes, built once.
+var _skinN=null;
+function cactusSkinNormal(){
+  if(_skinN)return _skinN;
+  var N=128, H=new Float32Array(N*N), s=99117;
+  function rr(){s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296;}
+  for(var i=0;i<N*N;i++) H[i]=0.5+0.05*rr();
+  for(var cx=0;cx<7;cx++)for(var cy=0;cy<12;cy++){        // areoles on a rib-crest grid, jittered
+    var px=Math.floor(((cx+0.5)/7+(rr()-0.5)*0.05)*N), py=Math.floor(((cy+0.5)/12+(rr()-0.5)*0.06)*N), rad=2.3+rr()*1.5, amp=0.4+rr()*0.3;
+    for(var dy=-4;dy<=4;dy++)for(var dx=-4;dx<=4;dx++){var xx=((px+dx)%N+N)%N, yy=((py+dy)%N+N)%N, d=Math.hypot(dx,dy);
+      if(d<rad) H[yy*N+xx]+=amp*(1-d/rad)*(1-d/rad);}
+  }
+  var nc=document.createElement("canvas"); nc.width=nc.height=N; var nx=nc.getContext("2d"), im=nx.createImageData(N,N), nd=im.data, str=2.6;
+  for(var y=0;y<N;y++)for(var x=0;x<N;x++){
+    var hl=H[y*N+((x-1+N)%N)], hR=H[y*N+((x+1)%N)], hu=H[((y-1+N)%N)*N+x], hd=H[((y+1)%N)*N+x];
+    var nX=(hl-hR)*str, nY=(hu-hd)*str, nZ=1, l=Math.hypot(nX,nY,nZ); nX/=l;nY/=l;nZ/=l;
+    var j=(y*N+x)*4; nd[j]=(nX*.5+.5)*255; nd[j+1]=(nY*.5+.5)*255; nd[j+2]=(nZ*.5+.5)*255; nd[j+3]=255;
+  }
+  nx.putImageData(im,0,0); _skinN=nc; return _skinN;
+}
+// Unified saguaro FLESH: a RIBBED, TAPERED tube swept along a curve (trunk OR arm) via Frenet frames,
+// far end rounded to a fluted DOME, near end optionally capped watertight; per-vertex COLOUR baked in
+// (corky brown base → sage-green body → golden crown, with rib-valley AO). One function gives ribs that
+// break the silhouette + smooth candelabra curves + no bottle-cap seam. opt fields:
+//   radiusFn(t)->radius · ribCount · ribAmp · ribPow · radial · segs · capT · closeEnd · capStart · colorFn(worldY,t,th)->[r,g,b]
+function saguaroFlesh(curve,o){
+  var segs=o.segs||24, radial=o.radial||16, ribCount=o.ribCount||16, ribAmp=o.ribAmp||0.08;
+  var capT=o.capT||0.88, ribPow=o.ribPow||1.4;
+  var twist=o.ribTwist||0, wob=o.ribWob||0, rphase=o.ribPhase||0;
+  var fr=curve.computeFrenetFrames(segs,false), pts=[], N=fr.normals, B=fr.binormals;
+  for(var i=0;i<=segs;i++)pts.push(curve.getPoint(i/segs));
+  var per=radial+1, verts=[], cols=[], uvs=[], idx=[], hasC=!!o.colorFn;
+  // per-rib depth (mod ribCount → seamless): no two ribs identical, so the vertical shadow lines read uneven, some deeper
+  function ribDepth(k){k=((k%ribCount)+ribCount)%ribCount; var s=Math.sin(k*12.9898+rphase*7.0)*43758.5453; return 0.66+0.62*(s-Math.floor(s));}
+  for(var i=0;i<=segs;i++){var t=i/segs, c=pts[i], r0=o.radiusFn(t);
+    if(o.closeEnd&&t>capT){var k=(t-capT)/(1-capT); r0*=Math.sqrt(Math.max(0,1-k*k));}  // hemispherical dome close
+    // ribs spiral gently + low-frequency wander with height + azimuthal warp, so flutes are never dead-straight and lean into each other
+    var drift=twist*t + wob*Math.sin(6.28318*t*1.7 + rphase), warp=o.ribWarp||0;
+    for(var j=0;j<=radial;j++){var th=j/radial*6.28318, thE=th+drift+warp*Math.sin(2*th+rphase*1.7)*(0.5+0.5*t);
+      var rib=1+ribAmp*ribDepth(Math.round(ribCount*thE/6.28318))*Math.pow(0.5+0.5*Math.cos(ribCount*thE),ribPow);
+      var r=r0*rib, nx=Math.cos(th), ny=Math.sin(th);
+      verts.push(c.x+(nx*N[i].x+ny*B[i].x)*r, c.y+(nx*N[i].y+ny*B[i].y)*r, c.z+(nx*N[i].z+ny*B[i].z)*r);
+      uvs.push(j/radial, t);
+      if(hasC){var col=o.colorFn(c.y,t,thE); cols.push(col[0],col[1],col[2]);}   // shadow lines follow the drifted ribs
+    }
+  }
+  for(var i=0;i<segs;i++)for(var j=0;j<radial;j++){var a=i*per+j,b=a+per; idx.push(a,b,a+1, b,b+1,a+1);}
+  if(o.capStart){                                                  // flat fan closing the near (base) ring → watertight
+    var c0=pts[0], ci=verts.length/3;
+    verts.push(c0.x,c0.y,c0.z); uvs.push(0.5,0);
+    if(hasC){var cc=o.colorFn(c0.y,0,0); cols.push(cc[0],cc[1],cc[2]);}
+    for(var j=0;j<radial;j++) idx.push(ci, j, j+1);                // wind so the cap normal faces down/outward
+  }
+  var g=new THREE.BufferGeometry();
+  g.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
+  g.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
+  if(hasC)g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));
+  g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+// per-vertex colour ramp: corky brown base → waxy sage/blue-green body → lighter golden crown, rib valleys darkened
+function sagColorFn(H,tint,ribCount){
+  var brown=[0.36,0.29,0.20], green=[0.25,0.40,0.31], crown=[0.38,0.50,0.36];   // glaucous blue-green body
+  return function(wy,t,th){
+    var f=Math.max(0,Math.min(1,wy/H)), r,gg,b;
+    if(f<0.09){var k=f/0.09; r=brown[0]+(green[0]-brown[0])*k; gg=brown[1]+(green[1]-brown[1])*k; b=brown[2]+(green[2]-brown[2])*k;}
+    else if(f<0.80){r=green[0]; gg=green[1]; b=green[2];}
+    else{var k=(f-0.80)/0.20; r=green[0]+(crown[0]-green[0])*k; gg=green[1]+(crown[1]-green[1])*k; b=green[2]+(crown[2]-green[2])*k;}
+    var rib=0.5+0.5*Math.cos(ribCount*th), ao=0.62+0.38*Math.pow(rib,0.8);   // deep shadow in the flute valleys, bright crests
+    return [r*ao+tint[0], gg*ao+tint[1], b*ao+tint[2]];
+  };
+}
+// vertex-coloured skin material — one material serves the trunk and every arm
+function sagMat(dead,repY){
+  if(dead)return matR(DEADCOL,1);
+  var m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:0.8,flatShading:false});
+  var n=new THREE.CanvasTexture(cactusSkinNormal()); n.wrapS=n.wrapT=THREE.RepeatWrapping;
+  if("anisotropy" in n)n.anisotropy=4; n.repeat.set(3,repY||10);
+  m.normalMap=n; if(m.normalScale)m.normalScale.set(1.15,1.15); return m;
+}
+// One saguaro arm: grows OUT of the trunk (base embedded), reaches out with a slight shoulder sag, then CURVES
+// smoothly upward and rises parallel to the trunk toward the crown — the true candelabra arc (not a bent elbow).
+// Ribs continue onto it and wander like the trunk's; tip domes off. armStyle rs = {twist,wob,phase}.
+function saguaroArm(g,az,ay,trunkR,colH,m,R,tint,ribCount,rs){
+  var armR=trunkR*(0.66+R()*0.12), V=THREE.Vector3, ex=Math.cos(az), ez=Math.sin(az);
+  var run=trunkR*(1.9+R()*1.0)+armR;                               // how far the shoulder reaches out
+  var apexTarget=colH*(0.90+R()*0.08), rise=Math.max(colH*0.26,apexTarget-ay);
+  var dip=armR*(0.15+R()*0.3);                                     // a slight shoulder sag — elbow stays near branch height
+  var P0=new V(ex*trunkR*0.28, ay, ez*trunkR*0.28);               // base DEEP inside the trunk → grows out, no seam
+  var P1=new V(ex*run*0.55, ay-dip*0.5, ez*run*0.55);            // shoulder: reaching out, a touch below the branch
+  var P2=new V(ex*run, ay+rise*0.10, ez*run);                    // elbow: farthest out, at ~branch height, just turning up
+  var P3=new V(ex*run*0.99, ay+rise*0.52, ez*run*0.99);          // sweeping up in a smooth curve
+  var P4=new V(ex*run*0.86, ay+rise, ez*run*0.86);               // tip: risen, drawn back toward the trunk (parallel)
+  var curve=new THREE.CatmullRomCurve3([P0,P1,P2,P3,P4]); curve.tension=0.5;
+  var armRibs=Math.max(9,Math.round(ribCount*0.62));               // arms carry fewer, softer ribs than the trunk
+  var geo=saguaroFlesh(curve,{segs:34,radial:armRibs*2,ribCount:armRibs,ribAmp:0.10,ribPow:1.18,capT:0.80,closeEnd:true,
+    ribTwist:(rs?rs.twist:0)*0.7, ribWob:(rs?rs.wob:0), ribPhase:(rs?rs.phase:0)+az, ribWarp:0.04,
+    radiusFn:function(t){return armR*(1.04-0.18*t);}, colorFn:sagColorFn(colH,tint,armRibs)});   // columnar arm, blunt tip
+  var arm=new THREE.Mesh(geo,m); arm.castShadow=true; g.add(arm);
+}
+// A whole cholla is dozens of tiny cylinders/berries; to keep it cheap on a plot of ~53, each joint's
+// geometry is BAKED into world space and collected per material, then merged into one mesh per material
+// (≤5 draw calls/plant instead of ~60). All cholla materials use flatShading, so merging is visually exact.
+var CH_UP=new THREE.Vector3(0,1,0), CH_ONE=new THREE.Vector3(1,1,1);
+function chDir(az,tilt){return new THREE.Vector3(Math.cos(az)*Math.sin(tilt),Math.cos(tilt),Math.sin(az)*Math.sin(tilt));}
+function bakeGeo(geo,x,y,z,q,sx,sy,sz){                             // bake position+orientation(+scale) into the vertices
+  geo.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),q||new THREE.Quaternion(),
+    sx==null?CH_ONE:new THREE.Vector3(sx,sy,sz))); return geo;
+}
+function mergeGeos(geos){                                           // concat indexed position/normal buffers into one geometry
+  var pos=[], nor=[], idx=[], off=0;
+  for(var gi=0;gi<geos.length;gi++){var g=geos[gi], p=g.attributes.position, n=g.attributes.normal, id=g.index;
+    for(var i=0;i<p.count;i++){pos.push(p.getX(i),p.getY(i),p.getZ(i)); if(n)nor.push(n.getX(i),n.getY(i),n.getZ(i));}
+    if(id){for(var i2=0;i2<id.count;i2++)idx.push(id.getX(i2)+off);} else {for(var i3=0;i3<p.count;i3++)idx.push(i3+off);}
+    off+=p.count;}
+  var m=new THREE.BufferGeometry();
+  m.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  if(nor.length)m.setAttribute("normal",new THREE.Float32BufferAttribute(nor,3));
+  m.setIndex(idx); return m;
+}
+// One smooth obovoid cholla berry (fatter than the pencil-thin stem, wider at the free end), occasional 2–3-berry chain.
+function chollaFruit(B,x,y,z,rad,R){
+  var n=(R()<0.24)?(2+(R()<0.4?1:0)):1, fr0=Math.max(0.006,rad*2.2);
+  for(var i=0;i<n;i++){var ripe=!(R()<0.20);
+    (ripe?B.fruit:B.unripe).push(bakeGeo(new THREE.IcosahedronGeometry(fr0*(0.9+R()*0.3),1),x,y+i*fr0*1.8,z,null,0.82,1.34,0.82));}
+}
+// Recursive wiry cholla tangle: the first child of a low joint CONTINUES the axis (cohesion/upright), later
+// children fork at wide angles into pencil-thin branchlets; long solitary spines; terminal/node red fruit.
+// Each joint is oriented by a QUATERNION mapping +Y → its true growth direction, so the tip a child attaches
+// to is exactly where the parent cylinder ends — segments connect with no gaps. Geometry goes into buckets B.
+function chollaSeg(B,x,y,z,az,tilt,len,rad,depth,budget,R,dead){
+  if(budget.n<=0||depth>6)return; budget.n--;
+  var woody=depth===0, dir=chDir(az,tilt), q=new THREE.Quaternion().setFromUnitVectors(CH_UP,dir);
+  (woody?B.wood:B.green).push(bakeGeo(stemGeo(rad*0.82,rad,len,7),x,y,z,q));  // only the short base joint is woody/brown
+  var tx=x+dir.x*len, ty=y+dir.y*len, tz=z+dir.z*len;
+  if(!dead&&!woody){var ns=1+(R()<0.4?1:0);                         // ~1 long pale solitary spine per green node (one areole)
+    for(var s=0;s<ns;s++){var sa=R()*6.283, st=0.9+R()*0.7, f=0.3+R()*0.55, sl=len*(0.55+R()*0.5);
+      var sq=new THREE.Quaternion().setFromUnitVectors(CH_UP,chDir(sa,st));
+      B.spine.push(bakeGeo(stemGeo(0.00025,rad*0.28,sl,3),x+dir.x*len*f,y+dir.y*len*f,z+dir.z*len*f,sq));}}
+  var kids=depth===0?2:(depth<4?(2+(R()<0.45?1:0)):(R()<0.55?1:0));  // fork early + often → a fuller wiry tangle
+  for(var k=0;k<kids;k++){var straight=(depth<3&&k===0);            // axis-continuing child stays near-vertical → cohesion
+    var ka=straight?az+(R()-0.5)*0.7:az+(R()*2-1)*1.5;              // side branches roll freely around the axis → 3D, not coplanar
+    var kt=straight?tilt*0.55+R()*0.3:0.5+R()*0.9, kl=len*(0.76+R()*0.18);
+    chollaSeg(B,tx,ty,tz,ka,kt,kl,rad*0.88,depth+1,budget,R,dead);}
+  if(!dead){ if(kids===0&&R()<0.74) chollaFruit(B,tx,ty,tz,rad,R);
+    else if(depth>=2&&R()<0.28) chollaFruit(B,tx,ty,tz,rad,R); }
+}
 function buildPlant(p,seed){
   var g=new THREE.Group(); g.position.set(p.x,0,-p.y);   // scene north = -Z (so top-down reads north-up/east-right)
   var R=rnd(seed), dead=p.status==="dead", tx=p.tx;
@@ -499,24 +647,18 @@ function buildPlant(p,seed){
           bl.scale.y=1.3; bl.castShadow=true; foliage.add(bl);}
       }
     }
-  }else if(tx==="CYLE8"){              // ── Christmas cholla: thin wiry canes + right-angle branchlets
-    var canes=2+Math.floor(R()*2), rad=cr*0.02;
-    var cg=stemGeo(rad*0.85,rad,1,5), bm=mat(fol);
-    for(var c=0;c<canes;c++){
-      var a=R()*6.283, cx=Math.cos(a)*cr*0.12, cz=Math.sin(a)*cr*0.12, yy=0, segs=2+Math.floor(R()*2);
-      for(var s2=0;s2<segs;s2++){
-        var seglen=h*(0.30+R()*0.22), lean=(R()-0.5)*0.6, la=a+(R()-0.5);
-        var cane=new THREE.Mesh(cg,bm); cane.position.set(cx,yy,cz);
-        cane.rotation.set(Math.cos(la)*lean,la,Math.sin(la)*lean); cane.scale.set(1,seglen,1); cane.castShadow=true; foliage.add(cane);
-        cx+=Math.cos(la)*Math.sin(lean)*seglen; cz+=Math.sin(la)*Math.sin(lean)*seglen; yy+=seglen*Math.cos(lean);
-        var nbr=1+Math.floor(R()*2);          // near-perpendicular terminal branchlets
-        for(var b2=0;b2<nbr;b2++){var ba=R()*6.283, blen=h*(0.10+R()*0.14);
-          var br=new THREE.Mesh(cg,bm); br.position.set(cx,yy-seglen*0.15,cz);
-          br.rotation.set(Math.cos(ba)*1.35,ba,Math.sin(ba)*1.35); br.scale.set(0.9,blen,0.9); br.castShadow=true; foliage.add(br);
-          if(!dead&&R()<0.5){var fr=new THREE.Mesh(ico(rad*1.8),mat(spCol(p,"fruit")));  // red winter fruit
-            fr.position.set(cx+Math.cos(ba)*blen*0.6,yy-seglen*0.15+blen*0.2,cz+Math.sin(ba)*blen*0.6); foliage.add(fr);}}
-      }
-    }
+  }else if(tx==="CYLE8"){              // ── Christmas cholla: pencil-thin wiry tangle, long spines, red winter fruit
+    // ~4–8 mm stems, wide-angle branchlets, long solitary spines, red+unripe obovoid fruit, short woody base — see chollaSeg.
+    var deadW="#716655";                                          // weathered grey-brown skeleton (opaque woody sticks)
+    var cols={green:dead?matR(deadW,1):m, wood:matR(dead?deadW:"#6f5a3e",1), spine:matR("#e6d8b8",1),
+              fruit:mat(spCol(p,"fruit")), unripe:matR("#8a9a5b",1)};
+    var rad0=(0.004+cr*0.004*R()+0.001)*(dead?1.25:1);            // ~4–8 mm live; a touch thicker + woody when dead
+    var budget={n:Math.round(30+h*30+R()*12)}, canes=1+Math.floor(R()*2);   // merged per material → dense tangle stays cheap
+    var baseLen=h*0.13, B={green:[],wood:[],spine:[],fruit:[],unripe:[]};
+    for(var c=0;c<canes;c++){var ca=R()*6.283, r0=cr*0.06*R();
+      chollaSeg(B,Math.cos(ca)*r0,0,Math.sin(ca)*r0,ca,0.06+R()*0.16,baseLen*(0.85+R()*0.3),rad0,0,budget,R,dead);}
+    ["wood","green","spine","fruit","unripe"].forEach(function(k){
+      if(B[k].length){var cm=new THREE.Mesh(mergeGeos(B[k]),cols[k]); cm.castShadow=true; foliage.add(cm);}});
   }else if(tx==="PRVE"){              // ── Velvet mesquite: crooked dark trunks under a broad feathery dome
     var bm=matR(bark,1), nT=h<1.1?1:2+Math.floor(R()*2), trunkH=h*0.45, tops=[];
     var rTr=Math.max(0.045,(bd?bd*0.006:0.06+h*0.03)/Math.sqrt(nT));   // trunk ⌀ from real basal-stem diameter
@@ -577,16 +719,28 @@ function buildPlant(p,seed){
     for(var i=0;i<bumps;i++){var a=R()*6.283, br2=rr*0.6*R();
       var bp=new THREE.Mesh(ico(rr*(0.30+R()*0.16)),m);
       bp.position.set(Math.cos(a)*br2,rr*(0.55+R()*0.35),Math.sin(a)*br2); bp.scale.y=0.7; bp.castShadow=true; foliage.add(bp);}
-  }else if(tx==="CAGI10"){         // ── Saguaro: tall fluted green column (juveniles armless), arms if tall
-    var rr=Math.max(0.06,cr*0.42), colH=h;
-    var col=new THREE.Mesh(stemGeo(rr*0.85,rr,colH,12),m); col.castShadow=true; foliage.add(col);
-    var domeTop=new THREE.Mesh(new THREE.SphereGeometry(rr*0.85,12,6,0,6.283,0,1.4),m); domeTop.position.y=colH; domeTop.castShadow=true; foliage.add(domeTop);
-    if(h>3){var arms=1+Math.floor(R()*3);      // upcurving arms only on mature giants
-      for(var i=0;i<arms;i++){var a=R()*6.283, ay=colH*(0.5+R()*0.25), al=colH*0.28;
-        var e=new THREE.Mesh(stemGeo(rr*0.6,rr*0.65,al,10),m); e.position.set(0,ay,0); e.rotation.set(0,a,1.1); e.castShadow=true; foliage.add(e);
-        var ex=Math.cos(a)*al*0.7, ez=Math.sin(a)*al*0.7;
-        var up=new THREE.Mesh(stemGeo(rr*0.55,rr*0.6,al*1.1,10),m); up.position.set(ex,ay+al*0.2,ez); up.castShadow=true; foliage.add(up);
-        var ad=new THREE.Mesh(new THREE.SphereGeometry(rr*0.55,10,5,0,6.283,0,1.4),m); ad.position.set(ex,ay+al*0.2+al*1.1,ez); foliage.add(ad);}}
+  }else if(tx==="CAGI10"){         // ── Saguaro: deep-fluted vertex-coloured column; candelabra arms (mixed ages) only when tall
+    var mature=Math.min(1,Math.max(0,(h-0.4)/6));                 // 0 = knee-high juvenile, 1 = tall adult
+    var ribsN=Math.round(13+mature*9+R()*2);                      // juv ~13–15, adult ~22–24 flutes
+    var girth=0.9+R()*0.28;                                       // per-plant slenderness (some fatter columns)
+    var srr=Math.max(0.03,Math.min(cr*0.55,0.026+h*0.028))*girth, colH=h*0.94;
+    var tint=[(R()-0.5)*0.05,(R()-0.5)*0.04,(R()-0.5)*0.04];      // faint per-plant hue jitter
+    var swell=0.06+(R()*2-1)*0.30, midBulge=(R()-0.5)*0.05;       // base pinched(<0)/swollen(>0) + occasional mid-belly
+    var rs={twist:(R()-0.5)*0.7, wob:0.045+R()*0.06, phase:R()*6.283};   // this plant's rib-wander signature
+    var sm=sagMat(dead,Math.max(4,Math.round(colH*1.5)));
+    var lean=(R()-0.5)*0.10, bow=(R()-0.5)*0.05, Vs=THREE.Vector3, y0=-0.25;   // slight lean/bow; base buried, capped
+    var spine=new THREE.CatmullRomCurve3([new Vs(0,y0,0), new Vs(bow*colH,colH*0.35,0),
+      new Vs((bow+lean*0.4)*colH,colH*0.70,0), new Vs(lean*colH,colH,0)]);
+    var trunk=new THREE.Mesh(saguaroFlesh(spine,{segs:34,radial:ribsN*2,ribCount:ribsN,ribAmp:0.13,ribPow:1.15,capT:0.84,closeEnd:true,capStart:true,
+      ribTwist:rs.twist,ribWob:rs.wob,ribPhase:rs.phase,ribWarp:0.05,
+      radiusFn:function(t){return srr*(1+swell*Math.exp(-t*4.5)+midBulge*Math.exp(-Math.pow((t-0.5)*3,2)))*(1-0.08*Math.pow(t,2.4));},
+      colorFn:sagColorFn(colH,tint,ribsN)}),sm); trunk.castShadow=true; foliage.add(trunk);
+    if(h>2.4){var maxArms=Math.min(8,Math.floor((h-1.6)/1.0));    // armless until well over 2–3 m; many adults still armless
+      var arms=Math.max(0,Math.floor(R()*(maxArms+1))-(R()<0.3?1:0));
+      if(R()<0.02)arms+=6+Math.floor(R()*6);                      // rare many-armed "monster"
+      var azBase=R()*6.283;
+      for(var ia=0;ia<arms;ia++){var az=azBase+ia*(6.283/Math.max(3,arms))+(R()-0.5)*0.9;   // spread around trunk, no collisions
+        saguaroArm(foliage,az,colH*(0.40+R()*0.36),srr,colH,sm,R,tint,ribsN,rs);}}          // staggered emergence heights
   }else{                            // fallback low mound
     var b=new THREE.Mesh(ico(cr*0.4),m); b.position.y=h*0.35; b.scale.set(1.2,0.7,1.2); b.castShadow=true; foliage.add(b);
   }
@@ -1178,5 +1332,9 @@ function loop(t){requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 document.getElementById("loading").style.display="none";
+// headless-render hook (gated behind ?dbg): lets a screenshot harness drive the walk camera and
+// spawn extra plants through the real buildPlant path. No effect on the shipped page (default view).
+if(location.search.indexOf("dbg")>=0)window.__P={scene:scene,camera:camera,renderer:renderer,DATA:DATA,buildPlant:buildPlant,
+  setMode:setMode,cam:function(x,z,y,pi){setMode("walk");px=x;pz=z;yaw=y;pitch=pi;}};
 })();
 </script>
