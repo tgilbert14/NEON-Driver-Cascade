@@ -558,28 +558,52 @@ function saguaroArm(g,az,ay,trunkR,colH,m,R,tint,ribCount){
     radiusFn:function(t){return armR*(1.06-0.30*t);}, colorFn:sagColorFn(colH,tint,armRibs)});
   var arm=new THREE.Mesh(geo,m); arm.castShadow=true; g.add(arm);
 }
-// One small red/green obovoid cholla berry (fatter than the pencil-thin stem), occasional 2–3-berry chain.
-function chollaFruit(g,x,y,z,rad,R,fruitM,greenM){
-  var n=(R()<0.22)?(2+(R()<0.4?1:0)):1;
-  for(var i=0;i<n;i++){var fr=new THREE.Mesh(ico(rad*(2.4+R()*0.6)),(R()<0.22?greenM:fruitM));
-    fr.position.set(x,y+i*rad*3.0,z); fr.scale.set(1,1.3,1); fr.castShadow=true; g.add(fr);}
+// A whole cholla is dozens of tiny cylinders/berries; to keep it cheap on a plot of ~53, each joint's
+// geometry is BAKED into world space and collected per material, then merged into one mesh per material
+// (≤5 draw calls/plant instead of ~60). All cholla materials use flatShading, so merging is visually exact.
+var CH_UP=new THREE.Vector3(0,1,0), CH_ONE=new THREE.Vector3(1,1,1);
+function chDir(az,tilt){return new THREE.Vector3(Math.cos(az)*Math.sin(tilt),Math.cos(tilt),Math.sin(az)*Math.sin(tilt));}
+function bakeGeo(geo,x,y,z,q,sx,sy,sz){                             // bake position+orientation(+scale) into the vertices
+  geo.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),q||new THREE.Quaternion(),
+    sx==null?CH_ONE:new THREE.Vector3(sx,sy,sz))); return geo;
 }
-// Recursive wiry cholla tangle: pencil-thin joints, NEAR-90° branchlets, long solitary spines, terminal/node fruit.
-function chollaSeg(g,x,y,z,az,tilt,len,rad,depth,budget,R,cols,dead){
-  if(budget.n<=0||depth>4)return; budget.n--;
-  var m=depth===0?cols.wood:(depth===1&&R()<0.5?cols.wood:cols.green);
-  var seg=new THREE.Mesh(stemGeo(rad*0.85,rad,len,5),m); seg.position.set(x,y,z);
-  seg.rotation.set(Math.cos(az)*tilt,az,Math.sin(az)*tilt); seg.castShadow=true; g.add(seg);
-  var tx=x+Math.cos(az)*Math.sin(tilt)*len, tz=z+Math.sin(az)*Math.sin(tilt)*len, ty=y+Math.cos(tilt)*len;
-  if(depth>0&&R()<0.5){var sa=R()*6.283, st=0.7+R()*1.1, f=0.3+R()*0.6;
-    var sp=new THREE.Mesh(stemGeo(0.0004,rad*0.4,0.025+R()*0.025,3),cols.spine);
-    sp.position.set(x+Math.cos(az)*Math.sin(tilt)*len*f,y+Math.cos(tilt)*len*f,z+Math.sin(az)*Math.sin(tilt)*len*f);
-    sp.rotation.set(Math.cos(sa)*st,sa,Math.sin(sa)*st); g.add(sp);}
-  var kids=depth<2?(1+Math.floor(R()*3)):(R()<0.55?1:0);
-  for(var k=0;k<kids;k++){var ka=az+(R()<0.5?-1:1)*(1.2+R()*0.45), kt=0.35+R()*1.0, kl=len*(0.62+R()*0.34);
-    chollaSeg(g,tx,ty,tz,ka,kt,kl,rad*0.86,depth+1,budget,R,cols,dead);}
-  if(!dead){ if(kids===0&&R()<0.62) chollaFruit(g,tx,ty,tz,rad,R,cols.fruit,cols.unripe);
-    else if(depth>=1&&R()<0.16) chollaFruit(g,tx,ty,tz,rad,R,cols.fruit,cols.unripe); }
+function mergeGeos(geos){                                           // concat indexed position/normal buffers into one geometry
+  var pos=[], nor=[], idx=[], off=0;
+  for(var gi=0;gi<geos.length;gi++){var g=geos[gi], p=g.attributes.position, n=g.attributes.normal, id=g.index;
+    for(var i=0;i<p.count;i++){pos.push(p.getX(i),p.getY(i),p.getZ(i)); if(n)nor.push(n.getX(i),n.getY(i),n.getZ(i));}
+    if(id){for(var i2=0;i2<id.count;i2++)idx.push(id.getX(i2)+off);} else {for(var i3=0;i3<p.count;i3++)idx.push(i3+off);}
+    off+=p.count;}
+  var m=new THREE.BufferGeometry();
+  m.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  if(nor.length)m.setAttribute("normal",new THREE.Float32BufferAttribute(nor,3));
+  m.setIndex(idx); return m;
+}
+// One small red/green obovoid cholla berry (fatter than the pencil-thin stem), occasional 2–3-berry chain.
+function chollaFruit(B,x,y,z,rad,R){
+  var n=(R()<0.24)?(2+(R()<0.4?1:0)):1, fr0=Math.max(0.006,rad*2.2);
+  for(var i=0;i<n;i++){var ripe=!(R()<0.20);
+    (ripe?B.fruit:B.unripe).push(bakeGeo(ico(fr0*(0.9+R()*0.3)),x,y+i*fr0*1.7,z,null,0.9,1.25,0.9));}
+}
+// Recursive wiry cholla tangle: the first child of a low joint CONTINUES the axis (cohesion/upright), later
+// children fork at wide angles into pencil-thin branchlets; long solitary spines; terminal/node red fruit.
+// Each joint is oriented by a QUATERNION mapping +Y → its true growth direction, so the tip a child attaches
+// to is exactly where the parent cylinder ends — segments connect with no gaps. Geometry goes into buckets B.
+function chollaSeg(B,x,y,z,az,tilt,len,rad,depth,budget,R,dead){
+  if(budget.n<=0||depth>6)return; budget.n--;
+  var woody=depth===0, dir=chDir(az,tilt), q=new THREE.Quaternion().setFromUnitVectors(CH_UP,dir);
+  (woody?B.wood:B.green).push(bakeGeo(stemGeo(rad*0.82,rad,len,7),x,y,z,q));  // only the short base joint is woody/brown
+  var tx=x+dir.x*len, ty=y+dir.y*len, tz=z+dir.z*len;
+  if(!woody){var ns=(R()<0.75?1:0)+(R()<0.3?1:0);                    // 0–2 long pale spines, angled out from the joint
+    for(var s=0;s<ns;s++){var sa=R()*6.283, st=0.9+R()*0.7, f=0.35+R()*0.5, sl=len*(0.5+R()*0.5);
+      var sq=new THREE.Quaternion().setFromUnitVectors(CH_UP,chDir(sa,st));
+      B.spine.push(bakeGeo(stemGeo(0.00025,rad*0.28,sl,3),x+dir.x*len*f,y+dir.y*len*f,z+dir.z*len*f,sq));}}
+  var kids=depth===0?2:(depth<4?(2+(R()<0.45?1:0)):(R()<0.55?1:0));  // fork early + often → a fuller wiry tangle
+  for(var k=0;k<kids;k++){var straight=(depth<3&&k===0);            // axis-continuing child stays near-vertical → cohesion
+    var ka=straight?az+(R()-0.5)*0.7:az+(R()<0.5?-1:1)*(0.7+R()*0.8);
+    var kt=straight?tilt*0.55+R()*0.3:0.55+R()*0.85, kl=len*(0.76+R()*0.18);
+    chollaSeg(B,tx,ty,tz,ka,kt,kl,rad*0.88,depth+1,budget,R,dead);}
+  if(!dead){ if(kids===0&&R()<0.74) chollaFruit(B,tx,ty,tz,rad,R);
+    else if(depth>=2&&R()<0.28) chollaFruit(B,tx,ty,tz,rad,R); }
 }
 function buildPlant(p,seed){
   var g=new THREE.Group(); g.position.set(p.x,0,-p.y);   // scene north = -Z (so top-down reads north-up/east-right)
@@ -609,13 +633,16 @@ function buildPlant(p,seed){
       }
     }
   }else if(tx==="CYLE8"){              // ── Christmas cholla: pencil-thin wiry tangle, long spines, red winter fruit
-    // ~4 mm stems, near-90° branchlets, long solitary spines, red+unripe obovoid fruit, woody base — see chollaSeg.
-    var cols={green:m, wood:matR(dead?DEADCOL:"#7a6142",1), spine:matR("#dfd3b6",1),
+    // ~4–8 mm stems, wide-angle branchlets, long solitary spines, red+unripe obovoid fruit, short woody base — see chollaSeg.
+    var cols={green:m, wood:matR(dead?DEADCOL:"#6f5a3e",1), spine:matR("#e6d8b8",1),
               fruit:mat(spCol(p,"fruit")), unripe:matR("#8a9a5b",1)};
-    var rad0=0.0035+R()*0.0013, budget={n:8+Math.floor(R()*8)};   // segment budget capped for perf (≈53 on a plot)
-    var canes=3+Math.floor(R()*3);
-    for(var c=0;c<canes;c++){var ca=R()*6.283, r0=cr*0.12*R();
-      chollaSeg(foliage,Math.cos(ca)*r0,0,Math.sin(ca)*r0,ca,0.1+R()*0.45,0.06+R()*0.1,rad0,0,budget,R,cols,dead);}
+    var rad0=0.004+cr*0.004*R()+0.001;
+    var budget={n:Math.round(30+h*30+R()*12)}, canes=1+Math.floor(R()*2);   // merged per material → dense tangle stays cheap
+    var baseLen=h*0.13, B={green:[],wood:[],spine:[],fruit:[],unripe:[]};
+    for(var c=0;c<canes;c++){var ca=R()*6.283, r0=cr*0.06*R();
+      chollaSeg(B,Math.cos(ca)*r0,0,Math.sin(ca)*r0,ca,0.06+R()*0.16,baseLen*(0.85+R()*0.3),rad0,0,budget,R,dead);}
+    ["wood","green","spine","fruit","unripe"].forEach(function(k){
+      if(B[k].length){var cm=new THREE.Mesh(mergeGeos(B[k]),cols[k]); cm.castShadow=true; foliage.add(cm);}});
   }else if(tx==="PRVE"){              // ── Velvet mesquite: crooked dark trunks under a broad feathery dome
     var bm=matR(bark,1), nT=h<1.1?1:2+Math.floor(R()*2), trunkH=h*0.45, tops=[];
     var rTr=Math.max(0.045,(bd?bd*0.006:0.06+h*0.03)/Math.sqrt(nT));   // trunk ⌀ from real basal-stem diameter
@@ -1285,7 +1312,7 @@ requestAnimationFrame(loop);
 document.getElementById("loading").style.display="none";
 // headless-render hook (gated behind ?dbg): lets a screenshot harness drive the walk camera and
 // spawn extra plants through the real buildPlant path. No effect on the shipped page (default view).
-if(location.search.indexOf("dbg")>=0)window.__P={scene:scene,camera:camera,DATA:DATA,buildPlant:buildPlant,
+if(location.search.indexOf("dbg")>=0)window.__P={scene:scene,camera:camera,renderer:renderer,DATA:DATA,buildPlant:buildPlant,
   setMode:setMode,cam:function(x,z,y,pi){setMode("walk");px=x;pz=z;yaw=y;pitch=pi;}};
 })();
 </script>
