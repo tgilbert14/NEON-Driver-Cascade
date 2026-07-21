@@ -210,25 +210,39 @@ on-screen **height key** ("bare → tall canopy") beside the ground credit whene
 toolbar bounce: the colour-scale legend now has a fixed one-line height (nowrap + clip) so toggling it
 never reflows the control row above (verified: `.row` top constant across all four colour modes).
 
-**Botanical model revamp — saguaro + Christmas cholla (done, the "1-day proof"):** the first two species of a
-planned per-species model upgrade (the direction both research studies endorsed: keep the data-driven
-procedural geometry, sharpen the per-species archetype from real references). Both were rebuilt from deep,
-cross-checked botanical briefs (FNA, ASDM, NPS, llifle, iNat/GBIF) with **tasteful per-individual variation**
-off the existing seed so no two look alike:
-- **Saguaro (CAGI10):** a genuinely **fluted** column (`ribbedColumn` helper — a cylinder rippled per rib);
-  ribs + fluting depth scale with age (juvenile ~12–15 deep flutes → adult ~21–27 shallow), very slender,
-  near-vertical. **Candelabra arms** emerge only when tall (>2.4 m) from the upper trunk at random azimuths,
-  with a **mix of ages on one plant** — fresh rounded "nubbins", young horizontal, long upswept old (arm count
-  is ~85% random per the literature; many adults stay armless "spears"). SRER's on-plot individual is a 0.5 m
-  juvenile (armless), but the model spans juvenile→giant for the fleet.
-- **Christmas cholla (CYLE8):** a **pencil-thin (~4 mm) see-through wiry tangle** (recursive `chollaSeg`),
-  near-90° branchlets, long solitary spines, small **obovoid red fruit** with unripe-green mixed in and
-  occasional 2–3-berry chains, and a browner woody base. Per-plant density/canes/spine-load/fruit-count vary.
-  Segment budget is capped for perf (≈53 instances/plot; load stayed ~2.0 s).
+**Botanical model revamp — saguaro + Christmas cholla (done, the "1-day proof" → deepened):** the first two
+species of a planned per-species model upgrade (the direction both research studies endorsed: keep the
+data-driven procedural geometry, sharpen the per-species archetype from real references). Both were rebuilt
+from deep, cross-checked botanical briefs (FNA, ASDM, NPS, llifle, iNat/GBIF) with **tasteful per-individual
+variation** off the existing seed so no two look alike. After first passes, owner feedback ("needs curves +
+texture; must connect and look like a real plant; go all out") drove a second, deeper rewrite of both — each
+verified inside the real plot scene (walk-camera `?dbg` hook), not just the harness:
+- **Saguaro (CAGI10):** one unified geometry — `saguaroFlesh(curve, opts)` — sweeps a **ribbed, tapered,
+  per-vertex-coloured** tube along a Frenet-framed curve for BOTH trunk and arms, far end rounded to a fluted
+  **dome** (no needle tip), near end capped watertight. The trunk is a slightly leaning/bowing spine with a
+  full body + basal swell; **candelabra arms grow OUT of the trunk** (base embedded, no stuck-on shoulder
+  patch), open a real "U", then rise parallel to ~90 % of the apex — "Y not T". Per-vertex colour bakes a corky
+  brown base → waxy sage/blue-green body → golden crown with rib-valley AO, plus a faint per-plant hue tint;
+  the canvas cactus-skin normal map (`cactusSkinNormal`) carries areole stipple. Ribs 13–15 juvenile → 22–24
+  adult; arms only when >2.4 m; ~85 % random count, many adults stay armless "spears". SRER's on-plot
+  individual is a 0.5 m juvenile, but the model spans juvenile→giant for the fleet.
+- **Christmas cholla (CYLE8):** the core defect is fixed — joints were oriented by an Euler that didn't match
+  where each child was placed, so segments drifted apart and it read as scattered sticks. Each joint is now
+  oriented by a **quaternion** mapping +Y → its true growth direction, so children attach exactly at the parent
+  tip and the tangle **connects**. Form scales with the record's height, starts from a **short woody base**,
+  forks early/often into pencil-thin (~4–8 mm) branchlets, carries long pale spines, and wears its signature
+  **persistent scarlet fruit** at tips/nodes (occasional unripe-green + 2–3-berry chains). To keep ~53 dense
+  chollas cheap on a walkable plot, each plant's dozens of tiny cylinders/berries are **baked to world space and
+  merged into one mesh per material** (green/wood/spine/fruit/unripe) → **≤5 draw calls/plant** instead of ~60.
+  Whole scene at a cholla cluster: 355 draw calls, ~50 k tris, <1 s load.
 
-Reusable helpers (`ribbedColumn`, `saguaroArm`, `chollaSeg`, `chollaFruit`) sit beside the other model builders;
-the per-individual data pipeline is unchanged. Developed in a scratchpad Three.js harness then ported into
-`plot.src.html`. Next: work through the rest of the species fleet.
+Reusable helpers now beside the other model builders: `saguaroFlesh`, `sagColorFn`, `sagMat`, `saguaroArm`,
+`cactusSkinNormal`, and for cholla `chDir`/`bakeGeo`/`mergeGeos` + `chollaSeg`/`chollaFruit` (bucket-and-merge).
+The per-individual data pipeline is unchanged; honesty discipline intact (variation is seeded off the real
+record, never invented numbers). A `?dbg` render hook (gated, no effect on the shipped default view) lets a
+headless harness drive the walk camera and spawn extra individuals through the real `buildPlant` path.
+Developed in a scratchpad Three.js harness then ported into `plot.src.html`. Next: work through the rest of the
+species fleet — creosote ×93 (biggest visual impact) → velvet mesquite ×13 → the remaining cacti.
 
 **Deferred:** phenology (animate the year — owner: "pheno is another area, not tied to these plots; max out this
 plot first"), double-click-to-isolate a species, a live/dead filter, link from the desert walk into the plot,
