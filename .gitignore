@@ -16,8 +16,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# local dev (machine-specific preview launch config)
-.claude/
+# local dev (machine-specific preview launch config) — but track the shared learning log
+.claude/*
+!.claude/agents/
+.claude/agents/*
+!.claude/agents/LESSONS.md
 
 # transient owner record for the single-writer artifact rebuild
 .cascade-rebuild.lock/
