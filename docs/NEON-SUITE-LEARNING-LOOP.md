@@ -49,6 +49,15 @@ contract that later producer/consumer passes must respect. The detailed baseline
 per-app briefs, visual system, and completion gates are in
 `docs/NEON-SUITE-REVAMP-PLAN.md`.
 
+Owner direction on 2026-07-22 resumed the program after Pass 4 and inserted one
+cover-alignment checkpoint before Pass 5. Plant Phenology local candidate
+`118bc28` and Plant Diversity local candidate `d389fb6` now apply the approved
+Suite Living Poster V1 frame to Pages and in-app first run without changing their
+scientific contracts or Driver dispositions. They remain source candidates—not
+published evidence—until GitHub authentication and their pinned CI, artifact,
+review, Pages, Connect, and semantic-health gates close. Ground Beetle Pass 5 then
+began with a read-only baseline audit.
+
 ```text
 Driver baseline
   -> Phase 0 release-health stabilization
@@ -202,7 +211,7 @@ Do not mark an app complete from memory or screenshots alone.
 | 2 | Plant Phenology Explorer | PASS 2 COMPLETE / PRODUCTION VERIFIED | release head `cc0151d` passed run `29669603912`; merge/Pages/Connect `29c0ed1`; R 4.5.2, 92 packages, 60 runtime files, Haswell/one thread, five-handler JS contract, expanded scientific fixtures, 46/46 bundles, two-pass null-container normalization, two-build deterministic indexes, offline source, and exact manifest/data equality passed; manifest SHA-256 `cc5e2a464b2c96772c6e2b441b55a4eabb603f36311c08d4342e4ed0f59a5325` | exact plant-year-week opportunity, onset interval/left censoring, desert coverage/leaf-active alternative, within-species cross-site guardrails, release identities, cover provenance, and reusable learning recorded | `HOLD / NO DRIVER BYTE CHANGE`; app-local onset/leaf-active/coverage are trusted candidates, but existing temperature -> green-up adoption must be re-evaluated through an exact registered join | Connect Last deployed `29c0ed1`; semantic run `29670192516`, fresh HARV Overview/Clock/Onset/Across-Sites flow, and Pages desktop/390/320 with all ten suite links and no root overflow passed |
 | 3 | Plant Diversity | PASS 3 COMPLETE / PRODUCTION VERIFIED | final code merge `d6c4862`; PR-head run `29695040575` and master run `29695179837` passed R 4.5.2 / 91 packages / 150 manifest files, Haswell/one thread, registered science and portability fixtures, 46 plant + 46 environment bundles, 34 references, two-build deterministic search/manifest, exact bundle/manifest equality, offline source, and six-handler/mobile contracts; runtime `sha256:0765d895...`; manifest SHA-256 `12ffe349...` | exact nested-grain/current-state/recurrent-panel, Chao2 lower-bound, cover/nativity/reference/source-limit, export, release, responsive, artistic-poster, and reusable-learning package recorded; governance-only closeout PR #10 merged as `8948930` with green master validation, semantic health, and Pages | `CONTEXT / NO DRIVER BYTE CHANGE`; common-grain richness, native/introduced/unknown cover, cross-scale occurrence, reference completeness, and support remain descriptive frozen-family context; richness is not productivity | Connect Last deployed `d6c4862` via request `00bdcf5f-babc-4a33-8307-144a221517f6`; exact post-republish semantic attempt 2 run `29695179854` passed; Pages run `29695179559` passed; live SRER desktop + 390/375/361/360/320 had full readiness, 44 × 44 Help, no overflow/disconnect/output error, and exact cover/social receipts |
 | 4 | Vegetation Structure Explorer | PASS 4 COMPLETE / PRODUCTION VERIFIED | official `DP1.10098.001` `RELEASE-2026`, DOI `10.48443/pypa-qf12`; candidate head `a8ccb56` run `29715249829`; promotion `800bd5e` exact-parent/54-payload ledger proof; core merge `987c102`; intermediate Plotly gate `91a7814`; runtime enhancement `433bbd25`; reset-picker PR #7 head `8389c9c` passed exact run `29722349642` and merged as `0709bd0`; definitive Plotly PR #8 head `06904fe` passed exact run `29723718100` and merged as authoritative runtime `d566b30`; exact R 4.5.2 / 91-package / 68-runtime-file manifest; 42 site bundles; source/science/DQA/parity/export/offline/browser gates passed | exact event/stem/source/mapping identity; opportunity/support states; disjoint tree-DBH and shrub/sapling stem-base cross-section channels; deterministic network/export/release family; 49 events / 4,365 rows / 11 sites held without invented opportunity fields; accessible loading/tour/pins, byte-shared plot export, artistic Living Poster, Selectize reset lifecycle, raw Plotly-event registration gate, and reusable learning published through docs PR #9 / merge `3391e70`; append-only receipt PR #10 head `a606f92` passed run `29725664115` and merged as receipt authority `da466ea` | `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE`; channel-qualified cross-sectional area is slow standing-structure context, never annual productivity, biomass, carbon, or an annual vote | runtime main CI `29724062900`, Pages `29724062095`, and Connect #59 verified exact `d566b30`; docs PR #9 merge `3391e70` passed CI/Pages/Connect #60; receipt merge `da466ea` passed main `29725954423`, Pages `29725953990`, and Connect #61 with byte-identical runtime manifest/search and clean landings/logs |
-| 5 | Ground Beetle Tracker | P0 OUTAGE / PASS PENDING | live startup error; 8 manifest file mismatches; no executable tests | — | catch-conditioned effort remains `CONTEXT` | failed semantic startup check 2026-07-18 |
+| 5 | Ground Beetle Tracker | P0 OUTAGE / PASS 5 BASELINE AUDIT ACTIVE | live startup error; 8 manifest file mismatches; no executable tests; owner resumed 2026-07-22 | baseline package in progress | catch-conditioned effort remains `CONTEXT` | failed semantic startup check 2026-07-18; fresh verification pending |
 | 6 | Mosquito Pulse | PASS PENDING | live start passed; 7 manifest file mismatches; no executable tests | — | provisional `HOLD` seasonal / otherwise `CONTEXT` | startup only, not a release receipt |
 | 7 | Breeding Birds | PASS PENDING | live start passed; 8 manifest file mismatches; one helper test | — | provisional `CONTEXT` | startup only, not a release receipt |
 | 8 | Water Chemistry Analyte Viewer | PASS PENDING | live start passed; 3 manifest file mismatches; no executable tests; current code ahead of review prose | — | provisional `CONTEXT` aquatic condition | startup only, not a release receipt |
@@ -266,9 +275,10 @@ work.
 
 Pass 4, app-local documentation, and its append-only receipt are complete. Runtime
 authority is `d566b30`, documentation authority is `3391e70`, and receipt authority
-is `da466ea`. Program execution is intentionally paused by the owner before Pass 5;
-Ground Beetle or any other companion work begins only when the owner deliberately
-resumes the program.
+is `da466ea`. The owner deliberately resumed the program on 2026-07-22, requested
+the Phenology and Plant Diversity Living Poster alignment candidates first, and
+then opened Ground Beetle Pass 5 for baseline audit. The two cover candidates
+remain unpublished; Pass 5 has not yet authorized scientific or release mutation.
 
 ## Driver v2 reintegration gate
 

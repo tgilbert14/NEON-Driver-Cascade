@@ -1,6 +1,6 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE — PAUSED BY OWNER BEFORE PASS 5**
+Status: **ACTIVE — OWNER RESUMED; PASS 5 BASELINE AUDIT STARTED**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
@@ -9,10 +9,14 @@ Progress: Driver baseline, Small Mammal Pass 1, Plant Phenology Pass 2, Plant
 Diversity Pass 3, and Vegetation Structure Pass 4 are complete and
 production-verified. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
-Ground Beetle remains the Phase 0 outage. The owner has paused the program before
-Pass 5. Vegetation's app-local documentation is published through PR #9 / merge
-`3391e70`; append-only receipt PR #10 is published as `da466ea`. Runtime, docs, and
-receipt authority remain deliberately separate.
+Ground Beetle remains the Phase 0 outage. On 2026-07-22 the owner resumed the
+program with an explicit sequence: align the Phenology and Plant Diversity covers
+to the approved Small Mammal/Vegetation Living Poster style, then begin Ground
+Beetle Pass 5. Local source candidates now exist at Phenology `118bc28` and Plant
+Diversity `d389fb6`; publication is pending renewed GitHub CLI authentication and
+the pinned release gates. Vegetation's app-local documentation is published
+through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
+`da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
 
 ## 1. Outcome
 
@@ -143,7 +147,7 @@ The pass order is intentionally not alphabetical:
 | 2 | Plant Phenology Explorer | **COMPLETE / PRODUCTION VERIFIED**; corrected plant-year opportunity, onset unavailability/censoring, deterministic derived artifacts, and release trust without changing Driver bytes |
 | 3 | Plant Diversity | **COMPLETE / PRODUCTION VERIFIED**; separated composition, invasion, richness, and cover from unsupported productivity inference; closed nested-grain/opportunity/panel/source-limit contracts without changing Driver bytes |
 | 4 | Vegetation Structure Explorer | **COMPLETE / PRODUCTION VERIFIED**; rebuilt from official RELEASE-2026 with event-atomic opportunity, separate physical channels, exact release promotion, an artistic Living Poster, accessible/export/pin enhancements, a complete reset contract, and a raw registered-event Plotly gate; Driver remains `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE` |
-| 5 | Ground Beetle Tracker | **PAUSED BY OWNER before this pass**; currently unavailable, and effort-complete zero-catch support will determine whether activity-density can leave context-only status |
+| 5 | Ground Beetle Tracker | **BASELINE AUDIT ACTIVE — OWNER RESUMED 2026-07-22**; currently unavailable, and effort-complete zero-catch support will determine whether activity-density can leave context-only status |
 | 6 | Mosquito Pulse | strongest seasonal consumer candidate; requires opportunity-complete trap effort and biome-aware temperature/precipitation framing |
 | 7 | Birds | important consumer context, but method, flyover, zero-detection, and annual-support constraints limit Driver use |
 | 8 | Water Chemistry | well-powered condition record and best control case for honest statistics; not itself a trophic hinge |
@@ -419,10 +423,13 @@ Suggested palette families remain distinct but related:
 - Across Sites leads with a gated within-species slope and CI, identifies coarse
   cadence, treats the network-wide slope as composition-confounded context, and
   explicitly rejects a causal temperature interpretation.
-- Rebuilt the cover around “Read the seasons” with responsive, provenance-tracked
-  stylized seasonal art, CAN/CANNOT and suite-role boundaries, a release receipt,
-  exact social metadata, and all ten suite destinations. Public desktop, 390, and
-  320 browser QA passed with no root overflow.
+- The verified `29c0ed1` release retains the information-heavy “Read the seasons”
+  baseline described in its receipt. Owner direction on 2026-07-22 approved a
+  Suite Living Poster V1 source candidate at local commit `118bc28`: hook “Read
+  the seasons.”, promise “Follow tagged plants through the turning year.”, CTA
+  “Pick a place”, one Driver route, responsive byte-mirrored seasonal art, a
+  compact honesty/source footer, and the same frame in-app. It changes no science
+  or Driver byte and is not production evidence until its pinned release closes.
 - Release PR head `cc0151d` passed run `29669603912`; merge, Pages, and Connect Last
   deployed are `29c0ed1`; semantic production run `29670192516` and fresh HARV
   Overview/Clock/Onset/Across-Sites interactions passed.
@@ -453,9 +460,14 @@ Suggested palette families remain distinct but related:
 - Production runtime is `sha256:0765d8951843cf6fea09a295b260bfb53f1eb6708370748905a4a3941c85d2cb`;
   manifest SHA-256 is `12ffe3496ac54a6504a04656236604abc64f4638d1ae92bfe103565c0d15cd51`;
   cover/social receipt remains `sha256:de6718b3b4e3557fdc395911cd98ce55be29db4d2a9b9038f1903814ed00413c`.
-- The released stylized plant art remains a verified baseline, not the final suite
-  answer. Future cover changes wait for approval of the artistic-poster system and
-  must not disturb the production science/release identity silently.
+- The released stylized plant art remains the verified production baseline. Owner
+  direction on 2026-07-22 approved a Suite Living Poster V1 source candidate at
+  local commit `d389fb6`: hook “How much can one square hold?”, promise “Explore
+  plant communities from one square metre outward.”, CTA “Pick a place”, one
+  Driver route, responsive byte-mirrored nested-quadrat art, a compact
+  honesty/source footer, and the same frame in-app. It changes no estimator,
+  source family, bundle, or Driver byte and is not production evidence until its
+  pinned release closes.
 - Driver disposition: `CONTEXT / NO DRIVER BYTE CHANGE`. Current-source ingestion
   requires a complete matching future receipt, sampled-opportunity ledger, and
   measured eligible site-year join; no productivity vote or per-site climate edge.
@@ -582,10 +594,15 @@ Suggested palette families remain distinct but related:
   Vegetation supplies channel-qualified slow standing-structure context and design
   evidence, not annual productivity, biomass, carbon, a causal edge, or an annual
   vote. App-local gates 1–7 are satisfied; gate 8, the separately reviewed Driver
-  adapter/rebuild, remains closed. Program execution is paused by the owner before
-  Ground Beetle Pass 5.
+  adapter/rebuild, remains closed. The owner resumed program execution on
+  2026-07-22; Ground Beetle Pass 5 is now in baseline audit.
 
 ### Ground Beetle Tracker — fifth pass
+
+Owner resumed this pass on 2026-07-22 after requesting the two plant-cover
+alignment candidates above. The first action is evidence gathering only: reconcile
+repository instructions, source/bundle identities, manifest drift, public outage,
+current effort denominator, and release workflow before changing science or UI.
 
 - Restore the public app and repair its release path.
 - Build effort from all trapping opportunities, including zero-carabid bouts. Until
