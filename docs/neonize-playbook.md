@@ -381,6 +381,13 @@ Connect deployment, and public semantic health are separate release identities.
 - Inventory every Shiny custom-message registration and require each handler to take
   exactly one payload argument, even when the payload is unused. Parse-only checks do
   not catch the Shiny 1.14 registration failure caused by zero-argument handlers.
+- Treat a healthy shell or semantic marker as necessary but insufficient Shiny
+  evidence. Outputs hidden behind a picker can still evaluate against `NULL` state
+  and carry `.shiny-output-error` before the first selection. Add one real-bundle
+  server lifecycle test: in a fresh session, pre-load outputs must suspend as
+  `shiny.silent.error`; after loading a representative committed bundle, those same
+  outputs must render without warning or error. Repeat the boundary in production
+  with a fresh browser session before and after site selection.
 - Branch naming is split across the suite (`main` vs `master`) — each workflow must push to the
   branch its own Connect Cloud app watches. Standardize new repos on `main`.
 
