@@ -77,6 +77,13 @@ these from the flagship and adapt the data layer:
   dimensions, checksums, and byte budgets; retain an intentional fallback. Verify
   both entry URLs cache-busted at desktop, 390, and 320 rather than accepting one
   cached surface as proof for the other.
+  Treat the cover contract as both a presence and an absence gate. Require exactly
+  one poster landmark, CTA, Driver route, and compact honesty disclosure; reject
+  metric bands, method/truth/boundary blocks, second marketing bridges, and a full
+  suite directory. Mosquito showed that correct art and a working CTA can otherwise
+  mask a structurally verbose first impression. On narrow screens, visually prove
+  artwork-first order and keep the CTA inside the first viewport where the chosen
+  geometry permits.
   Cohesion comes from the same frame, suite mark, typography, art language, motif
   family, registry, and in-app Suite panel; identity comes from the app-native
   visual/content variables rather than forced constellations, mascots, or generic

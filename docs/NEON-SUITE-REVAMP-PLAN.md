@@ -16,7 +16,9 @@ trust, and shipped the final static artistic poster on exact production merge
 `89caa435`. Mosquito Pulse Pass 6 published 47 opportunity-complete bundles, exact
 release trust, a static nocturnal-wetland poster, real-bundle server lifecycle
 coverage, and responsive production verification on authoritative runtime
-`935420e`. Breeding Birds Pass 7 is next.
+`935420e`. The later Pages-only compact-cover correction is authoritative at
+`ec0f2ba`, with app-local receipt `6450f01`; it changed no science, data,
+manifest, Connect runtime, or Driver byte. Breeding Birds Pass 7 is next.
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
@@ -347,13 +349,21 @@ historical baselines. Phenology PR #5 / merge `50106f20` and Plant Diversity PR
 Ground Beetle PR #15 / merge `89caa435` then extended the frame with a static
 forest-floor beetle/pitfall screenprint. Poster art is static by default from Pass
 5 onward; ordinary focus/hover feedback may remain, but the dominant hero does not
-require animation.
+require animation. Mosquito compact-cover PR #7 / merge `ec0f2ba` then proved a
+separate failure mode: correct art and a valid CTA are insufficient when a second
+headline, method lead, truth cards, or CAN/CANNOT panel still turns the first
+impression into a methods page.
 
 Validate exact copy/action count, provenance and asset hashes, a separately composed
 1200×630 social card, keyboard/focus order, reduced-motion and forced-color modes,
 zero overflow at desktop/390/320 and both sides of real framework seams, cache-busted
 Pages and Connect identities, CTA-to-picker focus, and console/server logs. Remove
-retired runtime media once its provenance remains recoverable.
+retired runtime media once its provenance remains recoverable. Cover contracts must
+test both required presence and prohibited absence: exactly one poster, CTA, Driver
+route, and compact honesty disclosure; no metric band, methods/truth/boundary layer,
+second marketing bridge, or full suite directory. At narrow widths, visually prove
+that artwork leads and that the CTA remains in the first viewport where the layout
+geometry permits.
 
 ### Trust, access, and provenance
 
@@ -651,7 +661,9 @@ head `c3dec8d` merged as `4e628f88`; the final static-poster PR #15 head
 
 Pass 6 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative app runtime is
 `935420e1e1aa79dcc3cf54d03ef150f6f0332b8d`; append-only documentation receipt is
-`91b4c713ebbdc717128de584273b995ec49dd622`.
+`91b4c713ebbdc717128de584273b995ec49dd622`. Compact Pages authority is
+`ec0f2ba4df71040d1760c23338da39233b92db96`; its app-local publication receipt is
+`6450f0197ac3ee535c0059b80a5e041b5dfe0b9a`.
 
 - Official `DP1.10043.001` `RELEASE-2026` producer/validator run `30207972162`
   emitted 47 site bundles and 223,048 combined effort/catch rows: 55,114 valid
@@ -680,6 +692,17 @@ Pass 6 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative app runtime is
   zero root overflow, descriptive alt text, one Driver route, one CTA, no cover
   animation, and no remote font/CDN. Fresh production 390 QA had zero Shiny errors
   before and after loading SRER; all 19 audited controls were at least 44×44 px.
+- User review correctly found that the initial Pages face still exceeded the
+  approved cover flow. PR #7 head `db732eb` passed `30218822559` and merged as
+  `ec0f2ba`; main `30218905672`, Pages `30218905198`, and smoke `30218905626`
+  passed. It removed the second method lead, three science cards, and two-part
+  boundary panel; retained the load-bearing science limits in one collapsed
+  honesty disclosure; and made ≤700 px artwork-first. Fresh live desktop/390/320
+  QA confirmed no overflow, one CTA/Driver route, zero method/card blocks, the
+  intrinsic 1200×800 local art, and empty warning/error logs. No art byte, `ui.R`,
+  manifest, bundle, estimator, or Connect runtime changed. Receipt PR #8 head
+  `8998dd4` passed `30219204557` and merged as `6450f01`; merged-main
+  `30219314063`, Pages `30219313524`, and smoke `30219314027` passed.
 - The first production browser pass caught two reactive outputs evaluating before
   a site bundle existed even though the public semantic marker and shell were
   healthy. Both now suspend before load and render after a real SRER bundle; this

@@ -2545,3 +2545,67 @@ Rules:
   Driver tranche after green CI, verify master/Pages, then begin Breeding Birds
   Pass 7. Do not rebuild Driver v2 until all nine app packages and the suite
   synthesis gate are complete.
+
+### 2026-07-26 13:38 MST - Mosquito compact-cover correction and Pass-7 continuity / Codex
+
+- **Changed/classification:** reconciled the suite register, revamp plan, reusable
+  playbook, and this handoff after user review found that Mosquito's Pages face was
+  more verbose than the approved Small Mammal/Vegetation Living Poster flow.
+  Classification is `suite-platform`; the explicit ecological decision is
+  **NONE / NO DRIVER BYTE CHANGE**. This Driver tranche changes documentation only.
+- **Correction:** Mosquito Pages removed the second method lead, three numbered
+  science cards, and the two-part CAN/CANNOT panel. The public face now moves from
+  one static poster directly to a compact footer with one collapsed honesty
+  disclosure. The load-bearing supported-zero versus unavailable boundary and the
+  activity/population/pathogen/causal limits remain present there. At ≤700 px the
+  artwork leads, while the CTA remains in the first viewport.
+- **Exact sibling authority:** compact-cover PR #7 head
+  `db732ebaa1173f92e5a36511401060b4224cdde7` passed exact-head run
+  `30218822559` and merged as Pages authority
+  `ec0f2ba4df71040d1760c23338da39233b92db96`. Merged-master validation
+  `30218905672`, Pages `30218905198`, and semantic smoke `30218905626` passed.
+  App-local receipt PR #8 head `8998dd4cd6246f3cb1e17f9ebb5a4aa7e1c34be6`
+  passed `30219204557` and merged as
+  `6450f0197ac3ee535c0059b80a5e041b5dfe0b9a`; receipt-main validation
+  `30219314063`, Pages `30219313524`, and smoke `30219314027` passed.
+- **Identity boundary:** authoritative Connect/science runtime remains
+  `935420e1e1aa79dcc3cf54d03ef150f6f0332b8d`; its science/runtime receipt remains
+  `91b4c713ebbdc717128de584273b995ec49dd622`. Compact Pages authority is
+  `ec0f2ba`; compact-cover receipt authority is `6450f01`. No art byte, `ui.R`,
+  release source, opportunity state, estimator, bundle, manifest, Connect runtime,
+  Driver adapter, or ecological disposition changed.
+- **Fresh production evidence:** cache-busted Pages passed visual and DOM QA at
+  1440×900, 390×844, and 320×800. Each width had no horizontal overflow, one H1,
+  one CTA, one Driver route, zero H2/method/card blocks, a 52 px CTA, and a 44 px
+  collapsed honesty control. At 390 and 320 the full artwork loaded first and the
+  footer began exactly at 844 and 800 CSS px; at desktop the footer began at 900.
+  The WebP completed at its intrinsic 1200×800 dimensions with local PNG fallback,
+  and browser warning/error logs were empty.
+- **Reusable prevention:** cover validators must combine required-presence and
+  prohibited-absence checks. Require one poster/CTA/Driver route/disclosure and
+  reject metric, methods, truth, boundary, second-bridge, and suite-directory
+  layers. From Birds onward, browser QA must also prove artwork-first narrow order
+  and first-viewport CTA visibility where geometry permits.
+- **Validation/non-impact:** started from clean synchronized `origin/master`
+  `2508104deca59265478f31b1664fdf2dff45a534` with no rebuild lock; the complete
+  handoff, suite loop, revamp plan, playbook, and repository instructions were read.
+  Documentation UTF-8/LF/no-BOM, control-character, fence/table-shape, identity,
+  exact changed-file scope, and `git diff --check` gates passed. Driver R/build and
+  browser gates are N/A because no Driver runtime input or public surface changed.
+  Canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild, generation, promotion, lock, stage, backup, or temporary Driver data
+  was created.
+- **Evidence invalidated:** only the earlier claim that Mosquito Pages already met
+  the concise Living Poster first-impression contract. Its dated visual acceptance
+  remains historical evidence for the static artwork and responsive mechanics.
+  All science, release, manifest, bundle, Connect, and Driver evidence remains
+  valid.
+- **Residual risk/next action:** browser coverage is finite and this docs-only
+  Driver reconciliation still requires review, green CI, merge, and master/Pages
+  verification. Then begin Breeding Birds Pass 7; do not rebuild Driver v2 before
+  all nine app packages and the suite-synthesis gate are complete.
