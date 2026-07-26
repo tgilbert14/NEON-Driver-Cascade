@@ -2459,3 +2459,89 @@ Rules:
   release still requires review, green CI, merge, and master verification. After
   that closeout, begin Mosquito Pulse Pass 6 with the full app-local evidence loop;
   do not alter Driver bytes during the companion pass.
+
+### 2026-07-26 10:54 MST - Mosquito Pass-6 production closeout and Pass-7 handoff / Codex
+
+- **Changed/classification:** reconciled the central suite register, revamp plan,
+  playbook, and this handoff with the completed Mosquito Pulse Pass 6. Classification
+  is `suite-platform`, `scientific-contract`, and `Driver-impacting`. The ecological
+  decision is **CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE**. The
+  outcome-state reconciliation and real-bundle server lifecycle test are adopted as
+  suite engineering/science-contract patterns, not as a Mosquito inferential vote.
+  This Driver tranche changes documentation only; no Driver code, source lock,
+  estimator, workflow, generated artifact, manifest, or public surface changed.
+- **Source/release evidence:** official `DP1.10043.001` `RELEASE-2026` producer and
+  validator completed in run `30207972162`. The promoted family contains 47 site
+  bundles and 223,048 combined effort/catch rows: 55,114 valid opportunities,
+  25,076 supported zeros, 103,887 catch rows, and 82,875 held rows. Data artifact
+  SHA-256 is
+  `2679408c4af5387811f2b3ac12642ea22b962fd996c855eb9216e0545838f3ed`;
+  source-receipt SHA-256 is
+  `00bba55dcfa4fdba2f9f9400e53cbff319d3a9281eacd6fb32e7b533aaa4f826`.
+  The final exact R 4.5.2 / 91-package / 112-runtime-file manifest SHA-256 is
+  `acef14509ce44347d53a99b252cd92814797df1698b5a4365c9e0ac0724cc4ce`.
+- **Scientific contract:** effort is keyed by source `uid` or a complete physical
+  event composite; `trapHours / 24` is continuous. Supported zero requires a valid
+  opportunity and `targetTaxaPresent = N`; positive, zero, unusable, unknown, and
+  ineligible states stay distinct. Invalid or conflicting expansion is held.
+  Total-versus-species and all-zero states fail closed. The exposed metric is
+  whole-trap-scaled target catch per 24 trap-hours: a within-site activity index,
+  never population, biting rate, infection prevalence, pathogen presence, disease
+  risk, or a causal effect. PUUM is included; its climate overlay remains held.
+- **Runtime/public identity:** PR #3 exact head `c1c0783` passed CI `30211462476`
+  and merged as `1522048`; main CI `30212048494`, Pages `30212048059`, and
+  production smoke `30212048468` passed. PR #4 exact head `c909ef2` passed CI
+  `30212805885` and merged as `68aef41`; main CI `30212882395`, Pages
+  `30212882153`, and smoke `30212882466` passed. Accessibility PR #5 exact head
+  `24e0eb7` passed CI `30213142660` and merged as authoritative runtime
+  `935420e1e1aa79dcc3cf54d03ef150f6f0332b8d`; main CI `30213225754`, Pages
+  `30213225369`, and smoke `30213225753` passed. App-local documentation PR #6
+  head `2179e80` passed `30213386500` and merged as receipt authority
+  `91b4c713ebbdc717128de584273b995ec49dd622` without changing runtime.
+- **Product/browser evidence:** Pages and Connect use one static violet/cyan
+  nocturnal-wetland screenprint with a plausible CO2 trap and mosquito. Static
+  Pages passed desktop/768/390/320 without root overflow, cover animation, remote
+  font/CDN, missing alt text, or duplicate Driver/CTA routes. The first production
+  Connect audit found `heroStats` and `siteInsights` evaluating before a site bundle
+  existed despite a healthy shell and semantic marker. Runtime PR #4 made them
+  suspend before load and added a permanent fresh-session `shiny::testServer`
+  regression that loads real bundled SRER. Fresh production sessions then had zero
+  Shiny errors before and after SRER. Final 390 QA measured all 19 audited poster,
+  navigation, expansion, and popover controls at least 44×44 px.
+- **Refresh failure and resolution:** the restricted producer and validator passed,
+  and the review branch published safely, but the initial workflow's final PR-open
+  operation was denied by the default GitHub Actions token. That failure did not
+  invalidate produced bytes or validator evidence. The publisher now reports the
+  review branch as a notice and exits successfully when token policy forbids PR
+  creation; it does not gain broader authority or bypass stale-base, exact-diff,
+  manifest, or validation gates. Integrated no-download refresh run `30211449455`
+  passed all jobs.
+- **Driver decision:** do not ingest Mosquito now. At suite synthesis, an independent
+  Driver adapter must pin runtime `935420e` and receipt `91b4c71`, preserve outcome
+  and effort states, measure the eligible site-season/year join and support,
+  pre-register a seasonal/thermal mechanism, keep PUUM climate overlay held, and
+  prove old/new parity before any ecological adoption decision.
+- **Validation/non-impact:** started from clean synchronized `origin/master`
+  `7070f18fae2e3582f9f0dd7a0af8786f79db0803` with no rebuild lock; read the
+  complete repository instructions, handoff, suite loop, revamp plan, and playbook;
+  and changed only the four Markdown authorities. Documentation UTF-8/LF/no-BOM,
+  control-character, fence/table-shape, stale-current-state, and `git diff --check`
+  gates passed. Driver R/build/browser gates are N/A because no Driver runtime input
+  or output changed. Canonical Driver SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No generation, promotion, lock, stage, backup, pending artifact, credential, or
+  temporary Driver project data was created.
+- **Evidence invalidated:** only the central current-state claims that Mosquito had
+  seven manifest mismatches, no executable tests, a missing social image, and
+  startup-only evidence. That 2026-07-18 baseline remains factual history. No
+  Driver release, determinism, science, manifest, boot, browser, or publication
+  evidence is invalidated.
+- **Residual risk/next action:** browser coverage is finite; Mosquito's PUUM climate
+  overlay and Driver ingestion remain deliberately held. Merge this docs-only
+  Driver tranche after green CI, verify master/Pages, then begin Breeding Birds
+  Pass 7. Do not rebuild Driver v2 until all nine app packages and the suite
+  synthesis gate are complete.

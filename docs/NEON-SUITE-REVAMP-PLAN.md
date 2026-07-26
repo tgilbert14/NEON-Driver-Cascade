@@ -1,11 +1,11 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE — PASS 5 COMPLETE; PASS 6 NEXT**
+Status: **ACTIVE — PASS 6 COMPLETE; PASS 7 NEXT**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
-Progress: Driver baseline and companion Passes 1–5 are complete and
+Progress: Driver baseline and companion Passes 1–6 are complete and
 production-verified. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
 The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
@@ -13,7 +13,10 @@ as `dfb44231` and Plant Phenology PR #5 merged as `50106f20`, with pinned valida
 Pages, and semantic-production checks green. Ground Beetle Pass 5 replaced the
 catch-conditioned baseline with 46 opportunity-complete bundles, repaired release
 trust, and shipped the final static artistic poster on exact production merge
-`89caa435`. Mosquito Pulse Pass 6 is next.
+`89caa435`. Mosquito Pulse Pass 6 published 47 opportunity-complete bundles, exact
+release trust, a static nocturnal-wetland poster, real-bundle server lifecycle
+coverage, and responsive production verification on authoritative runtime
+`935420e`. Breeding Birds Pass 7 is next.
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
@@ -61,7 +64,7 @@ The release layer is not at the same quality bar.
 | Plant Diversity | **production verified in Pass 3** | 13 -> 0 files | 1 -> registered science/build/handler/cover/semantic suite | nested grain, opportunity, recurrent panels, Chao2, unknown nativity, reference scope, and `legacy-partial` source limits are release-verified; Driver remains context only |
 | Vegetation Structure Explorer | **Pass 4 complete / production verified** | 8 -> 0 files | 1 -> registered source/science/parity/export/runtime/manifest/browser suite | official RELEASE-2026 event/opportunity family is verified; tree-DBH bole and shrub/sapling stem-base cross-section channels remain separate slow standing-structure context, never annual flux; reset and Plotly registration lifecycles are production-verified |
 | Ground Beetle Tracker | **Pass 5 complete / production verified** | 8 -> 0 files | 0 -> registered science/release/handler/cover/semantic suite | opportunity-complete effort includes zero-Carabidae bouts; taxonomy is reconciled by individualID; activity-density, detection-frequency, population/health, and causal limits are explicit |
-| Mosquito Pulse | available | 7 files | 0 | expansion, zero-catch effort, day/night support, and seasonal aggregation need fixture coverage |
+| Mosquito Pulse | **Pass 6 complete / production verified** | 7 -> 0 files | 0 -> registered science/release/handler/cover/server-runtime/semantic suite | opportunity-complete trap effort includes supported target-taxon zeros; continuous whole-trap expansion, outcome states, total/species reconciliation, activity/population/pathogen limits, and runtime lifecycle are release-verified |
 | Birds | available | 8 files | 1 | annual opportunity/zero-detection support and method/flyover handling need stronger contracts |
 | Water Chemistry | available | 3 files | 0 | current QC fixes are ahead of the review documentation; release manifest is stale |
 | My Little Inverts | available | 9 files | 0 | water type, sampler, habitat, and density-index support need executable tests and a current expert review |
@@ -75,9 +78,11 @@ files and exact runtime, source-limit, export, responsive, and semantic receipts
 Vegetation Pass 4 now has an exact R 4.5.2 / 91-package / 68-runtime-file manifest
 and a verified official 42-site RELEASE-2026 family. Ground Beetle Pass 5 now has
 an exact R 4.5.2 / 91-package / 112-runtime-file manifest and a verified 46-site
-opportunity-complete family; the other four companions remain at their baseline
-state. A future companion deploy can otherwise publish a
-different app than the repository appears to describe, or fail at startup.
+opportunity-complete family. Mosquito Pulse Pass 6 now has an exact R 4.5.2 /
+91-package / 112-runtime-file manifest and a verified 47-site opportunity-complete
+family; the other three companions remain at their baseline state. A future
+companion deploy can otherwise publish a different app than the repository appears
+to describe, or fail at startup.
 
 Additional suite-wide findings (baseline unless a later pass update is stated):
 
@@ -85,27 +90,32 @@ Additional suite-wide findings (baseline unless a later pass update is stated):
   `docs/BUILD-TEST-HANDOFF.md`. Small Mammal, Phenology, Plant Diversity, and
   Vegetation now have app-local governance, handoff, and Driver knowledge-package
   artifacts; Ground Beetle now has published governance, science-contract,
-  handoff, and knowledge-package artifacts with a complete release receipt; the
-  other four companions still lack them.
+  handoff, and knowledge-package artifacts with a complete release receipt;
+  Mosquito now has the same complete governance, scientific-contract, handoff,
+  and knowledge-package family; the other three companions still lack them.
 - At baseline, four companions had one helper test script and five had none. Small
   Mammal, Phenology, Plant Diversity, and Vegetation now run product-specific
   science, portability, client-handler, exact-release, and semantic-health gates;
   Ground Beetle now runs opportunity/zero-catch/taxonomy/QC, handler, cover,
-  bundle/index, exact-manifest, and semantic-health contracts; the other four
-  retain their baseline test debt.
+  bundle/index, exact-manifest, and semantic-health contracts; Mosquito now runs
+  effort/outcome/expansion/total-species, release, handler, cover, real-bundle
+  server-runtime, and semantic-health contracts; the other three retain their
+  baseline test debt.
 - Most companion workflows use moving action tags and a moving package snapshot,
   combine build/validation/publish in one write-enabled job, and do not reproduce
   the Driver's loaded BLAS/thread receipt.
 - Weekly scheduled runs can finish successfully in seconds because a date gate
   skipped the work. That is a skip, not fresh release-health evidence.
 - Baseline post-deploy checks were not content-aware. Small Mammal, Phenology,
-  Plant Diversity, Vegetation, and Ground Beetle now require app-specific semantic
-  markers and exact release receipts while rejecting Posit error pages; the pattern
-  remains to be ported to the other four companions.
+  Plant Diversity, Vegetation, Ground Beetle, and Mosquito now require app-specific
+  semantic markers and exact release receipts while rejecting Posit error pages;
+  Mosquito additionally proves pre-load suspension and post-load rendering against
+  a real bundle. The pattern remains to be ported to the other three companions.
 - The suite registry and relationship copy are duplicated in each static cover,
   creating ten sources of truth.
-- Mosquito Pulse and My Little Inverts reference `og-image.png` without committing
-  the file. Water Chemistry declares an Open Graph image but no Twitter image.
+- My Little Inverts references `og-image.png` without committing the file. Water
+  Chemistry declares an Open Graph image but no Twitter image. Mosquito's missing
+  social image was closed in Pass 6 with a committed, separately composed card.
 - Several expert-review documents mix historical findings with current status.
   Water Chemistry, for example, now implements fixes that its review still presents
   as open. Findings must be linked to fixes and release verification rather than
@@ -154,7 +164,7 @@ The pass order is intentionally not alphabetical:
 | 3 | Plant Diversity | **COMPLETE / PRODUCTION VERIFIED**; separated composition, invasion, richness, and cover from unsupported productivity inference; closed nested-grain/opportunity/panel/source-limit contracts without changing Driver bytes |
 | 4 | Vegetation Structure Explorer | **COMPLETE / PRODUCTION VERIFIED**; rebuilt from official RELEASE-2026 with event-atomic opportunity, separate physical channels, exact release promotion, an artistic Living Poster, accessible/export/pin enhancements, a complete reset contract, and a raw registered-event Plotly gate; Driver remains `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE` |
 | 5 | Ground Beetle Tracker | **COMPLETE / PRODUCTION VERIFIED**; opportunity-complete zero-catch effort, individualID taxonomy reconciliation, exact release trust, semantic health, and a static artistic Living Poster are live; activity-density remains context-only pending a separately reviewed Driver adapter and suite-synthesis decision |
-| 6 | Mosquito Pulse | strongest seasonal consumer candidate; requires opportunity-complete trap effort and biome-aware temperature/precipitation framing |
+| 6 | Mosquito Pulse | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 opportunity-complete trap effort, supported zero-catch states, continuous expansion, exact release trust, static Living Poster, server lifecycle, and mobile accessibility are live; the activity index remains `CONTEXT / HOLD DRIVER INGESTION` pending suite synthesis |
 | 7 | Birds | important consumer context, but method, flyover, zero-detection, and annual-support constraints limit Driver use |
 | 8 | Water Chemistry | well-powered condition record and best control case for honest statistics; not itself a trophic hinge |
 | 9 | My Little Inverts | closes the current aquatic consumer pass and reveals whether a producer or physical-driver product is still missing |
@@ -607,7 +617,8 @@ Suggested palette families remain distinct but related:
   evidence, not annual productivity, biomass, carbon, a causal edge, or an annual
   vote. App-local gates 1–7 are satisfied; gate 8, the separately reviewed Driver
   adapter/rebuild, remains closed. The owner resumed program execution on
-  2026-07-22; Ground Beetle Pass 5 is complete and Mosquito Pass 6 is next.
+  2026-07-22; Ground Beetle Pass 5 and Mosquito Pass 6 are complete, and Breeding
+  Birds Pass 7 is next.
 
 ### Ground Beetle Tracker — fifth pass
 
@@ -638,16 +649,47 @@ head `c3dec8d` merged as `4e628f88`; the final static-poster PR #15 head
 
 ### Mosquito Pulse — sixth pass
 
-- Test zero-catch deployments keyed independently of nullable `sampleID`.
-- Test continuous subsample expansion, trap-hour conversion, missing/zero effort,
-  day/night support, compromised samples, and uncertain IDs.
-- Keep activity per trap-night as a within-site activity index, not population,
-  biting rate, or disease risk.
-- Prefer within-season monsoon/thermal pulse analyses to underpowered site-year
-  verdicts; model thermal ceilings rather than monotone warmth.
-- Add a current expert review and static release codebook.
-- Driver disposition: `HOLD` for a registered pooled seasonal consumer signal;
-  otherwise `CONTEXT`.
+Pass 6 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative app runtime is
+`935420e1e1aa79dcc3cf54d03ef150f6f0332b8d`; append-only documentation receipt is
+`91b4c713ebbdc717128de584273b995ec49dd622`.
+
+- Official `DP1.10043.001` `RELEASE-2026` producer/validator run `30207972162`
+  emitted 47 site bundles and 223,048 combined effort/catch rows: 55,114 valid
+  opportunities, 25,076 supported zeros, 103,887 catch rows, and 82,875 held rows.
+  Data artifact SHA-256 is
+  `2679408c4af5387811f2b3ac12642ea22b962fd996c855eb9216e0545838f3ed`.
+- Effort keys prefer source `uid` and otherwise require a complete physical-event
+  composite. `trapHours / 24` remains continuous; target-taxon presence controls
+  supported zero; positive, zero, unusable, unknown, and ineligible states remain
+  distinct; invalid/conflicting expansion is held; total/species and all-zero
+  fixtures fail closed.
+- The exact R 4.5.2 / 91-package / 112-runtime-file manifest has SHA-256
+  `acef14509ce44347d53a99b252cd92814797df1698b5a4365c9e0ac0724cc4ce`.
+  The restricted refresh publishes a review branch only after producer and
+  validator success. The initial run's final PR-opening step was denied by the
+  default Actions token after safely publishing the branch; the workflow now emits
+  a notice and succeeds without weakening producer/validator/publisher separation.
+- PR #3 merge `1522048` established the release/science/poster family. PR #4 merge
+  `68aef41` fixed pre-site reactive outputs and added a real-bundle `testServer`
+  regression. PR #5 merge `935420e` raised poster, navigation, expansion, and
+  popover targets to the 44 px contract. Its main CI `30213225754`, Pages
+  `30213225369`, and production smoke `30213225753` passed. Documentation PR #6
+  merged as receipt authority `91b4c71` after exact-head CI `30213386500`.
+- Pages and Connect share one static violet/cyan nocturnal-wetland screenprint with
+  a scientifically plausible CO2 trap and mosquito. Desktop/768/390/320 checks had
+  zero root overflow, descriptive alt text, one Driver route, one CTA, no cover
+  animation, and no remote font/CDN. Fresh production 390 QA had zero Shiny errors
+  before and after loading SRER; all 19 audited controls were at least 44×44 px.
+- The first production browser pass caught two reactive outputs evaluating before
+  a site bundle existed even though the public semantic marker and shell were
+  healthy. Both now suspend before load and render after a real SRER bundle; this
+  lifecycle is an executable release gate rather than a visual assumption.
+- Driver disposition is `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE`.
+  Whole-trap-scaled target catch per 24 trap-hours is a within-site activity index,
+  not population, biting rate, infection prevalence, pathogen presence, disease
+  risk, or causal effect. PUUM climate overlay remains held. Reconsider only through
+  an independent pinned adapter, measured site-season/year join and support, a
+  pre-registered seasonal/thermal mechanism, and old/new parity at suite synthesis.
 
 ### Birds — seventh pass
 
