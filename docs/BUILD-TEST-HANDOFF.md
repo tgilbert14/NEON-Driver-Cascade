@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-07-20
+Last updated: 2026-07-26
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -2402,3 +2402,60 @@ Rules:
   pair, the weather/plants/animals chain from the 20 unused `signals`) is recorded in
   `prototypes/site-explorer/PROGRESS.md` rung 22.
 - **Next action:** owner review of PR #40.
+
+### 2026-07-26 07:06 MST - Pass-5 closeout and Pass-6 register handoff / Codex
+
+- **Changed/classification:** reconciled the central suite register, revamp plan,
+  and playbook with the published Plant Phenology and Plant Diversity Living Poster
+  refreshes and the complete Ground Beetle Pass-5 release. Classification is
+  `suite-platform`, `scientific-contract`, and `Driver-impacting`; the ecological
+  Driver implication is **HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE**. The
+  static-poster default is now durable suite guidance. No Driver app code, source
+  lock, estimator, workflow, generated artifact, manifest, or public surface changed.
+- **Exact sibling evidence:** Phenology PR #5 head `c1bf55d` passed
+  `29963446292` and merged as `50106f20`; main validation `29964265558`, Pages
+  `29964264658`, and production health `29964265433` passed. Plant Diversity PR
+  #11 head `3b9137e` passed `29963358476` and merged as `dfb44231`; main
+  validation `29963570916`, Pages `29963570413`, and production health
+  `29963570919` passed. Both live Pages and Connect poster surfaces passed the
+  previously completed desktop/390/320 review.
+- **Ground Beetle result:** opportunity-complete PR #14 head `c3dec8d` merged as
+  `4e628f88`; final static-poster PR #15 head `a7950294` merged as release authority
+  `89caa435`. Exact-head CI `30023971987` passed 46 bundles / 100,163 rows /
+  33,012 opportunity anchors / 67,151 catch rows, the effort/zero-catch/taxonomy/
+  detection/QC contracts, and the 91-package/112-file manifest. Pages
+  `30023970965` and content-aware production health `30023973253` passed on the
+  same merge. Manifest SHA-256 is
+  `b3da3599f7601fabd697d592897f2238af02315c286ef829d1ab0715815a9266`.
+- **Learned:** a release register must distinguish historical baseline failure from
+  current production authority. Opportunity-complete app metrics can become
+  scientifically trusted without automatically becoming Driver votes; ingestion
+  still requires a pinned independent adapter, measured eligible joins/support,
+  a registered mechanism, and old/new parity at suite synthesis. The main poster
+  artwork is static by default from Pass 5 onward.
+- **Test process/result:** started from clean synchronized `origin/master`
+  `7405bb039f4305ec1c8b51736e729a0f55fb978a`; read the complete repository
+  instructions, handoff, learning loop, revamp plan, and playbook; refreshed the
+  Driver remote; independently queried the merged sibling PR and workflow receipts;
+  inspected the Ground Beetle exact validator and production-smoke logs; and
+  reproduced its manifest SHA-256/package/file counts from `origin/main`. Expected
+  result was to replace only stale current-state documentation with exact released
+  evidence; actual matched. Driver R/build/browser gates are N/A because its runtime
+  surface and artifact family did not change.
+- **Evidence invalidated:** the central current-state claims that the two plant
+  covers were unpublished and that Ground Beetle was release-unsafe,
+  catch-conditioned, and still in foundation work. Their dated baseline records
+  remain factual history. No Driver release, determinism, science, manifest, boot,
+  browser, or publication evidence is invalidated.
+- **Artifacts/failure/cleanup:** no generation or promotion ran. Canonical Driver
+  SHA-256 values remain cascade `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`,
+  search `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`,
+  meta `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`,
+  codebook `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`,
+  and manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild lock, stage, backup, pending artifact, or temporary project data was
+  created.
+- **Residual risk/next action:** browser coverage is finite and the documentation
+  release still requires review, green CI, merge, and master verification. After
+  that closeout, begin Mosquito Pulse Pass 6 with the full app-local evidence loop;
+  do not alter Driver bytes during the companion pass.
