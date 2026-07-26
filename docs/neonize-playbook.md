@@ -81,6 +81,9 @@ these from the flagship and adapt the data layer:
   family, registry, and in-app Suite panel; identity comes from the app-native
   visual/content variables rather than forced constellations, mascots, or generic
   prose.
+- Keep the dominant poster artwork static by default. Motion is optional for small,
+  accessible interaction feedback when it serves the user job; a companion's main
+  hero must not depend on animation to communicate its subject, method, or promise.
 - `global.R`: semantic tokens (`accent`, `signal`, `warning`, `ink`, `muted`,
   `surface`, `line`) mapped to an app-specific palette; `app_theme` (bslib bs5 + a
   system/local font stack); `asset_url()` (mtime cache-bust); and the validated

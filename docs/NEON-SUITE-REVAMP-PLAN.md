@@ -1,23 +1,19 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE — PASS 5 BASELINE RECORDED; RELEASE FOUNDATION ACTIVE**
+Status: **ACTIVE — PASS 5 COMPLETE; PASS 6 NEXT**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
-Progress: Driver baseline, Small Mammal Pass 1, Plant Phenology Pass 2, Plant
-Diversity Pass 3, and Vegetation Structure Pass 4 are complete and
+Progress: Driver baseline and companion Passes 1–5 are complete and
 production-verified. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
-Fresh Ground Beetle verification on 2026-07-22 corrected the stale outage record:
-the public Connect app now starts a Shiny session and renders the 46-site picker,
-but release health remains unsafe because the client reports a custom-handler
-contract error, no semantic-ready marker exists, eight manifest files drift, and
-the effort bundle is catch-conditioned. On 2026-07-22 the owner resumed the
-program with an explicit sequence: align the Phenology and Plant Diversity covers
-to the approved Small Mammal/Vegetation Living Poster style, then begin Ground
-Beetle Pass 5. Local source candidates exist at Phenology `118bc28` and Plant
-Diversity `d389fb6`; publication and pinned release gates remain pending.
+The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
+as `dfb44231` and Plant Phenology PR #5 merged as `50106f20`, with pinned validation,
+Pages, and semantic-production checks green. Ground Beetle Pass 5 replaced the
+catch-conditioned baseline with 46 opportunity-complete bundles, repaired release
+trust, and shipped the final static artistic poster on exact production merge
+`89caa435`. Mosquito Pulse Pass 6 is next.
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
@@ -64,7 +60,7 @@ The release layer is not at the same quality bar.
 | Plant Phenology Explorer | **Startup Error -> restored in Pass 2** | 8 -> 0 files | 1 -> registered science/build/handler/semantic suite | desert green-up opportunity, interval censoring, and visit-cadence comparability are explicit; exact current-source Driver join remains held |
 | Plant Diversity | **production verified in Pass 3** | 13 -> 0 files | 1 -> registered science/build/handler/cover/semantic suite | nested grain, opportunity, recurrent panels, Chao2, unknown nativity, reference scope, and `legacy-partial` source limits are release-verified; Driver remains context only |
 | Vegetation Structure Explorer | **Pass 4 complete / production verified** | 8 -> 0 files | 1 -> registered source/science/parity/export/runtime/manifest/browser suite | official RELEASE-2026 event/opportunity family is verified; tree-DBH bole and shrub/sapling stem-base cross-section channels remain separate slow standing-structure context, never annual flux; reset and Plotly registration lifecycles are production-verified |
-| Ground Beetle Tracker | **Startup restored / release unsafe** | 8 files | 0 | catch-conditioned effort omits zero-carabid bouts; zero-argument client handlers fail the current Shiny contract; no semantic-ready marker; cover copy overstates ecosystem-health meaning |
+| Ground Beetle Tracker | **Pass 5 complete / production verified** | 8 -> 0 files | 0 -> registered science/release/handler/cover/semantic suite | opportunity-complete effort includes zero-Carabidae bouts; taxonomy is reconciled by individualID; activity-density, detection-frequency, population/health, and causal limits are explicit |
 | Mosquito Pulse | available | 7 files | 0 | expansion, zero-catch effort, day/night support, and seasonal aggregation need fixture coverage |
 | Birds | available | 8 files | 1 | annual opportunity/zero-detection support and method/flyover handling need stronger contracts |
 | Water Chemistry | available | 3 files | 0 | current QC fixes are ahead of the review documentation; release manifest is stale |
@@ -77,8 +73,10 @@ then closed its drift with a pinned R 4.5.2 / 92-package / 60-runtime-file relea
 Plant Diversity Pass 3 closed its drift with R 4.5.2 / 91 packages / 150 manifest
 files and exact runtime, source-limit, export, responsive, and semantic receipts.
 Vegetation Pass 4 now has an exact R 4.5.2 / 91-package / 68-runtime-file manifest
-and a verified official 42-site RELEASE-2026 family; the other five companions
-remain at their baseline state. A future companion deploy can otherwise publish a
+and a verified official 42-site RELEASE-2026 family. Ground Beetle Pass 5 now has
+an exact R 4.5.2 / 91-package / 112-runtime-file manifest and a verified 46-site
+opportunity-complete family; the other four companions remain at their baseline
+state. A future companion deploy can otherwise publish a
 different app than the repository appears to describe, or fail at startup.
 
 Additional suite-wide findings (baseline unless a later pass update is stated):
@@ -86,23 +84,24 @@ Additional suite-wide findings (baseline unless a later pass update is stated):
 - At baseline, only the Driver repository had `AGENTS.md` and a durable
   `docs/BUILD-TEST-HANDOFF.md`. Small Mammal, Phenology, Plant Diversity, and
   Vegetation now have app-local governance, handoff, and Driver knowledge-package
-  artifacts; Ground Beetle now has an evidence-only baseline governance, science
-  contract, handoff, and knowledge package at candidate `e19996d`; the other four
-  companions still lack them.
+  artifacts; Ground Beetle now has published governance, science-contract,
+  handoff, and knowledge-package artifacts with a complete release receipt; the
+  other four companions still lack them.
 - At baseline, four companions had one helper test script and five had none. Small
   Mammal, Phenology, Plant Diversity, and Vegetation now run product-specific
   science, portability, client-handler, exact-release, and semantic-health gates;
-  the other five retain their baseline test debt.
+  Ground Beetle now runs opportunity/zero-catch/taxonomy/QC, handler, cover,
+  bundle/index, exact-manifest, and semantic-health contracts; the other four
+  retain their baseline test debt.
 - Most companion workflows use moving action tags and a moving package snapshot,
   combine build/validation/publish in one write-enabled job, and do not reproduce
   the Driver's loaded BLAS/thread receipt.
 - Weekly scheduled runs can finish successfully in seconds because a date gate
   skipped the work. That is a skip, not fresh release-health evidence.
 - Baseline post-deploy checks were not content-aware. Small Mammal, Phenology,
-  Plant Diversity, and Vegetation now require app-specific semantic markers and
-  exact release receipts while rejecting Posit error pages; Ground Beetle now
-  visibly starts but still lacks the marker and clean handler contract, and the
-  pattern remains to be ported to the other four companions.
+  Plant Diversity, Vegetation, and Ground Beetle now require app-specific semantic
+  markers and exact release receipts while rejecting Posit error pages; the pattern
+  remains to be ported to the other four companions.
 - The suite registry and relationship copy are duplicated in each static cover,
   creating ten sources of truth.
 - Mosquito Pulse and My Little Inverts reference `og-image.png` without committing
@@ -111,9 +110,9 @@ Additional suite-wide findings (baseline unless a later pass update is stated):
   Water Chemistry, for example, now implements fixes that its review still presents
   as open. Findings must be linked to fixes and release verification rather than
   overwritten or left ambiguous.
-- Ground Beetle's cover calls beetles a gauge of site health. The product supports
-  activity-density, composition, and disturbance context, not an impairment or
-  ecosystem-health verdict.
+- Ground Beetle's released poster and app removed the baseline site-health claim.
+  The product now consistently frames activity-density, composition, and
+  disturbance context without an impairment or ecosystem-health verdict.
 
 ## 3. Program order
 
@@ -154,7 +153,7 @@ The pass order is intentionally not alphabetical:
 | 2 | Plant Phenology Explorer | **COMPLETE / PRODUCTION VERIFIED**; corrected plant-year opportunity, onset unavailability/censoring, deterministic derived artifacts, and release trust without changing Driver bytes |
 | 3 | Plant Diversity | **COMPLETE / PRODUCTION VERIFIED**; separated composition, invasion, richness, and cover from unsupported productivity inference; closed nested-grain/opportunity/panel/source-limit contracts without changing Driver bytes |
 | 4 | Vegetation Structure Explorer | **COMPLETE / PRODUCTION VERIFIED**; rebuilt from official RELEASE-2026 with event-atomic opportunity, separate physical channels, exact release promotion, an artistic Living Poster, accessible/export/pin enhancements, a complete reset contract, and a raw registered-event Plotly gate; Driver remains `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE` |
-| 5 | Ground Beetle Tracker | **BASELINE RECORDED / RELEASE FOUNDATION ACTIVE**; public startup is restored but semantic/release health is not, and effort-complete zero-catch support will determine whether activity-density can leave context-only status |
+| 5 | Ground Beetle Tracker | **COMPLETE / PRODUCTION VERIFIED**; opportunity-complete zero-catch effort, individualID taxonomy reconciliation, exact release trust, semantic health, and a static artistic Living Poster are live; activity-density remains context-only pending a separately reviewed Driver adapter and suite-synthesis decision |
 | 6 | Mosquito Pulse | strongest seasonal consumer candidate; requires opportunity-complete trap effort and biome-aware temperature/precipitation framing |
 | 7 | Birds | important consumer context, but method, flyover, zero-detection, and annual-support constraints limit Driver use |
 | 8 | Water Chemistry | well-powered condition record and best control case for honest statistics; not itself a trophic hinge |
@@ -332,8 +331,13 @@ board but was not shipped by PR #85. Vegetation established the production frame
 Small Mammal Cover V5 then proved that the same frame transfers to a second app in
 PR #86 / merge `c4c46fce`, using “Who moves after dark?”, “Meet the tiny lives
 reshaping the landscape.”, “Meet the mammals”, and a dominant trap/mouse editorial
-screenprint. Phenology/Plant generated-art releases remain factual baselines and
-must be reviewed against this contract before their next cover release.
+screenprint. The earlier Phenology/Plant generated-art releases remain factual
+historical baselines. Phenology PR #5 / merge `50106f20` and Plant Diversity PR
+#11 / merge `dfb44231` published their reviewed Living Poster V1 refreshes.
+Ground Beetle PR #15 / merge `89caa435` then extended the frame with a static
+forest-floor beetle/pitfall screenprint. Poster art is static by default from Pass
+5 onward; ordinary focus/hover feedback may remain, but the dominant hero does not
+require animation.
 
 Validate exact copy/action count, provenance and asset hashes, a separately composed
 1200×630 social card, keyboard/focus order, reduced-motion and forced-color modes,
@@ -430,13 +434,14 @@ Suggested palette families remain distinct but related:
 - Across Sites leads with a gated within-species slope and CI, identifies coarse
   cadence, treats the network-wide slope as composition-confounded context, and
   explicitly rejects a causal temperature interpretation.
-- The verified `29c0ed1` release retains the information-heavy “Read the seasons”
-  baseline described in its receipt. Owner direction on 2026-07-22 approved a
-  Suite Living Poster V1 source candidate at local commit `118bc28`: hook “Read
+- The core `29c0ed1` release retained the information-heavy baseline. Owner
+  direction on 2026-07-22 produced the Suite Living Poster V1 refresh: hook “Read
   the seasons.”, promise “Follow tagged plants through the turning year.”, CTA
   “Pick a place”, one Driver route, responsive byte-mirrored seasonal art, a
-  compact honesty/source footer, and the same frame in-app. It changes no science
-  or Driver byte and is not production evidence until its pinned release closes.
+  compact honesty/source footer, and the same frame in-app. PR #5 head `c1bf55d`
+  passed run `29963446292` and merged as `50106f20`; main validation
+  `29964265558`, Pages `29964264658`, and production health `29964265433` passed.
+  The cover changed no science or Driver byte.
 - Release PR head `cc0151d` passed run `29669603912`; merge, Pages, and Connect Last
   deployed are `29c0ed1`; semantic production run `29670192516` and fresh HARV
   Overview/Clock/Onset/Across-Sites interactions passed.
@@ -467,14 +472,14 @@ Suggested palette families remain distinct but related:
 - Production runtime is `sha256:0765d8951843cf6fea09a295b260bfb53f1eb6708370748905a4a3941c85d2cb`;
   manifest SHA-256 is `12ffe3496ac54a6504a04656236604abc64f4638d1ae92bfe103565c0d15cd51`;
   cover/social receipt remains `sha256:de6718b3b4e3557fdc395911cd98ce55be29db4d2a9b9038f1903814ed00413c`.
-- The released stylized plant art remains the verified production baseline. Owner
-  direction on 2026-07-22 approved a Suite Living Poster V1 source candidate at
-  local commit `d389fb6`: hook “How much can one square hold?”, promise “Explore
-  plant communities from one square metre outward.”, CTA “Pick a place”, one
-  Driver route, responsive byte-mirrored nested-quadrat art, a compact
-  honesty/source footer, and the same frame in-app. It changes no estimator,
-  source family, bundle, or Driver byte and is not production evidence until its
-  pinned release closes.
+- Owner direction on 2026-07-22 produced the Suite Living Poster V1 refresh: hook
+  “How much can one square hold?”, promise “Explore plant communities from one
+  square metre outward.”, CTA “Pick a place”, one Driver route, responsive
+  byte-mirrored nested-quadrat art, a compact honesty/source footer, and the same
+  frame in-app. PR #11 head `3b9137e` passed run `29963358476` and merged as
+  `dfb44231`; main validation `29963570916`, Pages `29963570413`, and production
+  health `29963570919` passed. It changed no estimator, source family, bundle, or
+  Driver byte.
 - Driver disposition: `CONTEXT / NO DRIVER BYTE CHANGE`. Current-source ingestion
   requires a complete matching future receipt, sampled-opportunity ledger, and
   measured eligible site-year join; no productivity vote or per-site climate edge.
@@ -602,31 +607,34 @@ Suggested palette families remain distinct but related:
   evidence, not annual productivity, biomass, carbon, a causal edge, or an annual
   vote. App-local gates 1–7 are satisfied; gate 8, the separately reviewed Driver
   adapter/rebuild, remains closed. The owner resumed program execution on
-  2026-07-22; Ground Beetle Pass 5 is now in baseline audit.
+  2026-07-22; Ground Beetle Pass 5 is complete and Mosquito Pass 6 is next.
 
 ### Ground Beetle Tracker — fifth pass
 
-Owner resumed this pass on 2026-07-22 after requesting the two plant-cover
-alignment candidates above. Evidence-only baseline candidate `e19996d` now records
-the repository instructions, science contract, source/bundle identities, manifest
-drift, public state, current effort denominator, release workflow, and Driver
-disposition. Fresh public evidence shows startup restored, not a healthy release:
-the picker renders, but no semantic marker exists and Shiny reports a one-argument
-custom-handler contract error. Release/science foundation work is now authorized;
-the artistic cover follows only after those gates are credible.
+Pass 5 is **COMPLETE / PRODUCTION VERIFIED**. Opportunity-complete data PR #14
+head `c3dec8d` merged as `4e628f88`; the final static-poster PR #15 head
+`a7950294` merged as authoritative production release `89caa435`.
 
-- Repair the public release path and prove semantic health on the exact deployment.
-- Build effort from all trapping opportunities, including zero-carabid bouts. Until
-  that denominator is complete, label catch-per-effort as outcome-conditioned and
-  keep it non-voting.
-- Make bundles portable under cold Linux reads; force materialized character data,
-  restore Date classes, save a supported serialization version, and test cold load.
-- Keep species-rank gates, introduced-dominant flags, and permutation-null framing.
-- Remove the cover's site-health claim.
-- Require enough environmental support before any candidate driver can enter model
-  selection.
-- Driver disposition: `CONTEXT`, with possible reconsideration after an
-  effort-complete rebuild.
+- The released family has 46 bundles, 100,163 rows, 33,012 independent field-effort
+  opportunity anchors, and 67,151 catch rows. Valid zero-Carabidae bouts are
+  represented before outcomes; duplicate, conflicting, missing, and all-zero
+  cases have adversarial fixtures.
+- Expert determinations are reconciled at `individualID`, preserve sorting totals,
+  and retain species-rank, introduced-context, small-series, and permutation-null
+  protections.
+- The exact R 4.5.2 / 91-package / 112-runtime-file manifest has SHA-256
+  `b3da3599f7601fabd697d592897f2238af02315c286ef829d1ab0715815a9266`.
+  Cold-bundle, index, handler, cover, and exact-manifest contracts passed.
+- CI `30023971987`, Pages `30023970965`, and content-aware production health
+  `30023973253` passed on exact merge `89caa435`. Live Pages desktop/390/320 and
+  Connect first-run/representative site QA passed without a first-party error.
+- Pages and Connect share one static editorial forest-floor screenprint showing a
+  recognizable carabid and flush-buried pitfall cup. The hero has no animation;
+  the site-health, population, occupancy, and causal boundaries stay visible.
+- Driver disposition remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
+  CHANGE`. Reconsider only through a pinned independent adapter, measured eligible
+  join/support, a registered seasonal mechanism, and old/new parity at suite
+  synthesis.
 
 ### Mosquito Pulse — sixth pass
 
