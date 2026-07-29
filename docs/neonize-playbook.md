@@ -276,6 +276,27 @@ release receipt.
   per plot-year, annual comparisons need recurrent panels, and cross-site richness
   needs a common grain. Chao2 is an incidence lower bound, not a generic effort or
   coverage correction.
+- **Source presence is not complete estimand support.** Keep separate fields for
+  source availability, the components required by the displayed estimand, the
+  components actually supported, and the final value. The Breeding Birds Pass 7
+  contract retains temperature source evidence at 47/47 sites while marking BARR
+  and TOOL `NA` because each has only 1 of 2 realized count months; only the
+  finite-temperature view uses 45/47 sites. Never average a partial realized
+  window, impute the gap, or drop the site's unrelated bird/Search/export evidence.
+- **Supported zeros are grain-specific.** A valid physical-count zero and a
+  supported-zero point-year are different facts and need distinct keys, totals,
+  outcome fields, and tests. Reconstruct each from the opportunity ledger; never
+  fill missing detections or absent visits with zero, and require positive +
+  supported-zero + unavailable conservation independently at every advertised
+  grain.
+- **One comparative contract must drive app, search, visual marks, and exports.**
+  Register the exact analysis window, eligibility predicate, effort target, and
+  support fields once, then independently reconstruct every public projection.
+  The Birds contract fixes 2017–2024 and a 90-valid-count rarefaction target across
+  its national comparison, Search, and export surfaces. UI labels and download
+  codebooks must keep rarefaction as effort standardization and detection as a
+  detection index; neither licenses causal, abundance, population, density, or
+  occupancy language.
 - **Unknown classifications and spatially narrow references stay visible.** Resolve
   contradictory nativity to Unknown/review, and never turn one reference coordinate
   into plot- or site-wide truth. Short per-site annual screens remain descriptive

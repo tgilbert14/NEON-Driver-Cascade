@@ -1,6 +1,7 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE — PASS 6 COMPLETE; PASS 7 NEXT**
+Status: **ACTIVE — PASS 7 RECONCILIATION DRAFTED; OFFICIAL RECEIPTS PENDING;
+PASS 8 NEXT**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
@@ -18,7 +19,12 @@ release trust, a static nocturnal-wetland poster, real-bundle server lifecycle
 coverage, and responsive production verification on authoritative runtime
 `935420e`. The later Pages-only compact-cover correction is authoritative at
 `ec0f2ba`, with app-local receipt `6450f01`; it changed no science, data,
-manifest, Connect runtime, or Driver byte. Breeding Birds Pass 7 is next.
+manifest, Connect runtime, or Driver byte. Breeding Birds Pass 7 now has a drafted
+47-site opportunity/support and product reconciliation with the fixed disposition
+`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE`. Its official Run 14,
+PR, merge, Pages, and Connect receipts remain **PENDING**, so production closeout
+is not claimed here. Water Chemistry Pass 8 is next after those exact identities
+are supplied.
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
@@ -67,7 +73,7 @@ The release layer is not at the same quality bar.
 | Vegetation Structure Explorer | **Pass 4 complete / production verified** | 8 -> 0 files | 1 -> registered source/science/parity/export/runtime/manifest/browser suite | official RELEASE-2026 event/opportunity family is verified; tree-DBH bole and shrub/sapling stem-base cross-section channels remain separate slow standing-structure context, never annual flux; reset and Plotly registration lifecycles are production-verified |
 | Ground Beetle Tracker | **Pass 5 complete / production verified** | 8 -> 0 files | 0 -> registered science/release/handler/cover/semantic suite | opportunity-complete effort includes zero-Carabidae bouts; taxonomy is reconciled by individualID; activity-density, detection-frequency, population/health, and causal limits are explicit |
 | Mosquito Pulse | **Pass 6 complete / production verified** | 7 -> 0 files | 0 -> registered science/release/handler/cover/server-runtime/semantic suite | opportunity-complete trap effort includes supported target-taxon zeros; continuous whole-trap expansion, outcome states, total/species reconciliation, activity/population/pathogen limits, and runtime lifecycle are release-verified |
-| Birds | available | 8 files | 1 | annual opportunity/zero-detection support and method/flyover handling need stronger contracts |
+| Birds | candidate Pass 7 contract drafted; official production receipt pending | 8 baseline mismatches -> official exact-manifest receipt `PENDING` | 1 baseline helper -> candidate opportunity/source/oracle/runtime suite; official Run 14 receipt `PENDING` | all 47 bird/Search-site/export rows are retained; physical-count and point-year opportunity, supported zeros, method/flyover/distance handling, fixed 2017–2024 support, 90-count rarefaction, and incomplete realized-temperature handling are explicit; no causal/abundance/population/occupancy claim |
 | Water Chemistry | available | 3 files | 0 | current QC fixes are ahead of the review documentation; release manifest is stale |
 | My Little Inverts | available | 9 files | 0 | water type, sampler, habitat, and density-index support need executable tests and a current expert review |
 
@@ -82,9 +88,10 @@ and a verified official 42-site RELEASE-2026 family. Ground Beetle Pass 5 now ha
 an exact R 4.5.2 / 91-package / 112-runtime-file manifest and a verified 46-site
 opportunity-complete family. Mosquito Pulse Pass 6 now has an exact R 4.5.2 /
 91-package / 112-runtime-file manifest and a verified 47-site opportunity-complete
-family; the other three companions remain at their baseline state. A future
-companion deploy can otherwise publish a different app than the repository appears
-to describe, or fail at startup.
+family. Birds has a candidate Pass 7 contract, but its official exact manifest and
+publication receipts remain pending; Water Chemistry and Inverts remain at their
+baseline state. A future companion deploy can otherwise publish a different app
+than the repository appears to describe, or fail at startup.
 
 Additional suite-wide findings (baseline unless a later pass update is stated):
 
@@ -94,14 +101,19 @@ Additional suite-wide findings (baseline unless a later pass update is stated):
   artifacts; Ground Beetle now has published governance, science-contract,
   handoff, and knowledge-package artifacts with a complete release receipt;
   Mosquito now has the same complete governance, scientific-contract, handoff,
-  and knowledge-package family; the other three companions still lack them.
+  and knowledge-package family. Birds has drafted those app-local authorities on
+  its Pass 7 candidate branch, but their official merge/publication receipt remains
+  pending; Water Chemistry and Inverts still lack them.
 - At baseline, four companions had one helper test script and five had none. Small
   Mammal, Phenology, Plant Diversity, and Vegetation now run product-specific
   science, portability, client-handler, exact-release, and semantic-health gates;
   Ground Beetle now runs opportunity/zero-catch/taxonomy/QC, handler, cover,
   bundle/index, exact-manifest, and semantic-health contracts; Mosquito now runs
   effort/outcome/expansion/total-species, release, handler, cover, real-bundle
-  server-runtime, and semantic-health contracts; the other three retain their
+  server-runtime, and semantic-health contracts. Birds has a candidate suite for
+  opportunity, support, taxonomy/method/flyover/distance, source privacy,
+  deterministic indexes, runtime lifecycle, cover, and exact release validation;
+  official Run 14 evidence is pending. Water Chemistry and Inverts retain their
   baseline test debt.
 - Most companion workflows use moving action tags and a moving package snapshot,
   combine build/validation/publish in one write-enabled job, and do not reproduce
@@ -112,7 +124,9 @@ Additional suite-wide findings (baseline unless a later pass update is stated):
   Plant Diversity, Vegetation, Ground Beetle, and Mosquito now require app-specific
   semantic markers and exact release receipts while rejecting Posit error pages;
   Mosquito additionally proves pre-load suspension and post-load rendering against
-  a real bundle. The pattern remains to be ported to the other three companions.
+  a real bundle. Birds has drafted the same content-aware and real-bundle lifecycle
+  boundary, but no final deployment receipt is recorded yet. The pattern remains
+  to be ported to Water Chemistry and Inverts.
 - The suite registry and relationship copy are duplicated in each static cover,
   creating ten sources of truth.
 - My Little Inverts references `og-image.png` without committing the file. Water
@@ -167,7 +181,7 @@ The pass order is intentionally not alphabetical:
 | 4 | Vegetation Structure Explorer | **COMPLETE / PRODUCTION VERIFIED**; rebuilt from official RELEASE-2026 with event-atomic opportunity, separate physical channels, exact release promotion, an artistic Living Poster, accessible/export/pin enhancements, a complete reset contract, and a raw registered-event Plotly gate; Driver remains `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE` |
 | 5 | Ground Beetle Tracker | **COMPLETE / PRODUCTION VERIFIED**; opportunity-complete zero-catch effort, individualID taxonomy reconciliation, exact release trust, semantic health, and a static artistic Living Poster are live; activity-density remains context-only pending a separately reviewed Driver adapter and suite-synthesis decision |
 | 6 | Mosquito Pulse | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 opportunity-complete trap effort, supported zero-catch states, continuous expansion, exact release trust, static Living Poster, server lifecycle, and mobile accessibility are live; the activity index remains `CONTEXT / HOLD DRIVER INGESTION` pending suite synthesis |
-| 7 | Birds | important consumer context, but method, flyover, zero-detection, and annual-support constraints limit Driver use |
+| 7 | Birds | **RECONCILIATION DRAFT COMPLETE / OFFICIAL RELEASE RECEIPTS PENDING**; the candidate preserves opportunity-complete physical counts and point-years, supported zeros, method/flyover/distance state, exact 2017–2024 comparative support, 90-count rarefaction, and complete-vs-partial realized-temperature support; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
 | 8 | Water Chemistry | well-powered condition record and best control case for honest statistics; not itself a trophic hinge |
 | 9 | My Little Inverts | closes the current aquatic consumer pass and reveals whether a producer or physical-driver product is still missing |
 
@@ -714,20 +728,53 @@ Pass 6 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative app runtime is
   an independent pinned adapter, measured site-season/year join and support, a
   pre-registered seasonal/thermal mechanism, and old/new parity at suite synthesis.
 
-### Birds — seventh pass
+### Birds — seventh pass reconciliation draft
 
-- Preserve rarefaction, Chao2 uncertainty/suppression, flyover quarantine, method
-  channels, and 999-distance handling.
-- Audit annual zero-detection opportunity so absent detections are distinguishable
-  from absent visits.
-- Keep point x year as the sampling unit; treat raw richness and detection counts as
-  effort/method sensitive.
-- Test method mixtures and observer-distance support in exports and visual marks.
-- Driver disposition: `CONTEXT` unless a registered, effort-complete pooled signal
-  clears support.
+Pass 7 has a complete scientific/product reconciliation draft, but it is not yet a
+production closeout. Official Run 14, candidate PR, merge/default-branch, Pages,
+Connect, and Driver publication receipts remain **PENDING** and must be replaced
+only with exact final evidence.
+
+- The candidate contract retains the complete 47-site roster across bird,
+  Search-site, and cross-site export rows. Search and export do not silently become
+  climate-complete subsets when an environmental estimand is unavailable.
+- Opportunity is explicit at two non-interchangeable grains: 26,365 valid physical
+  counts, including 117 supported-zero counts, and 24,509 supported point-years,
+  including 79 supported-zero point-years. A supported zero requires valid survey
+  opportunity; unavailable support remains unavailable rather than being filled.
+- The national comparison, Search, and export contract use the exact 2017–2024
+  window and a common rarefaction target of 90 valid physical counts. Rarefaction
+  standardizes count support only; it does not turn a detection index into
+  abundance, population size, density, or occupancy.
+- Temperature source evidence exists for all 47 bird sites, but complete
+  realized-month support exists for 45. BARR and TOOL each support only 1 of 2
+  realized count months, retain `NA`, and are omitted only from the finite-
+  temperature gradient. No partial-window average or imputation is allowed.
+- The product contract keeps parent/subspecies collapse, method state, flyover
+  quarantine, raw distance state and sentinels, Chao2 uncertainty/suppression, and
+  export/codebook support fields aligned with the same opportunity universe.
+- The claim boundary is fixed: community and climate displays are descriptive
+  context. They do not authorize causal, abundance, population, density, occupancy,
+  breeding-status, territory, or forecast claims.
+- Reusable implementation lesson: preserve source availability separately from
+  complete estimand support; make count-level and point-year opportunity states
+  explicit; reconstruct app, Search, and export outputs from one registered window
+  and eligibility predicate; and show an honest `NA` without dropping the site's
+  non-environmental evidence.
+- Driver disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
+  CHANGE`**. Any later reconsideration requires the pinned official release,
+  measured eligible Driver joins/support, a registered mechanism, an independent
+  adapter, and old/new parity at suite synthesis.
+- **PENDING closeout placeholders:** final Run 14 producer/validator/publisher and
+  artifact/science/release identities; reviewed PR and exact-head CI; merge and
+  default-branch verification; Pages/Connect deployed identities, semantic smoke,
+  fixed-window and supported-zero interaction checks, responsive/accessibility QA;
+  and the docs-only Driver PR/merge receipt.
 
 ### Water Chemistry — eighth pass
 
+- This is the next one-app cycle after the exact Birds closeout receipts replace
+  the pending placeholders above.
 - Treat the current code, not the older review prose, as the candidate implementation;
   verify canonical units, the site-aware plausibility gate, censored-share greying,
   BH q, effective-n logic, codebook, and legacy provenance with fixtures.

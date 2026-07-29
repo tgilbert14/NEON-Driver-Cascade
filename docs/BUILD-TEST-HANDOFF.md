@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-07-26
+Last updated: 2026-07-29
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -445,6 +445,42 @@ Do not impute plot area, emit a partial-site estimate, invent basal area/type, o
 treat an unmatched or absent plot record as zero. `NA` plus
 `unsupported-unmatched-plots` is the valid reviewed outcome, not a failing result
 to "fix."
+
+### Breeding Birds Pass 7 sibling contract (Driver ingestion held)
+
+These are documentation-reconciliation pins from the Breeding Birds Pass 7
+candidate package. They are not inputs to the current Driver artifact family and
+do not constitute a production-release receipt. Final Run 14, PR, merge, Pages,
+Connect, and Driver publication identities remain **PENDING**.
+
+| Measure | Reconciliation pin |
+|---|---:|
+| bird/Search-site/cross-site-export roster | 47 rows on every surface |
+| valid physical counts | 26,365 |
+| supported-zero physical counts | 117 |
+| supported point-years | 24,509 |
+| supported-zero point-years | 79 |
+| cross-site analysis window | 2017–2024 inclusive |
+| common rarefaction target | 90 valid physical counts |
+| temperature source support | 47/47 sites |
+| complete realized-month temperature support | 45/47 sites |
+| incomplete sites | `BARR`, `TOOL` |
+| realized-month support at each incomplete site | 1/2; aggregate `NA`; no imputation |
+
+Source availability and estimand completeness are separate fields: `BARR` and
+`TOOL` remain in every bird, Search-site, and export roster and are omitted only
+from the finite-temperature view. A supported-zero physical count and a
+supported-zero point-year are distinct opportunity states; neither may be
+manufactured from missing detections or absent visits. The exact 2017–2024 window,
+90-count target, eligibility predicate, and support fields must remain aligned
+across app, Search, visual marks, codebook, and exports.
+
+The fixed disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
+CHANGE`**. Rarefied community context and birds-per-count remain descriptive; they
+do not authorize causal, abundance, population, density, or occupancy claims. Any
+future Driver use requires the exact production receipts, a pinned independent
+adapter, measured eligible joins/support, a registered mechanism, and old/new
+parity during suite synthesis.
 
 ## Completion test matrix
 
@@ -2609,3 +2645,65 @@ Rules:
   Driver reconciliation still requires review, green CI, merge, and master/Pages
   verification. Then begin Breeding Birds Pass 7; do not rebuild Driver v2 before
   all nine app packages and the suite-synthesis gate are complete.
+
+### 2026-07-29 06:39 MST - Breeding Birds Pass-7 Driver reconciliation draft / Codex
+
+- **Changed/classification:** drafted the Breeding Birds Pass 7 closeout language
+  in this handoff, the suite learning register, the revamp plan, and the reusable
+  playbook. Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting`. The fixed ecological disposition is **`CONTEXT / HOLD DRIVER
+  INGESTION / NO DRIVER BYTE CHANGE`**. This is documentation-only work in an
+  isolated detached worktree at Driver `d80be866d681336e04c5ac397ed3d9332f986596`;
+  no Driver code, source lock, estimator, workflow, data, manifest, or public
+  surface changed.
+- **Candidate contract reconciled:** all 47 site rows remain present across bird,
+  Search-site, and cross-site export surfaces. The opportunity-complete package
+  reports 26,365 valid physical counts with 117 supported-zero counts and 24,509
+  supported point-years with 79 supported-zero point-years. The exact comparison
+  window is 2017–2024 and the common rarefaction target is 90 valid physical
+  counts. Temperature source evidence exists for 47/47 sites, but complete
+  realized-month support exists for 45/47: `BARR` and `TOOL` each have 1/2 months,
+  retain `NA`, and receive no imputation.
+- **Claim boundary:** rarefied community context and birds-per-count remain
+  descriptive. Neither the sibling candidate nor this documentation authorizes a
+  causal, abundance, population, density, or occupancy claim, an ecological vote,
+  or a Driver adapter/build.
+- **Reusable learning:** model source presence separately from complete estimand
+  support; keep physical-count and point-year opportunity/zero states distinct;
+  drive app, Search, UI marks, codebook, and exports from one registered
+  eligibility/window/support contract; and show a supported `NA` without deleting
+  the site's unrelated evidence. Presence and absence validators are both needed:
+  require every canonical site row and reject partial-window averaging,
+  imputation, silent row loss, and claim-language expansion.
+- **Official evidence status:** final Run 14 producer/validator/publisher,
+  artifacts, science/release stamps and manifest; candidate PR/exact-head CI;
+  merge/default-branch validation; Pages and Connect deployed identities,
+  semantic/interaction/responsive/accessibility checks; and the Driver docs-only
+  PR/merge receipt are all **PENDING**. No production-verified Pass 7 claim is made
+  and no earlier run or local audit may fill those placeholders.
+- **Test process/result:** from `/private/tmp/neon-driver-pass7.RjrZzm`, read the
+  complete root `AGENTS.md` and all four edited authorities before editing; started
+  with a clean detached worktree and no `.cascade-rebuild.lock`. Documentation
+  changed-file scope, `git diff --check`, strict UTF-8/LF/no-BOM/control-character,
+  Markdown fence and suite-table shape, required-value/placeholder scans, and exact
+  five-file Driver SHA-256 rehash passed. Driver R/build/browser gates are `N/A`
+  because no runtime input, output, workflow, or public surface changed.
+- **Evidence invalidated:** none. The Birds 2026-07-18 startup/drift baseline remains
+  historical and the production state remains pending until official receipts are
+  supplied. No Driver release, determinism, science, manifest, boot, browser, or
+  publication evidence is invalidated by this draft.
+- **Artifacts/failure/cleanup:** no generation or promotion ran. Canonical Driver
+  SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No lock, stage, backup, pending artifact, credential, or temporary Driver data was
+  created.
+- **Residual risk/next action:** the sibling candidate facts are locally auditable,
+  but official release and production identities are unproved in this Driver draft.
+  Replace every `PENDING` field only from exact final receipts, rerun documentation
+  checks, review and publish the docs-only reconciliation with all Driver hashes
+  unchanged, then begin Water Chemistry Pass 8. Driver v2 remains gated on all nine
+  pinned packages and suite synthesis.
