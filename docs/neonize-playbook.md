@@ -365,6 +365,12 @@ Connect deployment, and public semantic health are separate release identities.
   `docs/index.html` GitHub Pages showcase whose `APP_URL` points at the live Connect Cloud app.
 - Close publication with one receipt tying together the green PR head, merge commit, and exact
   Pages-deployed commit; also update and verify the repository description and homepage.
+- Required pull-request validation must test the literal review head, not GitHub's
+  synthetic merge revision. Set the source identity to
+  `${{ github.event.pull_request.head.sha || github.sha }}`, checkout that exact SHA,
+  assert `git rev-parse HEAD` equals it, and bind promotion or merge to the same head
+  (for example, a matching-head guard). A green merge-ref build does not prove the
+  bytes the reviewer approved.
 - Test the live showcase at desktop and 390x844 mobile after layout stabilizes or a reload:
   require zero persistent horizontal overflow, correct canonical/OG/Twitter metadata, the social
   image's natural dimensions, an empty unexpected console/network failure set, and successful
@@ -441,6 +447,20 @@ agent) and validate on contrasting sites so it never cries wolf (target ~0 high 
 CSS class convention: standardize on `.qc-flag-<level>` (not `.qc-flag.<level>`).
 The current bird implementation is one concrete reference; each app still requires
 domain-grounded thresholds and fixture evidence.
+
+**Opportunity-complete comparative surfaces (Birds reference):** distinguish source
+presence from complete estimand support. A site may have source rows yet lack every
+required realized month, method channel, or comparison year; retain it in the source
+roster and render the aggregate as `NA` rather than averaging partial support or
+imputing. Define supported zeros at the estimator's exact grain: a zero physical
+count and a zero point-year are different evidence and must not be inferred from a
+missing detection or absent visit. Build one versioned comparative contract that
+owns the window, eligibility predicate, support fields, rarefaction/standardization
+target, and ordered roster, then require the app, Search index, visual marks,
+codebook, and exports to consume it and agree exactly. State the claims the metric
+cannot support in executable fixtures and UI copy: standardizing effort does not
+create abundance, population, density, occupancy, breeding-status, territory,
+causal, or forecast evidence.
 
 **Search the network (the bundled-index search tab — every app with a national footprint gets it):**
 a "Search" nav_panel that queries a SMALL precomputed `data/search_index.rds` (one row per searchable

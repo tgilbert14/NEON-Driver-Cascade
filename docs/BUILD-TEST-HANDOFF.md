@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-07-26
+Last updated: 2026-08-03
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -445,6 +445,44 @@ Do not impute plot area, emit a partial-site estimate, invent basal area/type, o
 treat an unmatched or absent plot record as zero. `NA` plus
 `unsupported-unmatched-plots` is the valid reviewed outcome, not a failing result
 to "fix."
+
+### Breeding Birds Pass 7 sibling contract (production verified; ingestion held)
+
+The official `DP1.10003.001` `RELEASE-2026` package is complete and public. Run
+`30454799557` produced, independently validated, and published the exact 47-site
+candidate. Recovery PR #3 preserved candidate tree
+`61cd60092c87e2e127e0baeef9ae3a1f0447b8f3` and merged the byte-identical release
+as scientific/runtime authority
+`97c3e4c25b69068c7d8b3d56bc3da3bc019e5097`.
+
+| Measure | Locked value |
+|---|---:|
+| bird/Search-site/cross-site-export roster | 47 rows on every surface |
+| valid physical counts | 26,365 |
+| supported-zero physical counts | 117 |
+| supported point-years | 24,509 |
+| supported-zero point-years | 79 |
+| cross-site analysis window | 2017–2024 inclusive |
+| common rarefaction target | 90 valid physical counts |
+| temperature source support | 47/47 sites |
+| complete realized-month temperature support | 45/47 sites |
+| incomplete sites | `BARR`, `TOOL` |
+| realized-month support at each incomplete site | 1/2; aggregate `NA`; no imputation |
+
+Source availability and estimand completeness are separate fields. `BARR` and
+`TOOL` remain in every bird, Search-site, and export roster and are omitted only
+from the finite-temperature view. A supported-zero physical count and a
+supported-zero point-year are distinct opportunity states; neither may be
+manufactured from missing detections or absent visits. The exact 2017–2024 window,
+90-count target, eligibility predicate, and support fields remain aligned across
+app, Search, visual marks, codebook, and exports.
+
+The fixed disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
+CHANGE`**. Rarefied community context and birds per count remain descriptive; they
+do not authorize causal, abundance, population, density, occupancy, breeding-
+status, territory, or forecast claims. Future Driver use requires a pinned
+independent adapter, measured eligible joins/support, a registered mechanism, and
+old/new parity during suite synthesis.
 
 ## Completion test matrix
 
@@ -2609,3 +2647,68 @@ Rules:
   Driver reconciliation still requires review, green CI, merge, and master/Pages
   verification. Then begin Breeding Birds Pass 7; do not rebuild Driver v2 before
   all nine app packages and the suite-synthesis gate are complete.
+
+### 2026-08-03 10:20 EDT - Breeding Birds Pass 7 production closeout / Codex
+
+- **Changed/classification:** reconciled the app-local production package into this
+  handoff, the suite evidence register, revamp plan, and reusable playbook.
+  Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting` documentation. The ecological disposition is **`CONTEXT /
+  HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE`**; no Driver adapter, build,
+  runtime, source lock, estimator, data, manifest, or public surface changed.
+- **Official release evidence:** Breeding Birds Run 14 `30454799557` ran on exact
+  reviewed head `2da56ee499c10064b47b468bd23330fba6b35892`. Producer job
+  `90585528840`, independent validator `90662811450`, and restricted publisher
+  `90672878106` succeeded. Candidate `e3ec1cd35cc75891ac6eebd87da307d8266f8ca5`
+  binds release ID
+  `sha256:28cf09453f25d5d8fc509d414c7549fbefec45f6f89dc611946360944976a3ac`,
+  manifest SHA-256
+  `14f7425c3134ee217af4ab4331a5805c72dbc23e56724207c190877df5a767d2`,
+  121 runtime files, 91 pinned packages, and the complete 47-site opportunity and
+  context family.
+- **Merge and production identity:** recovery PR #3 exact head
+  `ffd0f05d13a716118d1efc63a0abbbfaca7f054a` passed exact-head CI
+  `30817207865` / job `91697774641` and merged as
+  `97c3e4c25b69068c7d8b3d56bc3da3bc019e5097`. Candidate, recovery head, and
+  merge share exact tree `61cd60092c87e2e127e0baeef9ae3a1f0447b8f3`.
+  Master CI `30818593951` / `91702470321`, Pages `30818592101`, and production
+  smoke `30818593688` / `91702467072` passed. Smoke proved Pages marker
+  `breeding-birds-poster-v1` and Connect marker
+  `breeding-birds-release-2026-v1` served the same release ID without startup-
+  failure text.
+- **App-local documentation authority:** closeout PR #4 exact head
+  `812df303f74a85880d9bafe2f49db55b07923c26` passed CI `30820481561` / job
+  `91708865944` and merged as
+  `07c852c2ed56357b39fb0315ecca1f12ebff962b`. The resulting master CI
+  `30821230065` / `91711360010`, Pages deployment `30821227931` (build
+  `91711362808`, deploy `91711428197`, report `91711428122`), and production
+  smoke `30821231664` / `91711364275` all succeeded. This docs-only authority did
+  not replace scientific/runtime authority `97c3e4c`.
+- **Contract adopted as context:** the app retains 47 sites, 26,365 valid physical
+  counts with 117 supported zeros, 24,509 supported point-years with 79 supported
+  zeros, exact 2017–2024 comparison support, rarefaction target 90, and separate
+  47/47 temperature-source versus 45/47 complete-realized-month support. `BARR`
+  and `TOOL` retain `NA`; no partial average, imputation, or unrelated-row loss is
+  allowed. Birds per count is a detection index, and rarefaction standardizes
+  effort rather than creating abundance, occupancy, or causality.
+- **Reusable prevention:** pull-request validators must evaluate the literal review
+  head, not GitHub's synthetic merge revision. Set the source SHA to
+  `github.event.pull_request.head.sha || github.sha`, checkout that SHA, assert
+  `git rev-parse HEAD` equality, and bind any promotion/merge to the same head.
+  A green merge-ref build cannot prove the bytes the reviewer actually approved.
+- **Validation/non-impact:** work began from clean current Driver `master`
+  `d80be866d681336e04c5ac397ed3d9332f986596`. Documentation scope and receipt
+  checks pass; Driver runtime/build/browser gates are not applicable because no
+  Driver byte changed. Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Evidence invalidated:** central Birds `PASS PENDING`, eight-manifest-mismatch,
+  one-helper-test, startup-only, and next-pass statements are superseded as current
+  state. They remain dated baseline history. No Driver release, science, manifest,
+  determinism, or publication evidence is invalidated.
+- **Next action:** publish this docs-only Driver reconciliation through exact-head
+  review and post-merge checks, then begin Water Chemistry Pass 8. Driver v2 remains
+  gated on all nine packages and suite synthesis.
