@@ -1,11 +1,11 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE — PASS 6 COMPLETE; PASS 7 NEXT**
+Status: **ACTIVE — PASS 7 COMPLETE; PASS 8 NEXT**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
-Progress: Driver baseline and companion Passes 1–6 are complete and
+Progress: Driver baseline and companion Passes 1–7 are complete and
 production-verified. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
 The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
@@ -18,7 +18,11 @@ release trust, a static nocturnal-wetland poster, real-bundle server lifecycle
 coverage, and responsive production verification on authoritative runtime
 `935420e`. The later Pages-only compact-cover correction is authoritative at
 `ec0f2ba`, with app-local receipt `6450f01`; it changed no science, data,
-manifest, Connect runtime, or Driver byte. Breeding Birds Pass 7 is next.
+manifest, Connect runtime, or Driver byte. Breeding Birds Pass 7 published the
+official 47-site opportunity-complete release on scientific/runtime authority
+`97c3e4c`, with app-local documentation authority `07c852c`, exact-head and
+merged-main validation, Pages, and production smoke green. Its context-only
+disposition changed no Driver byte. Water Chemistry Pass 8 is next.
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
@@ -167,7 +171,7 @@ The pass order is intentionally not alphabetical:
 | 4 | Vegetation Structure Explorer | **COMPLETE / PRODUCTION VERIFIED**; rebuilt from official RELEASE-2026 with event-atomic opportunity, separate physical channels, exact release promotion, an artistic Living Poster, accessible/export/pin enhancements, a complete reset contract, and a raw registered-event Plotly gate; Driver remains `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE` |
 | 5 | Ground Beetle Tracker | **COMPLETE / PRODUCTION VERIFIED**; opportunity-complete zero-catch effort, individualID taxonomy reconciliation, exact release trust, semantic health, and a static artistic Living Poster are live; activity-density remains context-only pending a separately reviewed Driver adapter and suite-synthesis decision |
 | 6 | Mosquito Pulse | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 opportunity-complete trap effort, supported zero-catch states, continuous expansion, exact release trust, static Living Poster, server lifecycle, and mobile accessibility are live; the activity index remains `CONTEXT / HOLD DRIVER INGESTION` pending suite synthesis |
-| 7 | Birds | important consumer context, but method, flyover, zero-detection, and annual-support constraints limit Driver use |
+| 7 | Birds | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 47-site family separates source presence from complete estimand support, preserves grain-specific supported zeros and method/flyover boundaries, and drives app/Search/visual/export surfaces from one comparative contract; runtime `97c3e4c`, docs `07c852c`; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
 | 8 | Water Chemistry | well-powered condition record and best control case for honest statistics; not itself a trophic hinge |
 | 9 | My Little Inverts | closes the current aquatic consumer pass and reveals whether a producer or physical-driver product is still missing |
 
@@ -627,8 +631,8 @@ Suggested palette families remain distinct but related:
   evidence, not annual productivity, biomass, carbon, a causal edge, or an annual
   vote. App-local gates 1–7 are satisfied; gate 8, the separately reviewed Driver
   adapter/rebuild, remains closed. The owner resumed program execution on
-  2026-07-22; Ground Beetle Pass 5 and Mosquito Pass 6 are complete, and Breeding
-  Birds Pass 7 is next.
+  2026-07-22; Ground Beetle Pass 5, Mosquito Pass 6, and Breeding Birds Pass 7 are
+  complete, and Water Chemistry Pass 8 is next.
 
 ### Ground Beetle Tracker — fifth pass
 
@@ -716,15 +720,36 @@ Pass 6 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative app runtime is
 
 ### Birds — seventh pass
 
-- Preserve rarefaction, Chao2 uncertainty/suppression, flyover quarantine, method
-  channels, and 999-distance handling.
-- Audit annual zero-detection opportunity so absent detections are distinguishable
-  from absent visits.
-- Keep point x year as the sampling unit; treat raw richness and detection counts as
-  effort/method sensitive.
-- Test method mixtures and observer-distance support in exports and visual marks.
-- Driver disposition: `CONTEXT` unless a registered, effort-complete pooled signal
-  clears support.
+Pass 7 is **COMPLETE / PRODUCTION VERIFIED**. Scientific/runtime authority is
+`97c3e4c25b69068c7d8b3d56bc3da3bc019e5097`; app-local documentation authority is
+`07c852c2ed56357b39fb0315ecca1f12ebff962b`.
+
+- Official `DP1.10003.001` `RELEASE-2026` Run 14 `30454799557` produced,
+  independently validated, and published the exact 47-site candidate. Recovery PR
+  #3 preserved exact tree `61cd60092c87e2e127e0baeef9ae3a1f0447b8f3`, passed
+  exact-head CI `30817207865`, and merged as runtime `97c3e4c`.
+- The released family has 26,365 valid physical counts with 117 supported zeros and
+  24,509 supported point-years with 79 supported zeros. The common comparison
+  window is exactly 2017–2024 and the rarefaction target is 90 valid physical
+  counts. Physical-count and point-year zeros remain separate opportunity states.
+- Source temperature is available for all 47 sites, but only 45/47 have complete
+  realized-month support. `BARR` and `TOOL` each have 1/2 realized months, remain in
+  every bird/Search/export roster, and receive aggregate `NA`; no partial average,
+  imputation, or unrelated-row loss is allowed.
+- Flyovers, 999-distance records, method channels, Chao2 uncertainty/suppression,
+  point-year support, and effort-sensitive raw counts remain explicit. One locked
+  comparative contract supplies the app, Search, visual marks, codebook, and
+  exports, preventing silent cross-surface eligibility drift.
+- Master CI `30818593951`, Pages `30818592101`, and content-aware production smoke
+  `30818593688` passed on runtime authority. Documentation PR #4 exact head
+  `812df303` passed `30820481561`, merged as `07c852c`, and passed merged-main CI
+  `30821230065`, Pages `30821227931`, and smoke `30821231664`.
+- Driver disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
+  CHANGE`**. Birds per count is a detection index and rarefaction standardizes
+  effort; neither supports abundance, population, density, occupancy, breeding-
+  status, territory, causal, or forecast claims. Any future Driver use requires a
+  pinned independent adapter, measured joins/support, a registered mechanism, and
+  old/new parity at suite synthesis.
 
 ### Water Chemistry — eighth pass
 
