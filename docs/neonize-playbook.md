@@ -285,6 +285,37 @@ release receipt.
   fill unknown `builtAt`, `neonRelease`, `sourceCutoff`, query receipt, or raw-source
   digest fields. Preserve explicit `NA` until a complete reviewed source receipt
   exists across the expected family and index.
+- **A semantic marker proves app family, not exact deployed revision.** Derive a
+  runtime receipt from the sorted checksums of the explicit runtime allowlist, emit
+  it with the ready marker, and make post-deploy smoke independently recompute and
+  require that exact value while rejecting host error text. Water Chemistry's
+  recovery showed that a constant marker and HTTP 200 can coexist with a stale or
+  failed Connect publication.
+- **Release recovery and data refresh are separate authority changes.** Restore a
+  failed deployment against one reviewed package graph and prove clean cold start,
+  exact runtime identity, and semantic production health before dispatching the
+  held refresh. A recovered app does not authorize a newly fetched candidate; that
+  candidate still needs independent validation, human delta review, and its own
+  promotion receipt.
+- **Release-safe bytes do not prove an opportunity-safe estimator.** An immutable
+  producer, independent manifest validator, green Pages deployment, and booting app
+  can all preserve a catch-conditioned scientific transform. Build the opportunity
+  ledger from field sampling rows before joining outcomes; then reconcile positive,
+  sampled-zero, unusable, and missing-effort states explicitly. The pre-Pass-9 My
+  Little Inverts family showed that deriving samples and bouts only from taxonomy-
+  bearing rows validates release identity while silently excluding opportunities
+  with no taxonomy outcome. Its Pass-9 release corrected the order: source
+  field opportunities are authoritative, and taxonomy rows enrich rather than
+  create them.
+- **An aquatic opportunity ledger needs an explicit status partition, not synthetic
+  zeros.** Prefer source `uid` and `sampleID` relations, retain practical field
+  opportunities even when per-sample processing or taxonomy is absent, and keep
+  unstratifiable, nonstandard, processing-unknown, count-unavailable, and quantified
+  states mutually exclusive and exhaustive. Unknown is not zero. Carry sampler,
+  habitat, and water type into support; report density only where area is supported
+  and only as a within-site/index quantity; frame EPT as composition rather than an
+  impairment, health, or causal score. My Little Inverts Pass 9 made these rules
+  executable before publishing its 7,198-opportunity family.
 - **Build the event ledger before derived structure.** Preserve every source row
   and event identity before choosing a current snapshot, tallying stems, or scaling
   by area. A measurement without a matching published opportunity row is not a

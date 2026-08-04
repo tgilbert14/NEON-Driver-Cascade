@@ -1,17 +1,21 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE — PASS 7 COMPLETE; PASS 8 NEXT**
+Status: **ACTIVE — PASSES 1–9 COMPLETE / PRODUCTION VERIFIED; SYNTHESIS NEXT**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
-Progress: Driver baseline and companion Passes 1–7 are complete and
-production-verified. Vegetation's reset lifecycle and Plotly source-registration
+Progress: Driver baseline and all nine companion passes are complete and
+production-verified; cross-product synthesis and the formal complementary-product
+decision are next. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
 The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
 as `dfb44231` and Plant Phenology PR #5 merged as `50106f20`, with pinned validation,
-Pages, and semantic-production checks green. Ground Beetle Pass 5 replaced the
-catch-conditioned baseline with 46 opportunity-complete bundles, repaired release
+Pages, and semantic-production checks green. Phenology current-data PR #9 later
+merged as current authority `7d0f29f`; merged-main validation `30842200764`, Pages
+`30842196863`, and production health `30842199076` passed while retaining the
+approved poster. Ground Beetle Pass 5 replaced the catch-conditioned baseline with
+46 opportunity-complete bundles, repaired release
 trust, and shipped the final static artistic poster on exact production merge
 `89caa435`. Mosquito Pulse Pass 6 published 47 opportunity-complete bundles, exact
 release trust, a static nocturnal-wetland poster, real-bundle server lifecycle
@@ -22,7 +26,18 @@ manifest, Connect runtime, or Driver byte. Breeding Birds Pass 7 published the
 official 47-site opportunity-complete release on scientific/runtime authority
 `97c3e4c`, with app-local documentation authority `07c852c`, exact-head and
 merged-main validation, Pages, and production smoke green. Its context-only
-disposition changed no Driver byte. Water Chemistry Pass 8 is next.
+disposition changed no Driver byte. Water Chemistry Pass 8 is complete on full-
+fetch run `30872232876`, direct-child candidate `27512485`, and PR #15 production
+merge `ee95af3`; exact-head check `30876917859`, Pages `30878152320`, production
+health `30878153073`, and Connect publication #67 passed on the exact release.
+My Little Inverts Pass 9 now pins official `DP1.20120.001` `RELEASE-2026`, DOI
+`10.48443/hp56-s582`. Full-fetch run `30885526988` at source `a685e01c` produced
+direct-child candidate `b7dffb6c`; reviewer-authenticated PR #6 merged it as
+`ff23e994`, and Pages `30890184235` passed. Its 34-site field-first family preserves
+7,198 non-DNA field opportunities before taxonomy outcomes, including 6,213
+quantified-community opportunities. Connect publication #17
+(`019fcbca-a610-e368-7562-54b93e2056d0`) and production run `30890185880` / job
+`91930207585` passed exact identity and a live bidirectional Shiny session.
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
@@ -71,9 +86,9 @@ The release layer is not at the same quality bar.
 | Vegetation Structure Explorer | **Pass 4 complete / production verified** | 8 -> 0 files | 1 -> registered source/science/parity/export/runtime/manifest/browser suite | official RELEASE-2026 event/opportunity family is verified; tree-DBH bole and shrub/sapling stem-base cross-section channels remain separate slow standing-structure context, never annual flux; reset and Plotly registration lifecycles are production-verified |
 | Ground Beetle Tracker | **Pass 5 complete / production verified** | 8 -> 0 files | 0 -> registered science/release/handler/cover/semantic suite | opportunity-complete effort includes zero-Carabidae bouts; taxonomy is reconciled by individualID; activity-density, detection-frequency, population/health, and causal limits are explicit |
 | Mosquito Pulse | **Pass 6 complete / production verified** | 7 -> 0 files | 0 -> registered science/release/handler/cover/server-runtime/semantic suite | opportunity-complete trap effort includes supported target-taxon zeros; continuous whole-trap expansion, outcome states, total/species reconciliation, activity/population/pathogen limits, and runtime lifecycle are release-verified |
-| Birds | available | 8 files | 1 | annual opportunity/zero-detection support and method/flyover handling need stronger contracts |
-| Water Chemistry | available | 3 files | 0 | current QC fixes are ahead of the review documentation; release manifest is stale |
-| My Little Inverts | available | 9 files | 0 | water type, sampler, habitat, and density-index support need executable tests and a current expert review |
+| Birds | **Pass 7 complete / production verified** | 8 -> 0 files | 1 -> registered opportunity/science/release/handler/cover/server-runtime/semantic suite | official RELEASE-2026 opportunity and comparison contracts preserve grain-specific zeros, method/flyover channels, and incomplete temperature support as `NA`; Driver remains context only |
+| Water Chemistry | **Pass 8 complete / production verified on `ee95af3`** | 3 -> 0 files | 0 -> registered source/replay/allowlist/unit/backup/candidate/cold-start/semantic suite | 200,953 observations across 34 analytes and 34 sites through 2026-07-15; audited unit identities, deterministic quarantine, exact six-file receipt, reviewed package restoration, independent refresh replay, Pages, and Connect #67 are production-verified; Driver remains context only |
+| My Little Inverts | **Pass 9 complete / production verified on `ff23e994`** | 9 -> 0 files | 0 -> source/release/identity/manifest/producer/science/cover/live-production contract family | official RELEASE-2026 field-first release preserves 7,198 non-DNA field opportunities before taxonomy; 6,213 are quantified-community/count- and density-eligible; method/habitat/water-type, supported-area, taxonomy-placeholder, zero/unknown, density, and EPT boundaries are verified; Pages, exact Connect identity, and a live Shiny round trip are green |
 
 At baseline, all nine companion manifests disagreed with at least one currently
 tracked runtime file. Small Mammal Cover V5 has now closed its drift and independently
@@ -86,7 +101,17 @@ and a verified official 42-site RELEASE-2026 family. Ground Beetle Pass 5 now ha
 an exact R 4.5.2 / 91-package / 112-runtime-file manifest and a verified 46-site
 opportunity-complete family. Mosquito Pulse Pass 6 now has an exact R 4.5.2 /
 91-package / 112-runtime-file manifest and a verified 47-site opportunity-complete
-family; the other three companions remain at their baseline state. A future
+family. Breeding Birds Pass 7 has an exact R 4.5.2 / 91-package / 121-runtime-file
+manifest and a verified 47-site opportunity/comparison family. Water Pass 8 now
+has an exact six-file runtime allowlist, reviewed 103-package Connect lock, signed
+raw replay, independently validated refreshed family, and exact Pages/Connect
+production receipts. My Little Inverts Pass 9 now has an exact R 4.5.2 / 91-package
+manifest with SHA-256
+`26b94b5e8ddc5e22618ad47faf1b388802dfa76354fd38f0a33a5c4c1a0eb8d2`, release
+ID `sha256:fcee160ddb5e6ecedbca84811dea57993263507bbb8c38570b5243d5d7644ee5`,
+and green Pages on merge `ff23e994`. Connect publication #17 and production run
+`30890185880` close exact runtime identity and live Shiny QA. Its release plumbing
+and field-first science contracts are no longer the baseline gaps. A future
 companion deploy can otherwise publish a different app than the repository appears
 to describe, or fail at startup.
 
@@ -98,34 +123,43 @@ Additional suite-wide findings (baseline unless a later pass update is stated):
   artifacts; Ground Beetle now has published governance, science-contract,
   handoff, and knowledge-package artifacts with a complete release receipt;
   Mosquito now has the same complete governance, scientific-contract, handoff,
-  and knowledge-package family; the other three companions still lack them.
+  and knowledge-package family; Birds and Water have complete published packages.
+  My Little Inverts now has the complete staged `AGENTS.md`, handoff, data-
+  takeaway, and Driver knowledge-package family for the production-verified Pass 9;
+  publishing that append-only governance candidate does not reopen runtime science.
 - At baseline, four companions had one helper test script and five had none. Small
   Mammal, Phenology, Plant Diversity, and Vegetation now run product-specific
   science, portability, client-handler, exact-release, and semantic-health gates;
   Ground Beetle now runs opportunity/zero-catch/taxonomy/QC, handler, cover,
   bundle/index, exact-manifest, and semantic-health contracts; Mosquito now runs
   effort/outcome/expansion/total-species, release, handler, cover, real-bundle
-  server-runtime, and semantic-health contracts; the other three retain their
-  baseline test debt.
+  server-runtime, and semantic-health contracts; Birds now runs its registered
+  opportunity/science/release/handler/cover/server-runtime/semantic suite; Water
+  runs source/replay, allowlist, unit, backup-recovery, candidate-verifier, clean
+  Connect cold-start, and exact-receipt semantic gates. My Little Inverts now runs
+  143 source, 109 science, 43 producer, 58 release-verifier, and 110 loaded-app
+  checks plus exact identity, manifest, Pages, Connect, and live Shiny gates.
 - Most companion workflows use moving action tags and a moving package snapshot,
   combine build/validation/publish in one write-enabled job, and do not reproduce
   the Driver's loaded BLAS/thread receipt.
 - Weekly scheduled runs can finish successfully in seconds because a date gate
   skipped the work. That is a skip, not fresh release-health evidence.
-- Baseline post-deploy checks were not content-aware. Small Mammal, Phenology,
-  Plant Diversity, Vegetation, Ground Beetle, and Mosquito now require app-specific
-  semantic markers and exact release receipts while rejecting Posit error pages;
-  Mosquito additionally proves pre-load suspension and post-load rendering against
-  a real bundle. The pattern remains to be ported to the other three companions.
+- Baseline post-deploy checks were not content-aware. All nine companions now
+  require app-specific semantic markers and exact release receipts while rejecting
+  Posit error pages. Mosquito additionally proves pre-load suspension and post-load
+  rendering against a real bundle; My Little Inverts binds Pages and Connect to the
+  release ID and requires a live bidirectional Shiny action.
 - The suite registry and relationship copy are duplicated in each static cover,
   creating ten sources of truth.
-- My Little Inverts references `og-image.png` without committing the file. Water
-  Chemistry declares an Open Graph image but no Twitter image. Mosquito's missing
-  social image was closed in Pass 6 with a committed, separately composed card.
-- Several expert-review documents mix historical findings with current status.
-  Water Chemistry, for example, now implements fixes that its review still presents
-  as open. Findings must be linked to fixes and release verification rather than
-  overwritten or left ambiguous.
+- My Little Inverts' baseline `og-image.png` 404 is closed by the committed Pass-9
+  `og-image-v2.png` production family. Water Chemistry declares an Open Graph image
+  but no Twitter image. Mosquito's missing social image was closed in Pass 6 with a
+  committed, separately composed card.
+- At baseline, several expert-review documents mixed historical findings with
+  current status. Water's current review now distinguishes implemented controls,
+  unresolved unit anomalies, and future enhancements, while the recovery receipt
+  separately proves publication health. Preserve that finding -> fix -> release-
+  evidence separation rather than overwriting history or leaving status ambiguous.
 - Ground Beetle's released poster and app removed the baseline site-health claim.
   The product now consistently frames activity-density, composition, and
   disturbance context without an impairment or ecosystem-health verdict.
@@ -172,8 +206,8 @@ The pass order is intentionally not alphabetical:
 | 5 | Ground Beetle Tracker | **COMPLETE / PRODUCTION VERIFIED**; opportunity-complete zero-catch effort, individualID taxonomy reconciliation, exact release trust, semantic health, and a static artistic Living Poster are live; activity-density remains context-only pending a separately reviewed Driver adapter and suite-synthesis decision |
 | 6 | Mosquito Pulse | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 opportunity-complete trap effort, supported zero-catch states, continuous expansion, exact release trust, static Living Poster, server lifecycle, and mobile accessibility are live; the activity index remains `CONTEXT / HOLD DRIVER INGESTION` pending suite synthesis |
 | 7 | Birds | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 47-site family separates source presence from complete estimand support, preserves grain-specific supported zeros and method/flyover boundaries, and drives app/Search/visual/export surfaces from one comparative contract; runtime `97c3e4c`, docs `07c852c`; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
-| 8 | Water Chemistry | well-powered condition record and best control case for honest statistics; not itself a trophic hinge |
-| 9 | My Little Inverts | closes the current aquatic consumer pass and reveals whether a producer or physical-driver product is still missing |
+| 8 | Water Chemistry | **COMPLETE / PRODUCTION VERIFIED**; full-fetch run `30872232876`, direct-child candidate `27512485`, PR #15 merge `ee95af3`, exact six-file runtime identity, reviewed package restoration, independent replay, and content-aware Pages/Connect health are closed; aquatic chemistry remains context, not itself a trophic hinge |
+| 9 | My Little Inverts | **COMPLETE / PRODUCTION VERIFIED**; full-fetch run `30885526988`, direct-child candidate `b7dffb6`, PR #6 merge `ff23e994`, field-first opportunity/status science, exact release identity, static Living Poster/social family, Pages `30890184235`, Connect #17, and production run `30890185880` are closed; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
 
 ### Phase 2 — complementary-product decision
 
@@ -350,6 +384,8 @@ reshaping the landscape.”, “Meet the mammals”, and a dominant trap/mouse e
 screenprint. The earlier Phenology/Plant generated-art releases remain factual
 historical baselines. Phenology PR #5 / merge `50106f20` and Plant Diversity PR
 #11 / merge `dfb44231` published their reviewed Living Poster V1 refreshes.
+Phenology current-data PR #9 / merge `7d0f29f` later retained that approved poster
+and passed merged-main validation, Pages, and production health.
 Ground Beetle PR #15 / merge `89caa435` then extended the frame with a static
 forest-floor beetle/pitfall screenprint. Poster art is static by default from Pass
 5 onward; ordinary focus/hover feedback may remain, but the dominant hero does not
@@ -632,7 +668,10 @@ Suggested palette families remain distinct but related:
   vote. App-local gates 1–7 are satisfied; gate 8, the separately reviewed Driver
   adapter/rebuild, remains closed. The owner resumed program execution on
   2026-07-22; Ground Beetle Pass 5, Mosquito Pass 6, and Breeding Birds Pass 7 are
-  complete, and Water Chemistry Pass 8 is next.
+  complete, Water Chemistry Pass 8 is complete and production-verified on
+  refreshed-data merge `ee95af3`, and My Little Inverts Pass 9 is complete and
+  production-verified on `ff23e994`. Cross-product synthesis and the formal
+  complementary-product decision are next.
 
 ### Ground Beetle Tracker — fifth pass
 
@@ -753,29 +792,78 @@ Pass 7 is **COMPLETE / PRODUCTION VERIFIED**. Scientific/runtime authority is
 
 ### Water Chemistry — eighth pass
 
-- Treat the current code, not the older review prose, as the candidate implementation;
-  verify canonical units, the site-aware plausibility gate, censored-share greying,
-  BH q, effective-n logic, codebook, and legacy provenance with fixtures.
-- Verify that mislabeled historical unit strings are corrected without applying a
-  false 1000x numeric conversion.
-- Preserve below-detection values and flags in raw exports while keeping
-  heavy-censor results exploratory.
-- Consider charge balance only after canonical units pass and only as QC.
-- Consolidate nine top-level tabs into task-oriented modes.
-- Driver disposition: `CONTEXT` as aquatic condition/aridity corroboration, not a
-  lag-aware trophic link.
+Pass 8 is **COMPLETE / PRODUCTION VERIFIED**. Refreshed-data authority is PR #15
+merge `ee95af3e270099980ea5bc98b28b549456b3f0b2`.
+
+- Full-fetch workflow `30872232876` ran at exact source
+  `e2ea753a25257492e4a9e82970c8275d898a2788`. Its signed source replay contains
+  238,488 lab rows, 8,599 field rows, and the canonical 34-site coordinate roster.
+  Producer, replay, independent validator, six-file cold boot, manifest, and
+  restricted publication gates passed.
+- Direct-child candidate `27512485a2252e994be501eca3e8440e7659d2c1`
+  passed exact-head PR check `30876917859` before reviewer-authenticated PR #15
+  merged as `ee95af3`. The released bundle has SHA-256
+  `50f6e57981cae7cee2f1d5cb68f9beff306ed7d8e59ce461503c62b26963f78c`
+  and contains 200,953 observations, 34 analytes, and 34 sites through 2026-07-15.
+- Unit policy v4 rewrites 14,422 exact registered missing labels, excludes 75
+  audited source rows, and changes zero numeric values. The clean independent
+  replay reconciled the same family with runtime exclusions `0/0`; all source,
+  bundle, index, codebook, manifest, and release receipts remained fail closed.
+- Pages `30878152320` and production health `30878153073` passed on the exact
+  merge. Public Pages returned HTTP 200 and was byte-identical to the committed
+  surface; Connect publication #67 served exact `ee95af3` without Startup Error
+  text.
+- The complete app-local package records canonical units, site-aware plausibility,
+  censored-share greying, BH q/effective-n logic, codebook/export parity, legacy
+  provenance, task-oriented navigation, and charge balance only as QC.
+- Driver disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
+  CHANGE`**: aquatic chemistry may corroborate condition/aridity, not create a
+  lag-aware trophic or causal link. Driver join/support remains unmeasured, not
+  zero; any future use requires an independent pinned adapter, measured support,
+  and suite-synthesis review.
 
 ### My Little Inverts — ninth pass
 
-- Add an expert review and executable tests for sample expansion, benthic area,
-  density, rarefaction/small-n suppression, coarse taxonomy, and EPT classification.
-- Stratify comparisons by water type, sampler, and habitat; make support visible on
-  every cross-site view.
-- Keep density as a within-site standardized index and EPT as composition, not an
-  impairment/health grade.
-- Confirm codebook-to-export parity and source provenance.
-- Driver disposition: `CONTEXT`; use the pass to decide whether physical drivers or
-  aquatic producers are the more load-bearing missing product.
+Pass 9 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative runtime/data merge is
+`ff23e994e289982c747b91e48c5ff0907c1672d2`.
+
+- Official `DP1.20120.001` `RELEASE-2026`, DOI `10.48443/hp56-s582`, full-fetch
+  run `30885526988` ran at publication source
+  `a685e01c61938fcbd49325d7cf365aa272fae58a`. The receipt-bound raw family has
+  7,201 field rows, 6,446 per-sample rows, and 320,240 taxonomy rows through
+  source publication date `2025-12-09`; three `.DNA` field rows are quarantined.
+- The release starts from all 7,198 remaining field opportunities across 34 sites,
+  before outcomes. It reconciles 830 events, 1,679 exact event strata, 6,477
+  primary opportunities, 6,213 count eligible, 6,213 density eligible, 181,922
+  collapsed taxonomy rows, and 85,874 taxon-stratum search rows. The exhaustive
+  display-status partition is 719 unstratifiable, 2 nonstandard collection, 34
+  processing unknown, 230 count unavailable, and 6,213 quantified community.
+- Source `uid` and `sampleID` relations remain primary. A practical field
+  opportunity can lack per-sample processing or taxonomy and still stays in the
+  ledger; unknown is never converted to zero. Thirty-one raw taxonomy placeholder
+  rows with no accepted taxon or usable count remain explicit: 24 are the only
+  placeholder outcome for their sample and 7 occur alongside count-valid taxa.
+- Comparisons retain water type, sampler, habitat, area, and support. Density is
+  reported only where area is supported and only as a within-site/index quantity;
+  EPT is composition, not an impairment, health, causal, or Driver score.
+- The exact R 4.5.2 / 91-package manifest SHA-256 is
+  `26b94b5e8ddc5e22618ad47faf1b388802dfa76354fd38f0a33a5c4c1a0eb8d2`;
+  release ID is
+  `sha256:fcee160ddb5e6ecedbca84811dea57993263507bbb8c38570b5243d5d7644ee5`.
+  Source, science, producer, release-verifier, and loaded-app suites passed 143,
+  109, 43, 58, and 110 checks respectively. Validated candidate
+  `b7dffb6c1e149c52d094c4347483435df07856f6` is the direct child of source
+  `a685e01c`; exact-head PR run `30888675725` passed before PR #6 merged.
+- Pages `30890184235` passed on exact merge `ff23e994`. Connect publication #17
+  (`019fcbca-a610-e368-7562-54b93e2056d0`) served that release; production run
+  `30890185880` / job `91930207585` passed exact Pages/Connect identity and a live
+  bidirectional Shiny session. Signed-in QA loaded the local static Living Poster,
+  Leaflet, all 34 sites, the SYCA workflow, and Help with no browser error.
+- Driver disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
+  CHANGE`**. Driver join/support is **UNMEASURED, not zero**. Cross-product
+  synthesis and the formal complementary-product decision come next; any future
+  ingestion still requires a pinned independent adapter, measured eligible
+  site-time support, a registered role/mechanism, claim limits, and old/new parity.
 
 ## 8. Verification matrix
 
