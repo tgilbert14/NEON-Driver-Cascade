@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -2712,3 +2712,460 @@ Rules:
 - **Next action:** publish this docs-only Driver reconciliation through exact-head
   review and post-merge checks, then begin Water Chemistry Pass 8. Driver v2 remains
   gated on all nine packages and suite synthesis.
+
+### 2026-08-03 15:41 EDT - verified sibling releases and Water recovery checkpoint / Codex
+
+- **Changed/classification:** reconciled only verified sibling-release evidence into
+  this handoff, the central suite register, revamp plan, and reusable playbook.
+  Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting` documentation. Ecological disposition remains **`CONTEXT /
+  HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE`** for Water and every already-held
+  sibling signal; no Driver adapter, build, runtime, source lock, estimator, data,
+  manifest, or public surface changed.
+- **Verified companion continuity:** Plant Diversity Living Poster authority
+  `dfb44231` remains supported by main validation `29963570916`, Pages
+  `29963570413`, and production health `29963570919`. Ground Beetle artistic
+  release `89caa435` remains supported by CI `30023971987`, Pages `30023970965`,
+  and semantic smoke `30023973253`. Mosquito runtime `935420e`, science/runtime
+  receipt `91b4c71`, compact Pages authority `ec0f2ba`, and cover receipt
+  `6450f01` retain their recorded green receipts. Breeding Birds runtime
+  `97c3e4c` and docs authority `07c852c` retain their exact validation, Pages, and
+  production-smoke receipts. This session changed no authority or ecological
+  disposition for those four apps.
+- **Phenology current authority:** current-data PR #9 exact head
+  `3089dc8e527340245735efbc62c95aa2faee5b25` merged as
+  `7d0f29f7886cfae1c760a9ffc9e056184ec6fc68`, retaining the approved Living
+  Poster. Merged-main validation `30842200764`, Pages `30842196863`, and exact
+  production health `30842199076` all completed successfully on that merge. The
+  earlier Poster authority `50106f20` remains historical cover provenance rather
+  than the current release head.
+- **Water recovery review and merge:** recovery PR #12 exact head
+  `04130a34cd2e4b315d181d954339b2beefe7afb7` passed run `30844732454`, including
+  candidate build, independent validation, and clean Ubuntu 22.04 / R 4.5.2
+  Connect cold start. It merged as
+  `d5101f2187b30b1492b2119607875f6305c35d19`. The recovery preserved the merged
+  scientific/data bytes, restored a reviewed 103-package Connect graph, restricted
+  the manifest to the exact six required runtime files, and added readiness
+  metadata bound to all six checksums.
+- **Water production identity:** Pages deployment `30846455599` and production
+  smoke `30846458474` succeeded on exact merge `d5101f2`. The smoke independently
+  derived the six-file receipt, received HTTP 200 plus the expected semantic body
+  from Connect and Pages on its first attempt, and rejected Posit Startup Error
+  text. The released runtime reports 48 quarantined collapsed unit-mismatch groups
+  representing 99 source rows, 11,679 registered missing-label fills without
+  numeric conversion, 198 plausibility exclusions, and zero PRPO high-variance
+  exclusions.
+- **Held refresh boundary:** full refresh run `30846587801` remains pending
+  candidate review. It is not a production receipt and supplies no accepted data-
+  through date, metric delta, artifact, or new release authority. Water Pass 8
+  remains open until its independently validated candidate and final knowledge
+  package are reviewed. No automatic merge, Driver ingestion, or suite-synthesis
+  promotion is authorized by the recovery.
+- **Reusable prevention:** a constant ready marker identifies an app family but
+  cannot prove the deployed revision. Emit an exact runtime receipt derived from
+  the sorted explicit allowlist checksums and make post-deploy smoke recompute and
+  match it while rejecting host error pages. Keep package/runtime recovery separate
+  from data refresh so a restored deployment cannot implicitly bless new data.
+- **Validation/non-impact:** work began from clean synchronized Driver
+  `origin/master` `13edc725fcb361e0a22da674a261a45967226698` with no rebuild lock.
+  Documentation UTF-8/LF/no-BOM, control-character, fence/table-shape, exact changed-
+  file scope, stale-current-state, and `git diff --check` gates pass. Driver
+  R/build/browser gates are not applicable because no Driver runtime input or
+  public surface changed. Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild, generation, promotion, lock, stage, backup, or temporary Driver data
+  was created.
+- **Evidence invalidated:** current-state claims that Phenology authority stops at
+  `50106f20`, Birds retains eight mismatches and one helper test, and Water remains
+  a three-mismatch/no-test/startup-only baseline are superseded. The dated
+  2026-07-18 baseline remains historical. No prior app science or release receipt
+  is invalidated, and Water full-refresh evidence is deliberately not inferred.
+- **Next action:** review run `30846587801` and its exact Water candidate if and
+  only if producer, independent validator, and publisher succeed. Close Pass 8 only
+  after human delta review, promotion, merged production verification, and the
+  complete app-local knowledge package. Driver v2 remains gated on all nine passes
+  and suite synthesis.
+
+### 2026-08-03 16:02 EDT - Inverts partial release audit correction / Codex
+
+- **Changed/classification:** independently reviewed the four uncommitted Driver
+  documentation changes against current My Little Inverts main and production,
+  then corrected the central register, revamp plan, handoff, and reusable playbook.
+  Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting` documentation. Disposition is **`CONTEXT / HOLD DRIVER
+  INGESTION / NO DRIVER BYTE CHANGE`**; no Driver or sibling runtime, data,
+  manifest, estimator, deployment, or public byte changed.
+- **Exact Inverts authority:** refresh/data merge
+  `fd509ae6821aae556a51ac05820e7f4f5dafbad5` retains the 34-site family reporting
+  830 bouts, 6,430 samples, 9,392 search rows, and source stamp `2026-06-22`.
+  Documentation PR #5 literal head
+  `31ff4cbe181be87f6c351affd28c903ab0ef62e1` passed producer and independent
+  validator run `30829357856`, then merged as current main
+  `114f91db92bb2d47e032af5d70d564f719b8ec2f`.
+- **Release/manifest evidence:** current manifest SHA-256 is
+  `a6b5056f4c786f8cbbccc8613cdbed80eebbb1d76ac4894df867247be8914c98`,
+  binding R 4.5.2, 91 packages, and 48 runtime files. Run `30829357856` evaluated
+  the literal review head, rebuilt derived release data in its clean validator,
+  and passed the exact candidate verifier. This supersedes the current-state claim
+  of nine manifest mismatches and no executable release validation; it does not
+  validate the ecological estimand.
+- **Pages and production evidence:** Pages run `30833410378` passed build, deploy,
+  and status on exact `114f91d`. The live 47,895-byte page is byte-identical to
+  current `docs/index.html`, both SHA-256
+  `11b4deac721d62a638f382475a0c7e2b7acac3b5e5bd40eca218756612147f45`.
+  Connect returned HTTP 200 and a real Shiny surface with Shiny, Plotly, Leaflet,
+  and Selectize dependencies rather than a Startup Error page, but the repository
+  has no post-deploy exact marker/receipt; availability cannot bind the worker to
+  `114f91d`. Declared Open Graph/Twitter `og-image.png` returned HTTP 404.
+- **Scientific hold:** `scripts/build_inv_data.R` constructs `tax` from taxonomy
+  rows, creates `obs` with `tax %>% inner_join(fld, by = "sampleID")`, and derives
+  `samp`, `bout_ids`, and `bouts` from `obs`. A field sampling opportunity with no
+  taxonomy outcome therefore cannot enter the released sample/bout family as a
+  sampled zero. No independent opportunity/zero ledger currently reconciles
+  positive, sampled-empty, unusable, and missing-effort states. The 830/6,430
+  counts, density index, richness, composition, and EPT summaries are released
+  surfaces, not Pass-9-safe opportunity-complete science evidence.
+- **Required Pass-9 closeout:** build the field-opportunity ledger before outcomes;
+  add adversarial zero, expansion, benthic-area, sampler, habitat, water-type,
+  taxonomy, rarefaction, and EPT fixtures; add an exact Connect runtime receipt;
+  repair the social asset; complete browser/accessibility and expert review; and
+  publish the final app-local knowledge package. Until then infer no absence,
+  density trend, impairment/health grade, causal link, or Driver vote.
+- **Water continuity:** run `30846587801` remained `in_progress` on exact recovery
+  merge `d5101f2` at 16:02 EDT. Its candidate remains pending review and supplies
+  no accepted data authority; the Water wording and Driver hold remain unchanged.
+- **Reusable prevention:** release safety and scientific opportunity safety are
+  separate gates. An immutable producer, independent manifest validator, green
+  Pages deployment, and booting app can faithfully preserve a catch-conditioned
+  transform. Require the sampling-opportunity ledger before outcome joins and
+  record partial release health without promoting the product pass.
+- **Validation/non-impact:** work remains based on clean synchronized Driver
+  `origin/master` `13edc725fcb361e0a22da674a261a45967226698` with no rebuild lock.
+  Documentation UTF-8/LF/no-BOM, control-character, fence/table-shape, exact changed-
+  file scope, stale-current-state, and `git diff --check` gates pass. Driver
+  R/build/browser gates remain not applicable. Canonical SHA-256 values remain
+  cascade `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`,
+  search `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`,
+  meta `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`,
+  codebook `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`,
+  and manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild, generation, promotion, lock, stage, backup, or temporary Driver data
+  was created.
+- **Evidence invalidated:** only the new uncommitted current-state claim that
+  Inverts retained its untouched nine-mismatch/no-test/startup-only baseline is
+  superseded. Its dated 2026-07-18 baseline and current scientific/product gaps
+  remain factual. No Water, Inverts, Driver, or other sibling release/science
+  receipt is invalidated.
+- **Next action:** keep Water refresh `30846587801` held for exact candidate review.
+  After Pass 8 closes, execute the full Inverts Pass 9 from the opportunity ledger;
+  do not treat the repaired release plumbing as a completed scientific pass.
+
+### 2026-08-04 EDT - Water Chemistry Pass 8 production closeout / Codex
+
+- **Changed/classification:** reconciled the final Water refreshed release into
+  this handoff, the suite evidence register, and the revamp plan while preserving
+  the earlier recovery and pending-review entries as dated history. Classification
+  is `suite-platform`, `scientific-contract`, and `Driver-impacting`
+  documentation. The ecological disposition remains **`CONTEXT / HOLD DRIVER
+  INGESTION / NO DRIVER BYTE CHANGE`**; no Driver adapter, build, runtime, source
+  lock, estimator, data, manifest, or public-surface byte changed.
+- **Authoritative source and candidate:** full-fetch workflow `30872232876` ran at
+  exact source `e2ea753a25257492e4a9e82970c8275d898a2788`. Its signed replay
+  contains 238,488 lab rows, 8,599 field rows, and the canonical 34-site
+  coordinate roster. Producer, replay, independent validator, exact six-file cold
+  boot, manifest, and restricted publisher passed. Candidate
+  `27512485a2252e994be501eca3e8440e7659d2c1` is the direct child of that source.
+- **Reviewed release:** reviewer-authenticated PR #15 bound the exact candidate to
+  full run `30872232876`; exact-head check `30876917859` passed before the PR
+  merged as `ee95af3e270099980ea5bc98b28b549456b3f0b2`. The released bundle SHA-256
+  is `50f6e57981cae7cee2f1d5cb68f9beff306ed7d8e59ce461503c62b26963f78c`
+  and contains 200,953 observations, 34 analytes, and 34 sites through 2026-07-15.
+- **Scientific receipt:** unit policy
+  `explicit-targets-audited-exclusions-value-invariant-v4` rewrites 14,422 exact
+  registered missing labels, excludes 75 audited source rows, and changes zero
+  numeric values. The clean independent replay reconstructed the same candidate
+  and reported runtime exclusions `0/0`. Source, bundle, index, codebook, manifest,
+  and receipt checks remained fail closed.
+- **Production identity:** Pages run `30878152320` and production-health run
+  `30878153073` passed on exact merge `ee95af3`. Public Pages returned HTTP 200 and
+  was byte-identical to the committed surface. Connect content
+  `019ebf59-b2ff-a20a-cb35-6d227ca6261a` publication #67 served the exact merge
+  without Startup Error text.
+- **Driver decision:** Pass 8 is complete, but release quality does not create an
+  ecological vote. Aquatic chemistry remains descriptive condition/aridity
+  context. Driver join/support is **UNMEASURED, not zero**; any future use requires
+  a separately reviewed pinned adapter, measured eligible site-time support, a
+  registered role and claim limits, old/new parity, and suite-synthesis review.
+- **Validation/non-impact:** the Driver worktree remains based on
+  `13edc725fcb361e0a22da674a261a45967226698` with no rebuild lock. The intended
+  scope is exactly the four Markdown authorities. Documentation UTF-8/LF/no-BOM,
+  control-character, fence/table-shape, stale-current-state, canonical-hash, and
+  `git diff --check` gates pass. Driver runtime/build/browser gates are not
+  applicable because no Driver input or public surface changed. Canonical SHA-256
+  values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild, generation, promotion, lock, stage, backup, or temporary Driver data
+  was created.
+- **Evidence invalidated:** current-state claims that Water stopped at recovery
+  merge `d5101f2`, full refresh remained pending, or Pass 8 remained open are
+  superseded. The dated recovery/pending-review entries remain factual history;
+  no prior Water, Driver, or sibling science/release receipt is invalidated.
+- **Next action:** complete My Little Inverts Pass 9 and its app-local publication
+  receipts, then reconcile that exact package here before the cross-product
+  synthesis and complementary-product decision. Do not ingest either aquatic app
+  into Driver without the independent adapter and measured-support gate.
+
+### 2026-08-04 EDT - My Little Inverts Pass 9 production closeout / Codex
+
+- **Changed/classification:** reconciled the completed Inverts scientific release,
+  exact candidate review, merge, Pages, Connect, and live-production receipt into
+  this handoff, the suite evidence register, revamp plan, and reusable playbook.
+  Classification is `suite-platform`, `scientific-contract`, and
+  `Driver-impacting` documentation. Final disposition is **`CONTEXT / HOLD DRIVER
+  INGESTION / NO DRIVER BYTE CHANGE`**; no Driver adapter, build, runtime, source
+  lock, estimator, data, manifest, or public-surface byte changed.
+- **Authoritative source:** official `DP1.20120.001` `RELEASE-2026`, DOI
+  `10.48443/hp56-s582`, full-fetch run `30885526988` ran at publication source
+  `a685e01c61938fcbd49325d7cf365aa272fae58a`. Source artifact `8883372756`
+  contains raw RDS SHA-256
+  `13345d39682bcc27ec45fca490cd63888b18c98735e6575737a79c6c109b67d0`;
+  source receipt SHA-256 is
+  `0426ccdc31b4db9e00e768e90ad28918df533fc271078ead42c31293ff138a28`,
+  and maximum source publication date is `2025-12-09`. The raw family contains
+  7,201 field rows, 6,446 per-sample rows, and 320,240 taxonomy rows; three `.DNA`
+  field rows remain quarantined.
+- **Scientific receipt:** the release begins from all 7,198 remaining field
+  opportunities across 34 sites before taxonomy outcomes. It reconciles 830
+  events, 1,679 exact event strata, 6,477 primary opportunities, 6,213 count
+  eligible, 6,213 density eligible, 181,922 collapsed taxonomy rows, and 85,874
+  taxon-stratum search rows. Its exhaustive display-status partition is 719
+  unstratifiable, 2 nonstandard collection, 34 processing unknown, 230 count
+  unavailable, and 6,213 quantified community. Source `uid`/`sampleID`, practical
+  opportunities lacking processing, taxonomy placeholders, method, habitat, water
+  type, area, and support remain explicit. Unknown is not zero; density is a
+  supported-area within-site/index quantity; EPT is composition, not health,
+  impairment, a causal claim, or a Driver vote.
+- **Reviewed candidate and release identity:** validated candidate
+  `b7dffb6c1e149c52d094c4347483435df07856f6` is the direct child of source
+  `a685e01c61938fcbd49325d7cf365aa272fae58a`. Its 43-file publication allowlist
+  matches validated artifact `8883990535` byte for byte; artifact ZIP SHA-256 is
+  `ec37be5bd0f3fe56cb9dde50e56f80193af024b7aa5a233bc5749db29f55b22d`.
+  Identity SHA-256 is
+  `f0be51e0da7cc41176abdda57c52e202019579c1df3890e6ab7df18f8a1a1f46`,
+  manifest SHA-256 is
+  `26b94b5e8ddc5e22618ad47faf1b388802dfa76354fd38f0a33a5c4c1a0eb8d2`,
+  and release ID is
+  `sha256:fcee160ddb5e6ecedbca84811dea57993263507bbb8c38570b5243d5d7644ee5`.
+  Exact R 4.5.2 / 91-package proof uses dated Posit forms with no moving alias or
+  `cran.rstudio.com` reference.
+- **Human review and publication:** exact-head PR workflow `30888675725` passed on
+  candidate `b7dffb6c`; reviewer-authenticated PR #6 merged as
+  `ff23e994e289982c747b91e48c5ff0907c1672d2`. Pages run `30890184235` passed on
+  that merge. Connect publication #17
+  (`019fcbca-a610-e368-7562-54b93e2056d0`) served the same release. Production run
+  `30890185880` / smoke job `91930207585` passed exact Pages and Connect HTTP
+  identity plus a live bidirectional Shiny session. Signed-in QA loaded the local
+  Living Poster, Leaflet, all 34 sites, SYCA's five hero statistics, and Help with
+  no horizontal overflow or browser error.
+- **Executable evidence:** the authoritative workflow passed source, science,
+  producer, release-verifier, and loaded-app contracts; the recorded suite totals
+  are 143, 109, 43, 58, and 110 checks. Source/release identity, manifest,
+  opportunity/status, area/density, taxonomy/EPT, cover, responsive, accessibility,
+  and production contracts are closed. Earlier safe-failure runs remain preserved
+  as nonauthoritative diagnostic history and published no candidate byte.
+- **Driver decision:** release quality and opportunity-complete science still do
+  not create an ecological vote. Driver join/support is **UNMEASURED, not zero**.
+  Keep every Driver artifact unchanged. Any future use requires a separately
+  reviewed pinned adapter, measured eligible site-time support, a registered
+  role/mechanism and claim limits, plus old/new parity during suite synthesis.
+- **Validation/non-impact:** the Driver worktree remains based on
+  `13edc725fcb361e0a22da674a261a45967226698` with no rebuild lock. Intended scope
+  is exactly the four Markdown authorities. Documentation UTF-8/LF/no-BOM,
+  control-character, fence/table-shape, stale-current-state, canonical-hash, and
+  `git diff --check` gates pass. Driver runtime/build/browser gates are not
+  applicable because no Driver input or public surface changed. Canonical SHA-256
+  values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild, generation, promotion, lock, stage, backup, or temporary Driver data
+  was created.
+- **Evidence invalidated:** current-state claims that Inverts stops at `114f91d`,
+  retains a taxonomy-first 830-bout / 6,430-sample / 9,392-search-row family, lacks
+  the social asset, or has no exact production receipt are superseded. The dated
+  2026-07-18 baseline and 2026-08-03 partial-audit entry remain factual history;
+  none of their historical hashes, failures, or observations was rewritten.
+- **Next action:** run the cross-product synthesis and record the formal
+  complementary-product build/defer decision. Do not automatically ingest Inverts,
+  Water, or any other companion into Driver; only accepted immutable inputs may
+  enter a deliberate Driver v2 adapter/rebuild.
+
+### 2026-08-04 06:26 EDT - My Little Inverts governance/tooling publication closeout / [Codex]
+
+- **Changed/classification:** reconciled the separately published Inverts
+  governance/tooling candidate and current production receipt into this handoff,
+  the suite evidence register, revamp plan, and reusable playbook. Classification
+  is `suite-platform`, `scientific-contract`, and `Driver-impacting`
+  documentation. Scope is exactly these four Driver Markdown authorities; no
+  Driver or Inverts runtime, estimator, data, manifest, generated artifact, or
+  public-surface byte was edited here.
+- **Authority/receipt model:** `ff23e994e289982c747b91e48c5ff0907c1672d2`
+  remains the Inverts science/data/runtime authority. The later governance stream
+  began at `1b059cb04e32c02c171d21a9d47b22cf6c060db2`; direct-child candidate
+  `ecbb23cd313632727e78896ab4473b600b456b34` passed PR #7 exact-head check
+  `30894827652` and merged as governance/tooling and production-identity authority
+  `6972817382491cc9312ae4588b75bc67ed422987`. Final BUILD-only merge
+  `53991b6f460a97a4abfcee9f62e94cd77c167f89` is the current deployed-revision
+  receipt; because it changes only the identity-excluded handoff, it replaces
+  neither authority nor the Driver-facing science/runtime pin.
+- **Identity/domain receipt:** the cycle-free production identity uses the
+  Pages-payload domain v2 and binds every root `docs/*.md` file
+  except the literal mutable `docs/BUILD-TEST-HANDOFF.md`; closure status belongs
+  in that excluded handoff and the central Driver register. Any other root-doc
+  change requires regenerated identity, a clean validator, and a newly reviewed
+  exact candidate. Governance manifest SHA-256 is
+  `7dceb40616052bb22e05a1ba68b56c47896ede68d08394b67c502bc81cd1ec8d`,
+  production ID is
+  `sha256:e1d3f1be5620706c71a53783e87b4570c6985fe8d9ed5554ece0b51954aa7aa8`,
+  and Pages payload SHA-256 is
+  `43b16e7b44d160055c8fa59039d2c922e802342042b1db1238e65c0249a44fff`.
+  Runtime payload SHA-256 remains byte-identical at
+  `87900f675a1ef34d4f5c47c6788fbaac08a8549d82c4ef900a1b28726e925278`.
+- **Published governance receipt:** Pages run `30896544721` passed on exact merge
+  `6972817`. Connect publication #18
+  (`019fcc1b-5672-3278-21c6-9ead85568da2`) served the same governance production
+  identity. Production run `30896548595` / job `91950703053` passed
+  exact Pages and Connect identity plus a live bidirectional Shiny round trip.
+  The reviewed candidate/source diff proves the science, data, runtime, poster,
+  index, and social-image bytes were unchanged.
+- **Executable production QA:** live Pages index, poster/art, and social assets
+  matched the reviewed checkout byte for byte. Stable 1280-, 390-, and 320-pixel
+  layouts had no persistent horizontal overflow and exposed visible keyboard
+  focus. Console, page, request, same-origin HTTP, stylesheet, and poster-image
+  failures were fail-closed. The live SYCA path reported 193 field opportunities,
+  121 count-eligible, 121 density-eligible, 245 mixed-rank taxa, and 17 events.
+  Playwright 1.55.1 ran on Node >=18; `npm audit` reported zero vulnerabilities.
+- **Final BUILD-only receipt:** PR #8 exact head
+  `6c01244c7eeb756c7305a6dfaa3f1c67adac3833` passed exact-head run
+  `30898431839`; its publisher skipped with zero steps before exact-head merge
+  `53991b6f460a97a4abfcee9f62e94cd77c167f89`. Pages run `30900109522`, Connect
+  publication #19 (`019fcc48-823f-0cc5-f8dc-4ef8c302f3cb`), and production run
+  `30900110643` / job `91962182435` passed on that merge. Connect published in
+  five seconds without a Startup Error, signed-in QA confirmed the exact
+  `sha256:e1d3f1be…` identity and 193/121/121/245/17 SYCA view, and the production
+  smoke proved exact Pages bytes at 1280/390/320 plus a live bidirectional Shiny
+  session. This append-only closeout moved neither runtime/science authority nor
+  any identity-bound byte.
+- **Driver decision:** disposition remains **`CONTEXT / HOLD DRIVER INGESTION /
+  NO DRIVER BYTE CHANGE`**. Governance quality and exact production verification
+  do not create an ecological vote. Driver join/support is **UNMEASURED, not
+  zero**; future use still requires a separately reviewed pinned adapter, measured
+  eligible site-time support, registered role/mechanism and claim limits, and
+  old/new parity during suite synthesis.
+- **Validation/non-impact:** the Driver worktree remains based on
+  `29052fc077859ab6ff746ecdfac918b75fcc43a5` with no rebuild lock. Documentation
+  UTF-8/LF/no-BOM, control-character, fence/table-shape, stale-current-state,
+  placeholder-absence, canonical-hash, changed-path, and `git diff --check` gates
+  pass. Driver runtime/build/browser gates are not applicable because no Driver
+  input or public surface changed. Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild, generation, promotion, lock, stage, backup, or temporary Driver data
+  was created.
+- **Evidence invalidated:** current-state claims that the Inverts governance
+  package or BUILD-only closeout was staged/pending, that `ff23e994` owned the
+  governance identity, or that `6972817` was still the current deployed repository
+  commit are superseded. The historical `ff23e994` science/data/runtime authority,
+  `6972817` governance/tooling and identity authority, manifests, production IDs,
+  Pages/Connect/live-Shiny receipts, and all earlier factual history remain valid.
+- **Next action:** begin cross-product synthesis and record the formal
+  complementary-product build/defer decision; do not ingest Inverts automatically.
+
+### 2026-08-04 06:36 EDT - Driver dependency-resolution contract repair / [Codex]
+
+- **Changed/classification:** repaired the release infrastructure exposed by the
+  first PR #51 validation attempt. Changed only `.github/workflows/ci.yml`, both
+  dependency-install sites in `.github/workflows/refresh-data.yml`, this append-only
+  handoff, and the already-in-scope reusable playbook. Classification is
+  `suite-platform` / release infrastructure; ecological Driver implication is
+  explicitly **NONE**. No Driver source, input, estimator, manifest, generated
+  artifact, or public-surface byte changed.
+- **Failure/root cause:** PR #51 exact head
+  `f3497e17b894f907b8139555e9ed0d72a6e10e0c` failed run `30900961084` / job
+  `91964895890` at `Validate committed snapshot and extract immutable source lock`
+  with `runtime package version drift: bslib=0.12.0 (manifest 0.11.0)`. Checkout,
+  dependency installation, deterministic OpenBLAS verification, static checks,
+  workflow/helper contracts, and the full cascade contract fixture set had passed;
+  sibling fetch, rebuild, exact-artifact reproduction, semantic-manifest comparison,
+  and final diff checks were skipped. The workflow requested unversioned `bslib`
+  while the immutable manifest requires `0.11.0`, allowing the pinned Posit snapshot
+  to resolve the newer library.
+- **Repair:** pinned `bslib@0.11.0` beside the existing exact Plotly pin in all
+  three CI/refresh dependency lists and rolled the shared cache contract from
+  `cascade-ppm-2026-07-15-v1` to `cascade-ppm-2026-07-15-v2`. The manifest drift
+  guard remains strict. Independent review found no P0-P2 concern: the failed
+  validator reported no other package mismatch, the exact version satisfies the
+  committed Shiny/rmarkdown constraints, and all producer/validator install sites
+  use the same pin and fresh cache namespace.
+- **Local validation/non-impact:** both edited workflows parse as YAML; exact
+  pin/cache cardinality is three; no unpinned workflow `bslib` or old cache key
+  remains; the manifest target is exactly `0.11.0`; workflow-receipt guard and
+  manifest-comparator fixtures pass; and `git diff --check` passes. The local
+  system Python is 3.9.6, so `scripts/test_trusted_publish.py` stops at its existing
+  `Path.write_text(..., newline=...)` test-harness requirement; the unchanged test
+  passed on the preceding GitHub runner before the package-version gate. A fresh
+  exact-head GitHub run remains authoritative for dependency installation and every
+  downstream rebuild/reproducibility gate. Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Evidence invalidated/residual risk:** the prior four-Markdown-path statement
+  remains true for the completed Inverts reconciliation commit, but no longer
+  describes the complete PR after this release-infrastructure repair. No Inverts
+  authority, production receipt, ecological disposition, or Driver artifact
+  evidence is invalidated. The repair is not complete until a new literal PR head
+  passes every previously skipped gate.
+- **Next action:** commit and push the focused repair, require a fully green
+  exact-head PR #51 run, then exact-head merge and verify `master`, Pages, and the
+  signed-in Connect publication before beginning cross-product synthesis.
+
+### 2026-08-04 06:45 EDT - Driver dependency repair exact-head validation / [Codex]
+
+- **Changed/classification:** appended the immutable validation receipt for the
+  focused dependency-resolution repair. This entry is `suite-platform` release
+  evidence only; ecological Driver implication remains explicitly **NONE**. No
+  workflow, source, input, estimator, manifest, artifact, or public-surface byte
+  changed after the reviewed repair head.
+- **Exact-head receipt:** PR #51 head
+  `e10a667671fefef431829096abe67fffc3dde927` passed run `30901537212` / job
+  `91966748824`. The job checked out that immutable SHA, installed the fresh pinned
+  dependency set, verified Haswell OpenBLAS with one thread, validated the committed
+  snapshot and 73-package / 12-file manifest, and extracted all seven source locks.
+  It fetched the seven recorded sibling commits detached, rebuilt all nine stages,
+  ended `ALL CASCADE CONTRACT TESTS PASSED`, verified runtime-integrity fault
+  fixtures, booted the exact staged app with 510 annual rows and 12 registered
+  associations, and reverified the manifest after boot and promotion.
+- **Reproduction/non-impact:** the four committed scientific artifacts reproduced
+  with an empty exact-byte diff; manifest semantics reproduced for 73 packages and
+  12 deploy checksums; and final whitespace rejection passed. The canonical five
+  hashes recorded above remain unchanged. This closes the dependency-repair risk
+  and validates all downstream gates skipped by failed run `30900961084`.
+- **Residual risk/next action:** this handoff-only receipt requires one final
+  literal-head PR run. After it passes, exact-head merge PR #51 and verify the
+  resulting `master` CI, Pages publication, signed-in Connect deployed revision,
+  and live Driver surface before beginning cross-product synthesis.
