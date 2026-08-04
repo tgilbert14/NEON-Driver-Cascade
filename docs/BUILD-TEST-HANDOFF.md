@@ -3143,3 +3143,29 @@ Rules:
 - **Next action:** commit and push the focused repair, require a fully green
   exact-head PR #51 run, then exact-head merge and verify `master`, Pages, and the
   signed-in Connect publication before beginning cross-product synthesis.
+
+### 2026-08-04 06:45 EDT - Driver dependency repair exact-head validation / [Codex]
+
+- **Changed/classification:** appended the immutable validation receipt for the
+  focused dependency-resolution repair. This entry is `suite-platform` release
+  evidence only; ecological Driver implication remains explicitly **NONE**. No
+  workflow, source, input, estimator, manifest, artifact, or public-surface byte
+  changed after the reviewed repair head.
+- **Exact-head receipt:** PR #51 head
+  `e10a667671fefef431829096abe67fffc3dde927` passed run `30901537212` / job
+  `91966748824`. The job checked out that immutable SHA, installed the fresh pinned
+  dependency set, verified Haswell OpenBLAS with one thread, validated the committed
+  snapshot and 73-package / 12-file manifest, and extracted all seven source locks.
+  It fetched the seven recorded sibling commits detached, rebuilt all nine stages,
+  ended `ALL CASCADE CONTRACT TESTS PASSED`, verified runtime-integrity fault
+  fixtures, booted the exact staged app with 510 annual rows and 12 registered
+  associations, and reverified the manifest after boot and promotion.
+- **Reproduction/non-impact:** the four committed scientific artifacts reproduced
+  with an empty exact-byte diff; manifest semantics reproduced for 73 packages and
+  12 deploy checksums; and final whitespace rejection passed. The canonical five
+  hashes recorded above remain unchanged. This closes the dependency-repair risk
+  and validates all downstream gates skipped by failed run `30900961084`.
+- **Residual risk/next action:** this handoff-only receipt requires one final
+  literal-head PR run. After it passes, exact-head merge PR #51 and verify the
+  resulting `master` CI, Pages publication, signed-in Connect deployed revision,
+  and live Driver surface before beginning cross-product synthesis.
