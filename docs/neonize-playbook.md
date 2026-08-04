@@ -444,6 +444,11 @@ Connect deployment, and public semantic health are separate release identities.
   `description.Built`; retain versions, origins, refs, compatibility, and checksums.
   A real Connect dependency-install receipt is required before the pattern becomes
   reusable.
+- When a workflow verifies the installed library against an immutable manifest,
+  pin any direct package whose snapshot resolves beyond the manifest version (for
+  example `bslib@0.11.0`) in every producer and validator install list. Roll the
+  shared dependency-cache version with that contract change so an older resolved
+  library cannot bypass the new pin; never weaken the manifest drift check.
 - Treat ordinary CRAN and Posit/RSPM records as semantically equivalent only after each complete
   manifest independently passes trusted-repository, version/ref/SHA, pinned-snapshot,
   optional-platform, dependency, deploy-surface, and checksum validation.

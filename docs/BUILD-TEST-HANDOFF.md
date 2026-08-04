@@ -3093,3 +3093,53 @@ Rules:
   Pages/Connect/live-Shiny receipts, and all earlier factual history remain valid.
 - **Next action:** begin cross-product synthesis and record the formal
   complementary-product build/defer decision; do not ingest Inverts automatically.
+
+### 2026-08-04 06:36 EDT - Driver dependency-resolution contract repair / [Codex]
+
+- **Changed/classification:** repaired the release infrastructure exposed by the
+  first PR #51 validation attempt. Changed only `.github/workflows/ci.yml`, both
+  dependency-install sites in `.github/workflows/refresh-data.yml`, this append-only
+  handoff, and the already-in-scope reusable playbook. Classification is
+  `suite-platform` / release infrastructure; ecological Driver implication is
+  explicitly **NONE**. No Driver source, input, estimator, manifest, generated
+  artifact, or public-surface byte changed.
+- **Failure/root cause:** PR #51 exact head
+  `f3497e17b894f907b8139555e9ed0d72a6e10e0c` failed run `30900961084` / job
+  `91964895890` at `Validate committed snapshot and extract immutable source lock`
+  with `runtime package version drift: bslib=0.12.0 (manifest 0.11.0)`. Checkout,
+  dependency installation, deterministic OpenBLAS verification, static checks,
+  workflow/helper contracts, and the full cascade contract fixture set had passed;
+  sibling fetch, rebuild, exact-artifact reproduction, semantic-manifest comparison,
+  and final diff checks were skipped. The workflow requested unversioned `bslib`
+  while the immutable manifest requires `0.11.0`, allowing the pinned Posit snapshot
+  to resolve the newer library.
+- **Repair:** pinned `bslib@0.11.0` beside the existing exact Plotly pin in all
+  three CI/refresh dependency lists and rolled the shared cache contract from
+  `cascade-ppm-2026-07-15-v1` to `cascade-ppm-2026-07-15-v2`. The manifest drift
+  guard remains strict. Independent review found no P0-P2 concern: the failed
+  validator reported no other package mismatch, the exact version satisfies the
+  committed Shiny/rmarkdown constraints, and all producer/validator install sites
+  use the same pin and fresh cache namespace.
+- **Local validation/non-impact:** both edited workflows parse as YAML; exact
+  pin/cache cardinality is three; no unpinned workflow `bslib` or old cache key
+  remains; the manifest target is exactly `0.11.0`; workflow-receipt guard and
+  manifest-comparator fixtures pass; and `git diff --check` passes. The local
+  system Python is 3.9.6, so `scripts/test_trusted_publish.py` stops at its existing
+  `Path.write_text(..., newline=...)` test-harness requirement; the unchanged test
+  passed on the preceding GitHub runner before the package-version gate. A fresh
+  exact-head GitHub run remains authoritative for dependency installation and every
+  downstream rebuild/reproducibility gate. Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Evidence invalidated/residual risk:** the prior four-Markdown-path statement
+  remains true for the completed Inverts reconciliation commit, but no longer
+  describes the complete PR after this release-infrastructure repair. No Inverts
+  authority, production receipt, ecological disposition, or Driver artifact
+  evidence is invalidated. The repair is not complete until a new literal PR head
+  passes every previously skipped gate.
+- **Next action:** commit and push the focused repair, require a fully green
+  exact-head PR #51 run, then exact-head merge and verify `master`, Pages, and the
+  signed-in Connect publication before beginning cross-product synthesis.
