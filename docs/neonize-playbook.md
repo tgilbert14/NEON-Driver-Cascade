@@ -207,6 +207,17 @@ authorized and green, and bind the green head, merge commit, deployed identity,
 manifest hash, landing/social assets, and content-aware public app check in one
 release receipt.
 
+**Driver synthesis rule — keep two decisions and three evidence levels separate.**
+An app may earn `ADOPT` for a sampling, zero/missing, estimator-support,
+provenance, or publication contract while its ecological signal remains `CONTEXT`,
+`HOLD`, or `REJECT`. Record both axes explicitly. Likewise, distinguish an
+app-supported site-year from an exact Driver-calendar match and from an eligible
+Driver adapter/model row. Calendar overlap is compatibility evidence, not signal
+authority. For aquatic companions, a shared NEON domain-year is only a labeled
+coverage proxy; it never repairs a missing site key or authorizes a vote. Preserve
+`UNMEASURED` when the required opportunity ledger, candidate bundle, intersection,
+adapter, or registered model does not exist.
+
 ---
 
 ## 4. The gotcha catalog (carry into every NEONize)

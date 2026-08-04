@@ -3169,3 +3169,84 @@ Rules:
   literal-head PR run. After it passes, exact-head merge PR #51 and verify the
   resulting `master` CI, Pages publication, signed-in Connect deployed revision,
   and live Driver surface before beginning cross-product synthesis.
+
+### 2026-08-04 15:48 EDT - Driver v2 cross-product synthesis Gate 0 / [Codex]
+
+- **Changed/classification:** completed Pass 10 cross-product synthesis from the
+  nine production companion packages and added an executable, immutable
+  compatibility audit plus a machine-readable decision ledger. Updated the suite
+  register, learning loop, revamp plan, complementary-product audit, README,
+  reusable playbook/lesson, and CI/refresh contract lists. Classification is
+  `scientific-contract`, `suite-platform`, and Driver-governance documentation.
+  No Driver source pin, adapter, estimator, schema, prior, vote, manifest entry,
+  generated artifact, or public-surface byte changed.
+- **Formal decision:** Gate 0 is **`PASS 10 COMPLETE / DRIVER V2 SIGNAL CHANGES
+  HELD / NO CANONICAL BYTE CHANGE`**. Reusable app contracts are accepted
+  independently of ecological signals; every new signal remains non-voting. The
+  two published v1 temperature-to-green-up screens remain unchanged historical
+  artifacts and are held for v2 re-authorization through a separately specified
+  current-Phenology adapter, censoring policy, registered model, and old/new
+  parity. A blind seven-repository repin is rejected.
+- **Measured compatibility:** exact app-supported/direct-calendar site-years are
+  Mammal `410/410`, Phenology `346/346`, Vegetation `151/156`, Beetles `388/388`,
+  Mosquito `200/203`, and Birds `381/384`. Plant Diversity annual support remains
+  `UNMEASURED` because the frozen family lacks an opportunity denominator. Water
+  is `0/387` by exact terrestrial site key and `351/387` by descriptive domain-year
+  proxy; Inverts is `0/307` exact and `307/307` proxy. Proxy compatibility is not
+  an eligible integration key and cannot repair either zero exact join.
+- **Complementary-product decision:** **`DEFER BUILD / ACQUIRE EVIDENCE ONLY`**.
+  Acquire pinned Continuous Discharge first and reopen only at at least three
+  recorded-stream sites with at least six common QC-cleared discharge x Inverts
+  years. Acquire Herbaceous Clip Harvest second and reopen only at at least three
+  temperate-grassland sites with at least six common coverage-cleared clip x
+  Driver-precipitation years. Litterfall remains separate descriptive forest
+  context. No complementary app, adapter, prior, or vote is authorized here.
+- **Companion governance receipts:** Mosquito PR #10 repair head
+  `273fabda1494c35d26a4b74b062d72d65833aa68` passed `30941882521` and merged as
+  `ff505c9f64dd3b99bc543f4078eb2e4dddb6a0f1`; Water PR #16 head
+  `6c662ad1d8adc964946b19072040eb7108f15348` passed `30940612037` and merged as
+  `9e2946ca5f07f0c81eac790ad10dcef0c9f0f3d9`; Phenology PR #10 repair head
+  `1fc8e7d60a7009b6f1ec15edc2ee95ce05aa662f` passed `30942442471` and merged as
+  `30be615dc438b60e4fa6454973b3b42589b22234`; Plant Diversity PR #16 repair head
+  `af89a1556e3d7268cbe1fc6514ccac517e029b99` passed `30942526938` and merged as
+  `28fab5b0bb5fa0fb87b7f5bbf4c2aa690cc5b612`. Their first manifest-producing
+  checks exposed moving `bslib` resolution, plus `zip` in Phenology; exact
+  `bslib@0.11.0` / `zip@3.0.1` pins and fresh cache namespaces closed those
+  release-platform failures without changing data or science bytes.
+- **Publication receipts:** the four governance merges have green Pages/production
+  pairs: Mosquito `30943576642` / `30943578793`, Water `30942884939` /
+  `30942886333`, Phenology `30943932550` / `30943933630`, and Plant Diversity
+  `30944079772` / `30944081214`. At this snapshot the supplemental merged-default
+  full validators `30943578486`, `30943934425`, and `30944081691` were still
+  running; no completion is asserted for them in this entry. Their amended PR
+  heads had already passed the same full canonical validators.
+- **Executable audit:** for each ledger product, ran
+  `Rscript --vanilla scripts/audit_suite_compatibility.R ../../repos <product>` in
+  its own process. All nine passed exact-commit reads, data/knowledge ancestry,
+  required knowledge-package presence, measured-count reproduction, and current
+  default data-tree identity. Water explicitly compares `data/neon_swc.rds`; every
+  compared Git object must exist, preventing `NA == NA` from becoming a false
+  identity receipt. The audit never checks out a sibling ref or runs sibling code.
+- **Local validation:** `Rscript --vanilla scripts/test_suite_synthesis.R` passed
+  ledger schema, all nine authorities, legacy pins, measured counts, the no-vote
+  gate, and the unchanged 510-row/46-site/552-link/12-prior Driver baseline. Both
+  new R scripts parse, both edited workflows parse as YAML, `git diff --check`
+  passes, and independent adversarial re-review returned **MERGE-READY** with no
+  remaining scientific or governance blocker. `scripts/test_helpers.R` is not a
+  valid local gate because this Mac runtime lacks `dplyr`; `verify_manifest.R`
+  correctly refused local R 4.5.3 against the committed R 4.5.2 platform. Canonical
+  Ubuntu 24.04 / R 4.5.2 / dated Posit 2026-07-15 / Haswell / one-thread CI remains
+  the authoritative full helper, rebuild, semantic-manifest, and exact-byte proof.
+- **Artifact/non-impact receipt:** no `.cascade-rebuild.lock` existed and no local
+  Driver rebuild, generation, promotion, backup, or staging operation was run.
+  SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Next action:** publish this synthesis through exact-head canonical CI, merge it
+  only after the unchanged bytes reproduce, and verify `master`, Pages, and
+  production. Then specify the independent current-Phenology v2 adapter and acquire
+  pinned discharge feasibility evidence; do not inspect new effects or build a
+  complementary app before its recorded reopening gate is met.

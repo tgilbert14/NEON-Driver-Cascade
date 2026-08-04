@@ -61,3 +61,7 @@
   don't tangle. Base variety must sit ABOVE grade: `swell·exp(-t·4.5)` (not exp(-t·10), which buries it).
   Two agent critic rounds (view renders → rank fixes) converged this; the reference-photo tells (curved
   arms, wandering shadow-lines, pinched/swollen bases, cristate crest) all map to explicit params.
+- [2026-08-04] codex · confirmed · Separate reusable-contract disposition from ecological-signal
+  disposition, and separate app support from calendar compatibility from eligible integration: an `ADOPT`
+  process rule or an exact site-year/domain-year match does not authorize a Driver adapter, prior, or vote;
+  keep missing opportunity ledgers and candidate intersections explicitly `UNMEASURED`.
