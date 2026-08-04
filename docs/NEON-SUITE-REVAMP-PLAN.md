@@ -1,13 +1,17 @@
 # NEON Explorer Suite revamp program
 
-Status: **ACTIVE — PASSES 1–9 COMPLETE / PRODUCTION VERIFIED; SYNTHESIS NEXT**
+Status: **ACTIVE — PASSES 1–10 COMPLETE; DRIVER V2 GATE 0 COMPLETE / NO-BUILD**
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
 
 Progress: Driver baseline and all nine companion passes are complete and
-production-verified; cross-product synthesis and the formal complementary-product
-decision are next. Vegetation's reset lifecycle and Plotly source-registration
+production-verified. Cross-product synthesis and the formal complementary-product
+decision are also complete: every new app build is deferred, discharge and
+herbaceous clip harvest are authorized for pinned feasibility acquisition only,
+and Driver v2 Gate 0 authorizes no blind repin or canonical byte change. The next
+implementation is a pre-specified independent adapter for the current Phenology
+release. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
 The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
 as `dfb44231` and Plant Phenology PR #5 merged as `50106f20`, with pinned validation,
@@ -56,6 +60,15 @@ merged as current deployed receipt
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
+
+Synthesis-governance closeout is merged on the watched defaults: Phenology
+`30be615d` (PR #10 / check `30942442471`), Plant Diversity `28fab5b0` (PR #16 /
+`30942526938`), Mosquito `ff505c9f` (PR #10 / `30941882521`), and Water Chemistry
+`9e2946ca` (PR #16 / `30940612037`). The amended Phenology, Plant Diversity, and
+Mosquito checks also close moving dependency resolution in manifest-producing
+jobs with exact committed package pins and fresh cache namespaces. These merges
+change governance and release-platform authority only; data/runtime authorities,
+committed manifests, ecological dispositions, and Driver bytes remain unchanged.
 
 ## 1. Outcome
 
@@ -241,8 +254,8 @@ The pass order is intentionally not alphabetical:
 | 2 | Plant Phenology Explorer | **COMPLETE / PRODUCTION VERIFIED**; corrected plant-year opportunity, onset unavailability/censoring, deterministic derived artifacts, and release trust without changing Driver bytes |
 | 3 | Plant Diversity | **COMPLETE / PRODUCTION VERIFIED**; separated composition, invasion, richness, and cover from unsupported productivity inference; closed nested-grain/opportunity/panel/source-limit contracts without changing Driver bytes |
 | 4 | Vegetation Structure Explorer | **COMPLETE / PRODUCTION VERIFIED**; rebuilt from official RELEASE-2026 with event-atomic opportunity, separate physical channels, exact release promotion, an artistic Living Poster, accessible/export/pin enhancements, a complete reset contract, and a raw registered-event Plotly gate; Driver remains `HOLD / CONTEXT ONLY / NO DRIVER DATA BYTE CHANGE` |
-| 5 | Ground Beetle Tracker | **COMPLETE / PRODUCTION VERIFIED**; opportunity-complete zero-catch effort, individualID taxonomy reconciliation, exact release trust, semantic health, and a static artistic Living Poster are live; activity-density remains context-only pending a separately reviewed Driver adapter and suite-synthesis decision |
-| 6 | Mosquito Pulse | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 opportunity-complete trap effort, supported zero-catch states, continuous expansion, exact release trust, static Living Poster, server lifecycle, and mobile accessibility are live; the activity index remains `CONTEXT / HOLD DRIVER INGESTION` pending suite synthesis |
+| 5 | Ground Beetle Tracker | **COMPLETE / PRODUCTION VERIFIED**; opportunity-complete zero-catch effort, individualID taxonomy reconciliation, exact release trust, semantic health, and a static artistic Living Poster are live; Gate-0 synthesis measured 388/388 supported calendar matches but kept activity-density `CONTEXT / HOLD DRIVER INGESTION` |
+| 6 | Mosquito Pulse | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 opportunity-complete trap effort, supported zero-catch states, continuous expansion, exact release trust, static Living Poster, server lifecycle, and mobile accessibility are live; Gate-0 synthesis measured 200/203 supported calendar matches but kept the activity index `CONTEXT / HOLD DRIVER INGESTION` |
 | 7 | Birds | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 47-site family separates source presence from complete estimand support, preserves grain-specific supported zeros and method/flyover boundaries, and drives app/Search/visual/export surfaces from one comparative contract; runtime `97c3e4c`, docs `07c852c`; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
 | 8 | Water Chemistry | **COMPLETE / PRODUCTION VERIFIED**; full-fetch run `30872232876`, direct-child candidate `27512485`, PR #15 merge `ee95af3`, exact six-file runtime identity, reviewed package restoration, independent replay, and content-aware Pages/Connect health are closed; aquatic chemistry remains context, not itself a trophic hinge |
 | 9 | My Little Inverts | **COMPLETE / PRODUCTION VERIFIED**; science/data/runtime authority remains field-first PR #6 merge `ff23e994`; governance/tooling and production-identity authority is PR #7 merge `6972817`, with unchanged runtime payload `87900f675a1e…`, cycle-free identity using Pages-payload domain v2, exact Pages `30896544721`, Connect #18, and production `30896548595`; identity-excluded BUILD-only PR #8 merged as current deployed receipt `53991b6` and passed Pages `30900109522`, Connect #19, and production `30900110643` without moving either authority; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
@@ -263,26 +276,33 @@ on the following registered criteria:
 - exact adapter/test feasibility; and
 - risk of creating a proxy that looks causal.
 
-Current candidates, not commitments:
+Formal 2026-08-04 decision: **DEFER every new app build / AUTHORIZE feasibility
+evidence acquisition only.** No candidate-side bundle and measured eligible
+intersection currently clears the build gate.
 
-1. **NEON HydroPulse / Aquatic Drivers** — discharge plus aquatic water
-   temperature, with season, flow anomaly, and sampling support. This is the leading
-   physical-hinge candidate because it can explain when chemistry and invertebrate
-   observations occur in a flow/temperature context.
-2. **NEON Aquatic Producers** — periphyton or another defensible primary-producer
-   product. This may close the more important trophic gap if method and opportunity
-   support are adequate.
-3. **Defer a new app** — correct if neither candidate clears the data-contract and
-   standalone-value gates.
+1. Acquire a pinned Continuous Discharge `DP4.00130.001` bundle first. Reopen BUILD
+   only if its QC-cleared intersection with released Inverts contains at least
+   three recorded-stream sites with at least six common years each.
+2. Acquire a pinned Herbaceous Clip Harvest `DP1.10023.001` bundle second. Reopen
+   BUILD or signal adoption only if its coverage-cleared intersection with the
+   Driver precipitation grid contains at least three temperate-grassland sites
+   with at least six common years each.
+3. Keep Litterfall `DP1.10033.001` as prospective descriptive forest context. Do
+   not combine it with clip harvest or claim a seed mediator.
 
-Fish or other higher aquatic consumers are a later option, not the default answer;
-adding another consumer does not close a missing physical-driver or producer rung.
+Periphyton, water temperature, fish, and other higher consumers remain sequenced
+backlog items. Adding another consumer does not close a missing physical-driver or
+producer rung, and a domain-year proxy does not create an aquatic integration key.
 
 ### Phase 3 — Driver v2 reintegration
 
-Synthesize the nine pinned knowledge packages and complementary-product decision.
-Only registered `ADOPT` signals enter inferential voting. `CONTEXT` remains visible
-but non-voting, `HOLD` stays gated, and `REJECT` reasons remain durable.
+Gate-0 synthesis is complete in `docs/DRIVER-V2-SYNTHESIS.md`. It separates
+contract/process adoption from ecological-signal adoption, measures all nine app
+families, and rejects blind replacement of the seven legacy pins. No current
+companion signal is newly vote-eligible. The two published v1 green-up screens are
+held for v2 re-authorization through an independent current-release Phenology
+adapter and registered model. `CONTEXT` remains non-voting, `HOLD` stays gated, and
+`REJECT` reasons remain durable.
 
 ## 4. The one-app pass
 
@@ -711,13 +731,16 @@ Suggested palette families remain distinct but related:
   science/data/runtime authority `ff23e994`, governance/tooling and production-
   identity authority `6972817`, and current deployed receipt `53991b6`; the latter
   two preserve runtime payload `87900f675a1e…`. Cross-product synthesis and the
-  formal complementary-product decision are next.
+  formal complementary-product decision are complete: new app builds are deferred,
+  and Driver v2 Gate 0 authorizes no canonical byte change.
 
 ### Ground Beetle Tracker — fifth pass
 
 Pass 5 is **COMPLETE / PRODUCTION VERIFIED**. Opportunity-complete data PR #14
 head `c3dec8d` merged as `4e628f88`; the final static-poster PR #15 head
-`a7950294` merged as authoritative production release `89caa435`.
+`a7950294` merged as cover/runtime authority `89caa435`. The current audited data
+authority is `a615d6c`, and current default/docs authority is `1a768b4`; Gate-0
+synthesis keeps those identity domains separate.
 
 - The released family has 46 bundles, 100,163 rows, 33,012 independent field-effort
   opportunity anchors, and 67,151 catch rows. Valid zero-Carabidae bouts are
@@ -736,9 +759,10 @@ head `c3dec8d` merged as `4e628f88`; the final static-poster PR #15 head
   recognizable carabid and flush-buried pitfall cup. The hero has no animation;
   the site-health, population, occupancy, and causal boundaries stay visible.
 - Driver disposition remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
-  CHANGE`. Reconsider only through a pinned independent adapter, measured eligible
-  join/support, a registered seasonal mechanism, and old/new parity at suite
-  synthesis.
+  CHANGE`. Gate-0 synthesis measured 388/388 supported Driver-calendar matches
+  across 46 sites, with 43 sites at at least six years, but authorized no ecological
+  vote. Reconsider only through a pinned independent adapter, registered seasonal
+  mechanism, eligible-estimator review, and old/new parity.
 
 ### Mosquito Pulse — sixth pass
 
@@ -795,7 +819,9 @@ Pass 6 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative app runtime is
   not population, biting rate, infection prevalence, pathogen presence, disease
   risk, or causal effect. PUUM climate overlay remains held. Reconsider only through
   an independent pinned adapter, measured site-season/year join and support, a
-  pre-registered seasonal/thermal mechanism, and old/new parity at suite synthesis.
+  pre-registered seasonal/thermal mechanism, and old/new parity. Gate-0 synthesis
+  measured 200/203 supported calendar matches across 46 sites and still authorized
+  no ecological vote.
 
 ### Birds — seventh pass
 
@@ -828,7 +854,10 @@ Pass 7 is **COMPLETE / PRODUCTION VERIFIED**. Scientific/runtime authority is
   effort; neither supports abundance, population, density, occupancy, breeding-
   status, territory, causal, or forecast claims. Any future Driver use requires a
   pinned independent adapter, measured joins/support, a registered mechanism, and
-  old/new parity at suite synthesis.
+  old/new parity. Gate-0 synthesis measured 381/384 supported calendar matches
+  across 46 Driver sites and still authorized no ecological vote; the Driver's
+  finite 2025 values must be reconciled against the official 2017–2024 release
+  before any repin.
 
 ### Water Chemistry — eighth pass
 
@@ -858,9 +887,11 @@ merge `ee95af3e270099980ea5bc98b28b549456b3f0b2`.
   provenance, task-oriented navigation, and charge balance only as QC.
 - Driver disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
   CHANGE`**: aquatic chemistry may corroborate condition/aridity, not create a
-  lag-aware trophic or causal link. Driver join/support remains unmeasured, not
-  zero; any future use requires an independent pinned adapter, measured support,
-  and suite-synthesis review.
+  lag-aware trophic or causal link. Direct terrestrial calendar compatibility is
+  measured at 0/387 site-years and the labeled domain-year proxy at 351/387;
+  eligible aquatic integration remains `UNMEASURED`, not zero. Any future use
+  requires a true aquatic key/driver, an independent pinned adapter, and registered
+  support/claim gates.
 
 ### My Little Inverts — ninth pass
 
@@ -932,9 +963,12 @@ Pass 9 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative runtime/data merge i
   job `91962182435` passed with production identity `sha256:e1d3f1be…` and
   runtime/science authority unchanged.
 - Driver disposition is **`CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE
-  CHANGE`**. Driver join/support is **UNMEASURED, not zero**. Cross-product
-  synthesis and the formal complementary-product decision come next; any future
-  ingestion still requires a pinned independent adapter, measured eligible
+  CHANGE`**. Exact direct compatibility is measured at `0/307` supported
+  site-years, while domain-proxy compatibility is `307/307`; neither proxy rows
+  nor calendar support are an eligible integration key. Cross-product synthesis
+  and the formal complementary-product decision are complete with a
+  no-build/no-byte-change outcome; eligible Driver integration remains
+  **UNMEASURED** and still requires a pinned independent adapter, measured eligible
   site-time support, a registered role/mechanism, claim limits, and old/new parity.
 
 ## 8. Verification matrix

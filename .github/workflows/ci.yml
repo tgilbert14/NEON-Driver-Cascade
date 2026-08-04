@@ -80,6 +80,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
           Rscript --vanilla scripts/workflow_guard.R self-test
           Rscript --vanilla scripts/test_helpers.R
+          Rscript --vanilla scripts/test_suite_synthesis.R
           Rscript --vanilla scripts/verify_manifest.R
           Rscript --vanilla scripts/test_manifest_compare.R
           Rscript --vanilla scripts/workflow_guard.R source-lock data/cascade.rds "$RUNNER_TEMP/source-lock.tsv"

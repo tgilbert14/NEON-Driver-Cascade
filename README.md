@@ -6,8 +6,15 @@ The **capstone** of the NEONize family — an exploratory cross-product atlas of
 The suite has nine product apps. This current baseline consumes seven of them
 (small mammals, breeding birds, plant diversity, vegetation structure, plant
 phenology, mosquitoes, and ground beetles); water chemistry and aquatic
-invertebrates remain future review inputs. The atlas **lines those seven inputs
-up** at shared field sites on a common annual calendar.
+invertebrates are released companion products but are not integrated. The atlas
+**lines those seven older pinned inputs up** at shared terrestrial field sites on a
+common annual calendar.
+
+> **2026-08-04 suite synthesis:** all nine companion passes are complete. The
+> measured [Driver v2 synthesis](docs/DRIVER-V2-SYNTHESIS.md) rejects a blind pin
+> refresh, authorizes no new ecological vote or canonical artifact change, and
+> defers every complementary-app build pending exact feasibility support. The
+> current atlas remains the frozen, exploratory v1 snapshot described below.
 
 > **Construct warning:** the current measurements do not supply a defensible annual production/seed-resource rung or
 > a mediated-path test. The layered display is a co-display of candidate bottom-up pathways, **not a tested trophic cascade**.
