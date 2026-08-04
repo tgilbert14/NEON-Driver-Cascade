@@ -3009,3 +3009,87 @@ Rules:
   complementary-product build/defer decision. Do not automatically ingest Inverts,
   Water, or any other companion into Driver; only accepted immutable inputs may
   enter a deliberate Driver v2 adapter/rebuild.
+
+### 2026-08-04 06:26 EDT - My Little Inverts governance/tooling publication closeout / [Codex]
+
+- **Changed/classification:** reconciled the separately published Inverts
+  governance/tooling candidate and current production receipt into this handoff,
+  the suite evidence register, revamp plan, and reusable playbook. Classification
+  is `suite-platform`, `scientific-contract`, and `Driver-impacting`
+  documentation. Scope is exactly these four Driver Markdown authorities; no
+  Driver or Inverts runtime, estimator, data, manifest, generated artifact, or
+  public-surface byte was edited here.
+- **Authority/receipt model:** `ff23e994e289982c747b91e48c5ff0907c1672d2`
+  remains the Inverts science/data/runtime authority. The later governance stream
+  began at `1b059cb04e32c02c171d21a9d47b22cf6c060db2`; direct-child candidate
+  `ecbb23cd313632727e78896ab4473b600b456b34` passed PR #7 exact-head check
+  `30894827652` and merged as governance/tooling and production-identity authority
+  `6972817382491cc9312ae4588b75bc67ed422987`. Final BUILD-only merge
+  `53991b6f460a97a4abfcee9f62e94cd77c167f89` is the current deployed-revision
+  receipt; because it changes only the identity-excluded handoff, it replaces
+  neither authority nor the Driver-facing science/runtime pin.
+- **Identity/domain receipt:** the cycle-free production identity uses the
+  Pages-payload domain v2 and binds every root `docs/*.md` file
+  except the literal mutable `docs/BUILD-TEST-HANDOFF.md`; closure status belongs
+  in that excluded handoff and the central Driver register. Any other root-doc
+  change requires regenerated identity, a clean validator, and a newly reviewed
+  exact candidate. Governance manifest SHA-256 is
+  `7dceb40616052bb22e05a1ba68b56c47896ede68d08394b67c502bc81cd1ec8d`,
+  production ID is
+  `sha256:e1d3f1be5620706c71a53783e87b4570c6985fe8d9ed5554ece0b51954aa7aa8`,
+  and Pages payload SHA-256 is
+  `43b16e7b44d160055c8fa59039d2c922e802342042b1db1238e65c0249a44fff`.
+  Runtime payload SHA-256 remains byte-identical at
+  `87900f675a1ef34d4f5c47c6788fbaac08a8549d82c4ef900a1b28726e925278`.
+- **Published governance receipt:** Pages run `30896544721` passed on exact merge
+  `6972817`. Connect publication #18
+  (`019fcc1b-5672-3278-21c6-9ead85568da2`) served the same governance production
+  identity. Production run `30896548595` / job `91950703053` passed
+  exact Pages and Connect identity plus a live bidirectional Shiny round trip.
+  The reviewed candidate/source diff proves the science, data, runtime, poster,
+  index, and social-image bytes were unchanged.
+- **Executable production QA:** live Pages index, poster/art, and social assets
+  matched the reviewed checkout byte for byte. Stable 1280-, 390-, and 320-pixel
+  layouts had no persistent horizontal overflow and exposed visible keyboard
+  focus. Console, page, request, same-origin HTTP, stylesheet, and poster-image
+  failures were fail-closed. The live SYCA path reported 193 field opportunities,
+  121 count-eligible, 121 density-eligible, 245 mixed-rank taxa, and 17 events.
+  Playwright 1.55.1 ran on Node >=18; `npm audit` reported zero vulnerabilities.
+- **Final BUILD-only receipt:** PR #8 exact head
+  `6c01244c7eeb756c7305a6dfaa3f1c67adac3833` passed exact-head run
+  `30898431839`; its publisher skipped with zero steps before exact-head merge
+  `53991b6f460a97a4abfcee9f62e94cd77c167f89`. Pages run `30900109522`, Connect
+  publication #19 (`019fcc48-823f-0cc5-f8dc-4ef8c302f3cb`), and production run
+  `30900110643` / job `91962182435` passed on that merge. Connect published in
+  five seconds without a Startup Error, signed-in QA confirmed the exact
+  `sha256:e1d3f1be…` identity and 193/121/121/245/17 SYCA view, and the production
+  smoke proved exact Pages bytes at 1280/390/320 plus a live bidirectional Shiny
+  session. This append-only closeout moved neither runtime/science authority nor
+  any identity-bound byte.
+- **Driver decision:** disposition remains **`CONTEXT / HOLD DRIVER INGESTION /
+  NO DRIVER BYTE CHANGE`**. Governance quality and exact production verification
+  do not create an ecological vote. Driver join/support is **UNMEASURED, not
+  zero**; future use still requires a separately reviewed pinned adapter, measured
+  eligible site-time support, registered role/mechanism and claim limits, and
+  old/new parity during suite synthesis.
+- **Validation/non-impact:** the Driver worktree remains based on
+  `29052fc077859ab6ff746ecdfac918b75fcc43a5` with no rebuild lock. Documentation
+  UTF-8/LF/no-BOM, control-character, fence/table-shape, stale-current-state,
+  placeholder-absence, canonical-hash, changed-path, and `git diff --check` gates
+  pass. Driver runtime/build/browser gates are not applicable because no Driver
+  input or public surface changed. Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No rebuild, generation, promotion, lock, stage, backup, or temporary Driver data
+  was created.
+- **Evidence invalidated:** current-state claims that the Inverts governance
+  package or BUILD-only closeout was staged/pending, that `ff23e994` owned the
+  governance identity, or that `6972817` was still the current deployed repository
+  commit are superseded. The historical `ff23e994` science/data/runtime authority,
+  `6972817` governance/tooling and identity authority, manifests, production IDs,
+  Pages/Connect/live-Shiny receipts, and all earlier factual history remain valid.
+- **Next action:** begin cross-product synthesis and record the formal
+  complementary-product build/defer decision; do not ingest Inverts automatically.

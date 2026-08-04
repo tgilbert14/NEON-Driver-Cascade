@@ -285,6 +285,24 @@ release receipt.
   fill unknown `builtAt`, `neonRelease`, `sourceCutoff`, query receipt, or raw-source
   digest fields. Preserve explicit `NA` until a complete reviewed source receipt
   exists across the expected family and index.
+- **Keep science/data/runtime authority separate from governance/tooling and
+  production-identity authority.** A later governance release can legitimately change the
+  production identity because identity-bound documentation or Pages bytes changed
+  while the runtime-payload hash remains exact. Record both authorities and the
+  unchanged runtime hash; do not silently move the Driver science pin to the newer
+  publication commit. My Little Inverts proves the pattern: `ff23e994` remains its
+  science/data/runtime authority while `6972817` owns governance/tooling and the
+  production identity, with runtime payload `87900f675a1e…` unchanged; BUILD-only
+  merge `53991b6` is the later current deployed-revision receipt and moves neither
+  authority.
+- **Make the documentation identity domain complete and the mutable exception
+  exact.** Bind every root `docs/*.md` file into the versioned Pages-payload domain
+  except the literal
+  `docs/BUILD-TEST-HANDOFF.md`; keep closure status in that handoff and the central
+  suite register. Any other root documentation change must regenerate identity,
+  pass the clean validator, and become a newly reviewed exact candidate. A final
+  BUILD-only receipt may append after publication without changing the identity it
+  records, but it may not smuggle in any other file or authority change.
 - **A semantic marker proves app family, not exact deployed revision.** Derive a
   runtime receipt from the sorted checksums of the explicit runtime allowlist, emit
   it with the ready marker, and make post-deploy smoke independently recompute and
@@ -402,11 +420,18 @@ Connect deployment, and public semantic health are separate release identities.
   assert `git rev-parse HEAD` equals it, and bind promotion or merge to the same head
   (for example, a matching-head guard). A green merge-ref build does not prove the
   bytes the reviewer approved.
-- Test the live showcase at desktop and 390x844 mobile after layout stabilizes or a reload:
-  require zero persistent horizontal overflow, correct canonical/OG/Twitter metadata, the social
-  image's natural dimensions, an empty unexpected console/network failure set, and successful
-  responses for every app/sibling/license link. An immediate viewport-transition frame is not
-  release evidence; remeasure it, but treat persistent overflow as a blocker.
+- Test the live showcase at 1280, 390, and 320 CSS-pixel widths after layout
+  stabilizes or a reload. Byte-compare the live Pages index, poster/art, and social
+  image to the reviewed checkout; require stable geometry, zero persistent
+  horizontal overflow, visible keyboard focus, correct canonical/OG/Twitter
+  metadata, the social image's natural dimensions, and successful app/sibling/
+  license links. Fail on unexpected console errors, page errors, request failures,
+  same-origin non-success HTTP, stylesheet failures, or poster-image failures. An
+  immediate viewport-transition frame is not release evidence; remeasure it, but
+  treat persistent overflow as a blocker. Then prove the app, not only its cover:
+  require exact Connect release identity, one live bidirectional Shiny round trip,
+  and registered app-specific statistics or roster assertions. Pin the browser
+  harness version and supported Node floor, and record the dependency-audit result.
 - Every generated family must name one canonical release-byte platform/toolchain or prove exact
   byte identity everywhere. Keep that platform's exact-byte gate; use other platforms for strict
   schema/key/text/source/decision checks and only explicitly named bounded numeric diagnostics.
