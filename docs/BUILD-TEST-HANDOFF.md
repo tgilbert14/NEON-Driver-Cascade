@@ -3986,3 +3986,63 @@ Rules:
   environment secret, dispatch only from the protected exact `master`, delete
   all raw material, and publish only route-free sanitized receipts to a draft
   review PR. F2 remains sealed until that exact receipt independently passes.
+
+### 2026-08-05 11:07 MST - Continuous Discharge F1 offline implementation candidate / no authenticated acquisition / [Codex]
+
+- **Classification and gate boundary:** scientific-contract + suite-platform F1
+  implementation candidate; Driver impact `NONE`; no app-local or runtime
+  change. Exact F0 authority remains receipt merge
+  `b75996a85809ed0cd8ba89121e0de18e22063cc7` / tree
+  `8e7b774da4fc8486fb3c41e790317c61d5af9379`. F1 is authorized only for the
+  reviewed manifest and non-observation metadata inventory. No authenticated
+  F1 acquisition has run; F2, observation bytes, support/effect calculations,
+  adapters, priors, votes, apps, and Driver-byte changes remain unauthorized.
+  Discharge support remains `UNMEASURED`.
+- **Public release-window recheck:** an unauthenticated, release-filtered read of
+  the official `DP4.00130.001` product record established that the exact frozen
+  24-site roster is present and its `RELEASE-2026` availability spans
+  `2016-08` through `2024-09`. Only that safe aggregate was printed; no raw
+  response, token, signed route, file manifest, or data byte was retained. The
+  authenticated `/data/query` endpoint was not called.
+- **Offline implementation:** added a pure producer contract, one isolated
+  network acquisition process, an independent stdlib-only verifier, an
+  adversarial fixture family, a dedicated empty-network CI job, and a protected
+  manual workflow. Exact positional basenames are classified before a URL field
+  may be read; observation routes are never retained or followed. Sanitized
+  inventories freeze domain/site/month/package and package/file generation
+  identities, normalized table-field declarations, validation rules, referenced
+  categorical flag codes, and an exact F2 identity-only allowlist. The raw phase
+  returns only route-free immutable objects before cleanup and receipt writing.
+- **Publication and credential controls:** the manual workflow is designed for
+  an exact `master` SHA in environment `discharge-f1`; that environment must be
+  configured with reviewer and literal-master protection before dispatch. It
+  injects `NEON_TOKEN` into one `python3 -I -S` process, destroys raw state
+  before an independent empty-network verifier and second checkout, and may
+  push only one direct-child review commit containing exactly four sanitized
+  receipt files. CI binds any such family to that direct-child producer and its
+  current blobs; it neither uploads artifacts nor creates/merges a PR
+  automatically.
+- **Adversarial and static validation:** the complete producer/acquisition/
+  independent-verifier suite passes on host Python 3.9.6 and bundled Python
+  3.12.13, including metadata masquerades with zero download calls, conflicting
+  domain/site/month identities, malformed and impossible UTC generations,
+  response-window drift, pre-window/provisional packages, flag-schema mutation,
+  route/secret canaries, raw-scope cleanup, `0600` staging, and `0644`
+  publication. Both workflow YAML files parse; every F1 Bash block and the
+  isolated Python wrapper syntax-check; `git diff --check` passes.
+- **Non-impact receipt:** no local Driver rebuild, generation, promotion,
+  Connect deployment, authenticated query, availability-manifest download,
+  observation fetch, or upstream Inverts RDS access occurred. Canonical SHA-256
+  remains cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Publication status and next action:** this is a local offline candidate; no
+  implementation PR, CI run, merge, Pages identity, environment protection, or
+  Driver-owned `NEON_TOKEN` is claimed yet. Commit and publish the exact branch,
+  require literal-head and merged-master CI plus Pages, then configure the
+  protected master-only environment and its environment-scoped secret before a
+  manual F1 dispatch. Any generated receipt still requires its own exact-head,
+  independent review, merge, and Pages receipt before F2 can be considered.

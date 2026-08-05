@@ -1,0 +1,461 @@
+name: Acquire reviewed Discharge F1 inventory
+
+# This workflow is intentionally manual and metadata-only. The authenticated
+# process may inventory RELEASE-2026 file metadata and fetch the reviewed
+# non-observation metadata families, but it may never fetch an observation table.
+# Raw responses and capabilities remain runner-local, are destroyed before a
+# second checkout exists, and are never transported through an Actions artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      expected_source_sha:
+        description: "Exact reviewed master commit to execute (40 lowercase hex)"
+        required: true
+        type: string
+      confirm_scope:
+        description: "Confirm the authorized no-observation F1 boundary"
+        required: true
+        type: choice
+        options:
+          - F1_METADATA_ONLY_NO_OBSERVATION_BYTES
+
+permissions: {}
+
+concurrency:
+  group: discharge-f1-inventory
+  cancel-in-progress: false
+
+env:
+  SOURCE_SHA: ${{ inputs.expected_source_sha }}
+  CONFIRM_SCOPE: ${{ inputs.confirm_scope }}
+  F0_AUTHORITY_SHA: b75996a85809ed0cd8ba89121e0de18e22063cc7
+  F0_AUTHORITY_TREE: 8e7b774da4fc8486fb3c41e790317c61d5af9379
+
+jobs:
+  acquire-and-propose:
+    if: github.repository == 'tgilbert14/NEON-Driver-Cascade'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment:
+      name: discharge-f1
+    permissions:
+      contents: write
+    env:
+      RAW_ROOT: ${{ runner.temp }}/discharge-f1-raw-${{ github.run_id }}-${{ github.run_attempt }}
+      SANITIZED_ROOT: ${{ runner.temp }}/discharge-f1-sanitized-${{ github.run_id }}-${{ github.run_attempt }}
+      VERIFY_TMP: ${{ runner.temp }}/discharge-f1-verify-${{ github.run_id }}-${{ github.run_attempt }}
+      ASKPASS_PATH: ${{ runner.temp }}/discharge-f1-askpass-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Assert the protected literal-master dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_REPOSITORY" = tgilbert14/NEON-Driver-Cascade
+          test "$GITHUB_REF" = refs/heads/master
+          test "$GITHUB_REF_TYPE" = branch
+          test "$GITHUB_REF_NAME" = master
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$GITHUB_SHA" = "$SOURCE_SHA"
+          test "$CONFIRM_SCOPE" = F1_METADATA_ONLY_NO_OBSERVATION_BYTES
+
+      - name: Checkout only the exact reviewed acquisition authority
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+          path: source
+
+      - name: Reassert F0, response, and unchanged Driver authorities
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          test "$(git -C source rev-parse "$F0_AUTHORITY_SHA^{commit}")" = \
+            "$F0_AUTHORITY_SHA"
+          test "$(git -C source rev-parse "$F0_AUTHORITY_SHA^{tree}")" = \
+            "$F0_AUTHORITY_TREE"
+          git -C source merge-base --is-ancestor "$F0_AUTHORITY_SHA" HEAD
+
+          spec=source/docs/DISCHARGE-FEASIBILITY-SPEC.md
+          ledger=source/docs/receipts/discharge-inverts-response-site-years.tsv
+          test "$(sha256sum "$spec" | awk '{print $1}')" = \
+            831baf97f6558a7d0bccacb401880929ffccd7a6ebf210b8ee70d536db298ac7
+          test "$(git -C source hash-object --no-filters \
+            docs/DISCHARGE-FEASIBILITY-SPEC.md)" = \
+            643dbaa3489bb8100de691b2de0ead124f842502
+          test "$(sha256sum "$ledger" | awk '{print $1}')" = \
+            79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296
+          test "$(git -C source hash-object --no-filters \
+            docs/receipts/discharge-inverts-response-site-years.tsv)" = \
+            c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8
+          test "$(head -n 1 "$ledger")" = $'siteID\tutc_calendar_year'
+          test "$(($(wc -l < "$ledger") - 1))" -eq 210
+          test "$(tail -n +2 "$ledger" | cut -f1 | LC_ALL=C sort -u | wc -l)" \
+            -eq 24
+          test "$(tail -n +2 "$ledger" | cut -f1 | LC_ALL=C sort | uniq -c | \
+            awk '$1 >= 6 { n++ } END { print n + 0 }')" -eq 23
+
+          test "$(sha256sum source/scripts/discharge_feasibility_contract.R | \
+            awk '{print $1}')" = \
+            b88f04e9404916568fabb5718ad3e5e53faca2b1df22895743e2f96c42356650
+          test "$(sha256sum source/scripts/test_discharge_inverts_authority.R | \
+            awk '{print $1}')" = \
+            cbae89b4c42193b0d0163fcd2bc332251de018d90c8411722042fcfd4244c874
+
+          test "$(sha256sum source/data/cascade.rds | awk '{print $1}')" = \
+            47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe
+          test "$(sha256sum source/data/search_index.rds | awk '{print $1}')" = \
+            a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e
+          test "$(sha256sum source/data/cascade_meta.rds | awk '{print $1}')" = \
+            00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de
+          test "$(sha256sum source/data/neon-cascade-codebook.csv | \
+            awk '{print $1}')" = \
+            a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3
+          test "$(sha256sum source/manifest.json | awk '{print $1}')" = \
+            92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79
+
+          test -z "$(git -C source status --porcelain=v1 --untracked-files=all)"
+          test -z "$(git -C source config --local --get-regexp \
+            '^http[.].*[.]extraheader$' || true)"
+          git -C source remote remove origin
+          test -z "$(git -C source remote)"
+
+      - name: Create exact private acquisition roots
+        run: |
+          set -euo pipefail
+          expected_raw="$RUNNER_TEMP/discharge-f1-raw-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          expected_sanitized="$RUNNER_TEMP/discharge-f1-sanitized-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          expected_verify="$RUNNER_TEMP/discharge-f1-verify-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          test "$RAW_ROOT" = "$expected_raw"
+          test "$SANITIZED_ROOT" = "$expected_sanitized"
+          test "$VERIFY_TMP" = "$expected_verify"
+          test ! -e "$RAW_ROOT"
+          test ! -e "$SANITIZED_ROOT"
+          test ! -e "$VERIFY_TMP"
+          install -d -m 0700 "$RAW_ROOT" "$SANITIZED_ROOT" "$VERIFY_TMP"
+          install -d -m 0700 "$VERIFY_TMP/home"
+          for path in "$RAW_ROOT" "$SANITIZED_ROOT" "$VERIFY_TMP"; do
+            test -d "$path"
+            test ! -L "$path"
+            test -O "$path"
+            test "$(stat -c '%a' "$path")" = 700
+          done
+
+      # A Python custom shell injects NEON_TOKEN directly into the one process
+      # permitted to possess it. runpy executes the reviewed CLI in that same
+      # process, so no token-bearing shell or child process is created.
+      - name: Acquire only the authenticated F1 metadata inventory
+        timeout-minutes: 45
+        shell: python3 -I -S -B {0}
+        env:
+          NEON_TOKEN: ${{ secrets.NEON_TOKEN }}
+        run: |
+          import os
+          from pathlib import Path
+          import runpy
+          import sys
+
+          if "GH_TOKEN" in os.environ or "GITHUB_TOKEN" in os.environ:
+              raise SystemExit("credential_or_capability_exposed")
+          token = os.environ.pop("NEON_TOKEN", "")
+          if not token:
+              raise SystemExit("credential_or_capability_exposed")
+          raw_root = os.environ["RAW_ROOT"]
+          sanitized_root = os.environ["SANITIZED_ROOT"]
+          source_sha = os.environ["SOURCE_SHA"]
+          source_root = str(Path.cwd() / "source")
+          safe_environment = {
+              "NEON_TOKEN": token,
+              "HOME": os.environ["VERIFY_TMP"] + "/home",
+              "LANG": "C.UTF-8",
+              "LC_ALL": "C.UTF-8",
+              "TZ": "UTC",
+              "TMPDIR": raw_root,
+              "PYTHONDONTWRITEBYTECODE": "1",
+          }
+          os.environ.clear()
+          os.environ.update(safe_environment)
+          safe_environment.clear()
+          del safe_environment
+          del token
+          sys.argv = [
+              "scripts/discharge_f1_acquire.py",
+              "--output-dir", sanitized_root,
+              "--raw-root", raw_root,
+              "--expected-source-sha", source_sha,
+          ]
+          os.chdir(source_root)
+          sys.path.insert(0, str(Path(source_root) / "scripts"))
+          runpy.run_path("scripts/discharge_f1_acquire.py", run_name="__main__")
+
+      - name: Destroy the exact raw acquisition root before verification
+        if: always()
+        run: |
+          set -euo pipefail
+          expected="$RUNNER_TEMP/discharge-f1-raw-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          test "$RAW_ROOT" = "$expected"
+          cleanup_failed=0
+          if test -L "$RAW_ROOT"; then
+            sudo rm -f -- "$RAW_ROOT" || cleanup_failed=1
+            cleanup_failed=1
+          elif test -e "$RAW_ROOT"; then
+            test -d "$RAW_ROOT" || cleanup_failed=1
+            test -O "$RAW_ROOT" || cleanup_failed=1
+            test "$(stat -c '%a' "$RAW_ROOT")" = 700 || cleanup_failed=1
+            entry_count="$(find "$RAW_ROOT" -xdev -mindepth 1 -printf '.' | \
+              wc -c)"
+            test "$entry_count" -le 100000 || cleanup_failed=1
+            sudo rm -rf -- "$RAW_ROOT" || cleanup_failed=1
+          fi
+          test ! -e "$RAW_ROOT" || cleanup_failed=1
+          printf 'raw_cleanup_complete=%s\n' \
+            "$([[ "$cleanup_failed" -eq 0 ]] && echo true || echo false)"
+          test "$cleanup_failed" -eq 0
+
+      - name: Independently verify the sanitized family without network
+        run: |
+          set -euo pipefail
+          test ! -e "$RAW_ROOT"
+          test -d "$SANITIZED_ROOT"
+          test ! -L "$SANITIZED_ROOT"
+          test -O "$SANITIZED_ROOT"
+          test "$(stat -c '%a' "$SANITIZED_ROOT")" = 700
+          test -d "$VERIFY_TMP"
+          test ! -L "$VERIFY_TMP"
+          test -O "$VERIFY_TMP"
+          test "$(stat -c '%a' "$VERIFY_TMP")" = 700
+
+          expected="$VERIFY_TMP/expected-receipts.txt"
+          actual="$VERIFY_TMP/actual-receipts.txt"
+          printf '%s\n' \
+            discharge-f1-release-receipt.json \
+            discharge-f1-file-inventory.tsv \
+            discharge-f1-schema-inventory.tsv \
+            discharge-f2-file-allowlist.tsv | LC_ALL=C sort > "$expected"
+          find "$SANITIZED_ROOT" -mindepth 1 -maxdepth 1 -type f \
+            -printf '%f\n' | LC_ALL=C sort > "$actual"
+          cmp -s "$expected" "$actual"
+          test -z "$(find "$SANITIZED_ROOT" -mindepth 1 -maxdepth 1 \
+            ! -type f -print -quit)"
+
+          host_net="$(readlink /proc/self/ns/net)"
+          test -n "$host_net"
+          runner_user="$(id -un)"
+          test -n "$runner_user"
+          sudo unshare --net -- sudo -u "$runner_user" env -i \
+            PATH="$PATH" \
+            HOME="$VERIFY_TMP/home" \
+            LANG=C.UTF-8 \
+            LC_ALL=C.UTF-8 \
+            TZ=UTC \
+            TMPDIR="$VERIFY_TMP" \
+            PYTHONDONTWRITEBYTECODE=1 \
+            HOST_NET="$host_net" \
+            SOURCE_ROOT="$GITHUB_WORKSPACE/source" \
+            SANITIZED_ROOT="$SANITIZED_ROOT" \
+            bash --noprofile --norc -c '
+              set -euo pipefail
+              child_net="$(readlink /proc/self/ns/net)"
+              test -n "$child_net"
+              test "$child_net" != "$HOST_NET"
+              test -z "$(ip -o route show table all)"
+              test -z "$(ip -o -6 route show table all)"
+              cd "$SOURCE_ROOT"
+              python3 -B scripts/verify_discharge_f1_inventory.py \
+                "$SANITIZED_ROOT"
+            '
+
+          test "$(sha256sum source/data/cascade.rds | awk '{print $1}')" = \
+            47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe
+          test "$(sha256sum source/data/search_index.rds | awk '{print $1}')" = \
+            a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e
+          test "$(sha256sum source/data/cascade_meta.rds | awk '{print $1}')" = \
+            00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de
+          test "$(sha256sum source/data/neon-cascade-codebook.csv | \
+            awk '{print $1}')" = \
+            a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3
+          test "$(sha256sum source/manifest.json | awk '{print $1}')" = \
+            92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79
+          test "$(git -C source rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          test -z "$(git -C source status --porcelain=v1 --untracked-files=all)"
+          test -z "$(git -C source remote)"
+
+      # The publication checkout does not exist until the token-bearing process
+      # has exited, raw cleanup has succeeded, and a route-free verifier passes.
+      - name: Checkout a fresh publication worktree after cleanup
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+          path: publish
+
+      - name: Stage exactly the four sanitized review receipts
+        run: |
+          set -euo pipefail
+          test ! -e "$RAW_ROOT"
+          test "$(git -C publish rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          test -z "$(git -C publish status --porcelain=v1 --untracked-files=all)"
+          test -z "$(git -C publish config --local --get-regexp \
+            '^http[.].*[.]extraheader$' || true)"
+          git -C publish fetch --quiet --no-tags origin \
+            refs/heads/master:refs/remotes/origin/master
+          test "$(git -C publish rev-parse 'origin/master^{commit}')" = \
+            "$SOURCE_SHA"
+
+          receipt_names=(
+            discharge-f1-release-receipt.json
+            discharge-f1-file-inventory.tsv
+            discharge-f1-schema-inventory.tsv
+            discharge-f2-file-allowlist.tsv
+          )
+          install -d -m 0755 publish/docs/receipts
+          for name in "${receipt_names[@]}"; do
+            source_path="$SANITIZED_ROOT/$name"
+            target_path="publish/docs/receipts/$name"
+            test -f "$source_path"
+            test ! -L "$source_path"
+            install -m 0644 "$source_path" "$target_path"
+            cmp -s "$source_path" "$target_path"
+          done
+
+          changed="$VERIFY_TMP/publication-paths.txt"
+          git -C publish status --porcelain=v1 --untracked-files=all | \
+            cut -c4- | LC_ALL=C sort > "$changed"
+          while IFS= read -r path; do
+            case "$path" in
+              docs/receipts/discharge-f1-release-receipt.json|\
+              docs/receipts/discharge-f1-file-inventory.tsv|\
+              docs/receipts/discharge-f1-schema-inventory.tsv|\
+              docs/receipts/discharge-f2-file-allowlist.tsv) ;;
+              "") ;;
+              *) echo "raw_payload_output_attempted" >&2; exit 1 ;;
+            esac
+          done < "$changed"
+
+      - name: Push one unique direct-child review branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test ! -e "$RAW_ROOT"
+          test -n "${GH_TOKEN:-}"
+          test -z "${NEON_TOKEN:-}"
+          branch="automation/discharge-f1-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git check-ref-format "refs/heads/$branch"
+          git -C publish switch -c "$branch"
+          git -C publish config user.name neon-data-bot
+          git -C publish config user.email \
+            neon-data-bot@users.noreply.github.com
+          git -C publish add -- \
+            docs/receipts/discharge-f1-release-receipt.json \
+            docs/receipts/discharge-f1-file-inventory.tsv \
+            docs/receipts/discharge-f1-schema-inventory.tsv \
+            docs/receipts/discharge-f2-file-allowlist.tsv
+          git -C publish diff --cached --check
+          if git -C publish diff --cached --quiet; then
+            echo "No sanitized F1 receipt change; no review branch created."
+            exit 0
+          fi
+          while IFS= read -r path; do
+            case "$path" in
+              docs/receipts/discharge-f1-release-receipt.json|\
+              docs/receipts/discharge-f1-file-inventory.tsv|\
+              docs/receipts/discharge-f1-schema-inventory.tsv|\
+              docs/receipts/discharge-f2-file-allowlist.tsv) ;;
+              *) echo "raw_payload_output_attempted" >&2; exit 1 ;;
+            esac
+          done < <(git -C publish diff --cached --name-only)
+
+          git -C publish commit -m \
+            "data: propose reviewed Discharge F1 inventory [bot]" \
+            -m "Metadata-only candidate from $SOURCE_SHA; observation bytes and support conclusions remain sealed."
+          published_commit="$(git -C publish rev-parse 'HEAD^{commit}')"
+          test "$(git -C publish rev-parse 'HEAD^1^{commit}')" = "$SOURCE_SHA"
+          test "$(git -C publish rev-list --count "$SOURCE_SHA..HEAD")" -eq 1
+          test -z "$(git -C publish status --porcelain=v1 --untracked-files=all)"
+
+          test "$ASKPASS_PATH" = \
+            "$RUNNER_TEMP/discharge-f1-askpass-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          test ! -e "$ASKPASS_PATH"
+          umask 077
+          {
+            printf '%s\n' '#!/bin/sh'
+            printf '%s\n' 'case "$1" in'
+            printf '%s\n' '  *Username*) printf "%s\\n" x-access-token ;;'
+            printf '%s\n' '  *Password*) printf "%s\\n" "$GH_TOKEN" ;;'
+            printf '%s\n' '  *) exit 1 ;;'
+            printf '%s\n' 'esac'
+          } > "$ASKPASS_PATH"
+          chmod 0700 "$ASKPASS_PATH"
+          test -O "$ASKPASS_PATH"
+          trap 'rm -f -- "$ASKPASS_PATH"' EXIT
+
+          git -C publish remote set-url origin \
+            "https://github.com/${GITHUB_REPOSITORY}.git"
+          export GIT_ASKPASS="$ASKPASS_PATH"
+          export GIT_TERMINAL_PROMPT=0
+          git -C publish fetch --quiet --no-tags origin \
+            refs/heads/master:refs/remotes/origin/master
+          test "$(git -C publish rev-parse 'origin/master^{commit}')" = \
+            "$SOURCE_SHA"
+          test -z "$(git -C publish ls-remote --heads origin \
+            "refs/heads/$branch")"
+          git -C publish push origin "HEAD:refs/heads/$branch"
+          remote_head="$(git -C publish ls-remote --heads origin \
+            "refs/heads/$branch" | awk '{print $1}')"
+          test "$remote_head" = "$published_commit"
+
+          compare_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/master...${branch}?expand=1"
+          {
+            echo "### Sanitized Discharge F1 review branch ready"
+            echo "- Branch: \`$branch\`"
+            echo "- Exact head: \`$published_commit\`"
+            echo "- Acquisition source: \`$SOURCE_SHA\`"
+            echo "- [Open a reviewer-authenticated draft PR]($compare_url)"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "A repository write user must open the draft PR and require exact-head CI."
+
+      - name: Destroy all remaining workflow-owned temporary state
+        if: always()
+        run: |
+          set -euo pipefail
+          expected_raw="$RUNNER_TEMP/discharge-f1-raw-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          expected_sanitized="$RUNNER_TEMP/discharge-f1-sanitized-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          expected_verify="$RUNNER_TEMP/discharge-f1-verify-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          expected_askpass="$RUNNER_TEMP/discharge-f1-askpass-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          test "$RAW_ROOT" = "$expected_raw"
+          test "$SANITIZED_ROOT" = "$expected_sanitized"
+          test "$VERIFY_TMP" = "$expected_verify"
+          test "$ASKPASS_PATH" = "$expected_askpass"
+
+          cleanup_failed=0
+          for path in "$RAW_ROOT" "$SANITIZED_ROOT" "$VERIFY_TMP"; do
+            if test -L "$path"; then
+              sudo rm -f -- "$path" || cleanup_failed=1
+              cleanup_failed=1
+            elif test -e "$path"; then
+              test -d "$path" || cleanup_failed=1
+              test -O "$path" || cleanup_failed=1
+              sudo rm -rf -- "$path" || cleanup_failed=1
+            fi
+            test ! -e "$path" || cleanup_failed=1
+          done
+          if test -L "$ASKPASS_PATH" || test -f "$ASKPASS_PATH"; then
+            rm -f -- "$ASKPASS_PATH" || cleanup_failed=1
+          elif test -e "$ASKPASS_PATH"; then
+            cleanup_failed=1
+          fi
+          test ! -e "$ASKPASS_PATH" || cleanup_failed=1
+
+          if test -d source; then
+            test -z "$(git -C source config --local --get-regexp \
+              '^http[.].*[.]extraheader$' || true)" || cleanup_failed=1
+          fi
+          if test -d publish; then
+            test -z "$(git -C publish config --local --get-regexp \
+              '^http[.].*[.]extraheader$' || true)" || cleanup_failed=1
+          fi
+          printf 'workflow_cleanup_complete=%s\n' \
+            "$([[ "$cleanup_failed" -eq 0 ]] && echo true || echo false)"
+          test "$cleanup_failed" -eq 0
