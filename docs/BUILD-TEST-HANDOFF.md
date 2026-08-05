@@ -3250,3 +3250,55 @@ Rules:
   production. Then specify the independent current-Phenology v2 adapter and acquire
   pinned discharge feasibility evidence; do not inspect new effects or build a
   complementary app before its recorded reopening gate is met.
+
+### 2026-08-04 20:16 EDT - Driver v2 synthesis publication closeout / [Codex]
+
+- **Changed/classification:** appended the immutable PR, default-branch, Pages,
+  and signed-in Connect receipt for the completed Gate 0 synthesis. This entry is
+  `suite-platform` publication evidence only; ecological Driver implication is
+  explicitly **NONE**. No workflow, source pin, adapter, estimator, schema, prior,
+  vote, manifest, generated artifact, or public-surface byte changed after the
+  reviewed synthesis head.
+- **Exact-head validation and merge:** PR #52 exact head
+  `34a1789b11d214862f3e7a3f8dc6ceec092f6b4d` passed canonical run
+  `30945187045` / job `92113293064`. The job installed the pinned runtime, verified
+  Haswell OpenBLAS with one thread, ran the new synthesis ledger gate and the full
+  helper/manifest contract set, fetched all seven recorded siblings detached,
+  rebuilt all nine Driver stages, booted the staged app, and reproduced every
+  committed scientific artifact exactly. The clean, non-draft exact head merged
+  as `a99e0c849998253f47ddd01946f89aedab295418`.
+- **Default-branch and companion validators:** merge-head CI `30945683263` / job
+  `92114951480` passed the same complete rebuild contract on `a99e0c8`; Pages run
+  `30945682541` passed build, deploy, and report on that exact merge. Supplemental
+  merged-default validators previously pending in the Gate 0 entry also completed
+  successfully: Mosquito `30943578486` on `ff505c9f64dd3b99bc543f4078eb2e4dddb6a0f1`,
+  Phenology `30943934425` on `30be615dc438b60e4fa6454973b3b42589b22234`,
+  and Plant Diversity `30944081691` on
+  `28fab5b0bb5fa0fb87b7f5bbf4c2aa690cc5b612`. No failed step or rerun was hidden.
+- **Signed-in Connect receipt:** GitHub-connected publication #111
+  (`019fce5a-cb89-1eef-718e-7e6d91c84d40`) published successfully from exact
+  source commit `a99e0c849998253f47ddd01946f89aedab295418` at 15:58 EDT in five
+  seconds, using Shiny with R 4.5.2. Signed-in history identified that commit and
+  the public share URL loaded the Response Atlas with 46 sites and the unchanged
+  510-row/12-prior artifact. A real public Shiny session switched from Overview to
+  QC and returned the site-specific panel; browser console warning/error logs were
+  empty. Connect logs contained only the previously accepted benign
+  plotly/shinyjs package-built-under-R-4.5.3 warnings and a successful listener/
+  worker connection, with no Startup Error.
+- **Live Pages receipt:** the public project page served the expected Response
+  Atlas title, launch link, nine companion explorers, 46-site disclosure, four
+  measurement layers, construct warning, and attribution. It linked to the same
+  public Connect content and produced no browser warning/error log.
+- **Reproduction/non-impact:** canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  The formal decision remains **`PASS 10 COMPLETE / DRIVER V2 SIGNAL CHANGES
+  HELD / NO CANONICAL BYTE CHANGE`**.
+- **Next action:** merge this append-only receipt, then publish the no-look
+  Phenology v2 adapter specification before implementing support-only code. In
+  parallel, preserve the Continuous Discharge `RELEASE-2026` acquisition plan as
+  feasibility evidence only; neither track may inspect effects, add a vote, or
+  change Driver artifacts before its recorded gate is independently cleared.
