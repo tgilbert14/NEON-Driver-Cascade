@@ -31,8 +31,14 @@ run `31027151110` and Pages run `31027144433`; the public root returned HTTP 200
 and its bytes matched the exact merge.
 F1 is authorized only for the values-free file inventory and reviewed
 non-observation schema metadata. F2, discharge support, and every ecological
-path remain unauthorized; discharge support remains `UNMEASURED`. No Driver
-byte changed. Vegetation's reset lifecycle and Plotly source-registration
+path remain unauthorized; discharge support remains `UNMEASURED`. The F1
+offline implementation is published through PR #61 merge `c8ebe39f` and focused
+runner-context repair PR #62 merge `f16ab3ec`; final merged-master run
+`31036991024`, Pages `31036988796`, and exact public bytes passed. Protected
+environment `discharge-f1` requires reviewer `tgilbert14`, disables administrator
+bypass, and allows only literal `master`, but has no Driver-owned `NEON_TOKEN`;
+therefore no authenticated F1 acquisition has run. No Driver byte changed.
+Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
 The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
 as `dfb44231` and Plant Phenology PR #5 merged as `50106f20`, with pinned validation,

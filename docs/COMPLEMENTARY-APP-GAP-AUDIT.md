@@ -1,8 +1,9 @@
 # Complementary-app gap audit — should the NEON suite add more apps?
 
 Last updated: 2026-08-05. Scope: **formal decision support plus passed F0
-authority and an authorized metadata-only F1 inventory.** No product, estimator,
-Driver data artifact, or manifest changed in this decision.
+authority and a published offline F1 implementation; authenticated acquisition
+is pending a Driver-owned environment token.** No product, estimator, Driver
+data artifact, or manifest changed in this decision.
 
 This document answers the standing question the suite reserves for **learning-loop pass 10**
 (`docs/NEON-SUITE-LEARNING-LOOP.md`): *after the nine product apps, is a complementary app
@@ -42,7 +43,7 @@ density-eligible stream site-years at 24 stream sites; 23 sites have at least si
 On the terrestrial side, only CLBJ, CPER, KONZ, SJER, and WOOD currently have at least six finite
 Driver precipitation years. Candidate-side common support is still unmeasured in both cases.
 
-### Discharge Gate F0 passed / F1 metadata inventory authorized
+### Discharge F0 passed / F1 implementation published / acquisition pending token
 
 The effect-blind [Discharge feasibility specification](DISCHARGE-FEASIBILITY-SPEC.md),
 pure reducer, synthetic fixtures, and
@@ -78,6 +79,22 @@ passed build, status, and deploy on the same merge, and the public root returned
 HTTP 200 with bytes matching that merge. F0 is therefore passed. The frozen
 specification remains byte-identical; the append-only registers carry its
 publication state.
+
+The F1 offline implementation is published through PR #61 exact head
+`bacb1ea4def8dc70b4a1304fc75f4c9dc406bbd2`, exact-head run `31034934400`,
+and merge `c8ebe39f2ff6a45a523a64666caf5e15ce93b278`. Merged-master cascade run
+`31035535292` and Pages run `31035532263` passed, while separate workflow
+registration run `31035532958` correctly exposed that GitHub does not permit
+`runner.temp` in job-level `env`; it started no acquisition job. Focused repair
+PR #62 exact head `ce85c7c8bdaae490f99a38621dcafeb25ff05c1a` passed run
+`31035951191` and merged as `f16ab3ec06659c82a50c32276d0538365e20ef02`.
+Final merged-master run `31036991024` passed all seven jobs, Pages run
+`31036988796` passed build/status/deploy, and the public root matched the exact
+merge at SHA-256 `0187780bc9986530b6ed0d49daf82f52986b9f61a88993f3e52cbe7736b0918b`.
+Environment `discharge-f1` now requires reviewer `tgilbert14`, disables
+administrator bypass, and permits only literal `master`. It and the repository
+contain no `NEON_TOKEN`, so no authenticated query, manifest download, metadata
+fetch, or receipt publication has occurred.
 
 The primary cell is deliberately narrow:
 `qc_pass_record_present_in_utc_year` means that an exact Inverts stream site and UTC calendar year

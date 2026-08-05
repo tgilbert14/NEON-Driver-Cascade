@@ -2,7 +2,8 @@
 
 Decision date: 2026-08-04 EDT
 Decision state: **PASS 10 COMPLETE / PHENOLOGY SEAL 2 HOLD PUBLISHED /
-DISCHARGE F0 PASSED / RECEIPT PUBLISHED / F1 METADATA INVENTORY AUTHORIZED /
+DISCHARGE F0 PASSED / F1 OFFLINE IMPLEMENTATION PUBLISHED /
+AUTHENTICATED F1 ACQUISITION PENDING DRIVER-OWNED TOKEN /
 F2 UNAUTHORIZED / DRIVER V2 SIGNAL CHANGES HELD / NO CANONICAL BYTE CHANGE**
 
 This is the evidence gate between the nine completed companion passes and a future
@@ -109,6 +110,19 @@ would not be a safe integration strategy.
   bytes. F0 is passed. F1 is authorized only for the values-free availability/file
   inventory and reviewed non-observation schema metadata; F2 remains unauthorized.
   Candidate-side support remains `UNMEASURED`, and no Driver byte changed.
+- The F1 offline producer, acquisition boundary, independent verifier,
+  adversarial fixtures, and protected manual workflow are published through PR
+  #61 head `bacb1ea4def8dc70b4a1304fc75f4c9dc406bbd2` / run `31034934400` /
+  merge `c8ebe39f2ff6a45a523a64666caf5e15ce93b278`. GitHub-only validation run
+  `31035532958` rejected `runner.temp` at job-level scope before any job ran;
+  focused repair PR #62 head `ce85c7c8bdaae490f99a38621dcafeb25ff05c1a` /
+  run `31035951191` merged as `f16ab3ec06659c82a50c32276d0538365e20ef02`.
+  Final merged-master run `31036991024` and Pages `31036988796` passed, with
+  exact public-root SHA-256
+  `0187780bc9986530b6ed0d49daf82f52986b9f61a88993f3e52cbe7736b0918b`.
+  Protected environment `discharge-f1` requires reviewer `tgilbert14`, disables
+  administrator bypass, and allows only `master`; it has no `NEON_TOKEN`, so
+  authenticated F1 remains not run and F2 remains unauthorized.
 
 ## Evidence method and vocabulary
 
