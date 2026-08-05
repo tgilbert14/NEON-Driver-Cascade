@@ -23,7 +23,7 @@ common annual calendar.
 > formal parity was not attempted. Current response support and every effect path
 > remain sealed; the v1 artifact is unchanged.
 
-> **Discharge feasibility Gate F0 passed / F1 metadata inventory authorized:** the
+> **Discharge F0 passed / F1 implementation published / acquisition pending token:** the
 > [pre-payload specification](docs/DISCHARGE-FEASIBILITY-SPEC.md), pure reducer,
 > synthetic fixtures, and
 > [values-free response ledger](docs/receipts/discharge-inverts-response-site-years.tsv)
@@ -41,7 +41,18 @@ common annual calendar.
 > `8954c1f8934356c1c1c41706c35cc42680a8b027` passed run `31026452964` and
 > merged as `b75996a85809ed0cd8ba89121e0de18e22063cc7`; merged-master run
 > `31027151110` and Pages run `31027144433` passed, and the public root returned
-> HTTP 200 with bytes matching that exact merge. F0 is passed. F1 is authorized only for the
+> HTTP 200 with bytes matching that exact merge. F1 implementation PR #61 exact
+> head `bacb1ea4def8dc70b4a1304fc75f4c9dc406bbd2` passed run `31034934400`
+> and merged as `c8ebe39f2ff6a45a523a64666caf5e15ce93b278`. A GitHub-only
+> runner-context validation defect was repaired by PR #62 exact head
+> `ce85c7c8bdaae490f99a38621dcafeb25ff05c1a`, which passed run
+> `31035951191` and merged as `f16ab3ec06659c82a50c32276d0538365e20ef02`.
+> Final merged-master run `31036991024` and Pages run `31036988796` passed all
+> seven jobs and deploy stages; the public root bytes match that exact merge.
+> The protected `discharge-f1` environment now requires reviewer `tgilbert14`,
+> disables administrator bypass, and permits only literal `master`; its
+> Driver-owned `NEON_TOKEN` is not yet configured, so no authenticated F1 run
+> has occurred. F0 is passed. F1 is authorized only for the
 > values-free availability/file inventory and reviewed non-observation schema
 > metadata; F2 and observation-table bytes remain unauthorized, and discharge
 > support remains `UNMEASURED`. The eventual gate can measure only
