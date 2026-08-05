@@ -40,11 +40,6 @@ jobs:
       name: discharge-f1
     permissions:
       contents: write
-    env:
-      RAW_ROOT: ${{ runner.temp }}/discharge-f1-raw-${{ github.run_id }}-${{ github.run_attempt }}
-      SANITIZED_ROOT: ${{ runner.temp }}/discharge-f1-sanitized-${{ github.run_id }}-${{ github.run_attempt }}
-      VERIFY_TMP: ${{ runner.temp }}/discharge-f1-verify-${{ github.run_id }}-${{ github.run_attempt }}
-      ASKPASS_PATH: ${{ runner.temp }}/discharge-f1-askpass-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Assert the protected literal-master dispatch
         run: |
@@ -57,6 +52,34 @@ jobs:
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
           test "$GITHUB_SHA" = "$SOURCE_SHA"
           test "$CONFIRM_SCOPE" = F1_METADATA_ONLY_NO_OBSERVATION_BYTES
+
+      # The runner context is unavailable while GitHub evaluates job-level env.
+      # Derive these exact runner-owned paths only after a runner exists, then
+      # expose them to later steps through GitHub's per-job environment file.
+      - name: Define exact runner-owned acquisition paths
+        run: |
+          set -euo pipefail
+          test -n "$RUNNER_TEMP"
+          test -d "$RUNNER_TEMP"
+          test ! -L "$RUNNER_TEMP"
+          [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]]
+          raw_root="$RUNNER_TEMP/discharge-f1-raw-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sanitized_root="$RUNNER_TEMP/discharge-f1-sanitized-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          verify_tmp="$RUNNER_TEMP/discharge-f1-verify-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          askpass_path="$RUNNER_TEMP/discharge-f1-askpass-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          for path in "$raw_root" "$sanitized_root" "$verify_tmp" "$askpass_path"; do
+            case "$path" in
+              "$RUNNER_TEMP"/*) ;;
+              *) echo "runner_path_escape" >&2; exit 1 ;;
+            esac
+          done
+          {
+            printf 'RAW_ROOT=%s\n' "$raw_root"
+            printf 'SANITIZED_ROOT=%s\n' "$sanitized_root"
+            printf 'VERIFY_TMP=%s\n' "$verify_tmp"
+            printf 'ASKPASS_PATH=%s\n' "$askpass_path"
+          } >> "$GITHUB_ENV"
 
       - name: Checkout only the exact reviewed acquisition authority
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
