@@ -23,7 +23,7 @@ common annual calendar.
 > formal parity was not attempted. Current response support and every effect path
 > remain sealed; the v1 artifact is unchanged.
 
-> **Discharge feasibility Gate F0 candidate:** the
+> **Discharge feasibility Gate F0 implementation published / receipt candidate:** the
 > [pre-payload specification](docs/DISCHARGE-FEASIBILITY-SPEC.md), pure reducer,
 > synthetic fixtures, and
 > [values-free response ledger](docs/receipts/discharge-inverts-response-site-years.tsv)
@@ -33,9 +33,14 @@ common annual calendar.
 > `c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8` / SHA-256
 > `79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`;
 > F0 CI checks only its bytes and exact Inverts commit/tree metadata, never an RDS
-> blob. This candidate is not passed or published. F1 remains unauthorized until
-> a follow-up receipt binds an exact reviewed merge and Pages publication. The
-> gate can measure only response-anchored discharge-site-year and QC-pass record
+> blob. PR #59 exact head `0a8b71ccb3c5f47c13a1f7f59d73dd2a297e6d5e`
+> passed run `31024370208` and merged as
+> `28f00ecef8091a41af58db3f82ef9519ce940ceb`; merged-master run
+> `31024947729`, Pages run `31024946671`, and the public HTTP 200 check passed on
+> that exact merge. This append-only publication receipt is still a candidate,
+> so F0 is not yet passed and F1 remains unauthorized until the receipt itself
+> merges and Pages-verifies. The gate can measure only response-anchored
+> discharge-site-year and QC-pass record
 > presence and may reopen review—not a build, metric, effect, prior, vote, Driver
 > rebuild, or Driver byte change.
 

@@ -2,8 +2,8 @@
 
 Decision date: 2026-08-04 EDT
 Decision state: **PASS 10 COMPLETE / PHENOLOGY SEAL 2 HOLD PUBLISHED /
-DISCHARGE F0 CANDIDATE FROZEN FOR REVIEW / DRIVER V2 SIGNAL CHANGES HELD / NO
-CANONICAL BYTE CHANGE**
+DISCHARGE F0 IMPLEMENTATION PUBLISHED + RECEIPT CANDIDATE / F0 NOT YET PASSED /
+F1 UNAUTHORIZED / DRIVER V2 SIGNAL CHANGES HELD / NO CANONICAL BYTE CHANGE**
 
 This is the evidence gate between the nine completed companion passes and a future
 Driver v2 rebuild. It records what is safe to reuse, what is only context, what is
@@ -76,7 +76,7 @@ would not be a safe integration strategy.
   legacy acquisition, Seal-1, and values-free Seal-2 HOLD jobs. Pages run
   `31016812195` built and deployed the exact merge, and the public root returned
   HTTP 200. No scientific or runtime byte changed.
-- Discharge feasibility Gate F0 is a candidate frozen for review in
+- Discharge feasibility Gate F0 has a published implementation in
   [`DISCHARGE-FEASIBILITY-SPEC.md`](DISCHARGE-FEASIBILITY-SPEC.md). It includes
   the specification, pure reducer, synthetic fixtures, and the
   [committed values-free response ledger](receipts/discharge-inverts-response-site-years.tsv)
@@ -93,10 +93,16 @@ would not be a safe integration strategy.
   or a flow metric. It keeps `historical_uncorrected_1_min_only` distinct,
   enforces ordinary/BIGC chronology, rejects TOMB before QC, permits
   `namedLocation` only as identity, makes sensitivities non-rescuing, and maps
-  `REOPEN_REVIEW`/`HOLD` to review-only/do-not-build human dispositions. The F0
-  candidate is not passed or published; F1 remains unauthorized until a
-  follow-up exact merge/Pages receipt. Candidate-side support remains
-  `UNMEASURED`, and no Driver byte changed.
+  `REOPEN_REVIEW`/`HOLD` to review-only/do-not-build human dispositions.
+  Implementation PR #59 exact head
+  `0a8b71ccb3c5f47c13a1f7f59d73dd2a297e6d5e` passed all six jobs in run
+  `31024370208`, merged as
+  `28f00ecef8091a41af58db3f82ef9519ce940ceb`, and independently passed all six
+  merged-master jobs in run `31024947729`. Pages run `31024946671` built and
+  deployed that exact merge; the public root returned HTTP 200. This append-only
+  receipt remains a candidate until it is itself merged and Pages-verified, so
+  F0 is not yet passed and F1 remains unauthorized. Candidate-side support
+  remains `UNMEASURED`, and no Driver byte changed.
 
 ## Evidence method and vocabulary
 
@@ -229,11 +235,11 @@ production-proven Driver edge.
 The formal decision is **DEFER BUILD / ACQUIRE EVIDENCE**.
 
 - **First:** follow the frozen Continuous Discharge `DP4.00130.001` staged gate:
-  publish F0 and its exact receipt, inventory only the reviewed F1 non-observation
-  metadata, then separately authorize any F2 pinned payload and exact QC-cleared
-  discharge×Inverts site-year intersection. At at least three recorded-stream
-  sites with at least six common years, reopen independent review—not a build;
-  any later build requires separate authority.
+  publish the append-only F0 receipt, inventory only the separately reviewed F1
+  non-observation metadata, then separately authorize any F2 pinned payload and
+  exact QC-cleared discharge×Inverts site-year intersection. At at least three
+  recorded-stream sites with at least six common years, reopen independent
+  review—not a build; any later build requires separate authority.
 - **Second:** acquire a pinned Herbaceous Clip Harvest `DP1.10023.001` bundle and
   publish the exact coverage-cleared clip×Driver-precipitation intersection. Reopen
   only at at least three temperate-grassland sites with at least six common years.
@@ -271,10 +277,10 @@ The detailed ranked backlog and rejected alternatives remain in
    separately reviewed registry stage; never silently normalize the frozen
    contract. Current response support remains forbidden and Seal 3, including all
    effect execution, remains sealed. Leaving Phenology held is valid.
-5. Review the Discharge Gate F0 candidate and publish it through exact-head,
-   merged-default, and Pages gates without accessing a discharge payload or an
-   Inverts RDS blob. Merge a follow-up receipt binding those exact identities.
-   Only then may a separate authority run Gate F1 against the exact RELEASE-2026
+5. Publish the append-only Discharge Gate F0 receipt that binds the completed
+   exact-head, merged-default, and Pages implementation gates. Only after that
+   receipt itself merges and Pages-verifies may a separate authority run Gate F1
+   against the exact RELEASE-2026
    availability/file manifest and the reviewed non-observation schema-metadata
    allowlist. Payload columns remain sealed
    until that values-free inventory is independently reviewed; no app,

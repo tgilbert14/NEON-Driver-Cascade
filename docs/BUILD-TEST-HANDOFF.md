@@ -3872,3 +3872,51 @@ Rules:
   require every literal-head job to pass, merge only that reviewed head, then
   verify merged-default CI, Pages, and HTTP 200. Publish a separate follow-up
   receipt binding those exact identities before authorizing any F1 inventory.
+
+### 2026-08-05 09:35 MST - Continuous Discharge F0 implementation publication / append-only receipt candidate / [Codex]
+
+- **Classification and current authority:** documentation-only publication
+  receipt candidate for the scientific-contract + suite-platform F0
+  implementation; Driver impact `NONE`; no app-local change. The implementation
+  is published, but F0 is **not yet passed** and F1 remains unauthorized until
+  this append-only receipt itself passes review, merges, passes merged-default
+  CI, and publishes through Pages with a public HTTP 200 check.
+- **Exact reviewed implementation:** PR #59 exact head
+  `0a8b71ccb3c5f47c13a1f7f59d73dd2a297e6d5e` passed exact-head run
+  `31024370208`. All six jobs succeeded: authority `92368904355`, Seal 1
+  `92368904384`, discharge synthetic `92368904417`, Phenology acquisition
+  `92368904433`, canonical rebuild `92368904457`, and Seal 2 HOLD
+  `92370103528`.
+- **Exact merge and default-branch evidence:** only the reviewed head merged as
+  `28f00ecef8091a41af58db3f82ef9519ce940ceb`. Merged-master run
+  `31024947729` repeated all six successful jobs: rebuild `92370870240`,
+  authority `92370870294`, Seal 1 `92370870359`, acquisition `92370870396`,
+  discharge synthetic `92370870524`, and Seal 2 HOLD `92372099261`.
+- **Pages and public evidence:** Pages run `31024946671` passed build
+  `92370871661`, status `92370999666`, and deploy `92370999669` on exact merge
+  `28f00ece...`. The public Driver root returned HTTP 200 after deployment.
+- **Connect decision:** no Connect deployment was required. The base-to-merge
+  comparison was byte-identical for `global.R`, `ui.R`, `server.R`, every
+  tracked file under `R/` and `www/`, all 12 manifest-listed runtime files, the
+  four generated data artifacts, and the manifest. The F0 files live outside
+  the deployed Driver runtime payload.
+- **Scientific and acquisition boundary:** no discharge credential, capability
+  URL, manifest response, observation table URL, payload, value, token, or
+  upstream Inverts RDS blob was accessed, logged, retained, or committed.
+  Discharge support remains `UNMEASURED`; publication of implementation code
+  supplies no ecological result, effect, prior, vote, app, or Driver signal.
+  The frozen `docs/DISCHARGE-FEASIBILITY-SPEC.md`, reducer, CI, tests, and exact
+  values-free response ledger are unchanged by this receipt candidate.
+- **Non-impact receipt:** canonical SHA-256 remains cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Receipt status and next action:** this entry records implementation
+  publication only; the current documentation commit has no PR, run, merge, or
+  Pages identity yet. Commit and push this exact append-only receipt, require its
+  literal-head CI, merge only that reviewed head, then verify merged-default CI,
+  Pages, and public HTTP 200. Only that published receipt may mark F0 passed and
+  authorize a separate F1 metadata-inventory branch. F2, observation payloads,
+  all metrics/effects, a new app, and every Driver byte change remain forbidden.

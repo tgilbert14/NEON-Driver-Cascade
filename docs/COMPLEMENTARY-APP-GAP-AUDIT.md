@@ -1,8 +1,8 @@
 # Complementary-app gap audit — should the NEON suite add more apps?
 
-Last updated: 2026-08-05. Scope: **formal decision support plus a pre-payload F0
-candidate frozen for review.** No product, estimator, Driver data artifact, or
-manifest changed in this decision.
+Last updated: 2026-08-05. Scope: **formal decision support plus a published
+pre-payload F0 implementation and append-only receipt candidate.** No product,
+estimator, Driver data artifact, or manifest changed in this decision.
 
 This document answers the standing question the suite reserves for **learning-loop pass 10**
 (`docs/NEON-SUITE-LEARNING-LOOP.md`): *after the nine product apps, is a complementary app
@@ -21,9 +21,9 @@ ideas remain useful, but neither has an exact pinned candidate bundle or a measu
 candidate-to-response intersection. A catalog roster, calendar overlap, direct site-code mismatch,
 or domain-year proxy is not an eligible ecological join.
 
-That program decision does not skip the staged authorities. Current authorization
-stops at the F0 candidate; F1 is unauthorized until a follow-up receipt proves the
-exact reviewed F0 merge and Pages publication.
+That program decision does not skip the staged authorities. The F0 implementation
+is published, but current authorization stops at its append-only receipt candidate;
+F1 is unauthorized until that receipt itself merges and Pages-verifies.
 
 1. Acquire a pinned Continuous Discharge `DP4.00130.001` source bundle first. Intersect its exact
    QC-cleared `site x year` support with the released Inverts density-eligible stream panel. Reopen
@@ -40,12 +40,12 @@ density-eligible stream site-years at 24 stream sites; 23 sites have at least si
 On the terrestrial side, only CLBJ, CPER, KONZ, SJER, and WOOD currently have at least six finite
 Driver precipitation years. Candidate-side common support is still unmeasured in both cases.
 
-### Discharge Gate F0 — candidate frozen for review before payload access
+### Discharge Gate F0 — implementation published / receipt candidate
 
 The effect-blind [Discharge feasibility specification](DISCHARGE-FEASIBILITY-SPEC.md),
 pure reducer, synthetic fixtures, and
 [committed response ledger](receipts/discharge-inverts-response-site-years.tsv)
-form the F0 candidate. The ledger's exact Git blob is
+form the published F0 implementation. The ledger's exact Git blob is
 `c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8` and its SHA-256 is
 `79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`.
 It freezes the already-completed pass-10/manual projection from exact Inverts
@@ -57,6 +57,15 @@ F1, or F2: the committed two-column ledger is now the no-look boundary, and CI
 checks only its bytes plus upstream commit/tree metadata, never an Inverts RDS
 blob. It contains 210 site-years at 24 stream sites, 23 with `n >= 6`.
 The discharge authority is exact `DP4.00130.001` `RELEASE-2026`, DOI `10.48443/4n6c-gc44`.
+
+Implementation PR #59 exact head
+`0a8b71ccb3c5f47c13a1f7f59d73dd2a297e6d5e` passed all six jobs in run
+`31024370208` and merged only that head as
+`28f00ecef8091a41af58db3f82ef9519ce940ceb`. Merged-master run
+`31024947729` independently repeated all six jobs; Pages run `31024946671`
+passed build, status, and deploy on the same merge, and the public root returned
+HTTP 200. The five canonical Driver hashes remained unchanged. No Connect
+deployment was required because no app/runtime or generated Driver byte changed.
 
 The primary cell is deliberately narrow:
 `qc_pass_record_present_in_utc_year` means that an exact Inverts stream site and UTC calendar year
@@ -82,8 +91,9 @@ maps to `HOLD / DO NOT BUILD`.
 
 The same reopening floor remains: at least three unambiguous exact stream sites
 with at least six common primary years. Clearing it reopens **review**, not a
-build. F0 is not yet passed or published, so F1 remains unauthorized until the
-follow-up exact merge/Pages receipt. Once separately authorized, F1 may inspect
+build. The implementation is published, but F0 is not passed until this
+append-only receipt candidate is itself merged and Pages-verified; F1 therefore
+remains unauthorized. Once separately authorized, F1 may inspect
 only the authenticated values-free availability/file manifest and the reviewed
 non-observation schema-metadata allowlist; Gate F2 alone may inspect the
 registered payload columns. No stage may compute a
@@ -422,9 +432,9 @@ future sessions from re-hunting dead ends.
    candidate support, not companion release readiness.
 2. **Acquire feasibility evidence in this order:** discharge → herbaceous clip harvest → only then
    reconsider periphyton or water temperature. For Discharge, acquisition follows the frozen staged
-   sequence: publish F0 and its receipt, inventory only the reviewed F1 non-observation metadata,
-   then separately authorize any F2 pinned payload/support artifact. It never means a UI, adapter,
-   prior, or vote.
+   sequence: publish the append-only F0 receipt, inventory only the separately reviewed F1
+   non-observation metadata, then separately authorize any F2 pinned payload/support artifact. It
+   never means a UI, adapter, prior, or vote.
 3. **Reopen independent review only at the registered floors:** discharge×Inverts at at least three
    stream sites with at least six common eligible years, or clip×Driver precipitation at at least
    three temperate-grassland sites with at least six common coverage-cleared years. Crossing a floor
