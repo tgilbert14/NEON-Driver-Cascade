@@ -3435,3 +3435,89 @@ Rules:
   three isolated Seal-1 modules and independent synthetic tests on this branch.
   Do not deserialize current or legacy Phenology bundles, create Seal-3 receipts,
   source effect code, or expose any new response/climate/effect value.
+
+### 2026-08-04 21:54 MST - Phenology v2 Seal-1 implementation candidate / [Codex]
+
+- **Safe base and code authority:** branch `agent/phenology-v2-seal1` starts from
+  exact merged Seal-0 authority
+  `61568339de3585db59e0ed73fed2d4b203a29bef`. Literal-head checkout repair was
+  checkpointed as `2cc02149fc8f96e1b7463e48ef4217bf6608dd85`; the complete
+  reviewed Seal-1 implementation is commit
+  `ff643116678e8115d8817268913c6c4408838bf1`. Publication remains pending the
+  first PR run that proves both jobs executed this branch's literal head.
+- **Changed/classification:** added `R/phenology_adapter_v2.R`,
+  `R/phenology_response_model_v2.R`,
+  `R/phenology_climate_support_mask_v2.R`,
+  `scripts/test_phenology_adapter_v2.R`, the exact runtime receipt at
+  `docs/receipts/phenology-v2-seal1-runtime.json`, and an isolated Seal-1 CI job.
+  This is `scientific-contract` implementation plus `suite-platform` validation.
+  It changes no source pin, published data schema, prior, vote, manifest entry,
+  generated Driver artifact, app runtime, or public-surface byte.
+- **Pure adapter:** the synthetic-only Driver-owned adapter implements the frozen
+  source/date two-clock contract, exact duplicate and mixed-status visit rules,
+  conservative earliest-phase censor envelope, roster/taxonomy/plot audits,
+  recurrent connected panels, compatibility and v2 annual support, context-only
+  leaf-active support, exact 510-row/46-site calendar topology, and a direct
+  adapter-to-response schema. Climate/effect-like bundle, column, calendar, and
+  audit payloads fail closed.
+- **Response and mask isolation:** the sole response model is the registered
+  Gaussian interval-censored `survreg` with equal species-year cell weights,
+  stable individual clustering, exact controls, full-rank and covariance gates,
+  two-fit determinism, full species-by-year latent predictions, and equal-species
+  annual medians. The response-presence projection is values-free and enforces the
+  six-year eligibility gate. The separate climate builder accepts only that
+  boolean mask and allowlisted monthly climate input, applies exact completeness,
+  range, and equality-retaining within-site MAD rules, and emits only keyed
+  booleans, counts, and opaque digest material. Neither module can call an effect.
+- **Runtime authority:** canonical execution is Ubuntu 24.04 / R 4.5.2 / Posit
+  2026-07-15 / Haswell OpenBLAS / one thread. The receipt pins
+  `survival 3.8-9` archive SHA-256
+  `741f925dca22ef8f0aa67f798df19148ad56be3b09e8c8eea09e351ac5f99282`,
+  `metafor 5.0-1` archive SHA-256
+  `953f1a43794a9d660225cad666849f1100263e5cad486fb8becc1ad32f81e73f`,
+  and the complete 20-package hard-dependency inventory digest
+  `f94392ce27024f6c7828ade4c3ff025f618d08e90ef68210fa3fed68f7c7d01a`.
+  CI re-downloads and hashes both source archives, reconstructs dependency
+  closure, and checks the loaded OS/R/BLAS/thread identity before testing.
+- **Synthetic verification:** 38 fixture families pass across two clean
+  `static-lock`, two clean `adapter-response`, and two clean `climate-mask`
+  processes. Stdout and stderr reproduce byte-for-byte. The response processes
+  also emit only opaque SHA-256 receipt
+  `188dca20ce8e3373e88233025336fcede6008941cb005a88952226d7cd1ae239`
+  locally over canonical model rows, every full-grid species-year latent
+  prediction, annual responses, and diagnostics; both production prediction
+  vectors are exactly identical and every value agrees with the independent
+  numerical oracle within the registered tolerance. The fit object and response
+  values are never printed.
+- **Adversarial coverage:** fixtures cover exact interval algebra, all registered
+  status/state vocabularies, same-visit conflicts, source/date disagreement,
+  left/right censoring, roster exceptions and failures, recurrent/panel/support
+  boundaries, factor coding, warnings/nonconvergence/covariance/range failure,
+  response/mask eligibility contradictions, leaf-active and coverage boundaries,
+  monthly completeness/range/MAD equality, order and locale invariance, malformed
+  schemas, whitespace identities, ALTREP/dimensioned columns, payload smuggling,
+  effect-function aliasing, and generated-artifact nonmutation. Independent
+  architecture and runtime reviews found no remaining P0/P1/P2 contract defect.
+- **No-look receipt:** no current or legacy Phenology RDS was checked out,
+  deserialized, summarized, modeled, or repaired during Seal 1. CI verifies only
+  immutable Git commit/tree/manifest identities without checking out Phenology
+  data. No new response support, response value, climate pair, association,
+  coefficient, sign, rank, interval, p-value, effect, or vote was accessed or
+  exposed. Current v2 compatibility/model support remains `UNMEASURED` and every
+  effect path remains sealed.
+- **Local validation/non-impact:** the full six-process orchestrator,
+  `scripts/test_suite_synthesis.R`, parsing of all four new R/test files, workflow
+  YAML parsing, runtime-receipt JSON parsing, inventory-digest reconstruction, and
+  `git diff --check` passed. No `.cascade-rebuild.lock` exists; no local rebuild,
+  generation, promotion, backup, staging, or Phenology-data operation ran.
+  Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Next action:** commit the aligned registers/handoff, push the exact branch,
+  open a guarded PR, require literal-head Seal-1 plus full canonical rebuild CI,
+  merge only that head, and verify exact merged-default CI and Pages. After a
+  publication receipt, begin only Seal 2 against legacy pin `81e339e9...`; do not
+  inspect current response/effect output to repair parity or begin Seal 3 early.

@@ -19,12 +19,16 @@ would not be a safe integration strategy.
   published v1 artifact, and both remain **HOLD for v2 re-authorization**. The
   effect-blind [Phenology Seal-0 registry](PHENOLOGY-V2-ADAPTER-SPEC.md) now
   freezes the independent adapter, response model, support-mask, effect, and
-  pooling contracts; implementation, current response support, and all v2 effects
-  remain separate later gates.
+  pooling contracts. Seal 1 now implements only the pure adapter, response-only
+  model, and one-way values-free mask under an exact runtime lock; 38 synthetic
+  fixture families passed across six fresh processes without deserializing either
+  the legacy or current Phenology RDS family. Legacy parity, current response
+  support, climate support, and all v2 effects remain separate later gates.
 - Every complementary-app build is **DEFERRED**. Only pinned feasibility evidence
   acquisition is authorized: discharge first, herbaceous clip harvest second.
-- This synthesis changes documentation and audit tooling only. It does not update a
-  source pin, schema, prior, vote, row, manifest entry, or generated Driver artifact.
+- Seal 1 adds isolated Driver-owned implementation, synthetic tests, CI, and a
+  runtime-lock receipt only. It does not update a source pin, published schema,
+  prior, vote, row, manifest entry, or generated Driver artifact.
 
 ## Evidence method and vocabulary
 
@@ -170,17 +174,20 @@ The detailed ranked backlog and rejected alternatives remain in
 
 ## Authorized next work
 
-1. Freeze this synthesis as the v2 decision baseline.
-2. Implement and independently test only Seal 1 of the frozen
-   [current-release Phenology registry](PHENOLOGY-V2-ADAPTER-SPEC.md): the pure
-   two-clock adapter, response-only interval model, one-way values-free climate
-   support mask, synthetic fixtures, and exact runtime pin. Do not access current
-   response support until that implementation is merged and Seal 2 legacy parity
-   passes; do not access effects before the later support receipts and explicit
-   unseal.
-3. Acquire discharge feasibility evidence without building an app, adding a prior,
+1. Preserve this synthesis as the v2 decision baseline.
+2. Seal 1 is complete: the frozen
+   [Phenology registry](PHENOLOGY-V2-ADAPTER-SPEC.md) has a pure two-clock
+   adapter, response-only interval model, one-way values-free climate-support-mask
+   builder, adversarial synthetic fixtures, and exact runtime pin. It accessed no
+   current or legacy Phenology response family and produced no effect.
+3. Run Seal 2 only against exact legacy pin `81e339e9...` and prove sections 8.3
+   and 9.3. Do not inspect current response/effect output to repair a legacy
+   mismatch. Current support remains forbidden until this separate gate passes;
+   effects remain forbidden until the later receipts, support decision, and
+   explicit unseal.
+4. Acquire discharge feasibility evidence without building an app, adding a prior,
    or changing Driver artifacts.
-4. Revisit other companion adapters only when a named Driver question requires the
+5. Revisit other companion adapters only when a named Driver question requires the
    metric. Do not ingest all available app outputs merely to make the atlas larger.
 
 ## No-build receipt
