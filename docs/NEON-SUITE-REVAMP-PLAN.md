@@ -9,9 +9,21 @@ Progress: Driver baseline and all nine companion passes are complete and
 production-verified. Cross-product synthesis and the formal complementary-product
 decision are also complete: every new app build is deferred, discharge and
 herbaceous clip harvest are authorized for pinned feasibility acquisition only,
-and Driver v2 Gate 0 authorizes no blind repin or canonical byte change. The next
-implementation is a pre-specified independent adapter for the current Phenology
-release. Vegetation's reset lifecycle and Plotly source-registration
+and Driver v2 Gate 0 authorizes no blind repin or canonical byte change. Phenology
+Seal 2 is published as a schema `HOLD`, with its append-only receipt merged as
+`60989446`; all current response and effect gates remain sealed. The effect-blind
+Discharge feasibility Gate F0 is now a **candidate frozen for review**, not a
+passed or published authority. Its specification, pure reducer, synthetic
+fixtures, and committed values-free response ledger freeze exact RELEASE-2026
+inventory, two-table/QC, response-key, clock, chronology, special-site, and
+record-presence rules before any discharge payload access. The ledger at
+`docs/receipts/discharge-inverts-response-site-years.tsv` is exact Git blob
+`c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8` / SHA-256
+`79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`;
+F0 CI verifies only that ledger plus exact Inverts commit/tree metadata and never
+fetches or deserializes an Inverts RDS blob. F1 remains unauthorized until a
+follow-up receipt binds the reviewed F0 merge and Pages publication. No Driver
+byte changed. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
 The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
 as `dfb44231` and Plant Phenology PR #5 merged as `50106f20`, with pinned validation,
@@ -276,13 +288,22 @@ on the following registered criteria:
 - exact adapter/test feasibility; and
 - risk of creating a proxy that looks causal.
 
-Formal 2026-08-04 decision: **DEFER every new app build / AUTHORIZE feasibility
-evidence acquisition only.** No candidate-side bundle and measured eligible
-intersection currently clears the build gate.
+Formal 2026-08-04 decision: **DEFER every new app build / AUTHORIZE staged
+feasibility evidence only.** No candidate-side bundle and measured eligible
+intersection currently clears the build gate. Current executable authorization
+stops at the F0 candidate.
 
-1. Acquire a pinned Continuous Discharge `DP4.00130.001` bundle first. Reopen BUILD
-   only if its QC-cleared intersection with released Inverts contains at least
-   three recorded-stream sites with at least six common years each.
+1. Review and publish the Continuous Discharge `DP4.00130.001` F0 candidate, then
+   merge a follow-up receipt binding its exact reviewed merge and Pages identity.
+   Only that receipt may authorize F1 manifest/schema inventory, followed by a
+   separately reviewed F2 payload measurement. Reopen independent review—not an
+   automatic BUILD—only if the QC-cleared intersection with released Inverts
+   contains at least three recorded-stream sites with at least six common years
+   each. The F2 receipt must left-anchor all 210 response keys, retain explicit
+   `FALSE` states, enforce the ordinary/BIGC chronology, reject TOMB before QC,
+   preserve `namedLocation` only as identity, normalize
+   `historical_uncorrected_1_min_only`, and map `REOPEN_REVIEW`/`HOLD` to their
+   review-only/do-not-build human dispositions.
 2. Acquire a pinned Herbaceous Clip Harvest `DP1.10023.001` bundle second. Reopen
    BUILD or signal adoption only if its coverage-cleared intersection with the
    Driver precipitation grid contains at least three temperate-grassland sites

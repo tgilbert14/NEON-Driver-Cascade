@@ -129,6 +129,339 @@ jobs:
       - name: Reject whitespace errors
         run: git diff --check
 
+  discharge-feasibility-f0-synthetic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the literal Discharge F0 revision
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/discharge_feasibility_contract.R
+            scripts/test_discharge_feasibility_contract.R
+          sparse-checkout-cone-mode: false
+
+      - name: Assert the literal requested revision and synthetic-only surface
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          expected="$RUNNER_TEMP/discharge-f0-sparse-expected.txt"
+          actual="$RUNNER_TEMP/discharge-f0-sparse-actual.txt"
+          printf '%s\n' \
+            scripts/discharge_feasibility_contract.R \
+            scripts/test_discharge_feasibility_contract.R > "$expected"
+          find . -path './.git' -prune -o -type f -printf '%P\n' |
+            LC_ALL=C sort > "$actual"
+          cmp -s "$expected" "$actual"
+          test -z "$(find . -path './.git' -prune -o -type l -print -quit)"
+          rm -f -- "$expected" "$actual"
+          test -z "$(git config --local --get-regexp '^http[.].*[.]extraheader$' || true)"
+          git remote remove origin
+          test -z "$(git remote)"
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: '4.5.2'
+          use-public-rspm: false
+
+      - name: Freeze the synthetic execution surface
+        run: |
+          set -euo pipefail
+          child_tmp="$RUNNER_TEMP/discharge-f0-synthetic-child-tmp"
+          baseline="$RUNNER_TEMP/discharge-f0-synthetic-before.tsv"
+          test ! -e "$child_tmp"
+          install -d -m 0700 "$child_tmp"
+          test -O "$child_tmp"
+          test "$(stat -c '%a' "$child_tmp")" = 700
+
+          capture_inventory() {
+            output="$1"
+            {
+              find . -path './.git' -prune -o \
+                -printf 'entry\t%y\t%m\t%P\n' | LC_ALL=C sort
+              find . -path './.git' -prune -o -type f -print0 |
+                LC_ALL=C sort -z |
+                while IFS= read -r -d '' path; do
+                  printf 'sha256\t%s\t' "${path#./}"
+                  sha256sum "$path" | awk '{print $1}'
+                done
+            } > "$output"
+          }
+          capture_inventory "$baseline"
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+          untracked="$(git ls-files --others --exclude-standard)"
+          porcelain="$(git status --porcelain=v1 --untracked-files=all)"
+          test -z "$untracked"
+          test -z "$porcelain"
+
+      - name: Run the synthetic contract in a verified empty network namespace
+        run: |
+          set -euo pipefail
+          child_tmp="$RUNNER_TEMP/discharge-f0-synthetic-child-tmp"
+          test "$child_tmp" = "$RUNNER_TEMP/discharge-f0-synthetic-child-tmp"
+          test -d "$child_tmp"
+          test -O "$child_tmp"
+          test "$(stat -c '%a' "$child_tmp")" = 700
+          host_net="$(readlink /proc/self/ns/net)"
+          test -n "$host_net"
+
+          sudo unshare --net -- env -i \
+            PATH="$PATH" \
+            LANG=C.UTF-8 \
+            LC_ALL=C.UTF-8 \
+            TZ=UTC \
+            TMPDIR="$child_tmp" \
+            TMP_OWNER_UID="$(id -u)" \
+            HOST_NET="$host_net" \
+            bash --noprofile --norc -c '
+              set -euo pipefail
+              child_net="$(readlink /proc/self/ns/net)"
+              test -n "$child_net"
+              test "$child_net" != "$HOST_NET"
+              ipv4_routes="$(ip -o route show table all)"
+              ipv6_routes="$(ip -o -6 route show table all)"
+              test -z "$ipv4_routes"
+              test -z "$ipv6_routes"
+              test -d "$TMPDIR"
+              test "$(stat -c "%u" "$TMPDIR")" = "$TMP_OWNER_UID"
+              test "$(stat -c "%a" "$TMPDIR")" = 700
+              Rscript --vanilla \
+                scripts/test_discharge_feasibility_contract.R
+            '
+
+      - name: Reassert the synthetic surface and destroy owned temporary state
+        if: always()
+        run: |
+          set -euo pipefail
+          child_tmp="$RUNNER_TEMP/discharge-f0-synthetic-child-tmp"
+          baseline="$RUNNER_TEMP/discharge-f0-synthetic-before.tsv"
+          after="$RUNNER_TEMP/discharge-f0-synthetic-after.tsv"
+          test "$child_tmp" = "$RUNNER_TEMP/discharge-f0-synthetic-child-tmp"
+          cleanup() {
+            sudo rm -rf -- "$child_tmp"
+            rm -f -- "$baseline" "$after"
+          }
+          trap cleanup EXIT
+          test -f "$baseline"
+          {
+            find . -path './.git' -prune -o \
+              -printf 'entry\t%y\t%m\t%P\n' | LC_ALL=C sort
+            find . -path './.git' -prune -o -type f -print0 |
+              LC_ALL=C sort -z |
+              while IFS= read -r -d '' path; do
+                printf 'sha256\t%s\t' "${path#./}"
+                sha256sum "$path" | awk '{print $1}'
+              done
+          } > "$after"
+          cmp -s "$baseline" "$after"
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+          untracked="$(git ls-files --others --exclude-standard)"
+          porcelain="$(git status --porcelain=v1 --untracked-files=all)"
+          test -z "$untracked"
+          test -z "$porcelain"
+
+  discharge-feasibility-f0-inverts-authority:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      INVERTS_AUTHORITY: ff23e994e289982c747b91e48c5ff0907c1672d2
+    steps:
+      - name: Checkout only the literal values-free Inverts authority surface
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            docs/receipts/discharge-inverts-response-site-years.tsv
+            scripts/discharge_feasibility_contract.R
+            scripts/test_discharge_inverts_authority.R
+          sparse-checkout-cone-mode: false
+
+      - name: Assert the literal requested revision and restricted surface
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$INVERTS_AUTHORITY" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          expected="$RUNNER_TEMP/discharge-f0-authority-sparse-expected.txt"
+          actual="$RUNNER_TEMP/discharge-f0-authority-sparse-actual.txt"
+          printf '%s\n' \
+            docs/receipts/discharge-inverts-response-site-years.tsv \
+            scripts/discharge_feasibility_contract.R \
+            scripts/test_discharge_inverts_authority.R > "$expected"
+          find . -path './.git' -prune -o -type f -printf '%P\n' |
+            LC_ALL=C sort > "$actual"
+          cmp -s "$expected" "$actual"
+          test -z "$(find . -path './.git' -prune -o -type l -print -quit)"
+          rm -f -- "$expected" "$actual"
+          test -z "$(git config --local --get-regexp '^http[.].*[.]extraheader$' || true)"
+          git remote remove origin
+          test -z "$(git remote)"
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: '4.5.2'
+          use-public-rspm: false
+
+      - name: Fetch only commit and tree metadata for the Inverts authority
+        run: |
+          set -euo pipefail
+          repo="$RUNNER_TEMP/discharge-f0-inverts-authority-metadata"
+          test ! -e "$repo"
+          git init -q "$repo"
+          git -C "$repo" remote add origin \
+            https://github.com/tgilbert14/NEON-My-Little-Inverts.git
+          GIT_TERMINAL_PROMPT=0 git -C "$repo" fetch --quiet --no-tags \
+            --depth=1 --filter=blob:none origin "$INVERTS_AUTHORITY"
+          test "$(git -C "$repo" rev-parse 'FETCH_HEAD^{commit}')" = \
+            "$INVERTS_AUTHORITY"
+          test "$(git -C "$repo" rev-parse "$INVERTS_AUTHORITY^{tree}")" = \
+            b09c9b54aa5b81290ab6a2dc98072421eae66b03
+          test "$(git -C "$repo" rev-parse "$INVERTS_AUTHORITY:data")" = \
+            812be54ac172fe2febaa5a192f90070e87e3fbf0
+          test "$(git -C "$repo" rev-parse "$INVERTS_AUTHORITY:data/sites")" = \
+            080534caad4eb76cdaf0b5a56704ed4e890ed16a
+          object_types="$RUNNER_TEMP/discharge-f0-authority-fetch-types.txt"
+          git -C "$repo" cat-file --batch-all-objects \
+            --batch-check='%(objecttype)' > "$object_types"
+          blob_count="$(awk '$1 == "blob" { n++ } END { print n + 0 }' \
+            "$object_types")"
+          test "$blob_count" -eq 0
+          rm -f -- "$object_types"
+          git -C "$repo" remote remove origin
+          test -z "$(git -C "$repo" remote)"
+
+      - name: Freeze the values-free authority execution surface
+        run: |
+          set -euo pipefail
+          child_tmp="$RUNNER_TEMP/discharge-f0-authority-child-tmp"
+          baseline="$RUNNER_TEMP/discharge-f0-authority-before.tsv"
+          test ! -e "$child_tmp"
+          install -d -m 0700 "$child_tmp"
+          test -O "$child_tmp"
+          test "$(stat -c '%a' "$child_tmp")" = 700
+          {
+            find . -path './.git' -prune -o \
+              -printf 'entry\t%y\t%m\t%P\n' | LC_ALL=C sort
+            find . -path './.git' -prune -o -type f -print0 |
+              LC_ALL=C sort -z |
+              while IFS= read -r -d '' path; do
+                printf 'sha256\t%s\t' "${path#./}"
+                sha256sum "$path" | awk '{print $1}'
+              done
+          } > "$baseline"
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+          untracked="$(git ls-files --others --exclude-standard)"
+          porcelain="$(git status --porcelain=v1 --untracked-files=all)"
+          test -z "$untracked"
+          test -z "$porcelain"
+
+      - name: Verify the values-free authority in an empty network namespace
+        run: |
+          set -euo pipefail
+          repo="$RUNNER_TEMP/discharge-f0-inverts-authority-metadata"
+          child_tmp="$RUNNER_TEMP/discharge-f0-authority-child-tmp"
+          test "$repo" = "$RUNNER_TEMP/discharge-f0-inverts-authority-metadata"
+          test "$child_tmp" = "$RUNNER_TEMP/discharge-f0-authority-child-tmp"
+          test -d "$repo"
+          test -d "$child_tmp"
+          test -O "$child_tmp"
+          test "$(stat -c '%a' "$child_tmp")" = 700
+          object_types="$RUNNER_TEMP/discharge-f0-authority-pre-child-types.txt"
+          git -C "$repo" cat-file --batch-all-objects \
+            --batch-check='%(objecttype)' > "$object_types"
+          blob_count="$(awk '$1 == "blob" { n++ } END { print n + 0 }' \
+            "$object_types")"
+          test "$blob_count" -eq 0
+          rm -f -- "$object_types"
+          host_net="$(readlink /proc/self/ns/net)"
+          test -n "$host_net"
+
+          sudo unshare --net -- env -i \
+            PATH="$PATH" \
+            LANG=C.UTF-8 \
+            LC_ALL=C.UTF-8 \
+            TZ=UTC \
+            TMPDIR="$child_tmp" \
+            TMP_OWNER_UID="$(id -u)" \
+            HOST_NET="$host_net" \
+            INVERTS_REPO="$repo" \
+            GIT_NO_LAZY_FETCH=1 \
+            bash --noprofile --norc -c '
+              set -euo pipefail
+              child_net="$(readlink /proc/self/ns/net)"
+              test -n "$child_net"
+              test "$child_net" != "$HOST_NET"
+              ipv4_routes="$(ip -o route show table all)"
+              ipv6_routes="$(ip -o -6 route show table all)"
+              test -z "$ipv4_routes"
+              test -z "$ipv6_routes"
+              test -d "$TMPDIR"
+              test "$(stat -c "%u" "$TMPDIR")" = "$TMP_OWNER_UID"
+              test "$(stat -c "%a" "$TMPDIR")" = 700
+              Rscript --vanilla scripts/test_discharge_inverts_authority.R \
+                "$INVERTS_REPO"
+            '
+
+      - name: Reassert the authority surface and destroy temporary metadata
+        if: always()
+        run: |
+          set -euo pipefail
+          repo="$RUNNER_TEMP/discharge-f0-inverts-authority-metadata"
+          child_tmp="$RUNNER_TEMP/discharge-f0-authority-child-tmp"
+          baseline="$RUNNER_TEMP/discharge-f0-authority-before.tsv"
+          after="$RUNNER_TEMP/discharge-f0-authority-after.tsv"
+          fetch_types="$RUNNER_TEMP/discharge-f0-authority-fetch-types.txt"
+          pre_child_types="$RUNNER_TEMP/discharge-f0-authority-pre-child-types.txt"
+          cleanup_types="$RUNNER_TEMP/discharge-f0-authority-cleanup-types.txt"
+          test "$repo" = "$RUNNER_TEMP/discharge-f0-inverts-authority-metadata"
+          test "$child_tmp" = "$RUNNER_TEMP/discharge-f0-authority-child-tmp"
+          cleanup() {
+            sudo rm -rf -- "$repo" "$child_tmp"
+            rm -f -- "$baseline" "$after" "$fetch_types" \
+              "$pre_child_types" "$cleanup_types"
+          }
+          trap cleanup EXIT
+          test -f "$baseline"
+          if test -d "$repo"; then
+            git -C "$repo" cat-file --batch-all-objects \
+              --batch-check='%(objecttype)' > "$cleanup_types"
+            blob_count="$(awk '$1 == "blob" { n++ } END { print n + 0 }' \
+              "$cleanup_types")"
+            test "$blob_count" -eq 0
+          fi
+          {
+            find . -path './.git' -prune -o \
+              -printf 'entry\t%y\t%m\t%P\n' | LC_ALL=C sort
+            find . -path './.git' -prune -o -type f -print0 |
+              LC_ALL=C sort -z |
+              while IFS= read -r -d '' path; do
+                printf 'sha256\t%s\t' "${path#./}"
+                sha256sum "$path" | awk '{print $1}'
+              done
+          } > "$after"
+          cmp -s "$baseline" "$after"
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+          untracked="$(git ls-files --others --exclude-standard)"
+          porcelain="$(git status --porcelain=v1 --untracked-files=all)"
+          test -z "$untracked"
+          test -z "$porcelain"
+
   phenology-v2-seal2-acquire-legacy:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

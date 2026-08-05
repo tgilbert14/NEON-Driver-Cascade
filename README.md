@@ -10,19 +10,34 @@ invertebrates are released companion products but are not integrated. The atlas
 **lines those seven older pinned inputs up** at shared terrestrial field sites on a
 common annual calendar.
 
-> **2026-08-04 suite synthesis:** all nine companion passes are complete. The
+> **2026-08-05 suite synthesis:** all nine companion passes are complete. The
 > measured [Driver v2 synthesis](docs/DRIVER-V2-SYNTHESIS.md) rejects a blind pin
 > refresh, authorizes no new ecological vote or canonical artifact change, and
 > defers every complementary-app build pending exact feasibility support. The
 > current atlas remains the frozen, exploratory v1 snapshot described below.
 
-> **Phenology v2 Seal 0:** the effect-blind
-> [adapter and primary-model registry](docs/PHENOLOGY-V2-ADAPTER-SPEC.md) now
-> freezes the two-clock source contract, interval-censored response, response-only
-> feasibility gate, values-free climate-support mask, and later two-contrast
-> effect path. It authorizes no current response/effect inspection and changes no
-> Driver artifact; the next stage is the separately reviewed pure adapter and
-> synthetic-contract implementation.
+> **Phenology v2:** the effect-blind
+> [adapter and primary-model registry](docs/PHENOLOGY-V2-ADAPTER-SPEC.md) and
+> synthetic Seal 1 are published. Seal 2 stopped at its frozen legacy schema gate:
+> one of 46 bundles has a typed required-column `trend` table with zero rows, so
+> formal parity was not attempted. Current response support and every effect path
+> remain sealed; the v1 artifact is unchanged.
+
+> **Discharge feasibility Gate F0 candidate:** the
+> [pre-payload specification](docs/DISCHARGE-FEASIBILITY-SPEC.md), pure reducer,
+> synthetic fixtures, and
+> [values-free response ledger](docs/receipts/discharge-inverts-response-site-years.tsv)
+> freeze exact `RELEASE-2026`, response-key, two-table/QC, UTC-clock, zero/missing,
+> and special-site rules before any discharge payload is accessed. The ledger
+> freezes the prior pass-10/manual projection at Git blob
+> `c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8` / SHA-256
+> `79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`;
+> F0 CI checks only its bytes and exact Inverts commit/tree metadata, never an RDS
+> blob. This candidate is not passed or published. F1 remains unauthorized until
+> a follow-up receipt binds an exact reviewed merge and Pages publication. The
+> gate can measure only response-anchored discharge-site-year and QC-pass record
+> presence and may reopen review—not a build, metric, effect, prior, vote, Driver
+> rebuild, or Driver byte change.
 
 > **Construct warning:** the current measurements do not supply a defensible annual production/seed-resource rung or
 > a mediated-path test. The layered display is a co-display of candidate bottom-up pathways, **not a tested trophic cascade**.

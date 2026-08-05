@@ -218,6 +218,44 @@ coverage proxy; it never repairs a missing site key or authorizes a vote. Preser
 `UNMEASURED` when the required opportunity ledger, candidate bundle, intersection,
 adapter, or registered model does not exist.
 
+**Stage feasibility acquisition before payload access.** When the decision asks
+only whether a new product can support a future join, freeze the claim and key
+first, then separate three gates. F0 contains the reviewed specification, a pure
+reducer, synthetic fixtures, and—when a response roster was already established—a
+committed values-free authority ledger plus byte/metadata verifier. Treat a
+frozen F0 branch as a **candidate**, not a passed or published gate: F1 stays
+unauthorized until a follow-up receipt binds the exact reviewed merge and Pages
+publication. F1 may inspect a pinned availability/file manifest and fetch only
+the reviewed non-observation schema-metadata allowlist, but no ecological
+records; F2 may read only the registered payload columns after the F1 schema is
+independently reviewed.
+
+The Discharge example makes the no-look boundary concrete. Its Driver-owned
+response ledger is Git blob `c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8`,
+SHA-256 `79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`,
+and freezes an earlier manual projection from exact Inverts `ff23e994...` /
+`data/sites` tree `080534ca...`. That prior derivation necessarily deserialized
+monolithic bundles but never indexed, aggregated, or logged outcome fields. It is
+provenance, not a reusable acquisition method: F0/F1/F2 CI checks only commit/tree
+metadata and ledger bytes, never upstream RDS blobs. A pure projector emits a
+total `state, n_rows` receipt with stable zero-count states, while the eventual
+primary ledger left-anchors every response key and preserves explicit `FALSE`
+states. Keep permitted location keys such as `namedLocation` as identity only.
+
+Name weak support literally—for example,
+`qc_pass_record_present_in_utc_year`—instead of upgrading one usable sensor row
+to “annual coverage.” Register exact chronology with a named failure (ordinary
+cutover `2021-10-01T00:00:00Z`, BIGC-only cutover
+`2020-10-01T00:00:00Z`, `source_regime_chronology_mismatch`), reject special
+tables such as TOMB before applying ordinary QC, and normalize stable labels such
+as `historical_uncorrected_1_min_only`. Publish total opportunity/QC/clock/
+exclusion diagnostics without response or driver magnitude summaries, strip
+signed URL queries and credentials from every receipt, and make alternative
+clocks or source regimes non-rescuing sensitivities. Map machine
+`REOPEN_REVIEW`/`HOLD` to human `REOPEN INDEPENDENT REVIEW`/`HOLD / DO NOT BUILD`.
+Clearing a feasibility floor reopens review; it does not silently authorize an
+app, metric, effect, prior, vote, or Driver rebuild.
+
 ---
 
 ## 4. The gotcha catalog (carry into every NEONize)

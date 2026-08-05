@@ -1,7 +1,8 @@
 # Complementary-app gap audit — should the NEON suite add more apps?
 
-Last updated: 2026-08-04. Scope: **formal decision support, documentation-only.** No product,
-estimator, Driver data artifact, or manifest changed in this decision.
+Last updated: 2026-08-05. Scope: **formal decision support plus a pre-payload F0
+candidate frozen for review.** No product, estimator, Driver data artifact, or
+manifest changed in this decision.
 
 This document answers the standing question the suite reserves for **learning-loop pass 10**
 (`docs/NEON-SUITE-LEARNING-LOOP.md`): *after the nine product apps, is a complementary app
@@ -20,9 +21,14 @@ ideas remain useful, but neither has an exact pinned candidate bundle or a measu
 candidate-to-response intersection. A catalog roster, calendar overlap, direct site-code mismatch,
 or domain-year proxy is not an eligible ecological join.
 
+That program decision does not skip the staged authorities. Current authorization
+stops at the F0 candidate; F1 is unauthorized until a follow-up receipt proves the
+exact reviewed F0 merge and Pages publication.
+
 1. Acquire a pinned Continuous Discharge `DP4.00130.001` source bundle first. Intersect its exact
-   QC-cleared `site x year` support with the released Inverts density-eligible stream panel. Reopen a
-   build decision only if at least three recorded-stream sites each have at least six common years.
+   QC-cleared `site x year` support with the released Inverts density-eligible stream panel. Reopen
+   independent review—not an automatic build—only if at least three recorded-stream sites each have
+   at least six common years.
 2. Acquire a pinned Herbaceous Clip Harvest `DP1.10023.001` source bundle second. Intersect its exact
    coverage-cleared site-years with the current Driver precipitation grid. Reopen a build or signal
    decision only if at least three temperate-grassland sites each have at least six common years.
@@ -33,6 +39,56 @@ The response-side capacity is promising but insufficient for authorization. Inve
 density-eligible stream site-years at 24 stream sites; 23 sites have at least six eligible years.
 On the terrestrial side, only CLBJ, CPER, KONZ, SJER, and WOOD currently have at least six finite
 Driver precipitation years. Candidate-side common support is still unmeasured in both cases.
+
+### Discharge Gate F0 — candidate frozen for review before payload access
+
+The effect-blind [Discharge feasibility specification](DISCHARGE-FEASIBILITY-SPEC.md),
+pure reducer, synthetic fixtures, and
+[committed response ledger](receipts/discharge-inverts-response-site-years.tsv)
+form the F0 candidate. The ledger's exact Git blob is
+`c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8` and its SHA-256 is
+`79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`.
+It freezes the already-completed pass-10/manual projection from exact Inverts
+commit `ff23e994...` and `data/sites` tree `080534ca...`. That earlier projection
+necessarily deserialized the monolithic bundles, but selected only the four
+opportunity fields and never indexed, aggregated, or logged density, count,
+taxonomy, or other outcomes. Repeating that derivation is not authorized in F0,
+F1, or F2: the committed two-column ledger is now the no-look boundary, and CI
+checks only its bytes plus upstream commit/tree metadata, never an Inverts RDS
+blob. It contains 210 site-years at 24 stream sites, 23 with `n >= 6`.
+The discharge authority is exact `DP4.00130.001` `RELEASE-2026`, DOI `10.48443/4n6c-gc44`.
+
+The primary cell is deliberately narrow:
+`qc_pass_record_present_in_utc_year` means that an exact Inverts stream site and UTC calendar year
+contains at least one unique, finite, table-appropriate released discharge record that passes the
+frozen final/science-review and correction-status predicates. It means **record presence only**,
+not annual coverage, annualization readiness, flow permanence, or a usable `ann_flow()` metric.
+Historical released 1-minute rows may qualify but remain labeled
+`historical_uncorrected_1_min_only`; corrected 15-minute rows remain separate.
+Ordinary sites cut over at `2021-10-01T00:00:00Z`, BIGC alone at
+`2020-10-01T00:00:00Z`; any corrected-before or historical-at/after chronology
+fails as `source_regime_chronology_mismatch`. Water-year and corrected-only
+summaries are non-rescuing sensitivities. TOMB is rejected before main-table QC,
+and TOOK is outside the primary gate until its inflow/outflow `namedLocation`
+ambiguity has an exact crosswalk.
+
+The final primary receipt is left-anchored to all 210 response keys and retains
+`siteID`, `utc_calendar_year`, `discharge_site_year_present`,
+`qc_pass_record_present_in_utc_year`, and `source_regime`, including every
+explicit `FALSE`. `namedLocation` is permitted only as source identity. Total
+projection/exclusion receipts include zero-count states. Machine token
+`REOPEN_REVIEW` maps to human disposition `REOPEN INDEPENDENT REVIEW`; `HOLD`
+maps to `HOLD / DO NOT BUILD`.
+
+The same reopening floor remains: at least three unambiguous exact stream sites
+with at least six common primary years. Clearing it reopens **review**, not a
+build. F0 is not yet passed or published, so F1 remains unauthorized until the
+follow-up exact merge/Pages receipt. Once separately authorized, F1 may inspect
+only the authenticated values-free availability/file manifest and the reviewed
+non-observation schema-metadata allowlist; Gate F2 alone may inspect the
+registered payload columns. No stage may compute a
+discharge summary, response magnitude, association, effect, prior, vote, or
+Driver artifact.
 
 ## How this was produced
 
@@ -69,8 +125,9 @@ Driver precipitation years. Candidate-side common support is still unmeasured in
 3. **Clip harvest is the second feasibility acquisition**, not an authorized ANPP rung. The current
    Driver has only five grassland sites with at least six finite precipitation years, and the exact
    candidate-side intersection is unknown. Litterfall stays separate descriptive forest context.
-4. **Everything else remains sequenced, contextual, held, or rejected.** Reopen a build only from a
-   measured common-support artifact, never from the product name or catalog site count.
+4. **Everything else remains sequenced, contextual, held, or rejected.** For Discharge, a measured
+   common-support artifact may reopen only independent review, never a build; any later build needs
+   separate authority. Product names and catalog site counts never reopen either gate.
 
 ## What the suite is today (recap)
 
@@ -364,11 +421,14 @@ future sessions from re-hunting dead ends.
 1. **Do not open a new app build.** Passes 1–9 are complete; the remaining blocker is measured
    candidate support, not companion release readiness.
 2. **Acquire feasibility evidence in this order:** discharge → herbaceous clip harvest → only then
-   reconsider periphyton or water temperature. Acquisition means a pinned source bundle plus an
-   explicit support/intersection artifact; it does not mean a UI, adapter, prior, or vote.
-3. **Reopen BUILD only at the registered floors:** discharge×Inverts at at least three stream sites
-   with at least six common eligible years, or clip×Driver precipitation at at least three
-   temperate-grassland sites with at least six common coverage-cleared years. Litterfall stays
+   reconsider periphyton or water temperature. For Discharge, acquisition follows the frozen staged
+   sequence: publish F0 and its receipt, inventory only the reviewed F1 non-observation metadata,
+   then separately authorize any F2 pinned payload/support artifact. It never means a UI, adapter,
+   prior, or vote.
+3. **Reopen independent review only at the registered floors:** discharge×Inverts at at least three
+   stream sites with at least six common eligible years, or clip×Driver precipitation at at least
+   three temperate-grassland sites with at least six common coverage-cleared years. Crossing a floor
+   does not authorize a build; any later build requires separate authority. Litterfall stays
    descriptive forest context and is never silently fused with clip harvest.
 4. **Keep the D-tier ideas on the backlog with their reasons intact** so a future session neither
    re-proposes the TIS-vs-AIS silent-keying join, nor treats AOP greenness magnitude as a productivity
