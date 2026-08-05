@@ -934,6 +934,9 @@ def exercise_workflow_policy() -> None:
     lowered = text.lower()
     assert "workflow_dispatch:" in text and "pull_request:" not in text and "schedule:" not in text
     assert "name: discharge-f1" in text
+    assert "${{ runner.temp }}" not in text
+    assert "Define exact runner-owned acquisition paths" in text
+    assert text.count('>> "$GITHUB_ENV"') == 1
     assert text.count("${{ secrets.NEON_TOKEN }}") == 1
     assert text.count("${{ github.token }}") == 1
     assert text.count("persist-credentials: false") == 2
@@ -944,6 +947,8 @@ def exercise_workflow_policy() -> None:
     assert "actions/cache" not in lowered and "gh pr create" not in lowered
     assert "curl " not in lowered and "wget " not in lowered and "set -x" not in lowered
     assert "refs/heads/master:refs/heads/master" not in text
+    assert text.index("Assert the protected literal-master dispatch") < text.index("Define exact runner-owned acquisition paths")
+    assert text.index("Define exact runner-owned acquisition paths") < text.index("Checkout only the exact reviewed acquisition authority")
     assert text.index("Acquire only the authenticated F1 metadata inventory") < text.index("Destroy the exact raw acquisition root")
     assert text.index("Destroy the exact raw acquisition root") < text.index("Independently verify the sanitized family")
     assert text.index("Independently verify the sanitized family") < text.index("Checkout a fresh publication worktree")
