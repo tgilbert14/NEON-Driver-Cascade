@@ -1,8 +1,8 @@
 # Complementary-app gap audit — should the NEON suite add more apps?
 
-Last updated: 2026-08-05. Scope: **formal decision support plus a published
-pre-payload F0 implementation and append-only receipt candidate.** No product,
-estimator, Driver data artifact, or manifest changed in this decision.
+Last updated: 2026-08-05. Scope: **formal decision support plus passed F0
+authority and an authorized metadata-only F1 inventory.** No product, estimator,
+Driver data artifact, or manifest changed in this decision.
 
 This document answers the standing question the suite reserves for **learning-loop pass 10**
 (`docs/NEON-SUITE-LEARNING-LOOP.md`): *after the nine product apps, is a complementary app
@@ -21,14 +21,16 @@ ideas remain useful, but neither has an exact pinned candidate bundle or a measu
 candidate-to-response intersection. A catalog roster, calendar overlap, direct site-code mismatch,
 or domain-year proxy is not an eligible ecological join.
 
-That program decision does not skip the staged authorities. The F0 implementation
-is published, but current authorization stops at its append-only receipt candidate;
-F1 is unauthorized until that receipt itself merges and Pages-verifies.
+That program decision does not skip the staged authorities. F0 is passed and its
+publication receipt is published. Current authorization stops at F1's authenticated values-free
+file inventory and non-observation schema metadata; F2 remains unauthorized.
 
-1. Acquire a pinned Continuous Discharge `DP4.00130.001` source bundle first. Intersect its exact
-   QC-cleared `site x year` support with the released Inverts density-eligible stream panel. Reopen
-   independent review—not an automatic build—only if at least three recorded-stream sites each have
-   at least six common years.
+1. Run the authorized Continuous Discharge `DP4.00130.001` F1 values-free file and
+   non-observation schema-metadata inventory first. Only after its exact receipt passes independent
+   review and a separate F2 authority exists may a pinned source bundle be fetched and its exact
+   QC-cleared `site x year` support intersected with the released Inverts density-eligible stream panel.
+   Reopen independent review—not an automatic build—only if at least three recorded-stream sites
+   each have at least six common years.
 2. Acquire a pinned Herbaceous Clip Harvest `DP1.10023.001` source bundle second. Intersect its exact
    coverage-cleared site-years with the current Driver precipitation grid. Reopen a build or signal
    decision only if at least three temperate-grassland sites each have at least six common years.
@@ -40,7 +42,7 @@ density-eligible stream site-years at 24 stream sites; 23 sites have at least si
 On the terrestrial side, only CLBJ, CPER, KONZ, SJER, and WOOD currently have at least six finite
 Driver precipitation years. Candidate-side common support is still unmeasured in both cases.
 
-### Discharge Gate F0 — implementation published / receipt candidate
+### Discharge Gate F0 passed / F1 metadata inventory authorized
 
 The effect-blind [Discharge feasibility specification](DISCHARGE-FEASIBILITY-SPEC.md),
 pure reducer, synthetic fixtures, and
@@ -67,6 +69,16 @@ passed build, status, and deploy on the same merge, and the public root returned
 HTTP 200. The five canonical Driver hashes remained unchanged. No Connect
 deployment was required because no app/runtime or generated Driver byte changed.
 
+Receipt PR #60 exact head
+`8954c1f8934356c1c1c41706c35cc42680a8b027` passed all six jobs in run
+`31026452964` and merged only that head as
+`b75996a85809ed0cd8ba89121e0de18e22063cc7`. Merged-master run
+`31027151110` independently repeated all six jobs; Pages run `31027144433`
+passed build, status, and deploy on the same merge, and the public root returned
+HTTP 200 with bytes matching that merge. F0 is therefore passed. The frozen
+specification remains byte-identical; the append-only registers carry its
+publication state.
+
 The primary cell is deliberately narrow:
 `qc_pass_record_present_in_utc_year` means that an exact Inverts stream site and UTC calendar year
 contains at least one unique, finite, table-appropriate released discharge record that passes the
@@ -91,12 +103,12 @@ maps to `HOLD / DO NOT BUILD`.
 
 The same reopening floor remains: at least three unambiguous exact stream sites
 with at least six common primary years. Clearing it reopens **review**, not a
-build. The implementation is published, but F0 is not passed until this
-append-only receipt candidate is itself merged and Pages-verified; F1 therefore
-remains unauthorized. Once separately authorized, F1 may inspect
-only the authenticated values-free availability/file manifest and the reviewed
-non-observation schema-metadata allowlist; Gate F2 alone may inspect the
-registered payload columns. No stage may compute a
+build. F0 is passed, and F1 is now authorized to inspect only the authenticated
+values-free availability/file inventory and the reviewed non-observation
+schema-metadata allowlist. Site-month availability is not support and discharge
+support remains `UNMEASURED`. Gate F2 alone may inspect the registered payload
+columns, and it remains unauthorized until the exact F1 receipt passes independent
+review. No stage may compute a
 discharge summary, response magnitude, association, effect, prior, vote, or
 Driver artifact.
 
@@ -432,9 +444,9 @@ future sessions from re-hunting dead ends.
    candidate support, not companion release readiness.
 2. **Acquire feasibility evidence in this order:** discharge → herbaceous clip harvest → only then
    reconsider periphyton or water temperature. For Discharge, acquisition follows the frozen staged
-   sequence: publish the append-only F0 receipt, inventory only the separately reviewed F1
-   non-observation metadata, then separately authorize any F2 pinned payload/support artifact. It
-   never means a UI, adapter, prior, or vote.
+   sequence: inventory only the authorized F1 file and non-observation metadata, publish its
+   independently reviewed exact receipt, then separately authorize any F2 pinned payload/support
+   artifact. It never means a UI, adapter, prior, or vote.
 3. **Reopen independent review only at the registered floors:** discharge×Inverts at at least three
    stream sites with at least six common eligible years, or clip×Driver precipitation at at least
    three temperate-grassland sites with at least six common coverage-cleared years. Crossing a floor

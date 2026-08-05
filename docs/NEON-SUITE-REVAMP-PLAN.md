@@ -12,8 +12,8 @@ herbaceous clip harvest are authorized for pinned feasibility acquisition only,
 and Driver v2 Gate 0 authorizes no blind repin or canonical byte change. Phenology
 Seal 2 is published as a schema `HOLD`, with its append-only receipt merged as
 `60989446`; all current response and effect gates remain sealed. The effect-blind
-Discharge feasibility Gate F0 now has a **published implementation and an
-append-only receipt candidate**, but is not yet passed authority. Its
+Discharge feasibility Gate F0 is now **passed**, and its append-only publication
+receipt is published. Its
 specification, pure reducer, synthetic
 fixtures, and committed values-free response ledger freeze exact RELEASE-2026
 inventory, two-table/QC, response-key, clock, chronology, special-site, and
@@ -24,9 +24,15 @@ record-presence rules before any discharge payload access. The ledger at
 F0 CI verifies only that ledger plus exact Inverts commit/tree metadata and never
 fetches or deserializes an Inverts RDS blob. PR #59 head `0a8b71c` passed run
 `31024370208` and merged as `28f00ece`; merged-master run `31024947729`, Pages
-`31024946671`, and public HTTP 200 passed on that merge. F1 remains unauthorized
-until this receipt candidate itself merges and Pages-verifies. No Driver byte
-changed. Vegetation's reset lifecycle and Plotly source-registration
+`31024946671`, and public HTTP 200 passed on that merge. Receipt PR #60 exact
+head `8954c1f8934356c1c1c41706c35cc42680a8b027` passed run `31026452964`,
+merged as `b75996a85809ed0cd8ba89121e0de18e22063cc7`, and passed merged-master
+run `31027151110` and Pages run `31027144433`; the public root returned HTTP 200
+and its bytes matched the exact merge.
+F1 is authorized only for the values-free file inventory and reviewed
+non-observation schema metadata. F2, discharge support, and every ecological
+path remain unauthorized; discharge support remains `UNMEASURED`. No Driver
+byte changed. Vegetation's reset lifecycle and Plotly source-registration
 corrections are live on exact PR #8 merge `d566b30` / Connect deployment #59.
 The requested plant-cover checkpoint is also closed: Plant Diversity PR #11 merged
 as `dfb44231` and Plant Phenology PR #5 merged as `50106f20`, with pinned validation,
@@ -294,13 +300,13 @@ on the following registered criteria:
 Formal 2026-08-04 decision: **DEFER every new app build / AUTHORIZE staged
 feasibility evidence only.** No candidate-side bundle and measured eligible
 intersection currently clears the build gate. Current executable authorization
-stops at the F0 publication-receipt candidate.
+stops at the F1 values-free file inventory and reviewed non-observation schema
+metadata.
 
-1. Merge and Pages-verify the append-only Continuous Discharge `DP4.00130.001`
-   F0 receipt that binds PR #59, its exact reviewed merge, merged-master CI, and
-   Pages identity. Only that published receipt may authorize F1 manifest/schema
-   inventory, followed by a
-   separately reviewed F2 payload measurement. Reopen independent review—not an
+1. Run only the authorized Continuous Discharge `DP4.00130.001` F1 file and
+   non-observation schema-metadata inventory, then publish and independently
+   review its exact receipt before separately authorizing any F2 payload
+   measurement. Reopen independent review—not an
    automatic BUILD—only if the QC-cleared intersection with released Inverts
    contains at least three recorded-stream sites with at least six common years
    each. The F2 receipt must left-anchor all 210 response keys, retain explicit
