@@ -16,6 +16,14 @@ common annual calendar.
 > defers every complementary-app build pending exact feasibility support. The
 > current atlas remains the frozen, exploratory v1 snapshot described below.
 
+> **Phenology v2 Seal 0:** the effect-blind
+> [adapter and primary-model registry](docs/PHENOLOGY-V2-ADAPTER-SPEC.md) now
+> freezes the two-clock source contract, interval-censored response, response-only
+> feasibility gate, values-free climate-support mask, and later two-contrast
+> effect path. It authorizes no current response/effect inspection and changes no
+> Driver artifact; the next stage is the separately reviewed pure adapter and
+> synthetic-contract implementation.
+
 > **Construct warning:** the current measurements do not supply a defensible annual production/seed-resource rung or
 > a mediated-path test. The layered display is a co-display of candidate bottom-up pathways, **not a tested trophic cascade**.
 

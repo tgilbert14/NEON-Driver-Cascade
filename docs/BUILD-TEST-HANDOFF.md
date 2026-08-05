@@ -3328,3 +3328,69 @@ Rules:
   contracts with `apply_patch`, validate the docs-only diff, and publish a separate
   exact-head no-look PR only when the document can truthfully be marked sealed.
   Do not implement the adapter or expose an effect before that PR merges.
+
+### 2026-08-04 23:15 EDT - Phenology v2 Seal-0 registry ready for publication / [Codex]
+
+- **Changed/classification:** completed the effect-blind Phenology v2 Seal-0
+  registry in `docs/PHENOLOGY-V2-ADAPTER-SPEC.md` and aligned the README, Driver v2
+  synthesis, and central suite register/backlog. Classification is
+  `scientific-contract` and Driver-governance documentation. No adapter, source
+  pin, workflow, manifest, generated artifact, public runtime byte, deployment,
+  ecological vote, or canonical Driver byte changed.
+- **Sealed contract:** the registry fixes separate source-DOY compatibility and
+  validated-date v2 clocks; exact duplicate/mixed-status visit handling; the
+  narrow taxonomy-null roster exception; historical observation/roster plot
+  audit semantics; orthogonal opportunity/censor/support states; exact v1 tie
+  parity; conservative earliest-phase interval algebra; context-only leaf-active
+  and `thin_greenup`; and a primary Gaussian interval-censored `survreg` response
+  with equal species-year cell weights, individual clustering, deterministic
+  connected panels, exact fit/prediction gates, and no fallback.
+- **Pre-effect/effect boundary:** current v2 compatibility and model support remain
+  `UNMEASURED`. Seal 1 is synthetic implementation only; Seal 2 is legacy parity;
+  Seal 3A is response-only current support; Seal 3B is a separate values-free
+  climate-support mask; Seal 4 may issue only the registered support decision; and
+  a later reviewed commit is required to unseal effects. The first effect run is
+  limited to the two frozen lag-zero temperature contrasts, with exact
+  direction-screen, Holm/BH, REML/Knapp-Hartung, runtime, sensitivity, and claim
+  rules. No current v2 response value or effect was calculated, deserialized for
+  inspection, printed, ranked, plotted, or summarized in this work.
+- **Immutable authorities:** current Phenology data
+  `7d0f29f7886cfae1c760a9ffc9e056184ec6fc68`, knowledge/default
+  `30be615dc438b60e4fa6454973b3b42589b22234`, generator
+  `256989a91d4502feca0b54cea77a24dfe9a02fca`, data tree
+  `5a8fd457069d6dcca8dcd0dac9851528509032c6`, manifest SHA-256
+  `512737700fdad555264737303439a1816eb189f5ec456e7420aa40dc9165d29b`,
+  and legacy pin `81e339e9ed6f34d3d04ca45a7030fea51c4147a5` are frozen. The isolated
+  climate-mask source is the canonical Small Mammal origin at commit
+  `d2a53282637e4dbd7e5ebef7f64665fa27028531`, exact `data/env` tree
+  `3825e1f68fd6c99367d3959b64086a849c57538d`, and 46 archived files; no Driver
+  response artifact is an allowed climate source.
+- **Independent review:** separate read-only reviewers returned **MODEL-READY**,
+  **MERGE-READY**, and **DOCS-READY** after all authority, model, denominator,
+  roster/plot, two-clock, support-mask, seal-order, pooling, multiplicity,
+  runtime, fixture, hard-failure/abstention, link, and stale-status blockers were
+  corrected. Reviewers made no edits and accessed no effects.
+- **Validation/non-impact:** `Rscript --vanilla scripts/test_suite_synthesis.R`
+  passed; `git diff --check` passed; all four changed-document link targets
+  resolve; no `.cascade-rebuild.lock` exists; and the Small Mammal origin/commit/
+  tree/46-file assertions resolve locally. A synthetic, non-source `survreg` trial
+  had already passed the registered formula, rank, weight, and finite-prediction
+  gates; its local package version is not adopted as canonical. No rebuild,
+  generation, promotion, stage, backup, or temporary Driver data was created.
+  Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Evidence invalidated/residual risk:** the 20:43 draft/checkpoint state and its
+  two open source-contract questions are superseded by this reviewed registry.
+  No Gate-0, publication, source-shape, app-support, legacy, or canonical-byte
+  evidence is invalidated. This narrow documentation scope is not an adapter,
+  support receipt, effect result, Driver release, or product completion. The
+  registry authority is not immutable until the exact reviewed head passes
+  canonical CI and merges to `master`.
+- **Next action:** commit and push the exact reviewed docs-only head, open a
+  guarded PR to `master`, require exact-head canonical CI, merge only that head,
+  and verify default-branch CI/Pages/publication. Then start Seal 1 from the exact
+  merge with no current-source support or effect access.
