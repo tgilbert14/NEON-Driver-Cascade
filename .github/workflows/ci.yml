@@ -18,6 +18,7 @@ env:
   # evidence must instead execute the literal submitted head; push runs retain
   # the immutable commit that triggered the workflow.
   SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
   RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
   RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
   # Hosted x64 runners can select different OpenBLAS kernels from their physical
@@ -268,6 +269,256 @@ jobs:
           porcelain="$(git status --porcelain=v1 --untracked-files=all)"
           test -z "$untracked"
           test -z "$porcelain"
+
+  discharge-feasibility-f1-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the literal Discharge F1 offline surface
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/ci.yml
+            .github/workflows/discharge-f1-inventory.yml
+            docs/DISCHARGE-FEASIBILITY-SPEC.md
+            docs/receipts/discharge-inverts-response-site-years.tsv
+            docs/receipts/discharge-f1-release-receipt.json
+            docs/receipts/discharge-f1-file-inventory.tsv
+            docs/receipts/discharge-f1-schema-inventory.tsv
+            docs/receipts/discharge-f2-file-allowlist.tsv
+            data/cascade.rds
+            data/search_index.rds
+            data/cascade_meta.rds
+            data/neon-cascade-codebook.csv
+            manifest.json
+            scripts/discharge_f1_contract.py
+            scripts/discharge_f1_acquire.py
+            scripts/verify_discharge_f1_inventory.py
+            scripts/test_discharge_f1_contract.py
+          sparse-checkout-cone-mode: false
+
+      - name: Assert the literal revision and exact offline surface
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          expected="$RUNNER_TEMP/discharge-f1-offline-expected.txt"
+          actual="$RUNNER_TEMP/discharge-f1-offline-actual.txt"
+          printf '%s\n' \
+            .github/workflows/ci.yml \
+            .github/workflows/discharge-f1-inventory.yml \
+            data/cascade.rds \
+            data/cascade_meta.rds \
+            data/neon-cascade-codebook.csv \
+            data/search_index.rds \
+            docs/DISCHARGE-FEASIBILITY-SPEC.md \
+            docs/receipts/discharge-inverts-response-site-years.tsv \
+            manifest.json \
+            scripts/discharge_f1_acquire.py \
+            scripts/discharge_f1_contract.py \
+            scripts/test_discharge_f1_contract.py \
+            scripts/verify_discharge_f1_inventory.py > "$expected"
+          receipts=(
+            docs/receipts/discharge-f1-release-receipt.json
+            docs/receipts/discharge-f1-file-inventory.tsv
+            docs/receipts/discharge-f1-schema-inventory.tsv
+            docs/receipts/discharge-f2-file-allowlist.tsv
+          )
+          present=0
+          for receipt in "${receipts[@]}"; do
+            if test -e "$receipt"; then
+              test -f "$receipt"
+              test ! -L "$receipt"
+              printf '%s\n' "$receipt" >> "$expected"
+              present=$((present + 1))
+            fi
+          done
+          test "$present" -eq 0 || test "$present" -eq 4
+          LC_ALL=C sort -o "$expected" "$expected"
+          find . -path './.git' -prune -o -type f -printf '%P\n' |
+            LC_ALL=C sort > "$actual"
+          cmp -s "$expected" "$actual"
+          test -z "$(find . -path './.git' -prune -o -type l -print -quit)"
+          rm -f -- "$expected" "$actual"
+          test -z "$(git config --local --get-regexp '^http[.].*[.]extraheader$' || true)"
+          git remote remove origin
+          test -z "$(git remote)"
+
+      - name: Freeze the F1 offline execution surface
+        run: |
+          set -euo pipefail
+          child_tmp="$RUNNER_TEMP/discharge-f1-offline-child-tmp"
+          baseline="$RUNNER_TEMP/discharge-f1-offline-before.tsv"
+          test ! -e "$child_tmp"
+          install -d -m 0700 "$child_tmp"
+          test -O "$child_tmp"
+          test "$(stat -c '%a' "$child_tmp")" = 700
+          {
+            find . -path './.git' -prune -o \
+              -printf 'entry\t%y\t%m\t%P\n' | LC_ALL=C sort
+            find . -path './.git' -prune -o -type f -print0 |
+              LC_ALL=C sort -z |
+              while IFS= read -r -d '' path; do
+                printf 'sha256\t%s\t' "${path#./}"
+                sha256sum "$path" | awk '{print $1}'
+              done
+          } > "$baseline"
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+          test -z "$(git ls-files --others --exclude-standard)"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+
+      - name: Run the F1 adversarial family without network
+        run: |
+          set -euo pipefail
+          child_tmp="$RUNNER_TEMP/discharge-f1-offline-child-tmp"
+          test "$child_tmp" = "$RUNNER_TEMP/discharge-f1-offline-child-tmp"
+          test -d "$child_tmp"
+          test -O "$child_tmp"
+          test "$(stat -c '%a' "$child_tmp")" = 700
+          host_net="$(readlink /proc/self/ns/net)"
+          test -n "$host_net"
+          runner_user="$(id -un)"
+          test -n "$runner_user"
+
+          sudo unshare --net -- sudo -u "$runner_user" env -i \
+            PATH="$PATH" \
+            HOME="$child_tmp" \
+            LANG=C.UTF-8 \
+            LC_ALL=C.UTF-8 \
+            TZ=UTC \
+            TMPDIR="$child_tmp" \
+            PYTHONDONTWRITEBYTECODE=1 \
+            HOST_NET="$host_net" \
+            bash --noprofile --norc -c '
+              set -euo pipefail
+              child_net="$(readlink /proc/self/ns/net)"
+              test -n "$child_net"
+              test "$child_net" != "$HOST_NET"
+              test -z "$(ip -o route show table all)"
+              test -z "$(ip -o -6 route show table all)"
+              test -d "$TMPDIR"
+              test "$(stat -c "%u" "$TMPDIR")" = "$(id -u)"
+              test "$(stat -c "%a" "$TMPDIR")" = 700
+              python3 -B scripts/test_discharge_f1_contract.py
+              receipts=(
+                docs/receipts/discharge-f1-release-receipt.json
+                docs/receipts/discharge-f1-file-inventory.tsv
+                docs/receipts/discharge-f1-schema-inventory.tsv
+                docs/receipts/discharge-f2-file-allowlist.tsv
+              )
+              present=0
+              for receipt in "${receipts[@]}"; do
+                test ! -e "$receipt" || present=$((present + 1))
+              done
+              if test "$present" -eq 4; then
+                published_receipts="$TMPDIR/published-receipts"
+                test ! -e "$published_receipts"
+                install -d -m 0700 "$published_receipts"
+                for receipt in "${receipts[@]}"; do
+                  install -m 0644 "$receipt" "$published_receipts/$(basename "$receipt")"
+                done
+                python3 -B scripts/verify_discharge_f1_inventory.py "$published_receipts"
+              else
+                test "$present" -eq 0
+              fi
+            '
+
+      - name: Bind any F1 receipt family to its direct-child producer
+        run: |
+          set -euo pipefail
+          receipts=(
+            docs/receipts/discharge-f1-release-receipt.json
+            docs/receipts/discharge-f1-file-inventory.tsv
+            docs/receipts/discharge-f1-schema-inventory.tsv
+            docs/receipts/discharge-f2-file-allowlist.tsv
+          )
+          present=0
+          for receipt in "${receipts[@]}"; do
+            test ! -e "$receipt" || present=$((present + 1))
+          done
+          test "$present" -eq 0 || test "$present" -eq 4
+          if test "$present" -eq 0; then
+            exit 0
+          fi
+
+          receipt_source="$(python3 -B -c \
+            'import json, pathlib, re, sys; value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="ascii"))["source_sha"]; sys.stdout.write(value if isinstance(value, str) and re.fullmatch(r"[0-9a-f]{40}", value) else "")' \
+            "${receipts[0]}")"
+          [[ "$receipt_source" =~ ^[0-9a-f]{40}$ ]]
+          git cat-file -e "$receipt_source^{commit}"
+          git merge-base --is-ancestor "$receipt_source" HEAD
+
+          expected_changes="$(printf '%s\n' "${receipts[@]}" | LC_ALL=C sort)"
+          producer_commit=
+          producer_count=0
+          while IFS= read -r commit; do
+            read -r -a parents <<< "$(git show -s --format='%P' "$commit")"
+            test "${#parents[@]}" -eq 1 || continue
+            test "${parents[0]}" = "$receipt_source" || continue
+            actual_changes="$(git diff-tree --no-commit-id --name-only -r \
+              "$commit" | LC_ALL=C sort)"
+            test "$actual_changes" = "$expected_changes" || continue
+            blobs_match=1
+            for receipt in "${receipts[@]}"; do
+              if test "$(git rev-parse "$commit:$receipt")" != \
+                "$(git rev-parse "HEAD:$receipt")"; then
+                blobs_match=0
+                break
+              fi
+            done
+            test "$blobs_match" -eq 1 || continue
+            producer_commit="$commit"
+            producer_count=$((producer_count + 1))
+          done < <(git rev-list "$receipt_source..HEAD")
+          test "$producer_count" -eq 1
+          test -n "$producer_commit"
+
+          if test "$GITHUB_EVENT_NAME" = pull_request; then
+            [[ "$PR_BASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+            git cat-file -e "$PR_BASE_SHA^{commit}"
+            if ! git merge-base --is-ancestor "$producer_commit" \
+              "$PR_BASE_SHA"; then
+              test "$producer_commit" = "$SOURCE_SHA"
+              [[ "$GITHUB_HEAD_REF" =~ ^automation/discharge-f1-[0-9]+-[0-9]+$ ]]
+            fi
+          fi
+
+      - name: Reassert the F1 surface and destroy owned temporary state
+        if: always()
+        run: |
+          set -euo pipefail
+          child_tmp="$RUNNER_TEMP/discharge-f1-offline-child-tmp"
+          baseline="$RUNNER_TEMP/discharge-f1-offline-before.tsv"
+          after="$RUNNER_TEMP/discharge-f1-offline-after.tsv"
+          test "$child_tmp" = "$RUNNER_TEMP/discharge-f1-offline-child-tmp"
+          cleanup() {
+            sudo rm -rf -- "$child_tmp"
+            rm -f -- "$baseline" "$after"
+          }
+          trap cleanup EXIT
+          test -f "$baseline"
+          {
+            find . -path './.git' -prune -o \
+              -printf 'entry\t%y\t%m\t%P\n' | LC_ALL=C sort
+            find . -path './.git' -prune -o -type f -print0 |
+              LC_ALL=C sort -z |
+              while IFS= read -r -d '' path; do
+                printf 'sha256\t%s\t' "${path#./}"
+                sha256sum "$path" | awk '{print $1}'
+              done
+          } > "$after"
+          cmp -s "$baseline" "$after"
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+          test -z "$(git ls-files --others --exclude-standard)"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
   discharge-feasibility-f0-inverts-authority:
     runs-on: ubuntu-24.04

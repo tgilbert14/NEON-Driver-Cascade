@@ -3920,3 +3920,129 @@ Rules:
   Pages, and public HTTP 200. Only that published receipt may mark F0 passed and
   authorize a separate F1 metadata-inventory branch. F2, observation payloads,
   all metrics/effects, a new app, and every Driver byte change remain forbidden.
+
+### 2026-08-05 10:05 MST - Continuous Discharge F0 receipt published / F1 metadata inventory authorized / [Codex]
+
+- **Classification and authority transition:** scientific-contract +
+  suite-platform documentation receipt; Driver impact `NONE`; no app-local
+  change. F0 is now **passed**, and its append-only publication receipt is
+  published. Current
+  authority stops at F1's authenticated, values-free file inventory and the
+  explicitly reviewed non-observation schema-metadata allowlist. F2,
+  observation-table bytes, support conclusions, metrics, effects, priors, votes,
+  apps, rebuilds, and every Driver byte change remain unauthorized. Discharge
+  support remains `UNMEASURED`.
+- **Exact receipt head:** PR #60 exact head
+  `8954c1f8934356c1c1c41706c35cc42680a8b027` passed all six jobs in exact-head
+  run `31026452964`: authority `92376064326`, canonical rebuild `92376064382`,
+  Seal 1 `92376064421`, Phenology acquisition `92376064426`, discharge
+  synthetic `92376064466`, and Seal 2 parity HOLD `92377263455`.
+- **Exact merge and default-branch evidence:** only that reviewed head merged as
+  `b75996a85809ed0cd8ba89121e0de18e22063cc7`; its parents are exact prior
+  `master` `28f00ecef8091a41af58db3f82ef9519ce940ceb` and exact reviewed head
+  `8954c1f...`, and its tree is the reviewed-head tree
+  `8e7b774da4fc8486fb3c41e790317c61d5af9379`. Merged-master run
+  `31027151110` independently passed rebuild `92378424553`, Phenology
+  acquisition `92378424569`, discharge synthetic `92378424583`, authority
+  `92378424588`, Seal 1 `92378424748`, and Seal 2 parity HOLD `92379479040`.
+- **Pages and public evidence:** Pages run `31027144433` passed build
+  `92378404954`, status `92378564211`, and deploy `92378564233` on exact merge
+  `b75996a...`. The public root returned HTTP 200, and its served
+  `docs/index.html` bytes matched the exact merge at SHA-256
+  `0187780bc9986530b6ed0d49daf82f52986b9f61a88993f3e52cbe7736b0918b`.
+- **Frozen contract and response authority:** the preregistered specification is
+  still exact Git blob `643dbaa3489bb8100de691b2de0ead124f842502` / SHA-256
+  `831baf97f6558a7d0bccacb401880929ffccd7a6ebf210b8ee70d536db298ac7`.
+  The response ledger remains exact Git blob
+  `c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8` / SHA-256
+  `79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`,
+  with exactly 210 keys at 24 sites and 23 sites having at least six response
+  years. The frozen specification's earlier candidate wording is preserved as
+  preregistration history; mutable registers carry the current authority.
+- **F1-only acquisition boundary:** F1 may authenticate at runtime for exact
+  `DP4.00130.001` / `expanded` / `RELEASE-2026`, inventory sanitized site-month
+  file identities, and fetch only explicitly registered non-observation
+  metadata. It must never follow an observation-table URL, expose or retain a
+  token or signed capability, publish a raw manifest response, infer record
+  support from availability, or inspect an Inverts RDS blob. Any F1 receipt must
+  be independently verified and published before separate F2 authorization.
+- **Secret and implementation state:** the Driver repository currently has no
+  configured `NEON_TOKEN` repository secret. No API request was attempted and no
+  credential was copied from another repository. This F1 branch may therefore
+  implement and adversarially test the F1 contract offline only; a protected,
+  manually dispatched acquisition remains blocked on a Driver-owned runtime
+  secret and a separately reviewed exact implementation merge.
+- **Connect and non-impact receipt:** no Connect deployment was required because
+  no app/runtime, generated artifact, or manifest byte changed. Canonical
+  SHA-256 remains cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Next action:** publish offline F1 producer, independent verifier, synthetic
+  adversarial tests, and manual protected workflow as a separately reviewed PR.
+  After exact-head and merged-master verification, provision the Driver-owned
+  environment secret, dispatch only from the protected exact `master`, delete
+  all raw material, and publish only route-free sanitized receipts to a draft
+  review PR. F2 remains sealed until that exact receipt independently passes.
+
+### 2026-08-05 11:07 MST - Continuous Discharge F1 offline implementation candidate / no authenticated acquisition / [Codex]
+
+- **Classification and gate boundary:** scientific-contract + suite-platform F1
+  implementation candidate; Driver impact `NONE`; no app-local or runtime
+  change. Exact F0 authority remains receipt merge
+  `b75996a85809ed0cd8ba89121e0de18e22063cc7` / tree
+  `8e7b774da4fc8486fb3c41e790317c61d5af9379`. F1 is authorized only for the
+  reviewed manifest and non-observation metadata inventory. No authenticated
+  F1 acquisition has run; F2, observation bytes, support/effect calculations,
+  adapters, priors, votes, apps, and Driver-byte changes remain unauthorized.
+  Discharge support remains `UNMEASURED`.
+- **Public release-window recheck:** an unauthenticated, release-filtered read of
+  the official `DP4.00130.001` product record established that the exact frozen
+  24-site roster is present and its `RELEASE-2026` availability spans
+  `2016-08` through `2024-09`. Only that safe aggregate was printed; no raw
+  response, token, signed route, file manifest, or data byte was retained. The
+  authenticated `/data/query` endpoint was not called.
+- **Offline implementation:** added a pure producer contract, one isolated
+  network acquisition process, an independent stdlib-only verifier, an
+  adversarial fixture family, a dedicated empty-network CI job, and a protected
+  manual workflow. Exact positional basenames are classified before a URL field
+  may be read; observation routes are never retained or followed. Sanitized
+  inventories freeze domain/site/month/package and package/file generation
+  identities, normalized table-field declarations, validation rules, referenced
+  categorical flag codes, and an exact F2 identity-only allowlist. The raw phase
+  returns only route-free immutable objects before cleanup and receipt writing.
+- **Publication and credential controls:** the manual workflow is designed for
+  an exact `master` SHA in environment `discharge-f1`; that environment must be
+  configured with reviewer and literal-master protection before dispatch. It
+  injects `NEON_TOKEN` into one `python3 -I -S` process, destroys raw state
+  before an independent empty-network verifier and second checkout, and may
+  push only one direct-child review commit containing exactly four sanitized
+  receipt files. CI binds any such family to that direct-child producer and its
+  current blobs; it neither uploads artifacts nor creates/merges a PR
+  automatically.
+- **Adversarial and static validation:** the complete producer/acquisition/
+  independent-verifier suite passes on host Python 3.9.6 and bundled Python
+  3.12.13, including metadata masquerades with zero download calls, conflicting
+  domain/site/month identities, malformed and impossible UTC generations,
+  response-window drift, pre-window/provisional packages, flag-schema mutation,
+  route/secret canaries, raw-scope cleanup, `0600` staging, and `0644`
+  publication. Both workflow YAML files parse; every F1 Bash block and the
+  isolated Python wrapper syntax-check; `git diff --check` passes.
+- **Non-impact receipt:** no local Driver rebuild, generation, promotion,
+  Connect deployment, authenticated query, availability-manifest download,
+  observation fetch, or upstream Inverts RDS access occurred. Canonical SHA-256
+  remains cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Publication status and next action:** this is a local offline candidate; no
+  implementation PR, CI run, merge, Pages identity, environment protection, or
+  Driver-owned `NEON_TOKEN` is claimed yet. Commit and publish the exact branch,
+  require literal-head and merged-master CI plus Pages, then configure the
+  protected master-only environment and its environment-scoped secret before a
+  manual F1 dispatch. Any generated receipt still requires its own exact-head,
+  independent review, merge, and Pages receipt before F2 can be considered.

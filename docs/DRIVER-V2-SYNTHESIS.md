@@ -2,8 +2,8 @@
 
 Decision date: 2026-08-04 EDT
 Decision state: **PASS 10 COMPLETE / PHENOLOGY SEAL 2 HOLD PUBLISHED /
-DISCHARGE F0 IMPLEMENTATION PUBLISHED + RECEIPT CANDIDATE / F0 NOT YET PASSED /
-F1 UNAUTHORIZED / DRIVER V2 SIGNAL CHANGES HELD / NO CANONICAL BYTE CHANGE**
+DISCHARGE F0 PASSED / RECEIPT PUBLISHED / F1 METADATA INVENTORY AUTHORIZED /
+F2 UNAUTHORIZED / DRIVER V2 SIGNAL CHANGES HELD / NO CANONICAL BYTE CHANGE**
 
 This is the evidence gate between the nine completed companion passes and a future
 Driver v2 rebuild. It records what is safe to reuse, what is only context, what is
@@ -100,9 +100,15 @@ would not be a safe integration strategy.
   `28f00ecef8091a41af58db3f82ef9519ce940ceb`, and independently passed all six
   merged-master jobs in run `31024947729`. Pages run `31024946671` built and
   deployed that exact merge; the public root returned HTTP 200. This append-only
-  receipt remains a candidate until it is itself merged and Pages-verified, so
-  F0 is not yet passed and F1 remains unauthorized. Candidate-side support
-  remains `UNMEASURED`, and no Driver byte changed.
+  receipt PR #60 exact head
+  `8954c1f8934356c1c1c41706c35cc42680a8b027` passed all six jobs in run
+  `31026452964`, merged as
+  `b75996a85809ed0cd8ba89121e0de18e22063cc7`, and independently passed all six
+  merged-master jobs in run `31027151110`. Pages run `31027144433` built and
+  deployed that exact merge; the public root returned HTTP 200 with matching
+  bytes. F0 is passed. F1 is authorized only for the values-free availability/file
+  inventory and reviewed non-observation schema metadata; F2 remains unauthorized.
+  Candidate-side support remains `UNMEASURED`, and no Driver byte changed.
 
 ## Evidence method and vocabulary
 
@@ -235,14 +241,14 @@ production-proven Driver edge.
 The formal decision is **DEFER BUILD / ACQUIRE EVIDENCE**.
 
 - **First:** follow the frozen Continuous Discharge `DP4.00130.001` staged gate:
-  publish the append-only F0 receipt, inventory only the separately reviewed F1
-  non-observation metadata, then separately authorize any F2 pinned payload and
-  exact QC-cleared discharge×Inverts site-year intersection. At at least three
+  inventory only the authorized F1 file and non-observation metadata, publish its
+  independently reviewed exact receipt, then separately authorize any F2 pinned
+  payload and exact QC-cleared discharge×Inverts site-year intersection. At least three
   recorded-stream sites with at least six common years, reopen independent
   review—not a build; any later build requires separate authority.
 - **Second:** acquire a pinned Herbaceous Clip Harvest `DP1.10023.001` bundle and
   publish the exact coverage-cleared clip×Driver-precipitation intersection. Reopen
-  only at at least three temperate-grassland sites with at least six common years.
+  only at least three temperate-grassland sites with at least six common years.
 - **Litterfall `DP1.10033.001`:** retain as prospective descriptive forest context.
   Do not fuse it with clip harvest or call it a seed mediator.
 
@@ -277,13 +283,10 @@ The detailed ranked backlog and rejected alternatives remain in
    separately reviewed registry stage; never silently normalize the frozen
    contract. Current response support remains forbidden and Seal 3, including all
    effect execution, remains sealed. Leaving Phenology held is valid.
-5. Publish the append-only Discharge Gate F0 receipt that binds the completed
-   exact-head, merged-default, and Pages implementation gates. Only after that
-   receipt itself merges and Pages-verifies may a separate authority run Gate F1
-   against the exact RELEASE-2026
-   availability/file manifest and the reviewed non-observation schema-metadata
-   allowlist. Payload columns remain sealed
-   until that values-free inventory is independently reviewed; no app,
+5. Run Gate F1 against only the exact RELEASE-2026 availability/file inventory
+   and reviewed non-observation schema-metadata allowlist, then publish its exact
+   independently reviewed receipt. Payload columns remain sealed until that
+   values-free inventory is independently reviewed; no app,
    `ann_flow()`, prior, vote, or Driver artifact is authorized.
 6. Revisit other companion adapters only when a named Driver question requires the
    metric. Do not ingest all available app outputs merely to make the atlas larger.

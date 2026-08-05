@@ -65,3 +65,7 @@
   disposition, and separate app support from calendar compatibility from eligible integration: an `ADOPT`
   process rule or an exact site-year/domain-year match does not authorize a Driver adapter, prior, or vote;
   keep missing opportunity ledgers and candidate intersections explicitly `UNMEASURED`.
+- [2026-08-05] codex · confirmed · For no-look acquisition, token-matching a filename is not an allowlist:
+  require an exact positional basename grammar before reading its route, scope raw bytes and capabilities
+  out of existence before receipt construction, publish normalized flag schemas, and bind receipts to the
+  exact direct-child producer commit in independent CI.
