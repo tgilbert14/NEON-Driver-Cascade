@@ -297,11 +297,11 @@ jobs:
             fields <- vapply(c("Depends", "Imports", "LinkingTo"), function(field) {
               value <- description[[field]]
               if (is.null(value) || length(value) != 1L || is.na(value)) ""
-              else gsub("[\\r\\n]+", " ", value)
+              else gsub("[\r\n]+", " ", value)
             }, character(1L))
             cat(package, as.character(description$Version), priority,
-                paste(fields, collapse = "\\037"), sep = "\\t")
-            cat("\\n")
+                paste(fields, collapse = "\037"), sep = "\t")
+            cat("\n")
           }
           '''
           observed_text = subprocess.run(

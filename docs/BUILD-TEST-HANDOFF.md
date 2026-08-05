@@ -3521,3 +3521,30 @@ Rules:
   merge only that head, and verify exact merged-default CI and Pages. After a
   publication receipt, begin only Seal 2 against legacy pin `81e339e9...`; do not
   inspect current response/effect output to repair parity or begin Seal 3 early.
+
+### 2026-08-04 22:02 MST - Seal-1 PR #55 first-run CI parser repair / [Codex]
+
+- **Exact failed evidence:** draft PR #55 ran exact literal head
+  `593140eed242c93ebcb0dec0af53b775693b48a5` in workflow run
+  `30976845525`. Job `phenology-v2-seal1-synthetic` / `92212514600` reached
+  the locked Ubuntu 24.04 / R 4.5.2 / Haswell / one-thread runtime and then
+  failed in `Verify the complete sealed runtime lock` with
+  `ValueError: not enough values to unpack (expected 4, got 1)`. The synthetic
+  adapter/model/mask suite did not run, so this failed job is not Seal-1 evidence.
+  The concurrent canonical rebuild job was still running when the failure was
+  diagnosed; no result is claimed for it here.
+- **Root cause and narrow repair:** the embedded R inventory emitter lives inside
+  a Python raw string, but its tab, unit-separator, newline, and CR/LF escapes were
+  double-escaped. R therefore printed literal escape text rather than four
+  delimiter-separated fields. The workflow-only repair uses the intended single
+  R escapes `\t`, `\037`, `\n`, `\r`; it changes no runtime authority,
+  inventory value/digest, dependency rule, adapter/model/mask code, fixture,
+  source identity, artifact, or ecological disposition.
+- **Local regression:** an exact-framing probe executed the repaired embedded R
+  emitter through Python and parsed 4/4 installed-package rows into four fields,
+  with three dependency subfields per row. Workflow YAML parsing and
+  `git diff --check` pass. Canonical CI must still prove the complete 20-package
+  inventory and all Seal-1 contracts on the amended literal head.
+- **Next action:** commit and push the workflow-only repair, update PR #55 to its
+  new exact head, and require fresh literal-head success from both jobs. Do not
+  rerun the failed job against the superseded head or merge partial evidence.
