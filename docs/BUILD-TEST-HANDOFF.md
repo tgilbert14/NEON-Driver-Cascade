@@ -3730,3 +3730,39 @@ Rules:
   an amendment, introduce it only as a new, separately reviewed registry stage;
   never silently normalize or rewrite the frozen contract. Current response
   support and every effect path remain forbidden until their later explicit gates.
+
+### 2026-08-05 04:15 MST - Phenology v2 Seal-2 HOLD publication receipt / [Codex]
+
+- **Publication/classification:** scientific-contract + suite-platform CI;
+  Driver impact `NONE / HOLD`; no app-local change. PR #57 exact reviewed head
+  `acd08543bf0566b4dc87763dbe10efc2495f3dc2` merged only after its required
+  checks as `a10c8ff75a88fed1043162325e19325901167020`.
+- **Exact-head evidence:** PR run `30982533042` passed canonical rebuild job
+  `92229861895`, exact legacy acquisition job `92229862026`, unchanged Seal-1 job
+  `92229862050`, and isolated Seal-2 job `92230756400`. The Seal-2 log emitted
+  `HOLD`, `bundles=46`, `affected=1`, `code=empty_required_table`, and
+  `parity_attempted=false`; `current_fetched`, `current_deserialized`,
+  `effect_module_sourced`, and `effect_function_called` were all false. The
+  registered 21-package runtime digest remained
+  `b2263019cdcd50af0230c0fb69b1422ef064e55b2ecbe521bde6548cb9846f0f`.
+- **Merged-default evidence:** run `30982973823` passed acquisition job
+  `92231270151`, canonical rebuild `92231270214`, Seal-1 `92231270259`, and the
+  networkless Seal-2 HOLD job `92232268414` on literal merge `a10c8ff...`. The
+  merged HOLD receipt repeated exactly: 46 checked, one affected,
+  `empty_required_table`, parity not attempted, and all four current/effect flags
+  false. Rebuild reproduction and all five canonical hashes remained unchanged.
+- **Pages/publication:** Pages run `30982972991` passed build `92231270574`, status
+  `92231369592`, and deploy `92231370607` on the same merge. The public Driver root
+  returned HTTP 200 after deployment. Seal 2 changed no Driver app/runtime byte,
+  so no Connect deployment was required or attempted.
+- **Scoped conclusion:** Seal 2 is published as `HOLD`; it did not prove sections
+  8.3/9.3 parity. The isolated gate fetched or deserialized no current Phenology
+  family and sourced or called no effect path. The separate canonical rebuild
+  continued to use recorded legacy v1 pins solely for exact v1 reproduction.
+  Current compatibility/model support remains `UNMEASURED`; Seal 3 and every v2
+  effect remain sealed.
+- **Next action:** do not normalize the typed-empty table or edit the frozen
+  registry in place. Either introduce a new, separately reviewed legacy-only
+  schema-amendment registry stage, or leave Phenology held and proceed to the
+  already authorized discharge feasibility evidence task. No new Driver vote or
+  canonical byte is authorized.

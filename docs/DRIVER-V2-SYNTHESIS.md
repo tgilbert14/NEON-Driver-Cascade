@@ -44,7 +44,7 @@ would not be a safe integration strategy.
   `30979297006` passed Seal-1 job `92220080404` and rebuild job `92220080424`.
   Pages run `30979295789` passed build `92220078640`, deploy `92220171068`, and
   status `92220171073`; the public root returned HTTP 200.
-- The first Seal-2 candidate acquired only exact legacy commit
+- The published Seal-2 gate acquired only exact legacy commit
   `81e339e9ed6f34d3d04ca45a7030fea51c4147a5` and its `data/sites` tree
   `30abe869b0f78931929c21e544ffc85ec2238e35`. A schema-only scan found 45
   bundles with nonempty `trend` and one typed, non-`NULL` `trend` with the
@@ -59,6 +59,14 @@ would not be a safe integration strategy.
   recorded legacy v1 pins. Adapter, frozen specification, canonical artifacts,
   and Driver disposition remain unchanged. Driver impact is `NONE`, Seal 2 is
   `HOLD`, and Seal 3 remains sealed.
+- Seal 2 is published as PR #57 exact head
+  `acd08543bf0566b4dc87763dbe10efc2495f3dc2`, merged as
+  `a10c8ff75a88fed1043162325e19325901167020`. Exact-head run `30982533042`
+  and merged-default run `30982973823` passed the canonical rebuild, Seal-1,
+  exact legacy acquisition, and networkless HOLD gate. Pages run `30982972991`
+  deployed the same merge and the public root returned HTTP 200. The published
+  HOLD repeats 46 bundles checked, one affected `empty_required_table`, parity
+  not attempted, and all four current/effect flags false.
 
 ## Evidence method and vocabulary
 
@@ -217,16 +225,19 @@ The detailed ranked backlog and rejected alternatives remain in
    `30978284811` respectively. Receipt PR #56 exact head `a26428a...` merged as
    `c952687...`; its PR, post-merge, and Pages gates passed, and the public root
    returned HTTP 200.
-3. Seal 2 is `HOLD` before parity. Its isolated legacy-only gate scanned all 46
-   bundles from exact legacy commit `81e339e9...` / tree `30abe869...`: 45 had a
+3. Seal 2 is published as `HOLD` before parity. Its isolated legacy-only gate
+   scanned all 46 bundles from exact legacy commit `81e339e9...` / tree
+   `30abe869...`: 45 had a
    nonempty `trend`, while one had a typed non-`NULL` required-column `trend` with
    zero rows. The frozen registry raised `empty_required_table`, so formal
    sections 8.3/9.3 parity was **NOT ATTEMPTED**. The successful manual adaptation
-   of one nonempty bundle is diagnostic only and is not parity evidence.
-4. Publish this HOLD gate. Any legacy-only schema amendment must be a new,
+   of one nonempty bundle is diagnostic only and is not parity evidence. PR #57
+   head `acd08543...` merged as `a10c8ff...`; exact-head/default CI and Pages all
+   passed, and the public root returned HTTP 200.
+4. If Phenology is revisited, any legacy-only schema amendment must be a new,
    separately reviewed registry stage; never silently normalize the frozen
    contract. Current response support remains forbidden and Seal 3, including all
-   effect execution, remains sealed.
+   effect execution, remains sealed. Leaving Phenology held is valid.
 5. Acquire discharge feasibility evidence without building an app, adding a prior,
    or changing Driver artifacts.
 6. Revisit other companion adapters only when a named Driver question requires the
