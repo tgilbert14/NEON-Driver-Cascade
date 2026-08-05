@@ -3575,3 +3575,40 @@ Rules:
 - **Next action:** independently verify the corrected row/digest, commit and push
   the receipt plus CI expectation and this append-only correction, and require a
   third fresh literal-head run. Merge no partial or superseded evidence.
+
+### 2026-08-04 22:17 MST - Seal-1 PR #55 cross-platform MAD-fixture repair / [Codex]
+
+- **Exact failed evidence:** corrected-closure head
+  `2999ccbaacce69fdd8d555ea8fa257308bf032ad` ran as
+  `30977613684`. Job `phenology-v2-seal1-synthetic` / `92214882028`
+  passed the complete 21-package runtime lock, immutable Phenology identity-only
+  gate, all adapter/response fixtures, and two clean Ubuntu response processes.
+  Their opaque full-grid numerical receipt was
+  `496d1465d7da21be60f9ba0b929ca34b6b7e3fd52ae5eaf0b4e44469e3857a73`
+  and reproduced byte-for-byte inside that canonical job. The job then failed
+  only `equality-retained MAD boundary is invariant to monthly row order` in
+  fixture 37; its concurrent rebuild result is not reused after the head changes.
+- **Root cause:** one fixture asked a deliberately ill-conditioned decimal monthly
+  vector to do two jobs: expose order-sensitive summation and land exactly on the
+  six-degree inclusive MAD boundary. Canonical month ordering worked, but the
+  constructed annual mean rounded just above six on Ubuntu while landing on six
+  locally. That is a platform-sensitive synthetic-fixture assumption, not a
+  production algorithm or threshold failure.
+- **Test-only correction:** retain the ill-conditioned vector solely to require
+  identical ordered/reversed support, counts, and digest material, without
+  asserting its platform-specific MAD classification. Add a separate exact
+  six-year boundary fixture with five years of monthly zero and 2023 monthly six.
+  Both values are exactly representable; for both registered contrasts the median
+  and MAD are zero, threshold and deviation are exactly six, and the frozen `<=`
+  rule must retain the year. Ordered/reversed support, counts, and digests must
+  also match.
+- **Independent/local verification:** fixture review found no contract issue and
+  confirmed that the split preserves both the floating-order stress test and the
+  exact inclusive-boundary test. Climate-only and full six-clean-process runs pass
+  locally with unchanged opaque local response receipt `188dca20...`; all five
+  generated artifact hashes remain unchanged. No production module, runtime pin,
+  source authority, response/effect boundary, or Driver ecological decision
+  changed.
+- **Next action:** commit and push only the corrected fixture plus this failure
+  receipt, update PR #55 to the fourth exact head, and require both jobs to rerun
+  from scratch. Merge no result attached to a superseded head.

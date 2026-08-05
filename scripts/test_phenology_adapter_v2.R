@@ -1808,9 +1808,9 @@ run_climate_fixture <- function(env) {
     near_boundary_climate$date == as.Date("2021-05-01")] <- 49.999
   near_boundary <- call_mask(near_boundary_climate, mask6)
 
-  # This annual mean lies on the retained absolute-deviation boundary.  The
-  # deliberately ill-conditioned monthly values make floating summation order
+  # Deliberately ill-conditioned monthly values make floating summation order
   # observable unless validation canonicalizes year/month before aggregation.
+  # Their exact MAD classification is platform-dependent and is not asserted.
   edge_values <- c(
     -16.103751334537286, -6.5085932804881601, 11.556656994943973,
     41.737884683949872, -21.848029570491054, 40.854274867722765,
@@ -1827,6 +1827,16 @@ run_climate_fixture <- function(env) {
   edge_ordered <- call_mask(edge_climate, edge_mask)
   edge_reversed <- call_mask(
     edge_climate[nrow(edge_climate):1L, , drop = FALSE], edge_mask)
+
+  # Keep equality semantics distinct from the floating-order stressor.  Five
+  # annual means are exactly zero and the sixth is exactly six, so median and
+  # MAD are zero and the registered inclusive threshold is exactly attained.
+  equality_climate <- monthly_env(years = 2018:2023, value = 0)
+  equality_climate$temp_c[
+    equality_climate$date >= as.Date("2023-01-01")] <- 6
+  equality_ordered <- call_mask(equality_climate, mask6)
+  equality_reversed <- call_mask(
+    equality_climate[nrow(equality_climate):1L, , drop = FALSE], mask6)
 
   # The mask builder is one-site-at-a-time; aggregate only values-free counts.
   site_masks <- lapply(c("SITEA", "SITEB", "SITEC"), function(site) {
@@ -1902,15 +1912,22 @@ run_climate_fixture <- function(env) {
             same_canonical(six$counts, six_ordered$counts) &&
             identical(six$digest_material, six_ordered$digest_material),
           "full climate result and digest invariant to monthly row order")
-    edge_annual <- one_row(
-      edge_ordered$support, list(year = 2021L, contrast = "temp"),
-      "floating-order MAD boundary row")
-    check(edge_annual$climate_mad_qc_pass &&
-            same_canonical(edge_ordered$support, edge_reversed$support) &&
+    check(same_canonical(edge_ordered$support, edge_reversed$support) &&
             same_canonical(edge_ordered$counts, edge_reversed$counts) &&
             identical(edge_ordered$digest_material,
                       edge_reversed$digest_material),
-          "equality-retained MAD boundary is invariant to monthly row order")
+          "ill-conditioned MAD result is invariant to monthly row order")
+    equality_rows <- equality_ordered$support$year == 2023L
+    check(all(equality_ordered$support$climate_mad_qc_pass[equality_rows]) &&
+            all(equality_ordered$support$climate_available[equality_rows]) &&
+            all(equality_ordered$support$overlap[equality_rows]) &&
+            same_canonical(equality_ordered$support,
+                           equality_reversed$support) &&
+            same_canonical(equality_ordered$counts,
+                           equality_reversed$counts) &&
+            identical(equality_ordered$digest_material,
+                      equality_reversed$digest_material),
+          "exact six-degree MAD equality is retained and row-order invariant")
     forbidden_output <- c(
       "temp_c", "temp", "temp_spring", "greenup_doy",
       "greenup_doy_interval_std", "response_value", "effect",
