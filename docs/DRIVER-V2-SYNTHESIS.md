@@ -1,7 +1,9 @@
 # Driver v2 cross-product synthesis
 
 Decision date: 2026-08-04 EDT
-Decision state: **PASS 10 COMPLETE / PHENOLOGY SEAL 2 HOLD AT LEGACY SCHEMA GATE / DRIVER V2 SIGNAL CHANGES HELD / NO CANONICAL BYTE CHANGE**
+Decision state: **PASS 10 COMPLETE / PHENOLOGY SEAL 2 HOLD PUBLISHED /
+DISCHARGE F0 CANDIDATE FROZEN FOR REVIEW / DRIVER V2 SIGNAL CHANGES HELD / NO
+CANONICAL BYTE CHANGE**
 
 This is the evidence gate between the nine completed companion passes and a future
 Driver v2 rebuild. It records what is safe to reuse, what is only context, what is
@@ -67,6 +69,34 @@ would not be a safe integration strategy.
   deployed the same merge and the public root returned HTTP 200. The published
   HOLD repeats 46 bundles checked, one affected `empty_required_table`, parity
   not attempted, and all four current/effect flags false.
+- Seal-2 publication receipt PR #58 exact head
+  `251e989b4f2e280a1f9672ef1c3fb792e66ce027` merged as
+  `609894461fde057fd9d32e3f7d6abadb50bc546a`. Exact-head run `31016236215`
+  and merged-default run `31016815527` each passed the canonical rebuild,
+  legacy acquisition, Seal-1, and values-free Seal-2 HOLD jobs. Pages run
+  `31016812195` built and deployed the exact merge, and the public root returned
+  HTTP 200. No scientific or runtime byte changed.
+- Discharge feasibility Gate F0 is a candidate frozen for review in
+  [`DISCHARGE-FEASIBILITY-SPEC.md`](DISCHARGE-FEASIBILITY-SPEC.md). It includes
+  the specification, pure reducer, synthetic fixtures, and the
+  [committed values-free response ledger](receipts/discharge-inverts-response-site-years.tsv)
+  (Git blob `c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8`; SHA-256
+  `79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296`).
+  That ledger freezes the prior manual projection from exact Inverts
+  `ff23e994...` / `data/sites` tree `080534ca...`; its historical derivation
+  deserialized monolithic bundles but never indexed, aggregated, or logged
+  outcome fields. That derivation may not be repeated: F0/F1/F2 and CI use only
+  commit/tree metadata and ledger bytes, never an Inverts RDS blob. The primary
+  response-anchored receipt retains all 210 keys and explicit `FALSE` values for
+  `discharge_site_year_present` and
+  `qc_pass_record_present_in_utc_year`; record presence is not annual coverage
+  or a flow metric. It keeps `historical_uncorrected_1_min_only` distinct,
+  enforces ordinary/BIGC chronology, rejects TOMB before QC, permits
+  `namedLocation` only as identity, makes sensitivities non-rescuing, and maps
+  `REOPEN_REVIEW`/`HOLD` to review-only/do-not-build human dispositions. The F0
+  candidate is not passed or published; F1 remains unauthorized until a
+  follow-up exact merge/Pages receipt. Candidate-side support remains
+  `UNMEASURED`, and no Driver byte changed.
 
 ## Evidence method and vocabulary
 
@@ -198,9 +228,12 @@ production-proven Driver edge.
 
 The formal decision is **DEFER BUILD / ACQUIRE EVIDENCE**.
 
-- **First:** acquire a pinned Continuous Discharge `DP4.00130.001` bundle and
-  publish the exact QC-cleared discharge×Inverts site-year intersection. Reopen a
-  build only at at least three recorded-stream sites with at least six common years.
+- **First:** follow the frozen Continuous Discharge `DP4.00130.001` staged gate:
+  publish F0 and its exact receipt, inventory only the reviewed F1 non-observation
+  metadata, then separately authorize any F2 pinned payload and exact QC-cleared
+  discharge×Inverts site-year intersection. At at least three recorded-stream
+  sites with at least six common years, reopen independent review—not a build;
+  any later build requires separate authority.
 - **Second:** acquire a pinned Herbaceous Clip Harvest `DP1.10023.001` bundle and
   publish the exact coverage-cleared clip×Driver-precipitation intersection. Reopen
   only at at least three temperate-grassland sites with at least six common years.
@@ -238,8 +271,14 @@ The detailed ranked backlog and rejected alternatives remain in
    separately reviewed registry stage; never silently normalize the frozen
    contract. Current response support remains forbidden and Seal 3, including all
    effect execution, remains sealed. Leaving Phenology held is valid.
-5. Acquire discharge feasibility evidence without building an app, adding a prior,
-   or changing Driver artifacts.
+5. Review the Discharge Gate F0 candidate and publish it through exact-head,
+   merged-default, and Pages gates without accessing a discharge payload or an
+   Inverts RDS blob. Merge a follow-up receipt binding those exact identities.
+   Only then may a separate authority run Gate F1 against the exact RELEASE-2026
+   availability/file manifest and the reviewed non-observation schema-metadata
+   allowlist. Payload columns remain sealed
+   until that values-free inventory is independently reviewed; no app,
+   `ann_flow()`, prior, vote, or Driver artifact is authorized.
 6. Revisit other companion adapters only when a named Driver question requires the
    metric. Do not ingest all available app outputs merely to make the atlas larger.
 

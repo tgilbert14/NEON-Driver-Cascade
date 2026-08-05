@@ -3766,3 +3766,109 @@ Rules:
   schema-amendment registry stage, or leave Phenology held and proceed to the
   already authorized discharge feasibility evidence task. No new Driver vote or
   canonical byte is authorized.
+
+### 2026-08-05 09:12 MST - Continuous Discharge Gate F0 no-look candidate / [Codex]
+
+- **Prerequisite receipt closure:** Phenology Seal-2 receipt PR #58 exact head
+  `251e989b4f2e280a1f9672ef1c3fb792e66ce027` passed run `31016236215` and
+  merged as exact master `609894461fde057fd9d32e3f7d6abadb50bc546a`.
+  Merged-default run `31016815527` and Pages run `31016812195` passed, and the
+  public root returned HTTP 200. That closes the preceding publication receipt;
+  current Phenology response/effects and Seal 3 remain sealed.
+- **Classification and authority boundary:** scientific-contract + suite-platform
+  candidate; Driver impact `NONE`; no app-local change. F0 freezes only a
+  pre-payload specification, pure in-memory reducer, synthetic fixtures, exact
+  values-free response-key ledger, and metadata-only authority verifier. It
+  authorizes no authenticated discharge request, F1 inventory, payload fetch,
+  estimator, app, effect, prior, vote, rebuild, or generated Driver byte. F1
+  remains unauthorized until a follow-up receipt binds the exact reviewed F0
+  merge and Pages publication and is itself merged and Pages-verified.
+- **Frozen release identity:** Continuous Discharge `DP4.00130.001`,
+  `RELEASE-2026`, expanded UUID
+  `c28725ff-5aa2-41fa-845e-a7f1c8239d09`, generation
+  `2026-01-23T00:07:49Z`, DOI `https://doi.org/10.48443/4n6c-gc44`, and
+  availability manifest `manifest-available-20260123T000738Z.json` / `2779477`
+  bytes / MD5 `33c04c0f24dba030d3082acf704e2c56`. F1 may eventually inspect only the
+  authenticated availability/file manifest and independently reviewed
+  non-observation schema-metadata allowlist; observation-table URLs remain
+  sealed until a later, separately reviewed F2 authority.
+- **Exact response authority and honest provenance:** the committed two-column
+  ledger `docs/receipts/discharge-inverts-response-site-years.tsv` is SHA-256
+  `79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296` and Git
+  blob `c2aefd1aa7db8b1d7de4bf0551b1c95cba73f7a8`. It freezes exactly 210 sorted
+  `(siteID, utc_calendar_year)` keys at 24 exact stream sites, 23 with at least
+  six response years, from Inverts authority
+  `ff23e994e289982c747b91e48c5ff0907c1672d2`, root tree
+  `b09c9b54aa5b81290ab6a2dc98072421eae66b03`, `data` tree
+  `812be54ac172fe2febaa5a192f90070e87e3fbf0`, and `data/sites` tree
+  `080534caad4eb76cdaf0b5a56704ed4e890ed16a`. The earlier one-time manual
+  projection necessarily deserialized monolithic Inverts bundles but did not
+  index, aggregate, or log ecological outcome fields. That derivation is frozen
+  provenance, not an authorized method: F0/F1/F2 may not fetch or deserialize an
+  upstream Inverts RDS blob.
+- **Scientific contract:** the primary quantity is only
+  `qc_pass_record_present_in_utc_year`, left-anchored to every eligible response
+  key and retaining explicit `FALSE`. Finite zero qualifies; missing, nonfinite,
+  absent, or flagged values do not. The corrected 15-minute and historical
+  uncorrected 1-minute tables have exact field/QC predicates, UTC calendar clock,
+  ordinary `2021-10-01T00:00:00Z` and BIGC-only
+  `2020-10-01T00:00:00Z` cutovers, and chronology-first failure. TOMB fails before
+  ordinary schema/QC projection; TOOK remains excluded pending a named-location
+  crosswalk. Total five-state Inverts projection and zero-inclusive TOMB/TOOK
+  exclusion receipts are retained. Corrected-only and water-year results are
+  non-rescuing sensitivities. Machine `REOPEN_REVIEW` / `HOLD` map exactly to
+  `REOPEN INDEPENDENT REVIEW` / `HOLD / DO NOT BUILD`; clearing `3 sites x 6
+  years` reopens review only and never a build.
+- **No-look CI:** two new sparse jobs assert literal `SOURCE_SHA`, remove checkout
+  credentials/remotes, inventory every path/mode/SHA before and after, and run in
+  a verified empty Linux network namespace with a session-owned `0700` temporary
+  directory. The synthetic job checks only the two R scripts. The authority job
+  fetches the exact Inverts commit/tree graph with `--filter=blob:none`, asserts
+  zero local blob objects before and after, removes its remote, sets
+  `GIT_NO_LAZY_FETCH=1`, and reads only the committed TSV. Both jobs destroy only
+  their exact owned temporary paths on success or failure and publish no
+  artifacts.
+- **Adversarial review and invalidated drafts:** independent CI/security,
+  science, and documentation/register reviews are clean. Review caught and fixed
+  an initial counts-only authority check that could accept the wrong years, TOMB
+  schema validation that ran before the special-site short circuit, missing
+  executable human-disposition mapping, and stale overlap/exclusion/F1 wording.
+  The final fixtures mutate one exact year, exercise a TOMB-only special shape,
+  assert chronology-first overlap, exact exclusion tokens, total zero-count
+  states, response-anchored `FALSE`, and both sides of the review floor. An
+  earlier draft whole-bundle RDS verifier is invalidated and absent; repeating
+  that derivation is forbidden.
+- **Local verification and environment limits:** `Rscript --vanilla
+  scripts/test_discharge_feasibility_contract.R`,
+  `scripts/test_suite_synthesis.R`, `scripts/test_manifest_compare.R`, and parse
+  checks for all three F0 scripts passed. A locally constructed metadata-only
+  repository contained commits/trees and zero blobs; with its remote removed and
+  `GIT_NO_LAZY_FETCH=1`, `scripts/test_discharge_inverts_authority.R` passed the
+  exact commit/tree/ledger/key assertions before the exact temporary directory
+  was destroyed. Bundled Python 3.12.13 passed `scripts/test_trusted_publish.py`;
+  JavaScript syntax, workflow YAML (`6` jobs), all `30` workflow shell blocks,
+  local Markdown links, ledger counts/hash/blob, and `git diff --check` passed.
+  Host `test_boot_integrity.R` could not exercise its intended fixture because
+  this local R library lacks `shiny`; the literal Ubuntu 24.04 / R 4.5.2
+  canonical rebuild remains required CI evidence rather than being weakened or
+  represented as a local pass.
+- **Cleanup and non-impact:** no discharge API request, credential, capability
+  URL, manifest response, observation payload, discharge value, or upstream RDS
+  blob was fetched, logged, retained, or committed in this session. No local
+  rebuild, generation, promotion, backup, or staging ran; no rebuild lock exists.
+  The metadata-only test directory was deleted after its zero-blob receipt.
+  Canonical SHA-256 remains cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Publication status/residual risk:** this is a reviewed local candidate; no F0
+  PR, CI run, merge, or Pages identity is claimed yet. Hosted-network namespace,
+  GitHub partial-clone behavior, exact canonical rebuild reproduction, and Pages
+  publication must still pass on the literal candidate head. Discharge support
+  remains `UNMEASURED`.
+- **Next action:** commit and push this exact F0 candidate, open a guarded PR,
+  require every literal-head job to pass, merge only that reviewed head, then
+  verify merged-default CI, Pages, and HTTP 200. Publish a separate follow-up
+  receipt binding those exact identities before authorizing any F1 inventory.
