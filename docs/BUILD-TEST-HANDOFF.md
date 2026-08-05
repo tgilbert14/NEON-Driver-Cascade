@@ -3394,3 +3394,221 @@ Rules:
   guarded PR to `master`, require exact-head canonical CI, merge only that head,
   and verify default-branch CI/Pages/publication. Then start Seal 1 from the exact
   merge with no current-source support or effect access.
+
+### 2026-08-04 20:38 MST - Phenology Seal-0 publication receipt and literal-head CI correction / [Codex]
+
+- **Publication/classification:** Phenology Seal-0 PR #54 published head
+  `381f26e083fe6f9a5ceb08579bc4a60d7260a275` and merged to `master` as
+  `61568339de3585db59e0ed73fed2d4b203a29bef`. This is a
+  `scientific-contract` publication receipt plus a `suite-platform` CI correction;
+  Driver artifact/ecological impact remains **NONE**. No current v2 response,
+  support distribution, climate value, association, effect, vote, source pin,
+  generated artifact, manifest byte, or public application byte was changed or
+  inspected.
+- **Exact published-commit evidence:** default-branch push run `30972228069` / job
+  `92198882319` checked out exact merge commit `61568339...`, verified the pinned
+  Ubuntu 24.04 / R 4.5.2 / 2026-07-15 snapshot / Haswell / one-thread runtime,
+  fetched all seven recorded sibling commits detached, completed the full guarded
+  nine-stage rebuild and contract suite, and reproduced every committed scientific
+  artifact and semantic manifest successfully. Pages run `30972227489` also
+  completed successfully on that exact merge. The registry is therefore immutable
+  at `61568339...`, and Seal 1 starts from that commit.
+- **Corrected PR-CI evidence:** retrospective log inspection found that PR run
+  `30971888672` / job `92197832889` used GitHub's synthetic PR merge revision
+  `0785cf7b1174db04de4dbffbc50c4803ad35725e`, not literal submitted head
+  `381f26e...`, because `.github/workflows/ci.yml` checked out
+  `${{ github.sha }}` on `pull_request`. Its green result is valid merge-simulation
+  evidence but is not exact-head evidence; any earlier description of that PR run
+  as literal-head validation is superseded by this correction. The subsequent
+  exact published-commit run above supplies the canonical scientific proof, so no
+  rollback or artifact regeneration is required.
+- **Workflow repair staged for Seal 1:** branch `agent/phenology-v2-seal1` was
+  created directly from exact `61568339...`. CI now derives `SOURCE_SHA` from
+  `${{ github.event.pull_request.head.sha || github.sha }}`, checks out that
+  revision, and immediately asserts `git rev-parse HEAD == SOURCE_SHA`. The first
+  Seal-1 PR run must prove from its logs that this guard executes the literal head
+  before the PR can merge.
+- **Non-impact receipt:** no `.cascade-rebuild.lock` exists and no local rebuild,
+  generation, promotion, backup, or staging operation ran. All five canonical
+  Driver hashes remain those recorded in the preceding entry.
+- **Next action:** checkpoint the literal-head workflow repair, then implement the
+  three isolated Seal-1 modules and independent synthetic tests on this branch.
+  Do not deserialize current or legacy Phenology bundles, create Seal-3 receipts,
+  source effect code, or expose any new response/climate/effect value.
+
+### 2026-08-04 21:54 MST - Phenology v2 Seal-1 implementation candidate / [Codex]
+
+- **Safe base and code authority:** branch `agent/phenology-v2-seal1` starts from
+  exact merged Seal-0 authority
+  `61568339de3585db59e0ed73fed2d4b203a29bef`. Literal-head checkout repair was
+  checkpointed as `2cc02149fc8f96e1b7463e48ef4217bf6608dd85`; the complete
+  reviewed Seal-1 implementation is commit
+  `ff643116678e8115d8817268913c6c4408838bf1`. Publication remains pending the
+  first PR run that proves both jobs executed this branch's literal head.
+- **Changed/classification:** added `R/phenology_adapter_v2.R`,
+  `R/phenology_response_model_v2.R`,
+  `R/phenology_climate_support_mask_v2.R`,
+  `scripts/test_phenology_adapter_v2.R`, the exact runtime receipt at
+  `docs/receipts/phenology-v2-seal1-runtime.json`, and an isolated Seal-1 CI job.
+  This is `scientific-contract` implementation plus `suite-platform` validation.
+  It changes no source pin, published data schema, prior, vote, manifest entry,
+  generated Driver artifact, app runtime, or public-surface byte.
+- **Pure adapter:** the synthetic-only Driver-owned adapter implements the frozen
+  source/date two-clock contract, exact duplicate and mixed-status visit rules,
+  conservative earliest-phase censor envelope, roster/taxonomy/plot audits,
+  recurrent connected panels, compatibility and v2 annual support, context-only
+  leaf-active support, exact 510-row/46-site calendar topology, and a direct
+  adapter-to-response schema. Climate/effect-like bundle, column, calendar, and
+  audit payloads fail closed.
+- **Response and mask isolation:** the sole response model is the registered
+  Gaussian interval-censored `survreg` with equal species-year cell weights,
+  stable individual clustering, exact controls, full-rank and covariance gates,
+  two-fit determinism, full species-by-year latent predictions, and equal-species
+  annual medians. The response-presence projection is values-free and enforces the
+  six-year eligibility gate. The separate climate builder accepts only that
+  boolean mask and allowlisted monthly climate input, applies exact completeness,
+  range, and equality-retaining within-site MAD rules, and emits only keyed
+  booleans, counts, and opaque digest material. Neither module can call an effect.
+- **Runtime authority:** canonical execution is Ubuntu 24.04 / R 4.5.2 / Posit
+  2026-07-15 / Haswell OpenBLAS / one thread. The receipt pins
+  `survival 3.8-9` archive SHA-256
+  `741f925dca22ef8f0aa67f798df19148ad56be3b09e8c8eea09e351ac5f99282`,
+  `metafor 5.0-1` archive SHA-256
+  `953f1a43794a9d660225cad666849f1100263e5cad486fb8becc1ad32f81e73f`,
+  and the complete 20-package hard-dependency inventory digest
+  `f94392ce27024f6c7828ade4c3ff025f618d08e90ef68210fa3fed68f7c7d01a`.
+  CI re-downloads and hashes both source archives, reconstructs dependency
+  closure, and checks the loaded OS/R/BLAS/thread identity before testing.
+- **Synthetic verification:** 38 fixture families pass across two clean
+  `static-lock`, two clean `adapter-response`, and two clean `climate-mask`
+  processes. Stdout and stderr reproduce byte-for-byte. The response processes
+  also emit only opaque SHA-256 receipt
+  `188dca20ce8e3373e88233025336fcede6008941cb005a88952226d7cd1ae239`
+  locally over canonical model rows, every full-grid species-year latent
+  prediction, annual responses, and diagnostics; both production prediction
+  vectors are exactly identical and every value agrees with the independent
+  numerical oracle within the registered tolerance. The fit object and response
+  values are never printed.
+- **Adversarial coverage:** fixtures cover exact interval algebra, all registered
+  status/state vocabularies, same-visit conflicts, source/date disagreement,
+  left/right censoring, roster exceptions and failures, recurrent/panel/support
+  boundaries, factor coding, warnings/nonconvergence/covariance/range failure,
+  response/mask eligibility contradictions, leaf-active and coverage boundaries,
+  monthly completeness/range/MAD equality, order and locale invariance, malformed
+  schemas, whitespace identities, ALTREP/dimensioned columns, payload smuggling,
+  effect-function aliasing, and generated-artifact nonmutation. Independent
+  architecture and runtime reviews found no remaining P0/P1/P2 contract defect.
+- **No-look receipt:** no current or legacy Phenology RDS was checked out,
+  deserialized, summarized, modeled, or repaired during Seal 1. CI verifies only
+  immutable Git commit/tree/manifest identities without checking out Phenology
+  data. No new response support, response value, climate pair, association,
+  coefficient, sign, rank, interval, p-value, effect, or vote was accessed or
+  exposed. Current v2 compatibility/model support remains `UNMEASURED` and every
+  effect path remains sealed.
+- **Local validation/non-impact:** the full six-process orchestrator,
+  `scripts/test_suite_synthesis.R`, parsing of all four new R/test files, workflow
+  YAML parsing, runtime-receipt JSON parsing, inventory-digest reconstruction, and
+  `git diff --check` passed. No `.cascade-rebuild.lock` exists; no local rebuild,
+  generation, promotion, backup, staging, or Phenology-data operation ran.
+  Canonical SHA-256 values remain cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Next action:** commit the aligned registers/handoff, push the exact branch,
+  open a guarded PR, require literal-head Seal-1 plus full canonical rebuild CI,
+  merge only that head, and verify exact merged-default CI and Pages. After a
+  publication receipt, begin only Seal 2 against legacy pin `81e339e9...`; do not
+  inspect current response/effect output to repair parity or begin Seal 3 early.
+
+### 2026-08-04 22:02 MST - Seal-1 PR #55 first-run CI parser repair / [Codex]
+
+- **Exact failed evidence:** draft PR #55 ran exact literal head
+  `593140eed242c93ebcb0dec0af53b775693b48a5` in workflow run
+  `30976845525`. Job `phenology-v2-seal1-synthetic` / `92212514600` reached
+  the locked Ubuntu 24.04 / R 4.5.2 / Haswell / one-thread runtime and then
+  failed in `Verify the complete sealed runtime lock` with
+  `ValueError: not enough values to unpack (expected 4, got 1)`. The synthetic
+  adapter/model/mask suite did not run, so this failed job is not Seal-1 evidence.
+  The concurrent canonical rebuild job was still running when the failure was
+  diagnosed; no result is claimed for it here.
+- **Root cause and narrow repair:** the embedded R inventory emitter lives inside
+  a Python raw string, but its tab, unit-separator, newline, and CR/LF escapes were
+  double-escaped. R therefore printed literal escape text rather than four
+  delimiter-separated fields. The workflow-only repair uses the intended single
+  R escapes `\t`, `\037`, `\n`, `\r`; it changes no runtime authority,
+  inventory value/digest, dependency rule, adapter/model/mask code, fixture,
+  source identity, artifact, or ecological disposition.
+- **Local regression:** an exact-framing probe executed the repaired embedded R
+  emitter through Python and parsed 4/4 installed-package rows into four fields,
+  with three dependency subfields per row. Workflow YAML parsing and
+  `git diff --check` pass. Canonical CI must still prove the complete 20-package
+  inventory and all Seal-1 contracts on the amended literal head.
+- **Next action:** commit and push the workflow-only repair, update PR #55 to its
+  new exact head, and require fresh literal-head success from both jobs. Do not
+  rerun the failed job against the superseded head or merge partial evidence.
+
+### 2026-08-04 22:09 MST - Seal-1 PR #55 hard-closure correction / [Codex]
+
+- **Exact failed evidence:** amended literal head
+  `490ff71d9919f40c80761a03b4e8f3d6f88b993b` ran as
+  `30977182631`. The repaired framing passed and job
+  `phenology-v2-seal1-synthetic` / `92213534519` then failed closed with
+  `runtime lock omits hard dependencies: ['compiler']`. The job again stopped
+  before the synthetic contract suite, so it is not Seal-1 evidence. Its
+  concurrent canonical rebuild result is not reused after the head changes.
+- **Root cause:** the receipt's 20-row inventory omitted R base package
+  `compiler`. Exact installed DESCRIPTION traversal exposes the chain
+  `metafor -> pbapply -> parallel -> compiler`; local R independently confirms
+  `parallel` imports `tools, compiler`. Because the registered inventory includes
+  implicit base packages and all `Depends`/`Imports`/`LinkingTo` closure, omission
+  is a receipt defect rather than an allowable installer-only exclusion.
+- **Narrow authority correction:** add radix-ordered row
+  `compiler<TAB>4.5.2<TAB>base<TAB>r-4.5.2-base` between `base` and `digest`.
+  The corrected 21-row canonical inventory SHA-256 is
+  `b2263019cdcd50af0230c0fb69b1422ef064e55b2ecbe521bde6548cb9846f0f`.
+  This supersedes the earlier 20-row / `f94392ce...` inventory claim. The direct
+  `survival`/`metafor` versions and archive hashes, OS/R/snapshot/BLAS/thread
+  authority, scientific implementation, tests, no-look boundary, and all Driver
+  artifact hashes remain unchanged.
+- **Next action:** independently verify the corrected row/digest, commit and push
+  the receipt plus CI expectation and this append-only correction, and require a
+  third fresh literal-head run. Merge no partial or superseded evidence.
+
+### 2026-08-04 22:17 MST - Seal-1 PR #55 cross-platform MAD-fixture repair / [Codex]
+
+- **Exact failed evidence:** corrected-closure head
+  `2999ccbaacce69fdd8d555ea8fa257308bf032ad` ran as
+  `30977613684`. Job `phenology-v2-seal1-synthetic` / `92214882028`
+  passed the complete 21-package runtime lock, immutable Phenology identity-only
+  gate, all adapter/response fixtures, and two clean Ubuntu response processes.
+  Their opaque full-grid numerical receipt was
+  `496d1465d7da21be60f9ba0b929ca34b6b7e3fd52ae5eaf0b4e44469e3857a73`
+  and reproduced byte-for-byte inside that canonical job. The job then failed
+  only `equality-retained MAD boundary is invariant to monthly row order` in
+  fixture 37; its concurrent rebuild result is not reused after the head changes.
+- **Root cause:** one fixture asked a deliberately ill-conditioned decimal monthly
+  vector to do two jobs: expose order-sensitive summation and land exactly on the
+  six-degree inclusive MAD boundary. Canonical month ordering worked, but the
+  constructed annual mean rounded just above six on Ubuntu while landing on six
+  locally. That is a platform-sensitive synthetic-fixture assumption, not a
+  production algorithm or threshold failure.
+- **Test-only correction:** retain the ill-conditioned vector solely to require
+  identical ordered/reversed support, counts, and digest material, without
+  asserting its platform-specific MAD classification. Add a separate exact
+  six-year boundary fixture with five years of monthly zero and 2023 monthly six.
+  Both values are exactly representable; for both registered contrasts the median
+  and MAD are zero, threshold and deviation are exactly six, and the frozen `<=`
+  rule must retain the year. Ordered/reversed support, counts, and digests must
+  also match.
+- **Independent/local verification:** fixture review found no contract issue and
+  confirmed that the split preserves both the floating-order stress test and the
+  exact inclusive-boundary test. Climate-only and full six-clean-process runs pass
+  locally with unchanged opaque local response receipt `188dca20...`; all five
+  generated artifact hashes remain unchanged. No production module, runtime pin,
+  source authority, response/effect boundary, or Driver ecological decision
+  changed.
+- **Next action:** commit and push only the corrected fixture plus this failure
+  receipt, update PR #55 to the fourth exact head, and require both jobs to rerun
+  from scratch. Merge no result attached to a superseded head.
