@@ -3302,3 +3302,29 @@ Rules:
   parallel, preserve the Continuous Discharge `RELEASE-2026` acquisition plan as
   feasibility evidence only; neither track may inspect effects, add a vote, or
   change Driver artifacts before its recorded gate is independently cleared.
+
+### 2026-08-04 20:43 EDT - Phenology v2 specification review checkpoint / [Codex]
+
+- **Safe branch/base:** resumed on `agent/phenology-v2-adapter-spec`, based on the
+  exact Driver receipt merge `928ae23d22bb28b6649bdbec25404e64c4a4dfaa`.
+  The post-merge `master` CI run `30963302148` and Pages run `30963301347` both
+  completed successfully at that exact head.
+- **Draft scope:** created only `docs/PHENOLOGY-V2-ADAPTER-SPEC.md`. It is explicitly
+  marked `DRAFT / ADVERSARIAL REVIEW IN PROGRESS — NOT A REGISTRY AUTHORITY`.
+  No adapter, effect path, source pin, workflow, manifest, generated artifact,
+  canonical Driver byte, deployment, merge, or ecological vote changed.
+- **No-look status:** no current-release climate/green-up association, coefficient,
+  direction, correlation, rank, interval, or p-value was calculated or inspected.
+  Read-only checks were limited to immutable source shape and identity semantics.
+- **Open review findings:** the exact current Phenology data tree
+  `5a8fd457069d6dcca8dcd0dac9851528509032c6` contains a taxonomically unknown
+  observation identity absent from `inds`, plus historical observation `plotID`
+  values that can differ from the roster's first-source plot. The draft's initial
+  fail-closed wording would reject its own pinned authority and must be replaced
+  by an explicit, audited taxonomy-exclusion and visit-plot policy. The review is
+  also deciding whether to freeze the primary interval-censored response model in
+  this same no-look seal rather than after current support is observed.
+- **Next action:** finish the independent scientific review, correct those two
+  contracts with `apply_patch`, validate the docs-only diff, and publish a separate
+  exact-head no-look PR only when the document can truthfully be marked sealed.
+  Do not implement the adapter or expose an effect before that PR merges.
