@@ -14,6 +14,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Pull-request `github.sha` is GitHub's synthetic merge ref. Scientific PR
+  # evidence must instead execute the literal submitted head; push runs retain
+  # the immutable commit that triggered the workflow.
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
   RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
   RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
   # Hosted x64 runners can select different OpenBLAS kernels from their physical
@@ -30,9 +34,12 @@ jobs:
       - name: Checkout the immutable cascade revision
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.SOURCE_SHA }}
           fetch-depth: 1
           persist-credentials: false
+
+      - name: Assert the literal requested revision
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
 
       - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
         with:

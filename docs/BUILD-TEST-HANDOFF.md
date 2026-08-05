@@ -3394,3 +3394,44 @@ Rules:
   guarded PR to `master`, require exact-head canonical CI, merge only that head,
   and verify default-branch CI/Pages/publication. Then start Seal 1 from the exact
   merge with no current-source support or effect access.
+
+### 2026-08-04 20:38 MST - Phenology Seal-0 publication receipt and literal-head CI correction / [Codex]
+
+- **Publication/classification:** Phenology Seal-0 PR #54 published head
+  `381f26e083fe6f9a5ceb08579bc4a60d7260a275` and merged to `master` as
+  `61568339de3585db59e0ed73fed2d4b203a29bef`. This is a
+  `scientific-contract` publication receipt plus a `suite-platform` CI correction;
+  Driver artifact/ecological impact remains **NONE**. No current v2 response,
+  support distribution, climate value, association, effect, vote, source pin,
+  generated artifact, manifest byte, or public application byte was changed or
+  inspected.
+- **Exact published-commit evidence:** default-branch push run `30972228069` / job
+  `92198882319` checked out exact merge commit `61568339...`, verified the pinned
+  Ubuntu 24.04 / R 4.5.2 / 2026-07-15 snapshot / Haswell / one-thread runtime,
+  fetched all seven recorded sibling commits detached, completed the full guarded
+  nine-stage rebuild and contract suite, and reproduced every committed scientific
+  artifact and semantic manifest successfully. Pages run `30972227489` also
+  completed successfully on that exact merge. The registry is therefore immutable
+  at `61568339...`, and Seal 1 starts from that commit.
+- **Corrected PR-CI evidence:** retrospective log inspection found that PR run
+  `30971888672` / job `92197832889` used GitHub's synthetic PR merge revision
+  `0785cf7b1174db04de4dbffbc50c4803ad35725e`, not literal submitted head
+  `381f26e...`, because `.github/workflows/ci.yml` checked out
+  `${{ github.sha }}` on `pull_request`. Its green result is valid merge-simulation
+  evidence but is not exact-head evidence; any earlier description of that PR run
+  as literal-head validation is superseded by this correction. The subsequent
+  exact published-commit run above supplies the canonical scientific proof, so no
+  rollback or artifact regeneration is required.
+- **Workflow repair staged for Seal 1:** branch `agent/phenology-v2-seal1` was
+  created directly from exact `61568339...`. CI now derives `SOURCE_SHA` from
+  `${{ github.event.pull_request.head.sha || github.sha }}`, checks out that
+  revision, and immediately asserts `git rev-parse HEAD == SOURCE_SHA`. The first
+  Seal-1 PR run must prove from its logs that this guard executes the literal head
+  before the PR can merge.
+- **Non-impact receipt:** no `.cascade-rebuild.lock` exists and no local rebuild,
+  generation, promotion, backup, or staging operation ran. All five canonical
+  Driver hashes remain those recorded in the preceding entry.
+- **Next action:** checkpoint the literal-head workflow repair, then implement the
+  three isolated Seal-1 modules and independent synthetic tests on this branch.
+  Do not deserialize current or legacy Phenology bundles, create Seal-3 receipts,
+  source effect code, or expose any new response/climate/effect value.
