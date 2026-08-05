@@ -128,3 +128,243 @@ jobs:
 
       - name: Reject whitespace errors
         run: git diff --check
+
+  phenology-v2-seal1-synthetic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout the literal Seal-1 revision
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Assert the literal requested revision
+        run: |
+          set -euo pipefail
+          test "${#SOURCE_SHA}" -eq 40
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: '4.5.2'
+          use-public-rspm: false
+
+      - name: Install the exact sealed response and future-effect packages
+        uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          packages: survival@3.8-9, metafor@5.0-1
+          pak-version: stable
+          dependencies: '"hard"'
+          cache-version: phenology-v2-seal1-ppm-2026-07-15-v1
+          install-pandoc: 'false'
+          install-quarto: 'false'
+
+      - name: Verify the complete sealed runtime lock
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ctypes
+          import hashlib
+          import json
+          import os
+          import re
+          import subprocess
+          import urllib.request
+          from pathlib import Path
+
+          path = Path("docs/receipts/phenology-v2-seal1-runtime.json")
+          lock = json.loads(path.read_text(encoding="utf-8"))
+          if lock.get("schema") != "phenology-v2-seal1-runtime-lock/v1":
+              raise SystemExit("unexpected Phenology Seal-1 runtime-lock schema")
+          if lock.get("registry_authority") != "61568339de3585db59e0ed73fed2d4b203a29bef":
+              raise SystemExit("runtime lock does not name the merged Seal-0 authority")
+
+          runtime = lock["runtime"]
+          expected_runtime = {
+              "os": "ubuntu-24.04",
+              "platform": "x86_64-pc-linux-gnu",
+              "r_version": "4.5.2",
+              "repository": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15",
+              "renv_repository_override": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15",
+              "openblas_core": "Haswell",
+              "openblas_threads": 1,
+              "omp_threads": 1,
+          }
+          if runtime != expected_runtime:
+              raise SystemExit("committed Phenology Seal-1 runtime authority drifted")
+          if os.environ.get("RSPM") != runtime["repository"]:
+              raise SystemExit("RSPM does not match the sealed runtime lock")
+          if os.environ.get("RENV_CONFIG_REPOS_OVERRIDE") != runtime["renv_repository_override"]:
+              raise SystemExit("RENV repository override does not match the sealed runtime lock")
+          if os.environ.get("OPENBLAS_CORETYPE") != runtime["openblas_core"]:
+              raise SystemExit("OpenBLAS core environment does not match the sealed runtime lock")
+          if os.environ.get("OPENBLAS_NUM_THREADS") != str(runtime["openblas_threads"]):
+              raise SystemExit("OpenBLAS thread environment does not match the sealed runtime lock")
+          if os.environ.get("OMP_NUM_THREADS") != str(runtime["omp_threads"]):
+              raise SystemExit("OMP thread environment does not match the sealed runtime lock")
+
+          os_release = {}
+          for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
+              if "=" in line:
+                  key, value = line.split("=", 1)
+                  os_release[key] = value.strip('"')
+          if os_release.get("ID") != "ubuntu" or os_release.get("VERSION_ID") != "24.04":
+              raise SystemExit("runner is not the sealed Ubuntu 24.04 authority")
+
+          r_meta = subprocess.run(
+              ["Rscript", "--vanilla", "-e",
+               "cat(as.character(getRversion()), R.version$platform, sep='\\n')"],
+              check=True, text=True, capture_output=True).stdout.splitlines()
+          if r_meta != [runtime["r_version"], runtime["platform"]]:
+              raise SystemExit(f"R runtime mismatch: {r_meta!r}")
+
+          lib = ctypes.CDLL("libopenblas.so.0")
+          lib.openblas_get_corename.restype = ctypes.c_char_p
+          lib.openblas_get_config.restype = ctypes.c_char_p
+          core = lib.openblas_get_corename().decode("ascii")
+          threads = lib.openblas_get_num_threads()
+          config = lib.openblas_get_config().decode("ascii")
+          print(f"OpenBLAS core={core} threads={threads} config={config}")
+          if core.lower() != runtime["openblas_core"].lower() or threads != runtime["openblas_threads"]:
+              raise SystemExit("loaded OpenBLAS does not match the sealed runtime lock")
+
+          direct = lock["direct_packages"]
+          expected_direct = {
+              "metafor": {
+                  "package_ref": "metafor@5.0-1",
+                  "version": "5.0-1",
+                  "source_archive": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15/src/contrib/metafor_5.0-1.tar.gz",
+                  "source_archive_sha256": "953f1a43794a9d660225cad666849f1100263e5cad486fb8becc1ad32f81e73f",
+              },
+              "survival": {
+                  "package_ref": "survival@3.8-9",
+                  "version": "3.8-9",
+                  "source_archive": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15/src/contrib/survival_3.8-9.tar.gz",
+                  "source_archive_sha256": "741f925dca22ef8f0aa67f798df19148ad56be3b09e8c8eea09e351ac5f99282",
+              },
+          }
+          observed_direct = {
+              row["package"]: {
+                  key: row[key] for key in (
+                      "package_ref", "version", "source_archive",
+                      "source_archive_sha256")
+              }
+              for row in direct
+          }
+          if len(observed_direct) != len(direct) or observed_direct != expected_direct:
+              raise SystemExit("direct package/archive authorities drifted")
+          for package, authority in expected_direct.items():
+              digest = hashlib.sha256()
+              request = urllib.request.Request(
+                  authority["source_archive"],
+                  headers={"User-Agent": "NEON-Driver-Cascade-Seal1-CI/1"})
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  while chunk := response.read(1024 * 1024):
+                      digest.update(chunk)
+              if digest.hexdigest() != authority["source_archive_sha256"]:
+                  raise SystemExit(f"{package} source archive digest mismatch")
+
+          inventory = lock["package_inventory"]
+          names = [row["package"] for row in inventory]
+          if names != sorted(names, key=lambda value: value.encode("utf-8")) or len(names) != len(set(names)):
+              raise SystemExit("package inventory is not unique radix order")
+          canonical = "".join(
+              f'{row["package"]}\t{row["version"]}\t{row["priority"]}\t{row["authority"]}\n'
+              for row in inventory).encode("utf-8")
+          digest = hashlib.sha256(canonical).hexdigest()
+          expected_inventory_contract = {
+              "roots": ["metafor", "survival"],
+              "dependency_types": ["Depends", "Imports", "LinkingTo"],
+              "includes_implicit_base": True,
+              "excludes_installer_only_packages": True,
+              "ordering": "R sort(method = 'radix') on package",
+              "canonical_row": "package<TAB>version<TAB>priority<TAB>authority<LF>",
+              "inventory_sha256": "f94392ce27024f6c7828ade4c3ff025f618d08e90ef68210fa3fed68f7c7d01a",
+          }
+          if lock["inventory_contract"] != expected_inventory_contract:
+              raise SystemExit("package inventory contract drifted")
+          if digest != expected_inventory_contract["inventory_sha256"]:
+              raise SystemExit("package inventory digest mismatch")
+
+          r_inventory = r'''
+          args <- commandArgs(trailingOnly = TRUE)
+          for (package in args) {
+            description <- utils::packageDescription(package)
+            priority <- description$Priority
+            if (is.null(priority) || length(priority) != 1L || is.na(priority)) priority <- "none"
+            fields <- vapply(c("Depends", "Imports", "LinkingTo"), function(field) {
+              value <- description[[field]]
+              if (is.null(value) || length(value) != 1L || is.na(value)) ""
+              else gsub("[\\r\\n]+", " ", value)
+            }, character(1L))
+            cat(package, as.character(description$Version), priority,
+                paste(fields, collapse = "\\037"), sep = "\\t")
+            cat("\\n")
+          }
+          '''
+          observed_text = subprocess.run(
+              ["Rscript", "--vanilla", "-e", r_inventory, *names],
+              check=True, text=True, capture_output=True).stdout
+          observed = {}
+          hard_dependencies = set()
+          for line in observed_text.splitlines():
+              package, version, priority, fields = line.split("\t", 3)
+              observed[package] = (version, priority)
+              for field in fields.split("\x1f"):
+                  for entry in field.split(","):
+                      match = re.match(r"^\s*([A-Za-z][A-Za-z0-9.]*)", entry)
+                      if match and match.group(1) != "R":
+                          hard_dependencies.add(match.group(1))
+          expected = {row["package"]: (row["version"], row["priority"])
+                      for row in inventory}
+          if observed != expected:
+              raise SystemExit(f"installed package inventory mismatch: {observed!r}")
+          missing = sorted(hard_dependencies.difference(expected))
+          if missing:
+              raise SystemExit(f"runtime lock omits hard dependencies: {missing!r}")
+          print(f"Phenology Seal-1 runtime lock verified ({len(inventory)} packages; {digest})")
+          PY
+
+      - name: Verify immutable Phenology identities without checking out data
+        env:
+          PHENOLOGY_ORIGIN: https://github.com/tgilbert14/NEON-Plant-Phenology-Explorer.git
+          PHENOLOGY_CURRENT_DATA: 7d0f29f7886cfae1c760a9ffc9e056184ec6fc68
+          PHENOLOGY_CURRENT_CANDIDATE: 3089dc8e527340245735efbc62c95aa2faee5b25
+          PHENOLOGY_GENERATOR: 256989a91d4502feca0b54cea77a24dfe9a02fca
+          PHENOLOGY_CURRENT_KNOWLEDGE: 30be615dc438b60e4fa6454973b3b42589b22234
+          PHENOLOGY_LEGACY: 81e339e9ed6f34d3d04ca45a7030fea51c4147a5
+        run: |
+          set -euo pipefail
+          repo="$RUNNER_TEMP/phenology-authorities.git"
+          git init --quiet --bare "$repo"
+          git -C "$repo" remote add origin "$PHENOLOGY_ORIGIN"
+          test "$(git -C "$repo" remote get-url origin)" = "$PHENOLOGY_ORIGIN"
+          for commit in "$PHENOLOGY_CURRENT_DATA" "$PHENOLOGY_CURRENT_CANDIDATE" \
+                        "$PHENOLOGY_GENERATOR" "$PHENOLOGY_CURRENT_KNOWLEDGE" \
+                        "$PHENOLOGY_LEGACY"; do
+            git -C "$repo" fetch --quiet --no-tags --filter=blob:none origin "$commit"
+            test "$(git -C "$repo" rev-parse 'FETCH_HEAD^{commit}')" = "$commit"
+            git -C "$repo" cat-file -e "$commit^{commit}"
+          done
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_CANDIDATE^1")" = "$PHENOLOGY_GENERATOR"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_DATA^1")" = "$PHENOLOGY_GENERATOR"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_DATA^2")" = "$PHENOLOGY_CURRENT_CANDIDATE"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_KNOWLEDGE^1")" = "$PHENOLOGY_CURRENT_DATA"
+          git -C "$repo" merge-base --is-ancestor "$PHENOLOGY_CURRENT_DATA" "$PHENOLOGY_CURRENT_KNOWLEDGE"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_DATA:data/sites")" = "5a8fd457069d6dcca8dcd0dac9851528509032c6"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_KNOWLEDGE:data/sites")" = "5a8fd457069d6dcca8dcd0dac9851528509032c6"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_LEGACY:data/sites")" = "30abe869b0f78931929c21e544ffc85ec2238e35"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_DATA:manifest.json")" = "dcc9433975c2d19b6b128a77c2304fd844c268e9"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_CURRENT_KNOWLEDGE:manifest.json")" = "dcc9433975c2d19b6b128a77c2304fd844c268e9"
+          test "$(git -C "$repo" cat-file blob "$PHENOLOGY_CURRENT_KNOWLEDGE:manifest.json" | sha256sum | awk '{print $1}')" = "512737700fdad555264737303439a1816eb189f5ec456e7420aa40dc9165d29b"
+
+      - name: Run all Seal-1 contracts twice in isolated clean processes
+        env:
+          CASCADE_ROOT: ""
+          PHENOLOGY_V2_SYNTHETIC_ONLY: "true"
+        run: Rscript --vanilla scripts/test_phenology_adapter_v2.R
+
+      - name: Reject whitespace errors
+        run: git diff --check
