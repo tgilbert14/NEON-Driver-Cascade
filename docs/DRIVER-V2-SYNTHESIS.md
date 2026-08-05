@@ -16,9 +16,11 @@ would not be a safe integration strategy.
 - **No current companion ecological signal is newly vote-eligible.** App-contract
   adoption and ecological-signal adoption are separate decisions.
 - The two legacy temperature→green-up screens remain part of the unchanged
-  published v1 artifact, but both are **HOLD for v2 re-authorization** until the
-  current Phenology release is processed by an independent, registered Driver
-  adapter and model.
+  published v1 artifact, and both remain **HOLD for v2 re-authorization**. The
+  effect-blind [Phenology Seal-0 registry](PHENOLOGY-V2-ADAPTER-SPEC.md) now
+  freezes the independent adapter, response model, support-mask, effect, and
+  pooling contracts; implementation, current response support, and all v2 effects
+  remain separate later gates.
 - Every complementary-app build is **DEFERRED**. Only pinned feasibility evidence
   acquisition is authorized: discharge first, herbaceous clip harvest second.
 - This synthesis changes documentation and audit tooling only. It does not update a
@@ -169,9 +171,13 @@ The detailed ranked backlog and rejected alternatives remain in
 ## Authorized next work
 
 1. Freeze this synthesis as the v2 decision baseline.
-2. Specify and independently test a current-release Phenology adapter before
-   looking at its Driver effect estimates. Declare expected row/site/support,
-   censoring, alternate desert outcome, and old/new parity behavior first.
+2. Implement and independently test only Seal 1 of the frozen
+   [current-release Phenology registry](PHENOLOGY-V2-ADAPTER-SPEC.md): the pure
+   two-clock adapter, response-only interval model, one-way values-free climate
+   support mask, synthetic fixtures, and exact runtime pin. Do not access current
+   response support until that implementation is merged and Seal 2 legacy parity
+   passes; do not access effects before the later support receipts and explicit
+   unseal.
 3. Acquire discharge feasibility evidence without building an app, adding a prior,
    or changing Driver artifacts.
 4. Revisit other companion adapters only when a named Driver question requires the
