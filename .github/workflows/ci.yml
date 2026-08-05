@@ -281,7 +281,7 @@ jobs:
               "excludes_installer_only_packages": True,
               "ordering": "R sort(method = 'radix') on package",
               "canonical_row": "package<TAB>version<TAB>priority<TAB>authority<LF>",
-              "inventory_sha256": "f94392ce27024f6c7828ade4c3ff025f618d08e90ef68210fa3fed68f7c7d01a",
+              "inventory_sha256": "b2263019cdcd50af0230c0fb69b1422ef064e55b2ecbe521bde6548cb9846f0f",
           }
           if lock["inventory_contract"] != expected_inventory_contract:
               raise SystemExit("package inventory contract drifted")

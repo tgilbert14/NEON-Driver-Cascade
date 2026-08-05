@@ -3548,3 +3548,30 @@ Rules:
 - **Next action:** commit and push the workflow-only repair, update PR #55 to its
   new exact head, and require fresh literal-head success from both jobs. Do not
   rerun the failed job against the superseded head or merge partial evidence.
+
+### 2026-08-04 22:09 MST - Seal-1 PR #55 hard-closure correction / [Codex]
+
+- **Exact failed evidence:** amended literal head
+  `490ff71d9919f40c80761a03b4e8f3d6f88b993b` ran as
+  `30977182631`. The repaired framing passed and job
+  `phenology-v2-seal1-synthetic` / `92213534519` then failed closed with
+  `runtime lock omits hard dependencies: ['compiler']`. The job again stopped
+  before the synthetic contract suite, so it is not Seal-1 evidence. Its
+  concurrent canonical rebuild result is not reused after the head changes.
+- **Root cause:** the receipt's 20-row inventory omitted R base package
+  `compiler`. Exact installed DESCRIPTION traversal exposes the chain
+  `metafor -> pbapply -> parallel -> compiler`; local R independently confirms
+  `parallel` imports `tools, compiler`. Because the registered inventory includes
+  implicit base packages and all `Depends`/`Imports`/`LinkingTo` closure, omission
+  is a receipt defect rather than an allowable installer-only exclusion.
+- **Narrow authority correction:** add radix-ordered row
+  `compiler<TAB>4.5.2<TAB>base<TAB>r-4.5.2-base` between `base` and `digest`.
+  The corrected 21-row canonical inventory SHA-256 is
+  `b2263019cdcd50af0230c0fb69b1422ef064e55b2ecbe521bde6548cb9846f0f`.
+  This supersedes the earlier 20-row / `f94392ce...` inventory claim. The direct
+  `survival`/`metafor` versions and archive hashes, OS/R/snapshot/BLAS/thread
+  authority, scientific implementation, tests, no-look boundary, and all Driver
+  artifact hashes remain unchanged.
+- **Next action:** independently verify the corrected row/digest, commit and push
+  the receipt plus CI expectation and this append-only correction, and require a
+  third fresh literal-head run. Merge no partial or superseded evidence.
