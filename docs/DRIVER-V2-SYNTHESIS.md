@@ -1,7 +1,7 @@
 # Driver v2 cross-product synthesis
 
 Decision date: 2026-08-04 EDT
-Decision state: **PASS 10 COMPLETE / DRIVER V2 SIGNAL CHANGES HELD / NO CANONICAL BYTE CHANGE**
+Decision state: **PASS 10 COMPLETE / PHENOLOGY SEAL 2 HOLD AT LEGACY SCHEMA GATE / DRIVER V2 SIGNAL CHANGES HELD / NO CANONICAL BYTE CHANGE**
 
 This is the evidence gate between the nine completed companion passes and a future
 Driver v2 rebuild. It records what is safe to reuse, what is only context, what is
@@ -24,8 +24,8 @@ would not be a safe integration strategy.
   fixture families passed across six fresh isolated Seal-1 processes without
   deserializing either the legacy or current Phenology RDS family. The separate
   unchanged v1 rebuild continues to use its recorded legacy pins only for exact
-  canonical reproduction. Legacy parity, current response
-  support, climate support, and all v2 effects remain separate later gates.
+  canonical reproduction. Legacy parity is not proved; current response support,
+  climate support, and all v2 effects remain separate later gates.
 - Every complementary-app build is **DEFERRED**. Only pinned feasibility evidence
   acquisition is authorized: discharge first, herbaceous clip harvest second.
 - Seal 1 adds isolated Driver-owned implementation, synthetic tests, CI, and a
@@ -36,8 +36,29 @@ would not be a safe integration strategy.
   `6cb1e9e8a0fce646ced26ee296cf8ee75d991f4d`. Exact-head run `30977899036`,
   merged-default run `30978285438`, and Pages run `30978284811` all passed;
   the public root returned HTTP 200. Driver impact is `NONE`, all five canonical
-  hashes remain unchanged, and the next permissible stage is exact legacy-pin
-  Seal-2 parity only.
+  hashes remain unchanged.
+- The documentation receipt for that authority is published as PR #56 exact head
+  `a26428a66a7e8dcadf9fa26c4f42d870a6ff36be`, merged as
+  `c952687399abfef9c155ccaf207b83a79ea698a4`. PR run `30979039907` passed
+  rebuild job `92219313582` and Seal-1 job `92219313600`; post-merge run
+  `30979297006` passed Seal-1 job `92220080404` and rebuild job `92220080424`.
+  Pages run `30979295789` passed build `92220078640`, deploy `92220171068`, and
+  status `92220171073`; the public root returned HTTP 200.
+- The first Seal-2 candidate acquired only exact legacy commit
+  `81e339e9ed6f34d3d04ca45a7030fea51c4147a5` and its `data/sites` tree
+  `30abe869b0f78931929c21e544ffc85ec2238e35`. A schema-only scan found 45
+  bundles with nonempty `trend` and one typed, non-`NULL` `trend` with the
+  required columns but zero rows. The frozen registry correctly raised its
+  registered hard failure `empty_required_table`; formal sections 8.3/9.3 parity
+  was **NOT ATTEMPTED**. A manual one-bundle nonempty diagnostic adapted
+  successfully, but is explicitly not parity evidence.
+- The isolated Seal-2 gate records `current_fetched = false`,
+  `current_deserialized = false`, `effect_module_sourced = false`, and
+  `effect_function_called = false`. Those no-current/no-effect claims apply only
+  to that isolated gate; the unchanged canonical rebuild separately uses its
+  recorded legacy v1 pins. Adapter, frozen specification, canonical artifacts,
+  and Driver disposition remain unchanged. Driver impact is `NONE`, Seal 2 is
+  `HOLD`, and Seal 3 remains sealed.
 
 ## Evidence method and vocabulary
 
@@ -79,8 +100,8 @@ phenology hinge:
 
 | Legacy v1 screen | Direction matches | Exact binomial p | Holm / FDR | v2 status |
 |---|---:|---:|---:|---|
-| annual temperature → green-up DOY | 15 / 18 | 0.003768921 | 0.007537842 | HOLD pending current-release adapter/model |
-| March–May temperature → green-up DOY | 8 / 18 | 0.759658813 | 0.759658813 | HOLD pending current-release adapter/model |
+| annual temperature → green-up DOY | 15 / 18 | 0.003768921 | 0.007537842 | HOLD — Seal-2 parity not attempted (legacy schema gate) |
+| March–May temperature → green-up DOY | 8 / 18 | 0.759658813 | 0.759658813 | HOLD — Seal-2 parity not attempted (legacy schema gate) |
 
 These values describe the published v1 snapshot; they are not a claim that the
 current Phenology release reproduces the same eligible plants, censoring treatment,
@@ -184,7 +205,7 @@ The detailed ranked backlog and rejected alternatives remain in
 ## Authorized next work
 
 1. Preserve this synthesis as the v2 decision baseline.
-2. Seal 1 is complete: the frozen
+2. Seal 1 and its publication receipt are complete: the frozen
    [Phenology registry](PHENOLOGY-V2-ADAPTER-SPEC.md) has a pure two-clock
    adapter, response-only interval model, one-way values-free climate-support-mask
    builder, adversarial synthetic fixtures, and exact runtime pin. Its isolated
@@ -193,15 +214,22 @@ The detailed ranked backlog and rejected alternatives remain in
    legacy pins only for exact canonical reproduction. PR #55
    exact head `35c2ca7` merged as `6cb1e9e8`; exact-head, merged-default, and
    Pages publication gates passed in runs `30977899036`, `30978285438`, and
-   `30978284811` respectively.
-3. Run Seal 2 only against exact legacy pin `81e339e9...` and prove sections 8.3
-   and 9.3. Do not inspect current response/effect output to repair a legacy
-   mismatch. Current support remains forbidden until this separate gate passes;
-   effects remain forbidden until the later receipts, support decision, and
-   explicit unseal.
-4. Acquire discharge feasibility evidence without building an app, adding a prior,
+   `30978284811` respectively. Receipt PR #56 exact head `a26428a...` merged as
+   `c952687...`; its PR, post-merge, and Pages gates passed, and the public root
+   returned HTTP 200.
+3. Seal 2 is `HOLD` before parity. Its isolated legacy-only gate scanned all 46
+   bundles from exact legacy commit `81e339e9...` / tree `30abe869...`: 45 had a
+   nonempty `trend`, while one had a typed non-`NULL` required-column `trend` with
+   zero rows. The frozen registry raised `empty_required_table`, so formal
+   sections 8.3/9.3 parity was **NOT ATTEMPTED**. The successful manual adaptation
+   of one nonempty bundle is diagnostic only and is not parity evidence.
+4. Publish this HOLD gate. Any legacy-only schema amendment must be a new,
+   separately reviewed registry stage; never silently normalize the frozen
+   contract. Current response support remains forbidden and Seal 3, including all
+   effect execution, remains sealed.
+5. Acquire discharge feasibility evidence without building an app, adding a prior,
    or changing Driver artifacts.
-5. Revisit other companion adapters only when a named Driver question requires the
+6. Revisit other companion adapters only when a named Driver question requires the
    metric. Do not ingest all available app outputs merely to make the atlas larger.
 
 ## No-build receipt

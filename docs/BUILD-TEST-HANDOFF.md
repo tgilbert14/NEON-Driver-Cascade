@@ -3663,3 +3663,70 @@ Rules:
   from its exact merge. Seal 2 may access only exact legacy pin `81e339e9...` for
   registered sections 8.3/9.3 parity. Current response/effect output and every
   effect execution remain forbidden until their separately reviewed later gates.
+
+### 2026-08-04 23:34 MST - Phenology v2 Seal-2 legacy schema HOLD candidate / [Codex]
+
+- **Published receipt base:** receipt PR #56 exact head
+  `a26428a66a7e8dcadf9fa26c4f42d870a6ff36be` merged as
+  `c952687399abfef9c155ccaf207b83a79ea698a4`. PR run `30979039907` passed
+  rebuild job `92219313582` and Seal-1 job `92219313600`; post-merge run
+  `30979297006` passed Seal-1 job `92220080404` and rebuild job `92220080424`.
+  Pages run `30979295789` passed build `92220078640`, deploy `92220171068`, and
+  status `92220171073`; the public root returned HTTP 200.
+- **Seal-2 boundary exercised:** the candidate acquired only exact legacy commit
+  `81e339e9ed6f34d3d04ca45a7030fea51c4147a5` and its `data/sites` tree
+  `30abe869b0f78931929c21e544ffc85ec2238e35`. It schema-scanned all 46 legacy
+  bundles before any registered parity comparison. Forty-five bundles had a
+  nonempty `trend`; one bundle had a typed, non-`NULL` `trend` with every required
+  column and zero rows.
+- **Registered stop:** the frozen validator correctly raised its registered hard
+  failure `empty_required_table`. Formal sections 8.3/9.3 parity was **NOT
+  ATTEMPTED**. A manual diagnostic adapted one nonempty legacy bundle
+  successfully, but that single-bundle result proves no full-set count, key,
+  tolerance, or digest parity and is explicitly not parity evidence.
+- **Isolation receipt:** `current_fetched = false`, `current_deserialized = false`,
+  `effect_module_sourced = false`, and `effect_function_called = false`. These
+  no-current/no-effect claims apply to the isolated Seal-2 gate only. The existing
+  canonical rebuild separately uses its recorded legacy v1 pins, so it is exact
+  v1 artifact-reproduction evidence rather than a no-look gate.
+- **Implementation/classification:** scientific-contract + suite-platform CI;
+  Driver impact decision `NONE / HOLD`; no app-local change. The new two-VM gate
+  fetches the literal legacy SHA in an empty object database, exports only the
+  verified 46-file site tree plus a values-free receipt, destroys the object
+  database, and runs the restricted parity surface without network access. The
+  parity job waits for legacy acquisition, the unchanged canonical rebuild, and
+  the unchanged Seal-1 suite. The HOLD path stops before adapter sourcing,
+  baseline deserialization, oracle/model work, or any effect path.
+- **Local and independent validation:** R parse, runner `--static`, runner
+  `--synthetic`, the exact 46-bundle legacy gate, and the unchanged full Seal-1
+  38-fixture/six-process suite passed. The real gate emitted exactly one ordered
+  HOLD JSON object and zero stderr bytes. The synthesis-ledger and manifest-
+  comparator fixtures, JavaScript syntax, YAML parse, all seven new shell blocks,
+  all four workflow Python blocks, immutable action-pin review, canonical hashes,
+  and `git diff --check` passed. Independent review improved the boundary so
+  reordered and duplicate-key JSON are rejected; expected HOLD and the latent
+  PASS schema remain accepted. Local `verify_manifest.R` correctly refused the
+  host R 4.5.3 versus sealed R 4.5.2 mismatch, and the host Python 3.9.6 cannot
+  execute the existing Python-3.10+ trusted-publish fixture; exact Ubuntu 24.04 /
+  R 4.5.2 CI remains required before merge.
+- **Cleanup/residual risk:** the acquisition object database and archive were
+  destroyed immediately; the extracted temporary legacy payload and validation
+  outputs were deleted after the final HOLD check and are not recoverable from
+  this workspace. The one typed-empty source bundle prevents registered parity;
+  CI viability of the hosted network namespace and exact sealed runtime remains
+  to be demonstrated on the candidate head.
+- **Contract and Driver impact:** `HOLD / NONE`. The adapter, frozen
+  `docs/PHENOLOGY-V2-ADAPTER-SPEC.md`, canonical artifacts, and every Driver
+  ecological disposition remain unchanged. Canonical SHA-256 remains cascade
+  `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`, search
+  `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`, meta
+  `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`, codebook
+  `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`, and
+  manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  Seal 3 remains sealed.
+- **Publication identity:** this is the local HOLD candidate record; no PR, run,
+  or merge identity is claimed for it.
+- **Next action:** publish this HOLD gate. If the typed-empty legacy schema needs
+  an amendment, introduce it only as a new, separately reviewed registry stage;
+  never silently normalize or rewrite the frozen contract. Current response
+  support and every effect path remain forbidden until their later explicit gates.
