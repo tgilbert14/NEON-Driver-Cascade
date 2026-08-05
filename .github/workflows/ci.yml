@@ -129,6 +129,636 @@ jobs:
       - name: Reject whitespace errors
         run: git diff --check
 
+  phenology-v2-seal2-acquire-legacy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      receipt_sha256: ${{ steps.acquire.outputs.receipt_sha256 }}
+    steps:
+      - name: Checkout the literal Seal-2 revision
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/ci.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Assert the literal requested revision
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+
+      - name: Acquire only the exact legacy Phenology sites tree
+        id: acquire
+        env:
+          PHENOLOGY_LEGACY_ORIGIN: https://github.com/tgilbert14/NEON-Plant-Phenology-Explorer.git
+          PHENOLOGY_LEGACY_SHA: 81e339e9ed6f34d3d04ca45a7030fea51c4147a5
+          PHENOLOGY_LEGACY_TREE: 30abe869b0f78931929c21e544ffc85ec2238e35
+        run: |
+          set -euo pipefail
+          [[ "$PHENOLOGY_LEGACY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$PHENOLOGY_LEGACY_TREE" =~ ^[0-9a-f]{40}$ ]]
+          repo="$RUNNER_TEMP/phenology-v2-seal2-legacy.git"
+          archive="$RUNNER_TEMP/phenology-v2-seal2-sites.tar"
+          entries="$RUNNER_TEMP/phenology-v2-seal2-tree.tsv"
+          payload="$RUNNER_TEMP/phenology-v2-seal2-payload"
+          sites="$payload/sites"
+          test ! -e "$repo"
+          test ! -e "$archive"
+          test ! -e "$payload"
+          mkdir -p "$sites"
+
+          git init --quiet --bare "$repo"
+          git -C "$repo" remote add origin "$PHENOLOGY_LEGACY_ORIGIN"
+          test "$(git -C "$repo" remote get-url origin)" = "$PHENOLOGY_LEGACY_ORIGIN"
+          test "$(git -C "$repo" remote get-url --all origin | wc -l)" -eq 1
+          GIT_TERMINAL_PROMPT=0 git -C "$repo" fetch --quiet --no-tags \
+            --depth=1 origin "$PHENOLOGY_LEGACY_SHA"
+          test "$(git -C "$repo" rev-parse 'FETCH_HEAD^{commit}')" = "$PHENOLOGY_LEGACY_SHA"
+          test "$(git -C "$repo" rev-parse "$PHENOLOGY_LEGACY_SHA:data/sites")" = \
+            "$PHENOLOGY_LEGACY_TREE"
+
+          git -C "$repo" ls-tree "$PHENOLOGY_LEGACY_SHA:data/sites" > "$entries"
+          awk -F '\t' '
+            $1 !~ /^100644 blob [0-9a-f]{40}$/ { exit 1 }
+            $2 !~ /^[A-Z0-9]{4}[.]rds$/ { exit 1 }
+            END { if (NR != 46) exit 1 }
+          ' "$entries"
+          git -C "$repo" archive --format=tar --output="$archive" \
+            "$PHENOLOGY_LEGACY_SHA:data/sites"
+          tar -xf "$archive" -C "$sites"
+
+          test "$(find "$sites" -mindepth 1 -maxdepth 1 | wc -l)" -eq 46
+          test "$(find "$sites" -mindepth 1 -maxdepth 1 -type f -name '*.rds' | wc -l)" -eq 46
+          test -z "$(find "$sites" -mindepth 1 -maxdepth 1 -type l -print -quit)"
+          find "$sites" -mindepth 1 -maxdepth 1 -type f -printf '%f\n' |
+            awk '
+              $0 !~ /^[A-Z0-9]{4}[.]rds$/ { exit 1 }
+              END { if (NR != 46) exit 1 }
+            '
+
+          git -C "$sites" init --quiet
+          git -C "$sites" config core.autocrlf false
+          git -C "$sites" config core.filemode true
+          git -C "$sites" add --all --force
+          test "$(git -C "$sites" write-tree)" = "$PHENOLOGY_LEGACY_TREE"
+          rm -rf -- "$sites/.git"
+          test ! -e "$sites/.git"
+
+          receipt="$payload/legacy-tree-receipt.tsv"
+          {
+            printf 'phenology-v2-seal2-legacy-tree/v1\n'
+            printf 'driver_sha\t%s\n' "$SOURCE_SHA"
+            printf 'origin\t%s\n' "$PHENOLOGY_LEGACY_ORIGIN"
+            printf 'legacy_commit\t%s\n' "$PHENOLOGY_LEGACY_SHA"
+            printf 'sites_tree\t%s\n' "$PHENOLOGY_LEGACY_TREE"
+            printf 'file_count\t46\n'
+          } > "$receipt"
+          test "$(find "$payload" -type f | wc -l)" -eq 47
+          receipt_sha="$(sha256sum "$receipt" | awk '{print $1}')"
+          [[ "$receipt_sha" =~ ^[0-9a-f]{64}$ ]]
+          printf 'receipt_sha256=%s\n' "$receipt_sha" >> "$GITHUB_OUTPUT"
+
+          rm -rf -- "$repo"
+          rm -f -- "$archive" "$entries"
+          test ! -e "$repo"
+          test ! -e "$archive"
+
+      - name: Upload only the verified legacy sites and values-free receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: phenology-v2-seal2-legacy-${{ env.SOURCE_SHA }}
+          retention-days: 1
+          if-no-files-found: error
+          path: ${{ runner.temp }}/phenology-v2-seal2-payload/
+
+  phenology-v2-seal2-legacy-parity:
+    needs:
+      - rebuild-contracts
+      - phenology-v2-seal1-synthetic
+      - phenology-v2-seal2-acquire-legacy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout only the literal Seal-2 parity surface
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            R/phenology_adapter_v2.R
+            scripts/test_phenology_adapter_v2_legacy.R
+            docs/PHENOLOGY-V2-ADAPTER-SPEC.md
+            docs/receipts/phenology-v2-seal1-runtime.json
+            data/cascade.rds
+            data/search_index.rds
+            data/cascade_meta.rds
+            data/neon-cascade-codebook.csv
+            manifest.json
+          sparse-checkout-cone-mode: false
+
+      - name: Assert the literal requested revision and restricted surface
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          expected="$RUNNER_TEMP/phenology-v2-seal2-sparse-expected.txt"
+          actual="$RUNNER_TEMP/phenology-v2-seal2-sparse-actual.txt"
+          printf '%s\n' \
+            R/phenology_adapter_v2.R \
+            data/cascade.rds \
+            data/cascade_meta.rds \
+            data/neon-cascade-codebook.csv \
+            data/search_index.rds \
+            docs/PHENOLOGY-V2-ADAPTER-SPEC.md \
+            docs/receipts/phenology-v2-seal1-runtime.json \
+            manifest.json \
+            scripts/test_phenology_adapter_v2_legacy.R > "$expected"
+          find . -path './.git' -prune -o -type f -printf '%P\n' |
+            LC_ALL=C sort > "$actual"
+          cmp -s "$expected" "$actual"
+          test -z "$(find . -path './.git' -prune -o -type l -print -quit)"
+          rm -f -- "$expected" "$actual"
+          test -z "$(git config --local --get-regexp '^http[.].*[.]extraheader$' || true)"
+          git remote remove origin
+          test -z "$(git remote)"
+          for path in \
+            R/phenology_adapter_v2.R \
+            scripts/test_phenology_adapter_v2_legacy.R \
+            docs/PHENOLOGY-V2-ADAPTER-SPEC.md \
+            docs/receipts/phenology-v2-seal1-runtime.json \
+            data/cascade.rds \
+            data/search_index.rds \
+            data/cascade_meta.rds \
+            data/neon-cascade-codebook.csv \
+            manifest.json; do
+            test -f "$path"
+          done
+          for path in \
+            R/phenology_response_model_v2.R \
+            R/phenology_climate_support_mask_v2.R \
+            R/source_adapters.R \
+            scripts/build_cascade.R \
+            scripts/cascade_meta.R \
+            scripts/rebuild_all.R; do
+            test ! -e "$path"
+          done
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: '4.5.2'
+          use-public-rspm: false
+
+      - name: Install the exact sealed response and future-effect packages
+        uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          packages: survival@3.8-9, metafor@5.0-1
+          pak-version: stable
+          dependencies: '"hard"'
+          cache-version: phenology-v2-seal1-ppm-2026-07-15-v1
+          install-pandoc: 'false'
+          install-quarto: 'false'
+
+      - name: Verify the complete sealed runtime lock
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ctypes
+          import hashlib
+          import json
+          import os
+          import re
+          import subprocess
+          import urllib.request
+          from pathlib import Path
+
+          path = Path("docs/receipts/phenology-v2-seal1-runtime.json")
+          lock = json.loads(path.read_text(encoding="utf-8"))
+          if lock.get("schema") != "phenology-v2-seal1-runtime-lock/v1":
+              raise SystemExit("unexpected Phenology Seal-1 runtime-lock schema")
+          if lock.get("registry_authority") != "61568339de3585db59e0ed73fed2d4b203a29bef":
+              raise SystemExit("runtime lock does not name the merged Seal-0 authority")
+
+          runtime = lock["runtime"]
+          expected_runtime = {
+              "os": "ubuntu-24.04",
+              "platform": "x86_64-pc-linux-gnu",
+              "r_version": "4.5.2",
+              "repository": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15",
+              "renv_repository_override": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15",
+              "openblas_core": "Haswell",
+              "openblas_threads": 1,
+              "omp_threads": 1,
+          }
+          if runtime != expected_runtime:
+              raise SystemExit("committed Phenology Seal-1 runtime authority drifted")
+          if os.environ.get("RSPM") != runtime["repository"]:
+              raise SystemExit("RSPM does not match the sealed runtime lock")
+          if os.environ.get("RENV_CONFIG_REPOS_OVERRIDE") != runtime["renv_repository_override"]:
+              raise SystemExit("RENV repository override does not match the sealed runtime lock")
+          if os.environ.get("OPENBLAS_CORETYPE") != runtime["openblas_core"]:
+              raise SystemExit("OpenBLAS core environment does not match the sealed runtime lock")
+          if os.environ.get("OPENBLAS_NUM_THREADS") != str(runtime["openblas_threads"]):
+              raise SystemExit("OpenBLAS thread environment does not match the sealed runtime lock")
+          if os.environ.get("OMP_NUM_THREADS") != str(runtime["omp_threads"]):
+              raise SystemExit("OMP thread environment does not match the sealed runtime lock")
+
+          os_release = {}
+          for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
+              if "=" in line:
+                  key, value = line.split("=", 1)
+                  os_release[key] = value.strip('"')
+          if os_release.get("ID") != "ubuntu" or os_release.get("VERSION_ID") != "24.04":
+              raise SystemExit("runner is not the sealed Ubuntu 24.04 authority")
+
+          r_meta = subprocess.run(
+              ["Rscript", "--vanilla", "-e",
+               "cat(as.character(getRversion()), R.version$platform, sep='\\n')"],
+              check=True, text=True, capture_output=True).stdout.splitlines()
+          if r_meta != [runtime["r_version"], runtime["platform"]]:
+              raise SystemExit(f"R runtime mismatch: {r_meta!r}")
+
+          lib = ctypes.CDLL("libopenblas.so.0")
+          lib.openblas_get_corename.restype = ctypes.c_char_p
+          lib.openblas_get_config.restype = ctypes.c_char_p
+          core = lib.openblas_get_corename().decode("ascii")
+          threads = lib.openblas_get_num_threads()
+          config = lib.openblas_get_config().decode("ascii")
+          print(f"OpenBLAS core={core} threads={threads} config={config}")
+          if core.lower() != runtime["openblas_core"].lower() or threads != runtime["openblas_threads"]:
+              raise SystemExit("loaded OpenBLAS does not match the sealed runtime lock")
+
+          direct = lock["direct_packages"]
+          expected_direct = {
+              "metafor": {
+                  "package_ref": "metafor@5.0-1",
+                  "version": "5.0-1",
+                  "source_archive": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15/src/contrib/metafor_5.0-1.tar.gz",
+                  "source_archive_sha256": "953f1a43794a9d660225cad666849f1100263e5cad486fb8becc1ad32f81e73f",
+              },
+              "survival": {
+                  "package_ref": "survival@3.8-9",
+                  "version": "3.8-9",
+                  "source_archive": "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15/src/contrib/survival_3.8-9.tar.gz",
+                  "source_archive_sha256": "741f925dca22ef8f0aa67f798df19148ad56be3b09e8c8eea09e351ac5f99282",
+              },
+          }
+          observed_direct = {
+              row["package"]: {
+                  key: row[key] for key in (
+                      "package_ref", "version", "source_archive",
+                      "source_archive_sha256")
+              }
+              for row in direct
+          }
+          if len(observed_direct) != len(direct) or observed_direct != expected_direct:
+              raise SystemExit("direct package/archive authorities drifted")
+          for package, authority in expected_direct.items():
+              digest = hashlib.sha256()
+              request = urllib.request.Request(
+                  authority["source_archive"],
+                  headers={"User-Agent": "NEON-Driver-Cascade-Seal2-CI/1"})
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  while chunk := response.read(1024 * 1024):
+                      digest.update(chunk)
+              if digest.hexdigest() != authority["source_archive_sha256"]:
+                  raise SystemExit(f"{package} source archive digest mismatch")
+
+          inventory = lock["package_inventory"]
+          names = [row["package"] for row in inventory]
+          if names != sorted(names, key=lambda value: value.encode("utf-8")) or len(names) != len(set(names)):
+              raise SystemExit("package inventory is not unique radix order")
+          canonical = "".join(
+              f'{row["package"]}\t{row["version"]}\t{row["priority"]}\t{row["authority"]}\n'
+              for row in inventory).encode("utf-8")
+          digest = hashlib.sha256(canonical).hexdigest()
+          expected_inventory_contract = {
+              "roots": ["metafor", "survival"],
+              "dependency_types": ["Depends", "Imports", "LinkingTo"],
+              "includes_implicit_base": True,
+              "excludes_installer_only_packages": True,
+              "ordering": "R sort(method = 'radix') on package",
+              "canonical_row": "package<TAB>version<TAB>priority<TAB>authority<LF>",
+              "inventory_sha256": "b2263019cdcd50af0230c0fb69b1422ef064e55b2ecbe521bde6548cb9846f0f",
+          }
+          if lock["inventory_contract"] != expected_inventory_contract:
+              raise SystemExit("package inventory contract drifted")
+          if digest != expected_inventory_contract["inventory_sha256"]:
+              raise SystemExit("package inventory digest mismatch")
+
+          r_inventory = r'''
+          args <- commandArgs(trailingOnly = TRUE)
+          for (package in args) {
+            description <- utils::packageDescription(package)
+            priority <- description$Priority
+            if (is.null(priority) || length(priority) != 1L || is.na(priority)) priority <- "none"
+            fields <- vapply(c("Depends", "Imports", "LinkingTo"), function(field) {
+              value <- description[[field]]
+              if (is.null(value) || length(value) != 1L || is.na(value)) ""
+              else gsub("[\r\n]+", " ", value)
+            }, character(1L))
+            cat(package, as.character(description$Version), priority,
+                paste(fields, collapse = "\037"), sep = "\t")
+            cat("\n")
+          }
+          '''
+          observed_text = subprocess.run(
+              ["Rscript", "--vanilla", "-e", r_inventory, *names],
+              check=True, text=True, capture_output=True).stdout
+          observed = {}
+          hard_dependencies = set()
+          for line in observed_text.splitlines():
+              package, version, priority, fields = line.split("\t", 3)
+              observed[package] = (version, priority)
+              for field in fields.split("\x1f"):
+                  for entry in field.split(","):
+                      match = re.match(r"^\s*([A-Za-z][A-Za-z0-9.]*)", entry)
+                      if match and match.group(1) != "R":
+                          hard_dependencies.add(match.group(1))
+          expected = {row["package"]: (row["version"], row["priority"])
+                      for row in inventory}
+          if observed != expected:
+              raise SystemExit(f"installed package inventory mismatch: {observed!r}")
+          missing = sorted(hard_dependencies.difference(expected))
+          if missing:
+              raise SystemExit(f"runtime lock omits hard dependencies: {missing!r}")
+          print(f"Phenology Seal-2 runtime lock verified ({len(inventory)} packages; {digest})")
+          PY
+
+      - name: Download the exact-run legacy tree artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: phenology-v2-seal2-legacy-${{ env.SOURCE_SHA }}
+          path: ${{ runner.temp }}/phenology-v2-seal2-incoming
+
+      - name: Verify the legacy receipt and recompute the exact tree
+        env:
+          PHENOLOGY_LEGACY_ORIGIN: https://github.com/tgilbert14/NEON-Plant-Phenology-Explorer.git
+          PHENOLOGY_LEGACY_SHA: 81e339e9ed6f34d3d04ca45a7030fea51c4147a5
+          PHENOLOGY_LEGACY_TREE: 30abe869b0f78931929c21e544ffc85ec2238e35
+          EXPECTED_RECEIPT_SHA256: ${{ needs['phenology-v2-seal2-acquire-legacy'].outputs.receipt_sha256 }}
+        run: |
+          set -euo pipefail
+          incoming="$RUNNER_TEMP/phenology-v2-seal2-incoming"
+          sites="$incoming/sites"
+          receipt="$incoming/legacy-tree-receipt.tsv"
+          expected="$RUNNER_TEMP/phenology-v2-seal2-expected-receipt.tsv"
+          test -d "$sites"
+          test -f "$receipt"
+          [[ "$EXPECTED_RECEIPT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          test "$(sha256sum "$receipt" | awk '{print $1}')" = "$EXPECTED_RECEIPT_SHA256"
+          {
+            printf 'phenology-v2-seal2-legacy-tree/v1\n'
+            printf 'driver_sha\t%s\n' "$SOURCE_SHA"
+            printf 'origin\t%s\n' "$PHENOLOGY_LEGACY_ORIGIN"
+            printf 'legacy_commit\t%s\n' "$PHENOLOGY_LEGACY_SHA"
+            printf 'sites_tree\t%s\n' "$PHENOLOGY_LEGACY_TREE"
+            printf 'file_count\t46\n'
+          } > "$expected"
+          cmp -s "$expected" "$receipt"
+          rm -f -- "$expected"
+
+          test "$(find "$incoming" -type f | wc -l)" -eq 47
+          test "$(find "$sites" -mindepth 1 -maxdepth 1 | wc -l)" -eq 46
+          test "$(find "$sites" -mindepth 1 -maxdepth 1 -type f -name '*.rds' | wc -l)" -eq 46
+          test -z "$(find "$incoming" -type l -print -quit)"
+          find "$sites" -mindepth 1 -maxdepth 1 -type f -printf '%f\n' |
+            awk '
+              $0 !~ /^[A-Z0-9]{4}[.]rds$/ { exit 1 }
+              END { if (NR != 46) exit 1 }
+            '
+          test -z "$(find "$incoming" -name .git -print -quit)"
+
+          git -C "$sites" init --quiet
+          git -C "$sites" config core.autocrlf false
+          git -C "$sites" config core.filemode true
+          git -C "$sites" add --all --force
+          test "$(git -C "$sites" write-tree)" = "$PHENOLOGY_LEGACY_TREE"
+          rm -rf -- "$sites/.git"
+          test ! -e "$sites/.git"
+          chmod -R a-w "$incoming"
+
+      - name: Run the exact legacy Seal-2 gate without network access
+        env:
+          PHENOLOGY_V2_LEGACY_ROOT: ${{ runner.temp }}/phenology-v2-seal2-incoming/sites
+          PHENOLOGY_V2_LEGACY_COMMIT: 81e339e9ed6f34d3d04ca45a7030fea51c4147a5
+          PHENOLOGY_V2_LEGACY_TREE: 30abe869b0f78931929c21e544ffc85ec2238e35
+        run: |
+          set -euo pipefail
+          for name in \
+            CASCADE_ROOT \
+            PHENOLOGY_ORIGIN \
+            PHENOLOGY_CURRENT_DATA \
+            PHENOLOGY_CURRENT_CANDIDATE \
+            PHENOLOGY_GENERATOR \
+            PHENOLOGY_CURRENT_KNOWLEDGE; do
+            test -z "${!name:-}"
+          done
+          test -d "$PHENOLOGY_V2_LEGACY_ROOT"
+          test -z "$(find "$PHENOLOGY_V2_LEGACY_ROOT" -name .git -print -quit)"
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          test -n "${R_LIBS_USER:-}"
+
+          host_net="$(readlink /proc/self/ns/net)"
+          child_net="$(sudo unshare --net -- readlink /proc/self/ns/net)"
+          test -n "$host_net"
+          test -n "$child_net"
+          test "$host_net" != "$child_net"
+
+          raw_stdout="$RUNNER_TEMP/phenology-v2-seal2-raw-stdout.json"
+          raw_stderr="$RUNNER_TEMP/phenology-v2-seal2-raw-stderr.log"
+          child_tmp="$RUNNER_TEMP/phenology-v2-seal2-child-tmp"
+          mkdir -p "$child_tmp"
+          cleanup_seal2_logs() {
+            rm -f -- "$raw_stdout" "$raw_stderr"
+          }
+          trap cleanup_seal2_logs EXIT
+
+          set +e
+          sudo unshare --net -- env -i \
+            PATH="$PATH" \
+            R_LIBS_USER="${R_LIBS_USER:-}" \
+            LANG=C.UTF-8 \
+            LC_ALL=C.UTF-8 \
+            TZ=UTC \
+            TMPDIR="$child_tmp" \
+            OPENBLAS_CORETYPE=Haswell \
+            OPENBLAS_NUM_THREADS=1 \
+            OMP_NUM_THREADS=1 \
+            PHENOLOGY_V2_LEGACY_ROOT="$PHENOLOGY_V2_LEGACY_ROOT" \
+            PHENOLOGY_V2_LEGACY_COMMIT="$PHENOLOGY_V2_LEGACY_COMMIT" \
+            PHENOLOGY_V2_LEGACY_TREE="$PHENOLOGY_V2_LEGACY_TREE" \
+            Rscript --vanilla scripts/test_phenology_adapter_v2_legacy.R \
+            > "$raw_stdout" 2> "$raw_stderr"
+          child_status=$?
+          set -e
+          if test "$child_status" -ne 0 || test -s "$raw_stderr"; then
+            echo "Phenology Seal-2 legacy gate execution failed closed; raw child output withheld." >&2
+            exit 1
+          fi
+          test -s "$raw_stdout"
+          test "$(wc -c < "$raw_stdout")" -le 4096
+
+          python - "$raw_stdout" <<'PY'
+          import json
+          import math
+          import re
+          import sys
+
+          expected_status = "HOLD"
+          pass_keys = [
+              "schema", "status", "source_support_rows",
+              "finite_compatibility_rows", "finite_compatibility_sites",
+              "finite_sites_ge_6", "annual_temperature_sites_ge_6",
+              "spring_temperature_sites_ge_6", "fields_compared",
+              "max_abs_delta", "max_abs_additive_delta", "parity_sha256",
+          ]
+          hold_keys = [
+              "schema", "status", "hard_failure_code", "affected_bundles",
+              "bundles_checked", "parity_attempted", "current_fetched",
+              "current_deserialized", "effect_module_sourced",
+              "effect_function_called",
+          ]
+
+          def strict_object(pairs):
+              keys = [key for key, _ in pairs]
+              if len(keys) != len(set(keys)):
+                  raise ValueError
+              return dict(pairs)
+
+          try:
+              with open(sys.argv[1], encoding="utf-8") as stream:
+                  value = json.load(stream, object_pairs_hook=strict_object)
+              if not isinstance(value, dict):
+                  raise ValueError
+              if value["schema"] != "phenology-v2-seal2-legacy-parity/v1":
+                  raise ValueError
+              status = value["status"]
+              if status == "PASS":
+                  if list(value) != pass_keys:
+                      raise ValueError
+                  counts = {
+                      "source_support_rows": 345,
+                      "finite_compatibility_rows": 269,
+                      "finite_compatibility_sites": 40,
+                      "finite_sites_ge_6": 31,
+                      "annual_temperature_sites_ge_6": 18,
+                      "spring_temperature_sites_ge_6": 18,
+                      "fields_compared": 11,
+                  }
+                  for key, expected in counts.items():
+                      observed = value[key]
+                      if type(observed) is not int or observed != expected:
+                          raise ValueError
+                  limits = {
+                      "max_abs_delta": 1e-15,
+                      "max_abs_additive_delta": 1e-12,
+                  }
+                  for key, limit in limits.items():
+                      observed = value[key]
+                      if (isinstance(observed, bool) or
+                          not isinstance(observed, (int, float)) or
+                          not math.isfinite(observed) or
+                          observed < 0 or observed > limit):
+                          raise ValueError
+                  digest = value["parity_sha256"]
+                  if (not isinstance(digest, str) or
+                      not re.fullmatch(r"[0-9a-f]{64}", digest)):
+                      raise ValueError
+              elif status == "HOLD":
+                  if list(value) != hold_keys:
+                      raise ValueError
+                  if value["hard_failure_code"] != "empty_required_table":
+                      raise ValueError
+                  if (type(value["affected_bundles"]) is not int or
+                      value["affected_bundles"] != 1 or
+                      type(value["bundles_checked"]) is not int or
+                      value["bundles_checked"] != 46):
+                      raise ValueError
+                  for key in (
+                      "parity_attempted", "current_fetched",
+                      "current_deserialized", "effect_module_sourced",
+                      "effect_function_called",
+                  ):
+                      if value[key] is not False:
+                          raise ValueError
+              else:
+                  raise ValueError
+              if status != expected_status:
+                  raise ValueError
+          except Exception:
+              raise SystemExit("Phenology Seal-2 summary validation failed closed")
+
+          if status == "HOLD":
+              print("[HOLD] Phenology Seal-2 stopped at the frozen legacy source contract")
+              print("[SUMMARY] bundles=46 affected=1 code=empty_required_table parity_attempted=false")
+              print(
+                  "[LOCK] current_fetched=false current_deserialized=false "
+                  "effect_module_sourced=false effect_function_called=false"
+              )
+          else:
+              print("[PASS] Phenology Seal-2 exact legacy parity")
+              print(
+                  "[SUMMARY] rows=345 finite=269 sites=40 sites_ge_6=31 "
+                  "annual_temp_ge_6=18 spring_temp_ge_6=18 fields=11"
+              )
+              print(
+                  f"[DELTA] ordinary={value['max_abs_delta']:.17g} "
+                  f"additive={value['max_abs_additive_delta']:.17g}"
+              )
+              print(f"[RECEIPT] parity-sha256 {value['parity_sha256']}")
+          PY
+
+      - name: Reassert exact head, clean trees, and canonical artifact hashes
+        env:
+          PHENOLOGY_LEGACY_TREE: 30abe869b0f78931929c21e544ffc85ec2238e35
+          EXPECTED_RECEIPT_SHA256: ${{ needs['phenology-v2-seal2-acquire-legacy'].outputs.receipt_sha256 }}
+        run: |
+          set -euo pipefail
+          incoming="$RUNNER_TEMP/phenology-v2-seal2-incoming"
+          sites="$incoming/sites"
+          receipt="$incoming/legacy-tree-receipt.tsv"
+          [[ "$EXPECTED_RECEIPT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          test "$(sha256sum "$receipt" | awk '{print $1}')" = "$EXPECTED_RECEIPT_SHA256"
+          test "$(find "$sites" -mindepth 1 -maxdepth 1 | wc -l)" -eq 46
+          test "$(find "$sites" -mindepth 1 -maxdepth 1 -type f -name '*.rds' | wc -l)" -eq 46
+          test -z "$(find "$incoming" -type l -print -quit)"
+          test -z "$(find "$incoming" -name .git -print -quit)"
+          chmod u+w "$sites"
+          git -C "$sites" init --quiet
+          git -C "$sites" config core.autocrlf false
+          git -C "$sites" config core.filemode true
+          git -C "$sites" add --all --force
+          test "$(git -C "$sites" write-tree)" = "$PHENOLOGY_LEGACY_TREE"
+          rm -rf -- "$sites/.git"
+          chmod u-w "$sites"
+          test ! -e "$sites/.git"
+
+          test "$(git rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
+          test -z "$(git remote)"
+          git diff --quiet -- .
+          git diff --cached --quiet -- .
+          test -z "$(git ls-files --others --exclude-standard)"
+          test "$(sha256sum data/cascade.rds | awk '{print $1}')" = \
+            "47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe"
+          test "$(sha256sum data/search_index.rds | awk '{print $1}')" = \
+            "a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e"
+          test "$(sha256sum data/cascade_meta.rds | awk '{print $1}')" = \
+            "00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de"
+          test "$(sha256sum data/neon-cascade-codebook.csv | awk '{print $1}')" = \
+            "a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3"
+          test "$(sha256sum manifest.json | awk '{print $1}')" = \
+            "92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79"
+          git diff --check
+
   phenology-v2-seal1-synthetic:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
