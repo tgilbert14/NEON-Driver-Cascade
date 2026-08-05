@@ -21,14 +21,23 @@ would not be a safe integration strategy.
   freezes the independent adapter, response model, support-mask, effect, and
   pooling contracts. Seal 1 now implements only the pure adapter, response-only
   model, and one-way values-free mask under an exact runtime lock; 38 synthetic
-  fixture families passed across six fresh processes without deserializing either
-  the legacy or current Phenology RDS family. Legacy parity, current response
+  fixture families passed across six fresh isolated Seal-1 processes without
+  deserializing either the legacy or current Phenology RDS family. The separate
+  unchanged v1 rebuild continues to use its recorded legacy pins only for exact
+  canonical reproduction. Legacy parity, current response
   support, climate support, and all v2 effects remain separate later gates.
 - Every complementary-app build is **DEFERRED**. Only pinned feasibility evidence
   acquisition is authorized: discharge first, herbaceous clip harvest second.
 - Seal 1 adds isolated Driver-owned implementation, synthetic tests, CI, and a
   runtime-lock receipt only. It does not update a source pin, published schema,
   prior, vote, row, manifest entry, or generated Driver artifact.
+- Seal 1 is published as PR #55 exact head
+  `35c2ca79a135303c00027dd32d9dd961a07bca2a`, merged authority
+  `6cb1e9e8a0fce646ced26ee296cf8ee75d991f4d`. Exact-head run `30977899036`,
+  merged-default run `30978285438`, and Pages run `30978284811` all passed;
+  the public root returned HTTP 200. Driver impact is `NONE`, all five canonical
+  hashes remain unchanged, and the next permissible stage is exact legacy-pin
+  Seal-2 parity only.
 
 ## Evidence method and vocabulary
 
@@ -178,8 +187,13 @@ The detailed ranked backlog and rejected alternatives remain in
 2. Seal 1 is complete: the frozen
    [Phenology registry](PHENOLOGY-V2-ADAPTER-SPEC.md) has a pure two-clock
    adapter, response-only interval model, one-way values-free climate-support-mask
-   builder, adversarial synthetic fixtures, and exact runtime pin. It accessed no
-   current or legacy Phenology response family and produced no effect.
+   builder, adversarial synthetic fixtures, and exact runtime pin. Its isolated
+   Seal-1 path accessed no current or legacy Phenology response family and
+   produced no v2 effect; the separate unchanged v1 rebuild used its recorded
+   legacy pins only for exact canonical reproduction. PR #55
+   exact head `35c2ca7` merged as `6cb1e9e8`; exact-head, merged-default, and
+   Pages publication gates passed in runs `30977899036`, `30978285438`, and
+   `30978284811` respectively.
 3. Run Seal 2 only against exact legacy pin `81e339e9...` and prove sections 8.3
    and 9.3. Do not inspect current response/effect output to repair a legacy
    mismatch. Current support remains forbidden until this separate gate passes;

@@ -3612,3 +3612,54 @@ Rules:
 - **Next action:** commit and push only the corrected fixture plus this failure
   receipt, update PR #55 to the fourth exact head, and require both jobs to rerun
   from scratch. Merge no result attached to a superseded head.
+
+### 2026-08-04 22:35 MST - Phenology v2 Seal-1 publication receipt / [Codex]
+
+- **Exact reviewed authority:** PR #55 exact head
+  `35c2ca79a135303c00027dd32d9dd961a07bca2a` passed literal-head workflow run
+  `30977899036`: `phenology-v2-seal1-synthetic` job `92215796752` and
+  `rebuild-contracts` job `92215796821` both succeeded. GitHub's exact-head merge
+  guard then merged only that head as master authority
+  `6cb1e9e8a0fce646ced26ee296cf8ee75d991f4d` at 2026-08-04 22:29 MST.
+- **Merged-default validation:** push run `30978285438` checked out and asserted
+  literal merge SHA `6cb1e9e8...`. Seal-1 job `92217038888` passed the complete
+  21-package runtime lock, immutable identity-only gate, and all 38 fixture
+  families twice across six isolated clean processes. Rebuild job `92217038849`
+  fetched the seven recorded sibling commits detached, reproduced every canonical
+  artifact exactly, reproduced the deploy manifest semantically, and passed the
+  whitespace gate.
+- **Runtime and numerical receipts:** the canonical lock remains Ubuntu 24.04 / R
+  4.5.2 / Posit Package Manager 2026-07-15 / Haswell OpenBLAS / one thread, with
+  21-row hard-closure digest
+  `b2263019cdcd50af0230c0fb69b1422ef064e55b2ecbe521bde6548cb9846f0f`.
+  Canonical Ubuntu response processes reproduced opaque full-grid receipt
+  `496d1465d7da21be60f9ba0b929ca34b6b7e3fd52ae5eaf0b4e44469e3857a73`
+  byte-for-byte within each Seal-1 job. That isolated path printed or promoted no
+  fit, prediction, response value, or effect.
+- **Pages/publication:** Pages run `30978284811` built and deployed exact merge
+  `6cb1e9e8...`; build job `92217038921`, status job `92217111182`, and deploy job
+  `92217111221` succeeded. The public root
+  `https://tgilbert14.github.io/NEON-Driver-Cascade/` returned HTTP 200 after
+  deployment. Seal 1 changed no public app/runtime byte, so no Connect deployment
+  was required or attempted.
+- **No-look/effect-lock receipt:** the isolated Seal-1 synthetic jobs and this
+  documentation-only receipt checked out, deserialized, summarized, modeled, or
+  inspected neither current nor legacy Phenology RDS. No current v2
+  response/support/effect value was accessed and no v2 effect code ran; current v2
+  compatibility/model support remains `UNMEASURED`; all v2 effect paths remain
+  sealed. The separate canonical `rebuild-contracts` jobs necessarily exercised
+  the unchanged published v1 builder against its recorded legacy pins; that is
+  exact artifact-reproduction evidence only, not Seal-1 data access or a new v2
+  effect. This scoped receipt supersedes any unscoped reading of earlier
+  shorthand no-look claims.
+- **Driver impact:** `NONE`. No source pin, prior, vote, eligible row, manifest
+  entry, generated artifact, or ecological disposition changed. Canonical SHA-256
+  remains cascade `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`,
+  search `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`,
+  meta `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`,
+  codebook `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`,
+  and manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+- **Next action:** publish this documentation-only receipt, then branch Seal 2
+  from its exact merge. Seal 2 may access only exact legacy pin `81e339e9...` for
+  registered sections 8.3/9.3 parity. Current response/effect output and every
+  effect execution remain forbidden until their separately reviewed later gates.
