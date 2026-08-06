@@ -60,19 +60,24 @@ these from the flagship and adapt the data layer:
   V1**, the required shared frame. Both entry points carry a focusable skip target;
   DDL identity plus exactly one Driver route; an app/unofficial eyebrow; one 3–7
   word hook; one 6–12 word plain-language promise; one contextual CTA; one dominant
-  responsive editorial artwork; a visible art/data boundary; and a compact
-  scope/honesty/Source/Feedback footer. A companion poster face has no metric band,
+  responsive editorial artwork with meaningful alt text and durable provenance;
+  and a compact scope/honesty/Source/Feedback footer. A companion poster face has
+  no metric band,
   methods block, release receipt, second marketing bridge, or full suite directory.
   Driver is the suite ambassador; the complete registry belongs in Driver and the
   in-app Suite/About panel.
   The scaffold is shared while visual/content variables remain app-native: palette,
   motif, crop, wording, CTA noun, focal position, and scientific limit. Pages and
-  Connect share copy, art authority, disclosure, Driver route, and CTA intent even
-  when their framework geometry differs. Updating only either entry surface can
-  leave the other serving a retired or generic first impression, so release QA must
-  verify both surfaces. Prefer a licensed, provenance-tracked documentary image only
-  when field realism earns trust; use an explicitly stylized illustration when
-  abstraction is the point.
+  Connect share copy, art authority, scientific disclosure, Driver route, and CTA
+  intent even when their framework geometry differs. Updating only either entry
+  surface can leave the other serving a retired or generic first impression, so
+  release QA must verify both surfaces. Prefer a licensed, provenance-tracked
+  documentary image only when field realism earns trust; use an explicitly stylized
+  illustration when abstraction is the point.
+  Do not add a cover-visible badge that merely says an obviously illustrative
+  poster is not a photograph or data record. Record that distinction in meaningful
+  alt text and the durable art-provenance receipt instead. Visible scientific
+  limitations remain required where they qualify a product claim.
   Serve raster art through a responsive `<picture>` family with declared natural
   dimensions, checksums, and byte budgets; retain an intentional fallback. Verify
   both entry URLs cache-busted at desktop, 390, and 320 rather than accepting one
@@ -342,7 +347,7 @@ app, metric, effect, prior, vote, or Driver rebuild.
   publication commit. My Little Inverts proves the pattern: `ff23e994` remains its
   science/data/runtime authority while `6972817` owns governance/tooling and the
   production identity, with runtime payload `87900f675a1e…` unchanged; BUILD-only
-  merge `53991b6` is the later current deployed-revision receipt and moves neither
+  merge `53991b6` is the later pre-cleanup deployed-revision receipt and moves neither
   authority.
 - **Make the documentation identity domain complete and the mutable exception
   exact.** Bind every root `docs/*.md` file into the versioned Pages-payload domain
