@@ -454,14 +454,14 @@ face is:
 5. one 6–12-word plain-language promise;
 6. exactly one contextual CTA;
 7. one dominant responsive editorial artwork;
-8. a visible illustration/photo/data boundary; and
+8. meaningful alt text plus a durable art-provenance record; and
 9. a compact scope/honesty/Source/Feedback footer.
 
 No companion poster face carries a metric band, methods block, release receipt,
 second marketing bridge, relationship map, or full suite directory. Driver is the
 suite ambassador and may carry the complete registry and integration story below
 its own poster; companions keep the full registry in their in-app Suite/About panel.
-Pages and Connect share the hook, promise, art authority, disclosure, Driver route,
+Pages and Connect share the hook, promise, art authority, scientific disclosure, Driver route,
 and CTA intent even when their framework geometry differs.
 
 The frame is constant; the visual/content variables are not. Each app owns its
@@ -496,14 +496,16 @@ Pages and Connect identities, CTA-to-picker focus, and console/server logs. Remo
 retired runtime media once its provenance remains recoverable. Cover contracts must
 test both required presence and prohibited absence: exactly one poster, CTA, Driver
 route, and compact honesty disclosure; no metric band, methods/truth/boundary layer,
-second marketing bridge, or full suite directory. At narrow widths, visually prove
+second marketing bridge, full suite directory, or ornamental illustration
+disclaimer. At narrow widths, visually prove
 that artwork leads and that the CTA remains in the first viewport where the layout
 geometry permits.
 
 ### Trust, access, and provenance
 
-- Keep imagery local, responsive, accessible, and explicit about whether it is
-  documentary, illustrative, generated, or code-native.
+- Keep imagery local, responsive, and accessible. Record whether it is documentary,
+  illustrative, generated, or code-native in meaningful alt text and durable
+  provenance rather than a cover-visible disclaimer badge.
 - Store source/prompt, dimensions, checksum, alt text, license, and generation date
   for every raster asset. Never let art imply data precision, ecosystem health,
   causal linkage, or field documentation it does not possess.
@@ -559,9 +561,10 @@ Suggested palette families remain distinct but related:
 - The Living Poster now converges both first impressions around the owner-selected
   hook “Who moves after dark?”, promise “Meet the tiny lives reshaping the
   landscape.”, CTA “Meet the mammals”, and an editorial screenprint whose metal box
-  trap is dominant beside a recognizable mouse. A visible boundary says the art is
-  illustration, and the honesty note prevents the invitation from becoming a claim
-  that capture records measured landscape effects.
+  trap is dominant beside a recognizable mouse. Descriptive alt text and the art
+  provenance receipt identify the screenprint as illustration; the honesty note
+  separately prevents the invitation from becoming a claim that capture records
+  measured landscape effects.
 - Pages and Connect passed desktop, 390 x 844, 320 x 568/720, and real responsive
   seams with zero root overflow and byte-matched full/compact artwork. The CTA moved
   focus to the 46-site picker; JORN loaded all ten tabs; species and environmental-
@@ -700,8 +703,8 @@ Suggested palette families remain distinct but related:
 - Replaced the dense cover with the responsive screenprint Living Poster:
   “Tagged. Measured. Still changing.”, “Follow real trees and shrubs through years
   of change.”, and “Pick a place”. Pages and Connect both expose the concise entry
-  promise, source/art disclosure, and suite bridge without moving methods onto the
-  poster face.
+  promise and suite bridge while the art source remains in durable provenance,
+  without moving methods onto the poster face.
 - BART live QA passed both channels, opened the same bar selection from two
   identical clicks, and passed search/compare, keyboard pin motion/resize/close,
   dark mode, and the promised export paths. Its standalone shrub/sapling
