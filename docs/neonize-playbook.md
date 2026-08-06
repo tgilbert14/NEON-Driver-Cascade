@@ -347,7 +347,7 @@ app, metric, effect, prior, vote, or Driver rebuild.
   publication commit. My Little Inverts proves the pattern: `ff23e994` remains its
   science/data/runtime authority while `6972817` owns governance/tooling and the
   production identity, with runtime payload `87900f675a1e…` unchanged; BUILD-only
-  merge `53991b6` is the later current deployed-revision receipt and moves neither
+  merge `53991b6` is the later pre-cleanup deployed-revision receipt and moves neither
   authority.
 - **Make the documentation identity domain complete and the mutable exception
   exact.** Bind every root `docs/*.md` file into the versioned Pages-payload domain

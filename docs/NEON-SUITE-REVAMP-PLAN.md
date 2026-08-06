@@ -1,6 +1,7 @@
 # NEON Explorer Suite revamp program
 
 Status: **ACTIVE — PASSES 1–10 COMPLETE; DRIVER V2 GATE 0 COMPLETE / NO-BUILD**
+Last updated: 2026-08-06
 Program owner: Driver Response Atlas repository
 Audit baseline: 2026-07-18
 Scope: Driver Response Atlas plus nine independently deployed companion apps
@@ -80,13 +81,25 @@ the production identity; `ff23e994` remains science/data/runtime authority, with
 runtime payload SHA-256
 `87900f675a1ef34d4f5c47c6788fbaac08a8549d82c4ef900a1b28726e925278` unchanged.
 Final identity-excluded BUILD-only PR #8 passed exact-head run `30898431839` and
-merged as current deployed receipt
+merged as then-current deployed receipt
 `53991b6f460a97a4abfcee9f62e94cd77c167f89`; Pages `30900109522`, Connect #19
 (`019fcc48-823f-0cc5-f8dc-4ef8c302f3cb`), and production `30900110643` / job
 `91962182435` passed with the production identity unchanged.
 Vegetation's app-local documentation is published
 through PR #9 / merge `3391e70`; append-only receipt PR #10 is published as
 `da466ea`. Runtime, docs, and receipt authority remain deliberately separate.
+
+The 2026-08-06 cover-label cleanup is a separate UI/publication tranche, not a
+new scientific/data release. Current cover/default merges are Small Mammal
+`fa982438`, Vegetation `fa083293`, Phenology `c704a377`, Plant Diversity
+`7fa45bbe`, Ground Beetle `0594cfa` (after cover `1be09b7` and lifecycle runtime
+`a5d3e0e`), Mosquito `fdb9aa1`, Breeding Birds `bb18be35`, and My Little Inverts
+`98c44ec`. Water required no cover change; `7feb49e` is release-platform-only.
+Birds exact-head/default validation, recovery Pages, exact production parity,
+and Connect #47 are terminal success. A final nine-app public sweep passed 27
+responsive Pages cases and nine Connect desktop cases. These identities do not
+replace the app-specific scientific/data authorities recorded in the suite
+register, and no Driver artifact or ecological disposition changed.
 
 Synthesis-governance closeout is merged on the watched defaults: Phenology
 `30be615d` (PR #10 / check `30942442471`), Plant Diversity `28fab5b0` (PR #16 /
@@ -143,7 +156,7 @@ The release layer is not at the same quality bar.
 | Mosquito Pulse | **Pass 6 complete / production verified** | 7 -> 0 files | 0 -> registered science/release/handler/cover/server-runtime/semantic suite | opportunity-complete trap effort includes supported target-taxon zeros; continuous whole-trap expansion, outcome states, total/species reconciliation, activity/population/pathogen limits, and runtime lifecycle are release-verified |
 | Birds | **Pass 7 complete / production verified** | 8 -> 0 files | 1 -> registered opportunity/science/release/handler/cover/server-runtime/semantic suite | official RELEASE-2026 opportunity and comparison contracts preserve grain-specific zeros, method/flyover channels, and incomplete temperature support as `NA`; Driver remains context only |
 | Water Chemistry | **Pass 8 complete / production verified on `ee95af3`** | 3 -> 0 files | 0 -> registered source/replay/allowlist/unit/backup/candidate/cold-start/semantic suite | 200,953 observations across 34 analytes and 34 sites through 2026-07-15; audited unit identities, deterministic quarantine, exact six-file receipt, reviewed package restoration, independent refresh replay, Pages, and Connect #67 are production-verified; Driver remains context only |
-| My Little Inverts | **Pass 9 complete / production verified; science/runtime `ff23e994`, governance/identity `6972817`, current deployed receipt `53991b6`** | 9 -> 0 files | 0 -> source/release/cycle-free identity with Pages-payload domain v2/manifest/producer/science/cover/Playwright/live-production contract family | official RELEASE-2026 field-first release preserves 7,198 non-DNA field opportunities before taxonomy; 6,213 are quantified-community/count- and density-eligible; method/habitat/water-type, supported-area, taxonomy-placeholder, zero/unknown, density, and EPT boundaries are verified. Governance publication leaves runtime payload `87900f675a1e…` unchanged while adding identity-domain and exact responsive/focus/browser gates; BUILD-only PR #8 then preserved the identity while Pages, exact Connect identity, and a live Shiny round trip stayed green |
+| My Little Inverts | **Pass 9 complete / production verified; science/runtime `ff23e994`, governance/identity `6972817`, pre-cleanup deployed receipt `53991b6`; current cover/default `98c44ec` is recorded in the 2026-08-06 register** | 9 -> 0 files | 0 -> source/release/cycle-free identity with Pages-payload domain v2/manifest/producer/science/cover/Playwright/live-production contract family | official RELEASE-2026 field-first release preserves 7,198 non-DNA field opportunities before taxonomy; 6,213 are quantified-community/count- and density-eligible; method/habitat/water-type, supported-area, taxonomy-placeholder, zero/unknown, density, and EPT boundaries are verified. Governance publication leaves runtime payload `87900f675a1e…` unchanged while adding identity-domain and exact responsive/focus/browser gates; BUILD-only PR #8 then preserved the identity while Pages, exact Connect identity, and a live Shiny round trip stayed green |
 
 At baseline, all nine companion manifests disagreed with at least one currently
 tracked runtime file. Small Mammal Cover V5 has now closed its drift and independently
@@ -176,7 +189,7 @@ and production ID
 Pages `30896544721`, Connect #18, and production run `30896548595` close exact
 governance production identity and enhanced live Shiny QA. BUILD-only merge
 `53991b6`, Pages `30900109522`, Connect #19, and production `30900110643` then
-proved that identity unchanged on the current deployed revision. Its release
+proved that identity unchanged on the then-current deployed revision. Its release
 plumbing, governance, and field-first science contracts are no longer baseline
 gaps. A future
 companion deploy can otherwise publish a different app than the repository appears
@@ -195,7 +208,7 @@ Additional suite-wide findings (baseline unless a later pass update is stated):
   takeaway, and Driver knowledge-package family on governance/tooling merge
   `6972817`; the Pages-payload domain v2 binds every root `docs/*.md` file except the
   exact mutable `docs/BUILD-TEST-HANDOFF.md`. Final identity-excluded BUILD-only
-  PR #8 merged as current deployed receipt `53991b6` and passed Pages/Connect/live-
+  PR #8 merged as pre-cleanup deployed receipt `53991b6` and passed Pages/Connect/live-
   production verification without reopening or replacing `ff23e994` runtime
   science or `6972817` governance identity.
 - At baseline, four companions had one helper test script and five had none. Small
@@ -285,7 +298,7 @@ The pass order is intentionally not alphabetical:
 | 6 | Mosquito Pulse | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 opportunity-complete trap effort, supported zero-catch states, continuous expansion, exact release trust, static Living Poster, server lifecycle, and mobile accessibility are live; Gate-0 synthesis measured 200/203 supported calendar matches but kept the activity index `CONTEXT / HOLD DRIVER INGESTION` |
 | 7 | Birds | **COMPLETE / PRODUCTION VERIFIED**; official RELEASE-2026 47-site family separates source presence from complete estimand support, preserves grain-specific supported zeros and method/flyover boundaries, and drives app/Search/visual/export surfaces from one comparative contract; runtime `97c3e4c`, docs `07c852c`; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
 | 8 | Water Chemistry | **COMPLETE / PRODUCTION VERIFIED**; full-fetch run `30872232876`, direct-child candidate `27512485`, PR #15 merge `ee95af3`, exact six-file runtime identity, reviewed package restoration, independent replay, and content-aware Pages/Connect health are closed; aquatic chemistry remains context, not itself a trophic hinge |
-| 9 | My Little Inverts | **COMPLETE / PRODUCTION VERIFIED**; science/data/runtime authority remains field-first PR #6 merge `ff23e994`; governance/tooling and production-identity authority is PR #7 merge `6972817`, with unchanged runtime payload `87900f675a1e…`, cycle-free identity using Pages-payload domain v2, exact Pages `30896544721`, Connect #18, and production `30896548595`; identity-excluded BUILD-only PR #8 merged as current deployed receipt `53991b6` and passed Pages `30900109522`, Connect #19, and production `30900110643` without moving either authority; Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
+| 9 | My Little Inverts | **COMPLETE / PRODUCTION VERIFIED**; science/data/runtime authority remains field-first PR #6 merge `ff23e994`; governance/tooling and production-identity authority is PR #7 merge `6972817`, with unchanged runtime payload `87900f675a1e…`, cycle-free identity using Pages-payload domain v2, exact Pages `30896544721`, Connect #18, and production `30896548595`; identity-excluded BUILD-only PR #8 merged as pre-cleanup deployed receipt `53991b6` and passed Pages `30900109522`, Connect #19, and production `30900110643` without moving either authority; current cover/default `98c44ec` is recorded in the 2026-08-06 register, and Driver remains `CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE` |
 
 ### Phase 2 — complementary-product decision
 
@@ -769,7 +782,7 @@ Suggested palette families remain distinct but related:
   complete, Water Chemistry Pass 8 is complete and production-verified on
   refreshed-data merge `ee95af3`, and My Little Inverts Pass 9 is complete with
   science/data/runtime authority `ff23e994`, governance/tooling and production-
-  identity authority `6972817`, and current deployed receipt `53991b6`; the latter
+  identity authority `6972817`, and then-current deployed receipt `53991b6`; the latter
   two preserve runtime payload `87900f675a1e…`. Cross-product synthesis and the
   formal complementary-product decision are complete: new app builds are deferred,
   and Driver v2 Gate 0 authorizes no canonical byte change.
@@ -778,9 +791,10 @@ Suggested palette families remain distinct but related:
 
 Pass 5 is **COMPLETE / PRODUCTION VERIFIED**. Opportunity-complete data PR #14
 head `c3dec8d` merged as `4e628f88`; the final static-poster PR #15 head
-`a7950294` merged as cover/runtime authority `89caa435`. The current audited data
-authority is `a615d6c`, and current default/docs authority is `1a768b4`; Gate-0
-synthesis keeps those identity domains separate.
+`a7950294` merged as cover/runtime authority `89caa435`. Scientific/data authority
+remains `a615d6c`. At Pass-5 closeout the default/docs authority was `1a768b4`;
+the dated 2026-08-06 register records later cover, lifecycle-runtime, and
+default/docs identities. Gate-0 synthesis keeps those identity domains separate.
 
 - The released family has 46 bundles, 100,163 rows, 33,012 independent field-effort
   opportunity anchors, and 67,151 catch rows. Valid zero-Carabidae bouts are
@@ -986,7 +1000,7 @@ Pass 9 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative runtime/data merge i
   The runtime payload remains byte-identical at
   `87900f675a1ef34d4f5c47c6788fbaac08a8549d82c4ef900a1b28726e925278`;
   governance publication does not replace the `ff23e994` science/data/runtime pin.
-- Current Pages run `30896544721` published exact index/art/social bytes, including
+- Governance Pages run `30896544721` published exact index/art/social bytes, including
   Pages payload SHA-256
   `43b16e7b44d160055c8fa59039d2c922e802342042b1db1238e65c0249a44fff`.
   Connect publication #18 (`019fcc1b-5672-3278-21c6-9ead85568da2`) and production
@@ -997,7 +1011,7 @@ Pass 9 is **COMPLETE / PRODUCTION VERIFIED**. Authoritative runtime/data merge i
   count-eligible, 121 density-eligible, 245 mixed-rank taxa, and 17 events.
   Playwright 1.55.1 ran on Node >=18 and `npm audit` reported zero vulnerabilities.
 - Final BUILD-only PR #8 is deliberately outside the Pages-payload domain v2.
-  Exact head `6c01244c` passed run `30898431839` and merged as current deployed
+  Exact head `6c01244c` passed run `30898431839` and merged as the pre-cleanup deployed
   receipt `53991b6f460a97a4abfcee9f62e94cd77c167f89`. Pages `30900109522`, Connect
   #19 (`019fcc48-823f-0cc5-f8dc-4ef8c302f3cb`), and production `30900110643` /
   job `91962182435` passed with production identity `sha256:e1d3f1be…` and

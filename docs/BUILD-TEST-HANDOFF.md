@@ -1,12 +1,12 @@
 # Build, test, and handoff record
 
-Last updated: 2026-08-04
+Last updated: 2026-08-06
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
 can continue safely without relying on chat history.
 
-## Current handoff state
+## Canonical Driver artifact state
 
 **Release-validation state on `master`: RELEASED AND PUBLICLY VERIFIED as of
 2026-07-18.** The owner approved Ubuntu 24.04 with R 4.5.2, the pinned
@@ -4085,3 +4085,112 @@ Rules:
   dispatch the manual workflow from the exact current `master` with the frozen
   F1 confirmation. Review and merge only its route-free exact-four receipt
   branch; do not authorize F2 from availability alone.
+
+### 2026-08-06 08:17 MST - cover-label policy and companion-publication reconciliation / Codex
+
+- **Classification and policy:** documentation/governance plus companion UI
+  publication; Driver impact `NONE`. Exact policy source
+  `3889a16dc8cbd5d772650b347988ba293435a640`, direct child of
+  `f0fcfc4c9582d4e12448c1be4d6145c3fb1d43c7`, changes only the suite learning
+  loop, revamp plan, and playbook. It retires ornamental cover-visible art
+  disclaimers, not meaningful alt text, durable provenance, accessibility, or
+  scientific claim limits.
+- **Publication state:** Small Mammal PR #92 `c1b667b6` -> `fa982438`
+  (head/main/Pages/production `31067930858` / `31068784690` / `31068784339` /
+  `31068784703`); Vegetation PR #15 `343e072a` -> `fa083293`
+  (`31068003862` / `31069040690` / `31069039945`; the central signed-in suite
+  receipt binds Connect content `019ee110-8fd3-abae-aee3-02ea8e4274c8` to exact
+  `fa083293` under R 4.5.2 / 91 packages, followed by live science/responsive QA);
+  Phenology PR #11
+  `36e6725e` -> `c704a377` (`31066206050` / `31066622018` / `31066621547` /
+  `31066622073`); Plant Diversity PR #17 `f8038f66` -> `7fa45bbe`
+  (`31066213366` / `31066454741` / `31066453987` / `31066454742`); Mosquito PR
+  #11 `105a7dba` -> `fdb9aa1a` (`31067295881` / `31069571068` /
+  `31069570315` / `31069571090`; the central signed-in suite receipt binds
+  Connect content `019ef0b1-0099-c999-1edc-4d47826044cc` to exact `fdb9aa1a`
+  under R 4.5.2 / 91 packages, followed by live science/responsive QA); Inverts
+  PR #9 `21bc350b` ->
+  `98c44ec4` (exact-head `31069906944`, Pages `31070821235`, production
+  `31070821791`, production identity
+  `sha256:eb247cf7ad9f534c3696623604b60277181e1471ae660e9982786a167dd540ca`).
+  Breeding Birds PR #5 `a7b954a5` -> `bb18be35` passed exact-head/default
+  validation `31108947955` / `31110952060`, recovery Pages `31113290899`, and
+  exact production smoke `31110952345` attempt 2. All listed terminal release
+  runs are success; the superseded Birds infrastructure failures are classified
+  separately below.
+- **Final nine-app public QA:** a fresh Playwright 1.55.1 / headless-Chrome sweep
+  completed at 2026-08-06 08:06 MST against every registered companion's public
+  production surfaces. All 27 Pages cases (1440 x 900, 390 x 844, and 320 x 720
+  for each app) and all nine Connect desktop cases (1440 x 900) rendered without
+  a host or Shiny output error, broken image, root overflow, visible retired
+  disclaimer, or visible `figcaption`; every cover retained a visible control at
+  least 44 CSS pixels high. All eight artistic covers retained meaningful image
+  alternatives, and Water remained the confirmed no-art/no-op cover.
+- **Ground lifecycle/docs closeout:** cover PR #19 `746f909a` -> `1be09b7b`
+  passed `31068718372` / `31069632109` / `31069631437` / `31069632097`.
+  Lifecycle PR #20 source `76459ec4` produced reviewed artifact `8955558168`
+  (digest
+  `sha256:65cf82b845ca1a47507d952ed7d1b69b0330ee3f8de59eaf6fcdaaf8da3fcfe4`)
+  in run `31070700866`; that source run deliberately ended red at the expected
+  pre-promotion generated-byte mismatch gate. Promoted head `832991e2` and merge
+  `a5d3e0ef` then passed exact-head `31071059592`, main `31071173398`, Pages
+  `31071172870`, and production `31071173390`. Docs PR #21 `fcd01c85` -> current default/deployed
+  `0594cfa489333a824e2fb1f3dd78196c5c1fce57`; exact-head `31071704436` /
+  artifact `8955904506`, main `31071862375`, Pages `31071861854`, production
+  `31071862357`, and Connect #76 /
+  `019fd55e-6e87-e75f-6232-8905aad702fc` passed. Science/data authority remains
+  `a615d6c`; cover, lifecycle runtime, and docs/default authority remain distinct.
+- **Water inspected no-op:** Water already had no visible cover-art disclaimer.
+  PR #17 head `1c1031cf` -> merge `7feb49ee` pins only the manifest-producing
+  `bslib@0.10.0` closure; exact workflow `31067098412`, Pages `31068098866`, and
+  production `31068099200` passed. Science/data/runtime authority stays
+  `ee95af3`, governance stays `9e2946ca`, and no cover/app/runtime/data/science/
+  Driver byte changed.
+- **Breeding Birds terminal release:** scientific/runtime authority stays
+  `97c3e4c` and prior docs/default authority stays `07c852c`; the exact cover and
+  current default publication chain begins at source
+  `44e7cf928b32e75e4089ea5dc6497ae4e402867b`. Authenticated refresh
+  `31067221525` produced validated artifact `8960794005` (digest
+  `sha256:c46ece7f868c489c4c9f9ee00f8dbfbcc12be4fbabcf080173150dd21ff7e4fa`)
+  and direct-child candidate/PR #5 head
+  `a7b954a5de4ac20494f9270a355ee8d268a596dc`. Exact-head CI `31108947955`
+  passed; the exact candidate merged as current default
+  `bb18be3526fd91ac90239bab393c86b83ad3ec78`; default CI `31110952060`
+  passed all scientific, manifest, deterministic-byte, offline-source, and
+  real-bundle Shiny gates. Release identity is
+  `sha256:043aa41d80a5b714b76e0d9bdc035fa636dc87a17200321695b9d9db706502cc`.
+  Connect #47 / history `019fd779-48d4-3ca1-31f5-e016c02ef2c1` published exact
+  `bb18be35` under R 4.5.2 / 91 packages via request
+  `2c597a29-cd83-4f7d-8f41-51fc496e6f3a`. Pages recovery run `31113290899`
+  then published the same exact release, and production run `31110952345`
+  attempt 2 verified exact Pages/Connect parity.
+- **Birds Pages incident boundary:** initial Pages run `31110949642` attempts 1
+  and 2 each built and accepted an exact artifact, then the GitHub Pages backend
+  remained `deployment_in_progress` for 600 seconds and timed out. Production
+  run `31110952345` attempt 1 therefore failed only its exact Pages-release poll;
+  Connect was already exact and healthy. A fresh Pages build request from
+  unchanged exact `bb18be35` created `31113290899`, whose deploy job
+  `92656395730` succeeded after 7m24s; production attempt 2 passed immediately.
+  No repository, app, science, data, manifest, or release byte was changed to
+  recover the infrastructure publication.
+- **Authority separation:** Small science/data stays `c4c46fce`; Vegetation
+  `d566b30`; Phenology `7d0f29f`; Plant Diversity source-data `a060ee6` and
+  science/runtime `8fc0824`; Mosquito `935420e`; Inverts `ff23e994`. The new
+  merges above own cover/default/publication state only to the exact scope proved
+  by their app-local receipts.
+- **Workspace warning:** the ten publish-intended worktrees were clean at the
+  bounded suite sweep, but they are handoff snapshots rather than current-default
+  authority after merge. Fourteen historical parallel worktrees still contain
+  retired badge markup or copy and are not publication sources. Do not branch,
+  publish, or infer deployment from those stale trees; fetch the exact remote
+  default into a fresh worktree before future changes. No live pre-PR exception
+  remains.
+- **Driver non-impact and publication boundary:** canonical SHA-256 remains
+  cascade `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe`,
+  search `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e`,
+  meta `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de`,
+  codebook `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`,
+  and manifest `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79`.
+  No scientific Driver rebuild is required. Publish this exact documentation/
+  default head through review, and require Driver CI, Pages, Connect, and public
+  verification for the governance receipt.
