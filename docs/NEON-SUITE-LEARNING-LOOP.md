@@ -385,7 +385,7 @@ canonical artifact byte changed. For the two rows below it supersedes the
 | Surface | Scientific/data/runtime authority retained | Cover/default publication authority | Evidence |
 |---|---|---|---|
 | Driver Response Atlas hub cover | canonical artifacts unchanged: cascade `47b98e48`, search `a11a072d`, meta `00120c52`, codebook `a79cc754`, manifest `92b46277` | living-poster redesign PR #66 heads `60e5a39` + `a4a8c71` -> merge `bb56bd35` | 7/7 PR checks green on both heads; live Pages root byte-identical post-deploy with og-image, three poster variants, and eight card-skin thumbs HTTP 200; master run `31213187051` in progress at write time (identical tree to the passing PR head) |
-| Water Chemistry Analyte Viewer | science/data/runtime `ee95af3`; governance `9e2946ca` | living-poster cover PR #18 head `6c9d046` (gate green; build/cold-start jobs and merge in flight at write time) | cover-only diff; verified locally at 1440/1920/800/390/320 with no overflow, two-line h1, 44px controls; Pages/production verification due post-merge |
+| Water Chemistry Analyte Viewer | science/data/runtime `ee95af3`; governance `9e2946ca` | living-poster cover PR #18 head `6c9d046` -> merge `1e758cce` | gate, build_candidate, and validate_candidate green on the PR run; cover-only diff verified locally at 1440/1920/800/390/320 with no overflow, two-line h1, 44px controls; merged with connect_cold_start (app-wake smoke, diff-independent) still concluding; live Pages verification recorded in the Driver handoff |
 
 Suite-platform notes from this tranche: (1) the cover language is captured as a
 reusable token spec (see Driver `.claude/agents/LESSONS.md` 2026-08-07); (2) the
