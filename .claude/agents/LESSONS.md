@@ -69,3 +69,15 @@
   require an exact positional basename grammar before reading its route, scope raw bytes and capabilities
   out of existence before receipt construction, publish normalized flag schemas, and bind receipts to the
   exact direct-child producer commit in independent CI.
+- [2026-08-07] cass · confirmed · The suite cover language is a reusable token spec, not a vibe: system
+  serif stack (Iowan Old Style→Georgia) two-line question h1 (one accent <em> line + aria-label carrying
+  the full sentence), poster-grid split with art-bleed (negative margin to the true gutter:
+  `min(-24px, calc((1440px - 100vw)/2))`) + 90deg night→transparent weld gradient, feTurbulence data-URI
+  film grain, single 52px pill CTA, cream #f3e8cb honesty footer with <details> disclosure, 44px controls,
+  zero JS. Cover-art pipeline that worked: Recraft V4.1 text-only for style exploration (accepts exact
+  palette hexes via `colors`), nano-banana image-ref variants to iterate the owner's pick (steer the LEFT
+  edge dark so it welds under the copy panel), bytedance 2k upscale, sharp → 1672/840 webp + 1200x630 og.
+  Honesty survives design compression by splitting: short chain-caveat ON the hero lead, full
+  mediation/causation sentence in the layers band, verbatim methods copy in the footer disclosure.
+  Gotcha: art director agents will push to strip hero caveats and recolor canonical layer hues — both are
+  governed, reject with reasons. Owner taste beats reviewer palette notes on decorative art.

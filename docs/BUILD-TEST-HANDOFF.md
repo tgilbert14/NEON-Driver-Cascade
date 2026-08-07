@@ -4224,3 +4224,55 @@ Rules:
   the final responsive/accessibility sweep. This receipt closes the suite-wide
   cover-disclaimer removal and publication pass; no app science, data, runtime,
   or Driver canonical artifact bytes were changed.
+
+### 2026-08-07 09:41 MST - Driver cover redesign (living-poster hub) / [Claude]
+
+- **Scope:** cover-only. `docs/index.html` rewritten in the suite's living-poster
+  language; four new art assets added under `docs/assets/` (`cascade-living-poster.png`
+  1672x941, `.webp` 1672w + 840w, `cascade-og.png` 1200x630) and the retired
+  `response-atlas-social.png` removed (og/twitter meta now point at `cascade-og.png`).
+  `docs/` is in `.rscignore` and outside the manifest allowlist, so the Connect
+  deploy bundle and the five canonical Driver artifacts are untouched.
+- **Driver implication: NONE.** Canonical SHA-256 verified unchanged this session:
+  cascade `47b98e48...`, search `a11a072d...`, meta `00120c52...` (matches the
+  2026-08-06 receipt). No rebuild run, no science/data/runtime byte changed.
+- **What changed and why:** the 2026-08-06 suite pass left the hub as the only
+  cover still in the old constellation style while all nine companions moved to
+  the split-hero living-poster language and route here via "Whole suite: Driver
+  Cascade". The new cover conforms to the extracted suite token spec (system
+  Iowan/Palatino serif two-line question headline with one teal accent line,
+  poster-grid with art bleed + gradient weld, feTurbulence film grain, single
+  52px pill CTA, cream `#f3e8cb` honesty footer, zero JavaScript) while keeping
+  the hub's unique jobs: a 3x3 explorer grid wearing each companion's accent hex
+  with its cover question, the four canonical layer hues, the 9/46/open/4 stats,
+  and every governed caveat (short chain caveat stays in the hero lead; the full
+  mediation/causation sentence moved to the layers band; "How it stays honest"
+  body preserved verbatim in the footer disclosure). Kicker now says
+  "Driver Cascade · NEON Response Atlas" so arrivals from companion headers can
+  confirm they landed at the hub.
+- **Art provenance:** hero art generated via Higgsfield (Recraft V4.1 explorations,
+  then nano-banana image-referenced variants of the owner-picked Sonoran monsoon
+  scene, bytedance 2k upscale), graded to the suite palette; decorative
+  illustration only — depicts no data. Owner picked the base scene mid-session;
+  a palette-muting regrade was generated and REJECTED in favor of the owner's pick.
+- **Test process + evidence:** local Playwright (bundled Chromium) shots at
+  1440x900 / 1920x1080 / 800x1000 / 390x844 / 320x720: no horizontal overflow at
+  any width (scrollWidth == innerWidth), h1 exactly two lines everywhere, art-first
+  stacking below 960px. Five-agent adversarial review (suite-kinship, a11y/QA,
+  honesty-preservation, links, code) ran against the draft; both blockers and all
+  "important" findings fixed (two-line headline, compact lead, 3x3 grid, two-column
+  layers band, 700-960px grid overflow, art overhang occlusion, svh->vh fallbacks,
+  footer CTA contrast #a04a38 = 4.9:1, causation clause restored, GitHub link
+  relabeled). Consciously rejected: recoloring the four canonical layer hues
+  (must stay in sync with the deployed app) and rewriting companions' quoted
+  cover questions (provenance wins). All 14 outbound links returned 200 at check
+  time. A11y bar: 44px controls, skip link, aria-label'd h1 over the span/em
+  split, reduced-motion/contrast/forced-colors blocks, meaningful alt text, no
+  figcaption, no cover-art disclaimer.
+- **Residual risk:** `assets/cascade-og.png` 404s on live Pages until this branch
+  merges to `master` (assets ship in the same commit as the HTML, so the deploy is
+  atomic). The suite-jump naming fix is one-sided: companion headers still label
+  the hub "Driver Cascade"; the hub kicker now carries both names.
+- **Next action:** review + merge PR from `claude/cascade-driver-cover-design-norhf2`
+  to `master`, then re-curl the live og:image URL and re-run the responsive QA
+  sweep against the deployed Pages root.
