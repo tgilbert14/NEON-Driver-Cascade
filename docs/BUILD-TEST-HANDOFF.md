@@ -4303,3 +4303,20 @@ Rules:
 - **Driver implication: NONE** (no data/runtime/manifest byte changed).
 - **Next action:** merge PR #66, then re-check live Pages root, og:image, and
   the nine card skins over the deployed assets.
+
+### 2026-08-07 13:55 MST - hub Water card + suite register addendum / [Claude]
+
+- **Scope:** cover/docs-only follow-up on a fresh `claude/cascade-driver-cover-design-norhf2`
+  restarted from merged master `bb56bd35`. The hub's Water Chemistry card now
+  wears the real art from the new Water living-poster cover (sibling repo PR #18,
+  built this session with the same token spec and art pipeline); the CSS droplet
+  placeholder is removed and `docs/assets/covers/water-chemistry.webp` added.
+  The card's "What's in the water?" tagline is now the companion cover's actual
+  headline — provenance aligned.
+- **Learning loop:** dated 2026-08-07 hub + Water cover addendum added to
+  `docs/NEON-SUITE-LEARNING-LOOP.md` (register supersession for the two surfaces,
+  thumb-refresh coupling, ten-of-ten living-poster closure, naming-drift note);
+  coupling lesson appended to `.claude/agents/LESSONS.md`.
+- **Driver implication: NONE** (no data/runtime/manifest byte changed).
+- **Next action:** after Water PR #18 merges, pin its merge SHA in the register
+  addendum on this branch, merge this PR to master, and verify both live Pages.

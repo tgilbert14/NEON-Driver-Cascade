@@ -376,6 +376,27 @@ in the Driver handoff.
 | Water Chemistry Analyte Viewer | science/data/runtime `ee95af3`; governance `9e2946ca` | cover change `N/A`; release-platform-only PR #17 head `1c1031cf` -> `7feb49ee` | inspected no-op; exact-head `31067098412`; Pages `31068098866`; production `31068099200` |
 | My Little Inverts | science/data/runtime `ff23e994`; governance/identity `6972817`; prior deployed receipt `53991b6` | PR #9 head `21bc350b` -> `98c44ec4` | exact-head `31069906944`; Pages `31070821235`; production `31070821791`; identity `sha256:eb247cf7ad9f534c3696623604b60277181e1471ae660e9982786a167dd540ca` |
 
+### 2026-08-07 hub + Water cover addendum
+
+This tranche is cover/publication-only; no app science, data, runtime, or Driver
+canonical artifact byte changed. For the two rows below it supersedes the
+2026-08-06 register's cover/default publication identity.
+
+| Surface | Scientific/data/runtime authority retained | Cover/default publication authority | Evidence |
+|---|---|---|---|
+| Driver Response Atlas hub cover | canonical artifacts unchanged: cascade `47b98e48`, search `a11a072d`, meta `00120c52`, codebook `a79cc754`, manifest `92b46277` | living-poster redesign PR #66 heads `60e5a39` + `a4a8c71` -> merge `bb56bd35` | 7/7 PR checks green on both heads; live Pages root byte-identical post-deploy with og-image, three poster variants, and eight card-skin thumbs HTTP 200; master run `31213187051` in progress at write time (identical tree to the passing PR head) |
+| Water Chemistry Analyte Viewer | science/data/runtime `ee95af3`; governance `9e2946ca` | living-poster cover PR #18 head `6c9d046` (gate green; build/cold-start jobs and merge in flight at write time) | cover-only diff; verified locally at 1440/1920/800/390/320 with no overflow, two-line h1, 44px controls; Pages/production verification due post-merge |
+
+Suite-platform notes from this tranche: (1) the cover language is captured as a
+reusable token spec (see Driver `.claude/agents/LESSONS.md` 2026-08-07); (2) the
+hub's nine explorer cards wear static copies of each companion's cover art under
+`docs/assets/covers/` — when a companion ships new poster art, refresh its hub
+thumb in the same pass; (3) with Water's artistic cover the suite-wide
+living-poster pass is closed at ten of ten surfaces, and future public QA sweeps
+should include the hub as a tenth surface; (4) naming drift remains: companions
+route here as "Driver Cascade" while the hub titles itself "Response Atlas" —
+the hub kicker now carries both; unify when naming is next revisited.
+
 The pass-closeout narrative below is retained as dated scientific/release history.
 Where it says "current," the 2026-08-06 register above is authoritative for
 cover/default publication identity; it does not replace the separate
