@@ -6,522 +6,497 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>NEON Cross-Product Response Atlas · Desert Data Labs</title>
   <meta name="description"
-    content="Align climate and biological records at NEON sites, inspect coverage and uncertainty, and screen selected build-locked direct associations. The displayed layers are not a tested trophic chain." />
+    content="Who moves with the weather? One calendar lines up NEON's weather with nine living records and screens a small locked set of direct associations. The displayed layers are not a tested trophic chain." />
   <meta name="theme-color" content="#070d1f" />
   <link rel="canonical" href="https://tgilbert14.github.io/NEON-Driver-Cascade/" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070d1f'/%3E%3Cg fill='none' stroke='%232dd4bf' stroke-width='4.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M32 12v40'/%3E%3Cpath d='M22 25l10-10 10 10'/%3E%3Cpath d='M19 41h26'/%3E%3C/g%3E%3C/svg%3E" />
 
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/" />
   <meta property="og:title" content="NEON Cross-Product Response Atlas · Desert Data Labs" />
   <meta property="og:description"
-    content="Align climate and biological records at NEON sites and screen selected direct associations with explicit coverage, uncertainty, and sensitivity checks. The layers are not a tested chain." />
-  <meta property="og:image" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/response-atlas-social.png" />
-  <meta property="og:image:secure_url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/response-atlas-social.png" />
+    content="Who moves with the weather? NEON's weather and nine living records on one shared calendar, with coverage, uncertainty, and sensitivity checks in view. The layers are not a tested chain." />
+  <meta property="og:image" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/cascade-og.png" />
+  <meta property="og:image:secure_url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/cascade-og.png" />
   <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1734" />
-  <meta property="og:image:height" content="907" />
-  <meta property="og:image:alt" content="Parallel climate and ecological observation layers surrounding a field-site map." />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt"
+    content="Vintage screen-print of a desert monsoon: storm and rain on the left, quail at a fresh rain pool beneath saguaros and a research instrument tower on the right." />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="NEON Cross-Product Response Atlas · Desert Data Labs" />
-  <meta name="twitter:description" content="Align NEON climate and biological records and inspect selected direct associations. The displayed layers are not a tested trophic chain." />
-  <meta name="twitter:image" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/response-atlas-social.png" />
-  <meta name="twitter:image:alt" content="Parallel climate and ecological observation layers surrounding a field-site map." />
+  <meta name="twitter:description"
+    content="Who moves with the weather? NEON's weather and nine living records on one shared calendar. The displayed layers are not a tested trophic chain." />
+  <meta name="twitter:image" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/cascade-og.png" />
+  <meta name="twitter:image:alt"
+    content="Vintage screen-print of a desert monsoon: storm and rain on the left, quail at a fresh rain pool beneath saguaros and a research instrument tower on the right." />
 
-
-  <!-- promote to JS layout before paint so there is no flash of the fallback list -->
-  <script>document.documentElement.className += ' js';</script>
+  <link rel="preload" as="image" type="image/webp"
+    imagesrcset="assets/cascade-living-poster-840.webp 840w, assets/cascade-living-poster.webp 1672w"
+    imagesizes="(max-width: 700px) 100vw, 66vw" fetchpriority="high" />
 
   <style>
     :root {
-      --bg-0:#070d1f; --bg-1:#0b1733; --bg-2:#0e1d40;
-      --teal:#2dd4bf; --teal-rgb:45,212,191; --bright:#5eead4;
-      --coral:#fb8a7e; --coral-rgb:251,138,126;
-      --gold:#ffd24a; --gold-rgb:255,210,74;
-      --ink:#eaf2ff; --dim:#9fb0cf; --line:rgba(255,255,255,.12); --card:rgba(255,255,255,.045);
-      /* measurement-layer hues */
-      --clim:#43b8e8; --phen:#9bd24a; --prod:#5fb56a; --cons:#fb8a7e;
+      --night: #070d1f;
+      --teal: #2dd4bf;
+      --teal-soft: #7ce9d9;
+      --ember: #fb8a7e;
+      --paper: #f3e8cb;
+      --paper-dim: #d9d3c2;
+      --ink: #1b2334;
+      --ink-dim: #565d68;
+      --line: rgba(243, 232, 203, .2);
+      --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      --sans: Aptos, Inter, "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
+
     * { box-sizing: border-box }
-    html,body { margin:0 }
+    html { background: var(--night); scroll-behavior: smooth }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg-0);
-      -webkit-font-smoothing: antialiased; line-height: 1.55; overflow-x:hidden;
+      margin: 0; background: var(--night); color: var(--paper);
+      font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased;
+      /* load-bearing: clips the poster art's negative-margin bleed and the mobile
+         100vw full-bleed (which can overshoot by the scrollbar width) */
+      overflow-x: hidden;
     }
-    h1,h2,h3 { font-family: inherit; line-height: 1.12; margin:0; font-weight:800 }
-    a { color: var(--bright); text-decoration:none }
-    .skip-link { position:fixed; left:50%; top:8px; z-index:100; transform:translate(-50%,-180%);
-      padding:10px 16px; border-radius:10px; background:#fff; color:#071328; font-weight:800 }
-    .skip-link:focus { transform:translate(-50%,0); outline:3px solid var(--gold); outline-offset:2px }
-    .wrap { max-width: 1060px; margin: 0 auto; padding: 0 22px; position:relative; z-index:2 }
+    a { color: inherit }
+    img { max-width: 100% }
 
-    /* ---------- desert-night / circuit sky ---------- */
-    .sky { position: fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+    .skip-link {
+      position: fixed; left: 50%; top: -96px; transform: translateX(-50%); z-index: 100;
+      display: inline-flex; align-items: center; min-height: 44px; padding: 0 22px;
+      border-radius: 999px; background: var(--paper); color: var(--night);
+      font-weight: 850; text-decoration: none; transition: top .18s ease;
+    }
+    .skip-link:focus { top: 12px; outline: 3px solid var(--teal); outline-offset: 3px }
+
+    .measure { width: min(1440px, calc(100% - 48px)); margin: 0 auto }
+
+    /* ---------- top bar ---------- */
+    .topline {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      min-height: 82px; border-bottom: 1px solid var(--line);
+    }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none }
+    .brand-mark {
+      display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+      border: 1px solid rgba(45, 212, 191, .68); color: var(--teal);
+    }
+    .brand-mark svg { width: 17px; height: 17px }
+    .brand b {
+      font-size: .76rem; font-weight: 850; letter-spacing: .16em;
+      text-transform: uppercase; color: var(--paper);
+    }
+    .suite-jump {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+      font-size: .74rem; font-weight: 700; letter-spacing: .04em;
+      color: var(--paper-dim); text-decoration: none;
+    }
+    .suite-jump strong { color: var(--teal); font-weight: 850 }
+    .suite-jump .arr { color: var(--ember) }
+    .suite-jump:hover strong { color: var(--teal-soft) }
+
+    /* ---------- poster hero ---------- */
+    .poster { position: relative; isolation: isolate }
+    .poster::before {
+      content: ""; position: absolute; inset: 0; z-index: -2; pointer-events: none;
       background:
-        radial-gradient(120% 90% at 50% -8%, var(--bg-2), transparent 58%),
-        radial-gradient(140% 120% at 50% 120%, #14245a 0%, var(--bg-1) 45%, var(--bg-0) 100%); }
-    .sky::before { content:""; position:absolute; inset:-50%; opacity:.45;
-      background-repeat:repeat; background-size:240px 240px;
+        radial-gradient(52% 44% at 12% 88%, rgba(45, 212, 191, .1), transparent 70%),
+        radial-gradient(44% 40% at 30% 6%, rgba(251, 138, 126, .07), transparent 72%),
+        var(--night);
+    }
+    .poster::after {
+      content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      opacity: .16; mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)'/%3E%3C/svg%3E");
+    }
+    .poster-grid {
+      display: grid; grid-template-columns: minmax(340px, .82fr) minmax(0, 1.34fr);
+      align-items: center; min-height: calc(100vh - 82px); min-height: calc(100svh - 82px);
+    }
+    .poster-copy {
+      position: relative; z-index: 1;
+      max-width: 560px; padding: 54px max(20px, 2vw) 72px 0;
+    }
+    .kicker {
+      margin: 0 0 18px; font-size: .74rem; font-weight: 800; letter-spacing: .22em;
+      text-transform: uppercase; color: var(--teal);
+    }
+    h1 {
+      margin: 0 0 22px; font-family: var(--serif); font-weight: 700;
+      font-size: clamp(2.9rem, 4.6vw, 4.35rem); line-height: .9; letter-spacing: -.05em;
+      color: var(--paper);
+    }
+    h1 span, h1 em { display: block }
+    h1 em { font-style: normal; font-weight: 600; color: var(--teal) }
+    .lead {
+      margin: 0 0 30px; max-width: 40ch; font-size: clamp(1.02rem, 1.5vw, 1.16rem);
+      color: var(--paper-dim);
+    }
+    .button {
+      display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 26px;
+      border-radius: 999px; background: var(--teal); color: var(--night);
+      font-size: .93rem; font-weight: 850; text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, .34);
+      box-shadow: 0 15px 44px rgba(45, 212, 191, .22);
+      transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .button:hover {
+      background: var(--teal-soft); transform: translateY(-2px);
+      box-shadow: 0 19px 52px rgba(45, 212, 191, .3);
+    }
+    .button svg { width: 17px; height: 17px }
+    .warm { margin: 14px 0 0; font-size: .82rem; color: var(--paper-dim); opacity: .85 }
+
+    .poster-art {
+      position: relative; align-self: stretch;
+      /* bleed to the true viewport edge: the gutter is max(24px, (100vw - 1440px)/2) */
+      margin: 0 min(-24px, calc((1440px - 100vw) / 2)) 0 0;
+    }
+    .poster-art img {
+      display: block; width: 100%; height: 100%;
+      min-height: calc(100vh - 82px); min-height: calc(100svh - 82px);
+      object-fit: cover; object-position: 63% 50%;
+      filter: saturate(.98) contrast(1.03);
+    }
+    .poster-art::before {
+      content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        linear-gradient(90deg, var(--night) 0%, rgba(7, 13, 31, .74) 10%, transparent 38%),
+        linear-gradient(0deg, rgba(7, 13, 31, .34), transparent 26%);
+    }
+
+    /* ---------- shared section chrome ---------- */
+    .band { padding: 72px 0 }
+    .band-head { max-width: 700px; margin-bottom: 34px }
+    h2 {
+      margin: .45rem 0 12px; font-family: var(--serif); font-weight: 700;
+      font-size: clamp(1.7rem, 3.1vw, 2.5rem); line-height: 1.06; letter-spacing: -.03em;
+      text-wrap: balance;
+    }
+    h2 em { font-style: normal; color: var(--teal) }
+    .band-head p { margin: 0; color: var(--paper-dim); max-width: 62ch }
+
+    /* ---------- the nine explorers ---------- */
+    .suite { border-top: 1px solid var(--line) }
+    .suite-grid {
+      list-style: none; margin: 0; padding: 0;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    @media (max-width: 900px) {
+      .suite-grid { grid-template-columns: repeat(2, 1fr) }
+      .suite-grid li:last-child { grid-column: 1 / -1 }
+    }
+    @media (max-width: 560px) {
+      .suite-grid { grid-template-columns: 1fr }
+      .suite-grid li:last-child { grid-column: auto }
+    }
+    .exp {
+      position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+      min-height: 172px; padding: 68px 18px 15px; border-radius: 16px; text-decoration: none;
+      overflow: hidden; isolation: isolate;
+      background: rgba(255, 255, 255, .035);
+      border: 1px solid rgba(243, 232, 203, .16); border-left: 4px solid var(--hc);
+      transition: transform .2s ease, border-color .2s ease, box-shadow .25s ease;
+    }
+    /* each card wears its own app's published cover art */
+    .exp .skin { position: absolute; inset: 0; z-index: -1; pointer-events: none }
+    .exp .skin img {
+      width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, 50% 50%);
+      opacity: var(--dim, .78); filter: saturate(.95);
+      transition: opacity .25s ease, transform .45s ease;
+    }
+    .exp .skin::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(0deg, rgba(7, 13, 31, .92) 0%, rgba(7, 13, 31, .46) 48%, rgba(7, 13, 31, .08) 100%);
+    }
+    .skin-water {
+      background-color: rgba(110, 230, 240, .07);
       background-image:
-        radial-gradient(1.4px 1.4px at 30px 40px, rgba(255,255,255,.5), transparent),
-        radial-gradient(1.2px 1.2px at 150px 90px, rgba(180,220,255,.45), transparent),
-        radial-gradient(1.5px 1.5px at 90px 170px, rgba(255,255,255,.4), transparent);
-      animation: drift 140s linear infinite; }
-    @keyframes drift { to { transform: translateY(240px) } }
-
-    /* ---------- hero ---------- */
-    .hero { position:relative; z-index:2; padding: 46px 0 6px }
-    .brand { display:inline-flex; align-items:center; gap:10px; }
-    .brand svg { width:26px; height:26px; overflow:visible }
-    .brand .stroke { stroke:var(--teal); stroke-width:7; fill:none; stroke-linecap:round }
-    .brand .pip { fill:var(--bright) }
-    .brand b { font-weight:700; font-size:.82rem; letter-spacing:.16em; text-transform:uppercase; color:var(--dim) }
-    .eyebrow { margin-top:18px; font-family: ui-monospace,Menlo,Consolas,monospace; font-size:.72rem;
-      letter-spacing:.26em; text-transform:uppercase; color:var(--teal); }
-    .hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); margin:.5rem 0 .6rem; letter-spacing:-.02em;
-      background:linear-gradient(100deg,#fff 10%, var(--bright) 45%, var(--coral) 95%);
-      -webkit-background-clip:text; background-clip:text; color:transparent; }
-    @media (min-width: 920px){ .hero h1 { max-width:17ch } }
-    .lead { font-size: clamp(1.05rem,2.2vw,1.24rem); max-width:60ch; margin:0 0 24px; color:var(--ink) }
-    .lead b { color:var(--bright); font-weight:600 }
-
-    /* ---------- standout launch button (the one thing to click) ---------- */
-    .cta-row { display:flex; flex-wrap:wrap; gap:14px; align-items:center }
-    .launch {
-      position:relative; display:inline-flex; align-items:center; gap:11px;
-      font-weight:800; font-size:1.06rem; padding:15px 28px; border-radius:14px;
-      color:#06121a; border:1px solid rgba(255,255,255,.5); overflow:hidden; isolation:isolate;
-      background:linear-gradient(100deg, var(--bright), var(--teal) 45%, #7fe9ff 80%, var(--bright));
-      background-size:220% 100%;
-      box-shadow:0 10px 34px rgba(var(--teal-rgb),.5), 0 0 0 6px rgba(var(--teal-rgb),.08);
-      transition: transform .16s ease, box-shadow .25s ease;
-      animation: ctaFlow 7s linear infinite;
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='58'%3E%3Cpath d='M15 7c-5.5 8-9 12.5 0 18 9-5.5 5.5-10 0-18Z' fill='%236ee6f0' opacity='.3'/%3E%3Cpath d='M43 31c-4.5 6.5-7.5 10.5 0 15 7.5-4.5 4.5-8.5 0-15Z' fill='%236ee6f0' opacity='.18'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='58'%3E%3Cpath d='M15 7c-5.5 8-9 12.5 0 18 9-5.5 5.5-10 0-18Z' fill='%236ee6f0' opacity='.3'/%3E%3Cpath d='M43 31c-4.5 6.5-7.5 10.5 0 15 7.5-4.5 4.5-8.5 0-15Z' fill='%236ee6f0' opacity='.18'/%3E%3C/svg%3E");
+      background-size: 58px 58px, 91px 91px;
     }
-    @keyframes ctaFlow { to { background-position:220% 0 } }
-    .launch::after { content:""; position:absolute; inset:0; z-index:-1; mix-blend-mode:soft-light;
-      background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.75) 50%, transparent 70%);
-      transform:translateX(-120%); transition:transform .6s ease; }
-    .launch:hover { transform: translateY(-2px) scale(1.015);
-      box-shadow:0 16px 46px rgba(var(--teal-rgb),.65), 0 0 0 6px rgba(var(--teal-rgb),.12) }
-    .launch:focus-visible { transform:translateY(-2px) scale(1.015);
-      outline:4px solid var(--gold); outline-offset:5px;
-      box-shadow:0 16px 46px rgba(var(--teal-rgb),.65), 0 0 0 7px rgba(var(--gold-rgb),.18) }
-    .launch:hover::after { transform:translateX(120%) }
-    .launch .arrow { font-size:1.1em; transition:transform .2s ease }
-    .launch:hover .arrow { transform:translateX(4px) }
-    .ghost { display:inline-flex; align-items:center; gap:8px; padding:14px 22px; border-radius:14px;
-      color:#fff; border:1.5px solid var(--line); font-weight:600; transition:background .2s, border-color .2s }
-    .ghost:hover { background:rgba(255,255,255,.07); border-color:rgba(var(--teal-rgb),.5) }
-    .warm { font-size:.82rem; color:var(--dim); margin-top:14px; min-height:1.2em }
-
-    /* ---------- the constellation (suite hub + signature motion) ---------- */
-    .constel-sec { position:relative; z-index:2; padding: 26px 0 8px }
-    .constel { position:relative; width:100%; max-width:680px; margin:0 auto;
-      aspect-ratio:1/1; max-height:74vh; }
-    .ctraces { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; pointer-events:none }
-    .ctraces line { stroke:rgba(var(--teal-rgb),.5); stroke-width:1.4; stroke-linecap:round;
-      stroke-dasharray:5 9; opacity:0; transition:opacity .5s ease; }
-    .constel.lit .ctraces line { opacity:.6; animation: layerFlow 1.5s linear infinite; }
-    @keyframes layerFlow { to { stroke-dashoffset:-28 } }    /* visually links the suite */
-
-    /* core = the launch */
-    .ccore {
-      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-      z-index:4; width:var(--core,150px); height:var(--core,150px); --core:clamp(120px,21vmin,168px);
-      display:grid; place-items:center; border-radius:50%; text-align:center; color:#06121a; cursor:pointer;
-      background:radial-gradient(circle at 42% 36%, #eafff9 0%, var(--bright) 30%, var(--teal) 64%, #0a7a6c 100%);
-      border:2px solid rgba(255,255,255,.65);
-      box-shadow:0 0 0 7px rgba(var(--teal-rgb),.10), 0 0 46px 6px rgba(var(--teal-rgb),.5), inset 0 0 30px rgba(255,255,255,.4);
-      animation: corePulse 3.6s ease-in-out infinite;
+    .exp:hover {
+      transform: translateY(-2px); border-color: var(--hc);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
     }
-    @keyframes corePulse {
-      0%,100% { box-shadow:0 0 0 7px rgba(var(--teal-rgb),.10), 0 0 46px 6px rgba(var(--teal-rgb),.5), inset 0 0 30px rgba(255,255,255,.4) }
-      50% { box-shadow:0 0 0 12px rgba(var(--teal-rgb),.04), 0 0 66px 12px rgba(var(--teal-rgb),.62), inset 0 0 34px rgba(255,255,255,.5) }
+    .exp:hover .skin img, .exp:focus-visible .skin img { opacity: .88; transform: scale(1.06) }
+    .exp .name {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+      font-weight: 800; font-size: .98rem; color: var(--paper);
+      text-shadow: 0 1px 3px rgba(7, 13, 31, .6);
     }
-    .ccore:hover { outline:none; transform:translate(-50%,-50%) scale(1.05) }
-    .ccore:focus-visible { transform:translate(-50%,-50%) scale(1.05);
-      outline:4px solid var(--gold); outline-offset:5px }
-    .ccore .clabel { font-weight:800; font-size:clamp(.86rem,2vw,1.02rem); line-height:1.1; padding:0 .5rem }
-    .ccore .csub { display:block; font-weight:700; font-size:.64em; letter-spacing:.14em; text-transform:uppercase;
-      color:#0a5a50; margin-top:.25rem }
+    .exp .name .arr { color: var(--hc); font-size: .85em }
+    .exp .ask {
+      font-family: var(--serif); font-style: italic; font-size: .95rem; color: var(--paper-dim);
+      text-shadow: 0 1px 3px rgba(7, 13, 31, .6);
+    }
+    @supports (color: color-mix(in srgb, red 50%, white)) {
+      .exp .ask { color: color-mix(in srgb, var(--hc) 68%, #f3e8cb) }
+    }
 
-    /* explorer nodes */
-    .cnode { position:absolute; left:0; top:0; z-index:3;
-      transform:translate(calc(var(--x,0px) - 50%), calc(var(--y,0px) - 50%)); }
-    html.js .cnode { opacity:0 }
-    .constel.lit .cnode { opacity:1 }
-    .cnode-orb { display:grid; place-items:center; width:var(--ns,72px); height:var(--ns,72px); border-radius:50%;
-      color:var(--ink); text-align:center; padding:6px;
-      background:radial-gradient(circle at 38% 32%, rgba(255,255,255,.5), rgba(var(--h,45 212 191),.0) 60%), rgba(10,22,42,.85);
-      border:1.5px solid rgba(var(--hc,var(--teal-rgb)),.6);
-      box-shadow:0 0 16px rgba(var(--hc,var(--teal-rgb)),.35), inset 0 0 12px rgba(255,255,255,.12);
-      transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .2s ease; }
-    .constel.lit .cnode-orb { animation: bob 6s ease-in-out infinite; animation-delay: calc(var(--i,0) * -.5s) }
-    @keyframes bob { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-6px) } }
-    .cnode:hover, .cnode:focus-visible { outline:none; z-index:9 }
-    .cnode:hover .cnode-orb, .cnode:focus-visible .cnode-orb {
-      transform:scale(1.16); border-color:#fff;
-      box-shadow:0 0 28px rgba(var(--hc,var(--teal-rgb)),.7), inset 0 0 16px rgba(255,255,255,.22) }
-    .cnode-dot { width:9px; height:9px; border-radius:50%; background:rgb(var(--hc,var(--teal-rgb)));
-      box-shadow:0 0 10px rgb(var(--hc,var(--teal-rgb))) }
-    .cnode-lab { font-size:.68rem; font-weight:700; line-height:1.05; margin-top:4px }
-    .cnode-dot.has-critter { width:40px; height:40px; border-radius:0; background:none; box-shadow:none; }
-    .cnode-dot.has-critter .mascot { width:100%; height:100%; display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,.45)); transition:transform .25s ease; }
-    .cnode:hover .cnode-dot.has-critter .mascot, .cnode:focus-visible .cnode-dot.has-critter .mascot { transform:scale(1.18) rotate(-4deg); }
-    html:not(.js) .cnode-dot.has-critter { width:28px; height:28px; }
+    /* ---------- aligned layers ---------- */
+    .layers { border-top: 1px solid var(--line) }
+    .layers-cols {
+      display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+      gap: 24px; align-items: start;
+    }
+    @media (max-width: 900px) { .layers-cols { grid-template-columns: 1fr } }
+    .flow { display: grid; gap: 10px }
+    .rung {
+      display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 13px 16px;
+      border-radius: 14px; background: rgba(255, 255, 255, .035);
+      border: 1px solid rgba(243, 232, 203, .16); border-left: 4px solid var(--lc);
+    }
+    .rung .dot {
+      flex: 0 0 auto; width: 11px; height: 11px; border-radius: 50%;
+      background: var(--lc); box-shadow: 0 0 10px var(--lc);
+    }
+    .rung b { font-size: .97rem } .rung span { color: var(--paper-dim); font-size: .87rem }
+    /* canonical layer hues from the deployed atlas — keep in sync with the app */
+    .r1 { --lc: #43b8e8 } .r2 { --lc: #9bd24a } .r3 { --lc: #5fb56a } .r4 { --lc: #fb8a7e }
 
-    /* ---------- aligned measurement layers ---------- */
-    .cascade-band { position:relative; z-index:2; margin: 30px 0 6px; padding:26px 0 }
-    .kick { font-family: ui-monospace,Menlo,Consolas,monospace; font-size:.72rem; letter-spacing:.22em;
-      text-transform:uppercase; color:var(--dim) }
-    .cascade-band h2 { font-size:clamp(1.4rem,3.4vw,1.9rem); margin:.4rem 0 4px;
-      background:linear-gradient(100deg,#fff, var(--bright)); -webkit-background-clip:text; background-clip:text; color:transparent }
-    .cascade-band > .wrap > p { color:var(--dim); margin:0 0 20px; max-width:64ch }
-    .flow { display:grid; gap:0 }
-    .frung { position:relative; display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:14px;
-      background:var(--card); border:1px solid var(--line); border-left:4px solid var(--lc); overflow:hidden }
-    .frung + .frung { margin-top:10px }
-    .frung::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.0;
-      background:linear-gradient(100deg, transparent, rgba(var(--lrgb),.16), transparent); }
-    .frung.pip-on::before { animation: pip 2.4s ease-in-out; }     /* highlight sweeps each layer in turn */
-    @keyframes pip { 0%{opacity:0; transform:translateX(-30%)} 40%{opacity:1} 100%{opacity:0; transform:translateX(30%)} }
-    .frung .fmark { width:34px; height:34px; flex:0 0 auto; border-radius:9px; position:relative;
-      background:rgba(var(--lrgb),.16); border:1px solid rgba(var(--lrgb),.5) }
-    .frung .fmark::after { content:""; position:absolute; inset:0; margin:auto; width:12px; height:12px; border-radius:50%;
-      background:var(--lc); box-shadow:0 0 12px var(--lc) }
-    .frung .ftxt b { font-weight:800; font-size:1rem } .frung .ftxt span { color:var(--dim); font-size:.86rem }
-    .frung.r1 { --lc:var(--clim); --lrgb:67,184,232 }
-    .frung.r2 { --lc:var(--phen); --lrgb:155,210,74; margin-left:14px }
-    .frung.r3 { --lc:var(--prod); --lrgb:95,181,106; margin-left:28px }
-    .frung.r4 { --lc:var(--cons); --lrgb:251,138,126; margin-left:42px }
-    .farrow { color:rgba(255,255,255,.32); text-align:center; margin:2px 0 2px 17px; font-size:1.05rem }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px }
+    .stat {
+      padding: 16px 12px; text-align: center; border-radius: 14px;
+      background: rgba(255, 255, 255, .035); border: 1px solid rgba(243, 232, 203, .16);
+    }
+    .stat .n { font-family: var(--serif); font-weight: 700; font-size: 1.55rem; color: var(--teal-soft) }
+    .stat .l { font-size: .78rem; color: var(--paper-dim) }
 
-    /* ---------- stats + about ---------- */
-    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:26px 0 0; position:relative; z-index:2 }
-    .stat { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 14px; text-align:center }
-    .stat .n { font-weight:800; font-size:1.5rem; color:var(--bright) } .stat .l { font-size:.78rem; color:var(--dim) }
-    details.more { margin:30px 0 0; border:1px solid var(--line); border-radius:14px; background:var(--card); overflow:hidden }
-    details.more > summary { cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between;
-      gap:1rem; padding:1rem 1.3rem; font-weight:700; color:var(--bright) }
-    details.more > summary::-webkit-details-marker { display:none }
-    details.more > summary::after { content:"+"; color:var(--coral); font-weight:800; font-size:1.2rem }
-    details.more[open] > summary::after { content:"\2212" }
-    details.more[open] { border-color:rgba(var(--teal-rgb),.4) }
-    details.more .mbody { padding:0 1.3rem 1.2rem; color:var(--dim) }
-    details.more .mbody b { color:var(--ink) }
+    /* ---------- paper footer ---------- */
+    .paper-foot { margin-top: 72px; background: var(--paper); color: var(--ink-dim); font-size: .9rem }
+    .paper-foot .measure { padding: 40px 0 56px }
+    .paper-foot b, .paper-foot strong { color: var(--ink) }
+    .paper-foot a { color: #14655b; font-weight: 750; text-underline-offset: 4px }
+    .paper-foot a.foot-cta {
+      display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 6px;
+      font-weight: 800; text-decoration: none; color: #a04a38;
+    }
+    .honesty { margin: 18px 0; border-top: 1px solid rgba(27, 35, 52, .18); border-bottom: 1px solid rgba(27, 35, 52, .18) }
+    .honesty summary {
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      min-height: 48px; padding: 6px 0; cursor: pointer; list-style: none;
+      font-weight: 850; color: var(--ink);
+    }
+    .honesty summary::-webkit-details-marker { display: none }
+    .honesty summary::after { content: "+"; font-weight: 800; font-size: 1.15rem; color: #b3543f }
+    .honesty[open] summary::after { content: "\2212" }
+    .honesty .hbody { padding: 0 0 16px; max-width: 76ch }
+    .foot-links { display: flex; flex-wrap: wrap; gap: 8px 26px; margin: 14px 0 18px }
+    .foot-links a { display: inline-flex; align-items: center; min-height: 44px }
+    .colophon { max-width: 86ch }
+    .colophon a { display: inline-block; padding-block: 10px; margin-block: -10px }
 
-    footer { position:relative; z-index:2; border-top:1px solid var(--line); margin-top:34px; padding:26px 0 54px;
-      color:var(--dim); font-size:.9rem }
-    .cta-foot { display:inline-block; margin-bottom:10px; font-weight:700; color:var(--coral) }
+    /* ---------- focus ---------- */
+    :is(a, summary, .button):focus-visible { outline: 3px solid var(--teal); outline-offset: 4px }
+    .paper-foot :is(a, summary):focus-visible { outline-color: var(--ink) }
 
-    @media (max-width:560px){ .stats { grid-template-columns:repeat(2,1fr) } .frung { margin-left:0 !important } }
+    /* ---------- responsive ---------- */
+    @media (max-width: 960px) {
+      .poster-grid { display: flex; flex-direction: column; min-height: 0 }
+      .poster-art { order: -1; width: 100vw; margin: 0 0 0 calc(50% - 50vw) }
+      .poster-art img { min-height: 0; height: 44vh; height: 44svh; object-position: 62% 56% }
+      .poster-art::before {
+        background: linear-gradient(0deg, var(--night) 0%, rgba(7, 13, 31, .5) 14%, transparent 44%);
+        top: auto; height: 62%; bottom: 0;
+      }
+      .poster-copy { padding: 6px 0 54px; max-width: none }
+      h1 { font-size: clamp(2.8rem, 8.5vw, 4.4rem) }
+      .band { padding: 54px 0 }
+    }
+    @media (max-width: 700px) {
+      .jump-pre { display: none }
+      h1 { font-size: clamp(2.8rem, 12.5vw, 3.9rem) }
+      .button { width: 100%; justify-content: center }
+    }
+    @media (max-width: 420px) and (max-height: 860px) {
+      .poster-art img { height: 36vh; height: 36svh }
+      h1 { font-size: clamp(2.4rem, 12.5vw, 3rem) }
+    }
+    @media (max-width: 340px) { h1 { font-size: 2.25rem } }
 
-    /* ---------- no-JS fallback: a plain reachable grid of the suite ---------- */
-    html:not(.js) .ctraces, html:not(.js) .ccore .csub { display:none }
-    html:not(.js) .constel { aspect-ratio:auto; max-width:100%; display:grid;
-      grid-template-columns:repeat(2,1fr); gap:12px; padding:8px 0 }
-    html:not(.js) .ccore { position:static; transform:none; width:auto; height:auto; border-radius:14px;
-      grid-column:1/-1; padding:18px; animation:none }
-    html:not(.js) .cnode { position:static; transform:none; opacity:1 }
-    html:not(.js) .cnode-orb { width:auto; height:auto; flex-direction:row; gap:10px; border-radius:14px;
-      padding:14px 16px; justify-content:flex-start; animation:none }
-    html:not(.js) .cnode-lab { font-size:.95rem; margin-top:0 }
-
-    /* ---------- tiny suite of mascots (the hub's hero accent) ---------- */
-    .flybird { position:absolute; top:-2px; right:-12px; width:clamp(190px,30vw,360px);
-      z-index:-1; pointer-events:none; }
-    .flybird svg { width:100%; height:auto; overflow:visible; display:block }
-    .flybird .halo { transform-box:fill-box; transform-origin:center; animation: cbHalo 5s ease-in-out infinite }
-    .flybird .mob { filter:drop-shadow(0 6px 13px rgba(3,8,20,.5)) drop-shadow(0 0 12px rgba(45,212,191,.4)); }
-    .flybird .m { transform-box:fill-box; transform-origin:50% 92%; animation: cbHop 3.6s ease-in-out infinite }
-    .flybird .m2{ animation-delay:-.5s } .flybird .m3{ animation-delay:-1s } .flybird .m4{ animation-delay:-1.5s }
-    .flybird .m5{ animation-delay:-2s } .flybird .m6{ animation-delay:-2.5s } .flybird .m7{ animation-delay:-3s }
-    .flybird .spark { transform-box:fill-box; transform-origin:center; animation: cbTwinkle 3.2s ease-in-out infinite }
-    .flybird .s2{ animation-delay:-1.2s } .flybird .s3{ animation-delay:-2.3s }
-    @keyframes cbHop { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-6px) } }
-    @keyframes cbHalo { 0%,100%{ opacity:.4; transform:scale(1) } 50%{ opacity:.65; transform:scale(1.05) } }
-    @keyframes cbTwinkle { 0%,100%{ opacity:.25; transform:scale(.7) } 50%{ opacity:1; transform:scale(1.2) } }
-    @media (max-width:760px){ .flybird{ width:190px; opacity:.85 } }
-    @media (max-width:430px){ .flybird{ display:none } }
-
-
-    @media (prefers-reduced-motion: reduce){
-      .sky::before, .launch, .ccore, .constel.lit .cnode-orb, .constel.lit .ctraces line, .frung.pip-on::before { animation:none !important }
-      .flybird, .flybird .halo, .flybird .m, .flybird .spark { animation:none !important }
-      .flybird .tiltwrap, .flybird .mini .mhov { transition:none !important; transform:none !important }
-      .launch::after { display:none }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto }
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important }
+      .button:hover, .exp:hover { transform: none }
+      .exp:hover .skin img, .exp:focus-visible .skin img { transform: none }
+    }
+    @media (prefers-contrast: more) {
+      .lead, .warm, .band-head p { color: var(--paper) }
+      .paper-foot { color: #39404d }
+      .paper-foot a.foot-cta { color: #7c3626 }
+    }
+    @media (forced-colors: active) {
+      .button, .exp, .rung, .stat, .brand-mark { border: 2px solid ButtonText; forced-color-adjust: auto }
     }
   </style>
 </head>
 
 <body>
-  <a class="skip-link" href="#main">Skip to main content</a>
-  <div class="sky" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to the atlas</a>
 
-  <main id="main" tabindex="-1">
-  <header class="hero">
-    <div class="wrap">
-      <div class="flybird" aria-hidden="true">
-        <div class="tiltwrap">
-        <svg viewBox="0 0 300 230">
-          <defs>
-            <radialGradient id="cbHalo" cx="60%" cy="42%" r="54%"><stop offset="0%" stop-color="#2dd4bf" stop-opacity=".4"/><stop offset="50%" stop-color="#fb8a7e" stop-opacity=".14"/><stop offset="100%" stop-color="#fb8a7e" stop-opacity="0"/></radialGradient>
-          </defs>
-          <circle class="halo" cx="196" cy="92" r="120" fill="url(#cbHalo)"/>
-          <g class="mob">
-            <g class="mini"><g transform="translate(132,74)"><g class="mhov"><g class="m m4">
-              <circle r="16" fill="#ffce5a"/>
-              <path d="M-15,-3 Q-25,-2 -21,6 Q-15,4 -11,2 Z" fill="#e8924a"/>
-              <path d="M14,-1 L21,1 L14,3 Z" fill="#f0993a"/>
-              <path d="M-2,-15 L0,-21 L3,-15 Z" fill="#f0b94a"/>
-              <circle cx="-5" cy="-2" r="3.2" fill="#2a160a"/><circle cx="5" cy="-2" r="3.2" fill="#2a160a"/>
-              <circle cx="-6" cy="-3" r="1.1" fill="#fff"/><circle cx="4" cy="-3" r="1.1" fill="#fff"/>
-            </g></g></g></g>
-            <g class="mini"><g transform="translate(178,66)"><g class="mhov"><g class="m m5">
-              <path d="M-6,-16 Q-12,-24 -16,-27" stroke="#d98a3c" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <path d="M6,-16 Q12,-24 16,-27" stroke="#d98a3c" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <ellipse rx="16" ry="18" fill="#36d98a"/>
-              <path d="M0,-15 L0,16" stroke="#176b46" stroke-width="1.5" opacity=".5"/>
-              <circle cx="-5" cy="-2" r="3.2" fill="#0c2a1c"/><circle cx="5" cy="-2" r="3.2" fill="#0c2a1c"/>
-              <circle cx="-6" cy="-3" r="1.1" fill="#fff"/><circle cx="4" cy="-3" r="1.1" fill="#fff"/>
-            </g></g></g></g>
-            <g class="mini"><g transform="translate(224,72)"><g class="mhov"><g class="m m6">
-              <path d="M0,-2 C-14,-12 -22,-6 -22,2 C-10,4 -2,0 0,-2 Z" fill="#5fd16a"/>
-              <path d="M0,-2 C14,-12 22,-6 22,2 C10,4 2,0 0,-2 Z" fill="#5fd16a"/>
-              <circle cy="6" r="15" fill="#d8cf9e"/>
-              <circle cx="-5" cy="3" r="3" fill="#3a2a12"/><circle cx="5" cy="3" r="3" fill="#3a2a12"/>
-              <circle cx="-6" cy="2" r="1.1" fill="#fff"/><circle cx="4" cy="2" r="1.1" fill="#fff"/>
-            </g></g></g></g>
-            <g class="mini"><g transform="translate(266,78)"><g class="mhov"><g class="m m7">
-              <rect x="-4" y="9" width="8" height="15" rx="2" fill="#8a5a2b"/>
-              <circle r="17" fill="#4eb86a"/>
-              <circle cx="9" cy="6" r="2.5" fill="#ffd24a"/>
-              <circle cx="-5" cy="-2" r="3.2" fill="#11331f"/><circle cx="5" cy="-2" r="3.2" fill="#11331f"/>
-              <circle cx="-6" cy="-3" r="1.1" fill="#fff"/><circle cx="4" cy="-3" r="1.1" fill="#fff"/>
-            </g></g></g></g>
-            <g class="mini"><g transform="translate(150,110)"><g class="mhov"><g class="m m1">
-              <circle cx="-11" cy="-13" r="8" fill="#5aa0d8"/><circle cx="11" cy="-13" r="8" fill="#5aa0d8"/>
-              <circle cx="-11" cy="-12" r="4" fill="#ffd24a"/><circle cx="11" cy="-12" r="4" fill="#ffd24a"/>
-              <circle r="17" fill="#5aa0d8"/>
-              <path d="M-3,5 Q0,4 3,5 Q1.5,9 0,9 Q-1.5,9 -3,5 Z" fill="#fb8a7e"/>
-              <circle cx="-6" cy="-1" r="3.4" fill="#0a1a2e"/><circle cx="6" cy="-1" r="3.4" fill="#0a1a2e"/>
-              <circle cx="-7" cy="-2.5" r="1.2" fill="#fff"/><circle cx="5" cy="-2.5" r="1.2" fill="#fff"/>
-            </g></g></g></g>
-            <g class="mini"><g transform="translate(198,112)"><g class="mhov"><g class="m m2">
-              <path d="M0,-18 C-12,-2 -16,8 0,18 C16,8 12,-2 0,-18 Z" fill="#46c6da"/>
-              <ellipse cx="-5" cy="2" rx="3" ry="5" fill="#fff" opacity=".4"/>
-              <circle cx="-5" cy="4" r="3.2" fill="#0a2230"/><circle cx="5" cy="4" r="3.2" fill="#0a2230"/>
-              <circle cx="-6" cy="3" r="1.1" fill="#fff"/><circle cx="4" cy="3" r="1.1" fill="#fff"/>
-            </g></g></g></g>
-            <g class="mini"><g transform="translate(240,110)"><g class="mhov"><g class="m m3">
-              <path d="M-4,-12 C-14,-18 -20,-10 -16,-2 C-8,-2 -4,-6 -4,-12 Z" fill="#e6a92e"/>
-              <path d="M4,-12 C14,-18 20,-10 16,-2 C8,-2 4,-6 4,-12 Z" fill="#e6a92e"/>
-              <path d="M0,-16 C-8,-16 -10,-4 -4,2 L4,2 C10,-4 8,-16 0,-16 Z" fill="#9bd24a"/>
-              <circle cy="4" r="15" fill="#8cbf52"/>
-              <circle cx="-5" cy="2" r="3" fill="#243a16"/><circle cx="5" cy="2" r="3" fill="#243a16"/>
-              <circle cx="-6" cy="1" r="1.1" fill="#fff"/><circle cx="4" cy="1" r="1.1" fill="#fff"/>
-            </g></g></g></g>
-          </g>
-          <g>
-            <circle class="spark s1" cx="108" cy="58" r="3" fill="#5eead4"/>
-            <circle class="spark s2" cx="288" cy="64" r="2.4" fill="#ffd24a"/>
-            <circle class="spark s3" cx="150" cy="152" r="2.2" fill="#fb8a7e"/>
-          </g>
+  <header class="measure topline">
+    <span class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M12 3v18M8 8l4-4 4 4M7 14h10" />
         </svg>
-        </div>
-      </div>
-      <span class="brand">
-        <svg viewBox="0 0 100 100" aria-hidden="true">
-          <path class="stroke" d="M50 14 L64 30 L50 46 L36 30 Z" />
-          <line class="stroke" x1="50" y1="46" x2="50" y2="86" />
-          <line class="stroke" x1="34" y1="86" x2="66" y2="86" />
-          <circle class="pip" cx="50" cy="62" r="7.5" />
-        </svg>
-        <b>Desert Data Labs</b>
       </span>
-
-      <div class="eyebrow">The NEON Explorer Suite</div>
-      <h1>NEON Cross-Product Response Atlas</h1>
-      <p class="lead"><b>NEON</b> measures climate and living systems across research sites in the United States.
-        This atlas aligns several of those annual records, makes missing coverage and uncertainty visible, and
-        screens a small set of explicitly eligible direct associations. The measurement layers are co-displayed
-        for exploration; they are <b>not a tested trophic chain</b>, and the atlas does not estimate mediation or causation.</p>
-
-      <div class="cta-row">
-        <a id="launch" class="launch" href="https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/">
-          Launch the Response Atlas <span class="arrow" aria-hidden="true">&rarr;</span>
-        </a>
-        <a class="ghost" href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">View on GitHub</a>
-      </div>
-      <div class="warm">The hosted app may need a moment to start after you activate Launch.</div>
-    </div>
+      <b>Desert Data Labs</b>
+    </span>
+    <a class="suite-jump" href="#suite"><span class="jump-pre">The suite:</span> <strong>nine explorers</strong>
+      <span class="arr" aria-hidden="true">&darr;</span></a>
   </header>
 
-  <!-- The core launches the atlas; each node opens a companion explorer. -->
-  <section class="constel-sec" aria-label="The NEON Explorer Suite">
-    <div class="wrap">
-      <div class="constel is-noscript" data-constel style="--n:9;">
-        <svg class="ctraces" viewBox="-340 -340 680 680" aria-hidden="true"><g data-traces></g></svg>
-
-        <a class="ccore" data-core href="https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/"
-           aria-label="Launch the NEON Cross-Product Response Atlas app">
-          <span class="clabel">Response Atlas<span class="csub">launch &rarr;</span></span>
-        </a>
-
-        <a class="cnode" style="--i:0; --hc:56,168,232" href="https://tgilbert14.github.io/NEON-Small-Mammal-Tracker-App/" aria-label="NEON Small Mammal Tracker"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><g class="mascot-ear-l"><circle cx="42" cy="34" r="14" fill="#5aa0d8"/><circle cx="43" cy="36" r="8" fill="#ffd24a"/></g><g class="mascot-ear-r"><circle cx="78" cy="34" r="14" fill="#5aa0d8"/><circle cx="77" cy="36" r="8" fill="#ffd24a"/></g><path d="M88,82 Q110,94 113,72" fill="none" stroke="#5a93c8" stroke-width="4" stroke-linecap="round"/><ellipse cx="60" cy="66" rx="32" ry="33" fill="#5aa0d8"/><ellipse cx="60" cy="76" rx="20" ry="22" fill="#eaf2ff"/><path d="M55,70 Q60,68 65,70 Q62,77 60,77 Q58,77 55,70 Z" fill="#fb8a7e"/><g class="mascot-eyes"><circle cx="50" cy="60" r="6.5" fill="#0a1a2e"/><circle cx="70" cy="60" r="6.5" fill="#0a1a2e"/><circle cx="48" cy="57.5" r="2.4" fill="#fff"/><circle cx="68" cy="57.5" r="2.4" fill="#fff"/></g></svg></span><span class="cnode-lab">Small Mammals</span></span></a>
-        <a class="cnode" style="--i:1; --hc:245,177,63" href="https://tgilbert14.github.io/NEON-Breeding-Birds/" aria-label="NEON Birds"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><g fill="#f0b94a"><path d="M54,30 L57,16 L62,30 Z"/><path d="M62,30 L65,14 L70,30 Z"/></g><ellipse cx="60" cy="66" rx="32" ry="33" fill="#ffce5a"/><ellipse cx="60" cy="76" rx="19" ry="21" fill="#fff3d6"/><g class="mascot-ear-l"><path d="M30,58 Q14,66 22,86 Q34,80 40,64 Z" fill="#e0714a"/></g><g class="mascot-ear-r"><path d="M90,58 Q106,66 98,86 Q86,80 80,64 Z" fill="#e0714a"/></g><path d="M54,68 L66,68 L60,80 Z" fill="#f0993a"/><g class="mascot-eyes"><circle cx="50" cy="60" r="6.5" fill="#2a160a"/><circle cx="70" cy="60" r="6.5" fill="#2a160a"/><circle cx="48" cy="57.5" r="2.4" fill="#fff"/><circle cx="68" cy="57.5" r="2.4" fill="#fff"/></g></svg></span><span class="cnode-lab">Birds</span></span></a>
-        <a class="cnode" style="--i:2; --hc:54,217,138" href="https://tgilbert14.github.io/NEON-Ground-Beetle-Tracker/" aria-label="NEON Ground Beetle Tracker"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><g class="mascot-ear-l"><path d="M50,40 Q40,22 32,16" fill="none" stroke="#d98a3c" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="16" r="4" fill="#e8a24a"/></g><g class="mascot-ear-r"><path d="M70,40 Q80,22 88,16" fill="none" stroke="#d98a3c" stroke-width="3" stroke-linecap="round"/><circle cx="88" cy="16" r="4" fill="#e8a24a"/></g><g stroke="#c47a2c" stroke-width="3" stroke-linecap="round"><path d="M30,62 L16,62"/><path d="M30,78 L18,88"/><path d="M90,62 L104,62"/><path d="M90,78 L102,88"/></g><ellipse cx="60" cy="64" rx="31" ry="34" fill="#36d98a"/><path d="M60,32 L60,96" stroke="#176b46" stroke-width="2" opacity=".5"/><ellipse cx="60" cy="34" rx="14" ry="10" fill="#176b46"/><g class="mascot-eyes"><circle cx="50" cy="58" r="6.5" fill="#0c2a1c"/><circle cx="70" cy="58" r="6.5" fill="#0c2a1c"/><circle cx="48" cy="55.5" r="2.4" fill="#fff"/><circle cx="68" cy="55.5" r="2.4" fill="#fff"/></g></svg></span><span class="cnode-lab">Ground Beetles</span></span></a>
-        <a class="cnode" style="--i:3; --hc:95,209,106" href="https://tgilbert14.github.io/NEON-Plant-Diversity/" aria-label="NEON Plant Diversity"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><path d="M60,60 L60,30" stroke="#4aa050" stroke-width="4" stroke-linecap="round"/><g class="mascot-ear-l"><path d="M60,36 C40,24 24,30 22,46 C40,52 56,46 60,36 Z" fill="#5fd16a"/></g><g class="mascot-ear-r"><path d="M60,36 C80,24 96,30 98,46 C80,52 64,46 60,36 Z" fill="#5fd16a"/></g><ellipse cx="60" cy="76" rx="28" ry="26" fill="#d8cf9e"/><g class="mascot-eyes"><circle cx="51" cy="72" r="6" fill="#3a2a12"/><circle cx="69" cy="72" r="6" fill="#3a2a12"/><circle cx="49" cy="69.5" r="2.2" fill="#fff"/><circle cx="67" cy="69.5" r="2.2" fill="#fff"/></g></svg></span><span class="cnode-lab">Plant Diversity</span></span></a>
-        <a class="cnode" style="--i:4; --hc:106,191,90" href="https://tgilbert14.github.io/NEON-Plant-Phenology-Explorer/" aria-label="NEON Plant Phenology"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><path d="M60,98 L60,64" stroke="#5a9a3a" stroke-width="4" stroke-linecap="round"/><g class="mascot-ear-l"><path d="M52,40 C34,30 22,40 26,54 C42,54 52,48 52,40 Z" fill="#e6a92e"/></g><g class="mascot-ear-r"><path d="M68,40 C86,30 98,40 94,54 C78,54 68,48 68,40 Z" fill="#e6a92e"/></g><path d="M60,30 C48,30 44,46 52,58 L68,58 C76,46 72,30 60,30 Z" fill="#9bd24a"/><ellipse cx="60" cy="68" rx="26" ry="26" fill="#8cbf52"/><g class="mascot-eyes"><circle cx="51" cy="66" r="6" fill="#243a16"/><circle cx="69" cy="66" r="6" fill="#243a16"/><circle cx="49" cy="63.5" r="2.2" fill="#fff"/><circle cx="67" cy="63.5" r="2.2" fill="#fff"/></g></svg></span><span class="cnode-lab">Plant Phenology</span></span></a>
-        <a class="cnode" style="--i:5; --hc:78,184,106" href="https://tgilbert14.github.io/NEON-Vegetation-Structure-Explorer/" aria-label="NEON Vegetation Structure"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><rect x="54" y="80" width="12" height="26" rx="3" fill="#8a5a2b"/><g class="mascot-ear-l"><circle cx="40" cy="44" r="15" fill="#4eb86a"/></g><g class="mascot-ear-r"><circle cx="80" cy="44" r="15" fill="#4eb86a"/></g><ellipse cx="60" cy="58" rx="34" ry="30" fill="#4eb86a"/><circle cx="42" cy="66" r="3" fill="#ffd24a"/><circle cx="80" cy="50" r="2.6" fill="#ffd24a"/><g class="mascot-eyes"><circle cx="51" cy="56" r="6.5" fill="#11331f"/><circle cx="69" cy="56" r="6.5" fill="#11331f"/><circle cx="49" cy="53.5" r="2.4" fill="#fff"/><circle cx="69" cy="53.5" r="2.4" fill="#fff"/></g></svg></span><span class="cnode-lab">Veg Structure</span></span></a>
-        <a class="cnode" style="--i:6; --hc:52,198,216" href="https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/" aria-label="NEON Water Chemistry"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><path d="M60,16 C36,52 28,72 60,98 C92,72 84,52 60,16 Z" fill="#46c6da"/><ellipse cx="48" cy="54" rx="6" ry="11" fill="#fff" opacity=".4" transform="rotate(-18 48 54)"/><g class="mascot-eyes"><circle cx="50" cy="64" r="6.5" fill="#0a2230"/><circle cx="70" cy="64" r="6.5" fill="#0a2230"/><circle cx="48" cy="61.5" r="2.4" fill="#fff"/><circle cx="68" cy="61.5" r="2.4" fill="#fff"/></g></svg></span><span class="cnode-lab">Water Chemistry</span></span></a>
-        <a class="cnode" style="--i:7; --hc:184,242,74" href="https://tgilbert14.github.io/NEON-Mosquito-Pulse/" aria-label="NEON Mosquito Pulse"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><g stroke="#b8f24a" stroke-width="3" stroke-linecap="round" fill="none"><path d="M52,40 Q46,26 50,18"/><path d="M68,40 Q74,26 70,18"/></g><g class="mascot-ear-l"><path d="M34,52 Q14,50 18,74 Q40,72 48,58 Z" fill="#b8f24a" fill-opacity=".9"/></g><g class="mascot-ear-r"><path d="M86,52 Q106,50 102,74 Q80,72 72,58 Z" fill="#b8f24a" fill-opacity=".9"/></g><ellipse cx="60" cy="64" rx="30" ry="33" fill="#7c52e0"/><ellipse cx="60" cy="74" rx="17" ry="19" fill="#cdb6ff"/><path d="M54,74 L66,74 L60,90 Z" fill="#ffc24a"/><g class="mascot-eyes"><circle cx="50" cy="58" r="7" fill="#1a1030"/><circle cx="70" cy="58" r="7" fill="#1a1030"/><circle cx="48" cy="55.5" r="2.5" fill="#fff"/><circle cx="68" cy="55.5" r="2.5" fill="#fff"/></g></svg></span><span class="cnode-lab">Mosquitoes</span></span></a>
-        <a class="cnode" style="--i:8; --hc:43,183,196" href="https://tgilbert14.github.io/NEON-My-Little-Inverts/" aria-label="NEON My Little Inverts"><span class="cnode-orb"><span class="cnode-dot has-critter" aria-hidden="true"><svg class="mascot" viewBox="0 0 120 120"><g stroke="#2bb7c4" stroke-width="3" stroke-linecap="round" fill="none"><path d="M50,38 Q44,24 48,16"/><path d="M70,38 Q76,24 72,16"/></g><g class="mascot-ear-l"><path d="M34,52 Q14,48 16,70 Q38,70 46,58 Z" fill="#7fe7ef" fill-opacity=".85"/></g><g class="mascot-ear-r"><path d="M86,52 Q106,48 104,70 Q82,70 74,58 Z" fill="#7fe7ef" fill-opacity=".85"/></g><g stroke="#0a6f7a" stroke-width="3" stroke-linecap="round" fill="none"><path d="M48,96 Q40,108 30,112"/><path d="M60,98 L60,114"/><path d="M72,96 Q80,108 90,112"/></g><ellipse cx="60" cy="64" rx="30" ry="34" fill="#2bb7c4"/><ellipse cx="60" cy="74" rx="17" ry="22" fill="#9beef5"/><g class="mascot-eyes"><circle cx="50" cy="58" r="6.5" fill="#0b2a30"/><circle cx="70" cy="58" r="6.5" fill="#0b2a30"/><circle cx="48" cy="55.5" r="2.4" fill="#fff"/><circle cx="68" cy="55.5" r="2.4" fill="#fff"/></g></svg></span><span class="cnode-lab">Little Inverts</span></span></a>
+  <main id="main" tabindex="-1">
+    <section class="poster">
+      <div class="measure poster-grid">
+        <div class="poster-copy">
+          <p class="kicker">Driver Cascade &middot; NEON Response Atlas &middot; unofficial</p>
+          <h1 aria-label="Who moves with the weather?"><span>Who moves</span> <em>with the weather?</em></h1>
+          <p class="lead">One shared calendar lines up NEON&rsquo;s weather with nine living records &mdash;
+            side by side to explore, not a tested chain.</p>
+          <a class="button" href="https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/">
+            Launch the Response Atlas
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 12h15M13 6l6 6-6 6" />
+            </svg>
+          </a>
+          <p class="warm">The hosted app can take a few seconds to wake up.</p>
+        </div>
+        <figure class="poster-art">
+          <picture>
+            <source type="image/webp"
+              srcset="assets/cascade-living-poster-840.webp 840w, assets/cascade-living-poster.webp 1672w"
+              sizes="(max-width: 700px) 100vw, 66vw" />
+            <img src="assets/cascade-living-poster.png" width="1672" height="941" fetchpriority="high"
+              decoding="async"
+              alt="Vintage screen-print of a desert monsoon: an indigo storm curtain drops teal rain on the left while a Gambel's quail leads its chicks along a wet wash toward a fresh rain pool where a small mouse waits, beneath saguaros and a slender weather-instrument mast in the returning cream-gold light." />
+          </picture>
+        </figure>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Co-displayed measurement layers; order does not assert a causal chain. -->
-  <section class="cascade-band">
-    <div class="wrap">
-      <span class="kick">What this shows you</span>
-      <h2>Weather and biological responses, aligned—not assumed to form a chain.</h2>
-      <p>Four measurement layers share an annual calendar. The atlas evaluates only explicitly eligible direct
-        pairings; visual order does not establish a mechanism, mediation, or trophic transfer.</p>
-      <div class="flow" data-flow>
-        <div class="frung r1"><span class="fmark"></span><span class="ftxt"><b>Weather summaries</b> &middot; <span>complete-window rain and temperature</span></span></div>
-        <div class="farrow" aria-hidden="true">+</div>
-        <div class="frung r2"><span class="fmark"></span><span class="ftxt"><b>Green-up timing index</b> &middot; <span>left-censor-screened and composition-adjusted</span></span></div>
-        <div class="farrow" aria-hidden="true">+</div>
-        <div class="frung r3"><span class="fmark"></span><span class="ftxt"><b>Plant observations</b> &middot; <span>richness, cover, and fruiting records</span></span></div>
-        <div class="farrow" aria-hidden="true">+</div>
-        <div class="frung r4"><span class="fmark"></span><span class="ftxt"><b>Animal observations</b> &middot; <span>within-site detection or catch indices</span></span></div>
+    <section class="suite band" id="suite" aria-label="The NEON Explorer Suite">
+      <div class="measure">
+        <div class="band-head">
+          <p class="kicker">The NEON Explorer Suite</p>
+          <h2>Nine explorers, <em>one sky.</em></h2>
+          <p>Each companion reads a different living record from the same NEON field sites. This atlas is where their
+            calendars meet the weather.</p>
+        </div>
+        <ul class="suite-grid">
+          <li><a class="exp" style="--hc:#dce319; --pos:18% 62%" href="https://tgilbert14.github.io/NEON-Small-Mammal-Tracker-App/"
+              aria-label="NEON Small Mammal Tracker"><span class="skin" aria-hidden="true"><img src="assets/covers/small-mammals.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Small Mammals <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">Who moves after dark?</span></a></li>
+          <li><a class="exp" style="--hc:#f2b64b; --pos:72% 32%" href="https://tgilbert14.github.io/NEON-Breeding-Birds/"
+              aria-label="NEON Breeding Bird Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/birds.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Birds <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">Who&rsquo;s singing where?</span></a></li>
+          <li><a class="exp" style="--hc:#dc7f49; --pos:55% 40%" href="https://tgilbert14.github.io/NEON-Ground-Beetle-Tracker/"
+              aria-label="NEON Ground Beetle Tracker"><span class="skin" aria-hidden="true"><img src="assets/covers/ground-beetles.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Ground Beetles <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">What moves at ground level?</span></a></li>
+          <li><a class="exp" style="--hc:#b56545; --pos:62% 78%; --dim:.62" href="https://tgilbert14.github.io/NEON-Plant-Diversity/"
+              aria-label="NEON Plant Diversity Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/plant-diversity.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Plant Diversity <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">How much can one square hold?</span></a>
+          </li>
+          <li><a class="exp" style="--hc:#b9de75; --pos:58% 55%" href="https://tgilbert14.github.io/NEON-Plant-Phenology-Explorer/"
+              aria-label="NEON Plant Phenology Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/plant-phenology.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Plant Phenology <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">Read the seasons.</span></a></li>
+          <li><a class="exp" style="--hc:#f0bd4f; --pos:50% 55%"
+              href="https://tgilbert14.github.io/NEON-Vegetation-Structure-Explorer/"
+              aria-label="NEON Vegetation Structure Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/veg-structure.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Veg Structure <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">Tagged. Measured. Still changing.</span></a>
+          </li>
+          <li><a class="exp" style="--hc:#6ee6f0"
+              href="https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/"
+              aria-label="NEON Water Chemistry Analyte Viewer"><span class="skin skin-water" aria-hidden="true"></span><span class="name">Water Chemistry <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">What&rsquo;s in the water?</span></a>
+          </li>
+          <li><a class="exp" style="--hc:#d0dc39; --pos:68% 45%" href="https://tgilbert14.github.io/NEON-Mosquito-Pulse/"
+              aria-label="NEON Mosquito Pulse"><span class="skin" aria-hidden="true"><img src="assets/covers/mosquitoes.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Mosquitoes <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">What rises after rain?</span></a></li>
+          <li><a class="exp" style="--hc:#e2a448; --pos:75% 50%" href="https://tgilbert14.github.io/NEON-My-Little-Inverts/"
+              aria-label="NEON My Little Inverts"><span class="skin" aria-hidden="true"><img src="assets/covers/little-inverts.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Little Inverts <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">What lives below the surface?</span></a>
+          </li>
+        </ul>
       </div>
+    </section>
 
-      <div class="stats">
-        <div class="stat"><div class="n">9</div><div class="l">companion explorers</div></div>
-        <div class="stat"><div class="n">46</div><div class="l">NEON sites</div></div>
-        <div class="stat"><div class="n">open</div><div class="l">public NEON data</div></div>
-        <div class="stat"><div class="n">4</div><div class="l">measurement layers aligned</div></div>
+    <section class="layers band" aria-label="What the atlas aligns">
+      <div class="measure">
+        <div class="band-head">
+          <p class="kicker">What this shows you</p>
+          <h2>Weather and living records, <em>aligned &mdash; not assumed to form a chain.</em></h2>
+          <p>Four measurement layers share an annual calendar. The atlas evaluates only explicitly eligible direct
+            pairings; visual order does not establish a mechanism, mediation, or trophic transfer. The atlas does not
+            estimate mediation or causation.</p>
+        </div>
+        <div class="layers-cols">
+        <div class="flow">
+          <div class="rung r1"><span class="dot" aria-hidden="true"></span><span><b>Weather summaries</b> &middot;
+              <span>complete-window rain and temperature</span></span></div>
+          <div class="rung r2"><span class="dot" aria-hidden="true"></span><span><b>Green-up timing index</b> &middot;
+              <span>left-censor-screened and composition-adjusted</span></span></div>
+          <div class="rung r3"><span class="dot" aria-hidden="true"></span><span><b>Plant observations</b> &middot;
+              <span>richness, cover, and fruiting records</span></span></div>
+          <div class="rung r4"><span class="dot" aria-hidden="true"></span><span><b>Animal observations</b> &middot;
+              <span>within-site detection or catch indices</span></span></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="n">9</div><div class="l">companion explorers</div></div>
+          <div class="stat"><div class="n">46</div><div class="l">NEON sites</div></div>
+          <div class="stat"><div class="n">open</div><div class="l">public NEON data</div></div>
+          <div class="stat"><div class="n">4</div><div class="l">layers aligned</div></div>
+        </div>
+        </div>
       </div>
+    </section>
+  </main>
 
-      <details class="more">
+  <footer class="paper-foot">
+    <div class="measure">
+      <a class="foot-cta" href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite">Get in touch with
+        Desert Data Labs &rarr;</a>
+      <p style="margin:6px 0 0">This atlas is <strong>derived</strong>: it is built from the published data bundles of
+        the nine explorer apps above, which in turn use public NEON data (CC BY 4.0).</p>
+
+      <details class="honesty">
         <summary>How it stays honest</summary>
-        <div class="mbody">
+        <div class="hbody">
           A short annual record can look patterned by chance. The atlas therefore requires minimum overlap,
           preserves missing calendar years, uses exact finite circular-shift diagnostics for eligible direct pairings,
           adjusts the pooled vote family, and reports trend, outcome-estimator, and spatial sensitivity checks.
           The primary pooled vote currently covers two temperature-to-green-up pairings; plant and animal rows
           remain descriptive context because the available products do not jointly supply defensible mediators,
-          aligned response windows, and complete effort denominators. Settings are literature-motivated and locked in the published
-          artifact, but this is retrospective exploratory work—not a preregistration—and the hypothesis family
-          evolved while the data were being examined. The green-up index is refit over each full snapshot, so a
-          refresh can revise historical values; downloadable definitions and hashes preserve every published version.
-          <b>This independent educational tool is not affiliated with NEON, Battelle, or the NSF.</b>
+          aligned response windows, and complete effort denominators. Settings are literature-motivated and locked
+          in the published artifact, but this is retrospective exploratory work&mdash;not a preregistration&mdash;and
+          the hypothesis family evolved while the data were being examined. The green-up index is refit over each
+          full snapshot, so a refresh can revise historical values; downloadable definitions and hashes preserve
+          every published version. <strong>This independent educational tool is not affiliated with NEON, Battelle,
+            or the NSF.</strong>
         </div>
       </details>
-    </div>
-  </section>
-  </main>
 
-  <footer>
-    <div class="wrap">
-      <a class="cta-foot" href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite">Get in touch with Desert Data Labs →</a><br>
-      Built by <b>Desert Data Labs</b> &middot; Tucson, AZ. Data: National Ecological Observatory Network
-      (operated by Battelle, funded by NSF). Educational tools, not affiliated with NEON, Battelle, or the NSF.
-      <br>NEON data are provided under a <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons Attribution 4.0 International (CC BY 4.0)</a> license. This app aggregates and derives summary metrics from the raw NEON data products; the underlying measurements are unaltered. It is an independent, unofficial tool and is not endorsed by NEON, Battelle, or the NSF.
+      <div class="foot-links">
+        <a href="https://github.com/tgilbert14/NEON-Driver-Cascade" target="_blank" rel="noopener">View on GitHub</a>
+        <a href="mailto:desertdatalabs@gmail.com?subject=NEON%20Explorer%20Suite">Feedback</a>
+      </div>
+
+      <p class="colophon">Built by <strong>Desert Data Labs</strong> &middot; Tucson, AZ. Data: National Ecological
+        Observatory Network (operated by Battelle, funded by NSF). Educational tools, not affiliated with NEON,
+        Battelle, or the NSF.<br />
+        NEON data are provided under a <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank"
+          rel="noopener">Creative Commons Attribution 4.0 International (CC BY 4.0)</a> license. This app aggregates
+        and derives summary metrics from the raw NEON data products; the underlying measurements are unaltered. It is
+        an independent, unofficial tool and is not endorsed by NEON, Battelle, or the NSF.</p>
     </div>
   </footer>
-
-  <script>
-
-    // ---- the constellation: lay the companion explorers on a ring ----
-    (function () {
-      var root = document.querySelector("[data-constel]");
-      if (!root) return;
-      var nodes = Array.prototype.slice.call(root.querySelectorAll(".cnode"));
-      var tracesG = root.querySelector("[data-traces]");
-      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      root.classList.remove("is-noscript");
-
-      var n = nodes.length, TR = 300; // trace viewBox radius
-      // build a trace from center to each node
-      if (tracesG) {
-        var frag = document.createDocumentFragment();
-        for (var i = 0; i < n; i++) {
-          var th = (i * (360 / n) - 90) * Math.PI / 180;
-          var ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
-          ln.setAttribute("x1", "0"); ln.setAttribute("y1", "0");
-          ln.setAttribute("x2", (Math.cos(th) * TR).toFixed(1));
-          ln.setAttribute("y2", (Math.sin(th) * TR).toFixed(1));
-          frag.appendChild(ln);
-        }
-        tracesG.appendChild(frag);
-      }
-
-      function place(landed) {
-        var r = root.getBoundingClientRect();
-        var cx = r.width / 2, cy = r.height / 2;
-        var unit = Math.min(r.width, r.height);
-        var rad = unit * 0.40, ns = Math.max(58, unit * 0.135);
-        nodes.forEach(function (nd, i) {
-          nd.style.setProperty("--ns", ns.toFixed(0) + "px");
-          var th = (i * (360 / n) - 90) * Math.PI / 180;
-          var f = landed ? 1 : 0.18;            // start near the core, fly out on land
-          nd.style.setProperty("--x", (cx + Math.cos(th) * rad * f).toFixed(1) + "px");
-          nd.style.setProperty("--y", (cy + Math.sin(th) * rad * f).toFixed(1) + "px");
-        });
-      }
-
-      place(false);
-      // light it up (fly the nodes out + animate the visual links) after a beat
-      function lite() { place(true); root.classList.add("lit"); }
-      if (reduce) { lite(); }
-      else { requestAnimationFrame(function () { requestAnimationFrame(lite); }); setTimeout(lite, 400); }
-
-      var rt;
-      window.addEventListener("resize", function () {
-        clearTimeout(rt); rt = setTimeout(function () { place(root.classList.contains("lit")); }, 120);
-      }, { passive: true });
-    })();
-
-    // ---- pulse each co-displayed measurement layer in turn ----
-    (function () {
-      var rungs = Array.prototype.slice.call(document.querySelectorAll("[data-flow] .frung"));
-      if (!rungs.length || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      var i = 0;
-      setInterval(function () {
-        rungs.forEach(function (r) { r.classList.remove("pip-on"); });
-        var el = rungs[i % rungs.length];
-        // force reflow so the animation restarts each cycle
-        void el.offsetWidth; el.classList.add("pip-on");
-        i++;
-      }, 900);
-    })();
-  </script>
-  <script>
-  (function(){
-    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var nums = document.querySelectorAll('.stat .n');
-    if(nums.length && 'IntersectionObserver' in window){
-      var run = function(el){
-        var raw0 = el.textContent.trim(), pre='';
-        if(raw0.charAt(0)==='~'||raw0.charAt(0)==='≈'){ pre=raw0.charAt(0); raw0=raw0.slice(1); }
-        var i=0, np='';
-        while(i<raw0.length){ var c=raw0.charAt(i); if((c>='0'&&c<='9')||c===','||c==='.'){ np+=c; i++; } else break; }
-        if(!np || reduce) return;
-        var rest = raw0.slice(i), full = el.textContent.trim();
-        var target = parseFloat(np.replace(/,/g,'')); if(!isFinite(target)) return;
-        var hasComma = np.indexOf(',')>=0, dec=(np.split('.')[1]||'').length;
-        var dur=950, t0=performance.now();
-        function fmt(v){ var s = dec? v.toFixed(dec) : (hasComma? Math.round(v).toLocaleString() : String(Math.round(v))); return pre+s+rest; }
-        function tick(now){ var t=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-t,3); el.textContent=fmt(target*e); if(t<1) requestAnimationFrame(tick); else el.textContent=full; }
-        el.textContent=fmt(0); requestAnimationFrame(tick);
-      };
-      var io = new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting){ io.unobserve(en.target); run(en.target); } }); }, {threshold:.5});
-      nums.forEach(function(n){ io.observe(n); });
-    }
-  })();
-  </script>
 </body>
 
 </html>
