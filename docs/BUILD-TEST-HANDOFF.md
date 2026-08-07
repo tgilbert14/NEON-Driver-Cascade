@@ -4276,3 +4276,30 @@ Rules:
 - **Next action:** review + merge PR from `claude/cascade-driver-cover-design-norhf2`
   to `master`, then re-curl the live og:image URL and re-run the responsive QA
   sweep against the deployed Pages root.
+
+### 2026-08-07 11:55 MST - Driver cover: card skins + wording pass / [Claude]
+
+- **Scope:** cover-only follow-up on the same branch/PR (#66). (1) The nine
+  explorer cards now wear their own apps' published cover art as dimmed
+  "skins" (new `docs/assets/covers/*.webp`, eight 640x360 thumbs ~290KB total,
+  recompressed from the siblings' live Pages assets; lazy-loaded, `alt=""`,
+  per-card `--pos` focal points, hover/focus brighten+zoom; Water Chemistry has
+  no cover art by design, so it carries a CSS droplet pattern in its accent).
+  (2) A cringe/AI-wording editorial pass: warm-start note and hero lead
+  de-jargoned ("co-displayed" removed), meta/og/twitter descriptions now lead
+  with the cover question instead of methods-abstract triads, layers h2 reads
+  "Weather and living records", and the seamed causation sentence was split
+  back into the two original governed sentences (both verbatim; no caveat
+  weakened). Water card tagline is now "What's in the water?" (hub-authored;
+  its cover has no question to quote).
+- **Review evidence:** copy pass and card-skin critique ran as two independent
+  agents. Adopted: per-card `--dim` hook (Plant Diversity .62 — fixes a real
+  WCAG AA fail measured ~4.0:1 over its cream art, worst on :focus-visible),
+  hover brighten capped at .88, text-shadow on card name/ask, Phenology/Mammals
+  focal retunes. Verified post-fix: no horizontal overflow at 320/390/800/1440/
+  1920, h1 two lines everywhere, all eight lazy skins load on real scroll at
+  390px (a blank card in one fullPage capture was a Playwright lazy-decode
+  race, not a page bug).
+- **Driver implication: NONE** (no data/runtime/manifest byte changed).
+- **Next action:** merge PR #66, then re-check live Pages root, og:image, and
+  the nine card skins over the deployed assets.

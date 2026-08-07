@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>NEON Cross-Product Response Atlas · Desert Data Labs</title>
   <meta name="description"
-    content="Align climate and biological records at NEON sites, inspect coverage and uncertainty, and screen selected build-locked direct associations. The displayed layers are not a tested trophic chain." />
+    content="Who moves with the weather? One calendar lines up NEON's weather with nine living records and screens a small locked set of direct associations. The displayed layers are not a tested trophic chain." />
   <meta name="theme-color" content="#070d1f" />
   <link rel="canonical" href="https://tgilbert14.github.io/NEON-Driver-Cascade/" />
   <link rel="icon"
@@ -16,7 +16,7 @@
   <meta property="og:url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/" />
   <meta property="og:title" content="NEON Cross-Product Response Atlas · Desert Data Labs" />
   <meta property="og:description"
-    content="Align climate and biological records at NEON sites and screen selected direct associations with explicit coverage, uncertainty, and sensitivity checks. The layers are not a tested chain." />
+    content="Who moves with the weather? NEON's weather and nine living records on one shared calendar, with coverage, uncertainty, and sensitivity checks in view. The layers are not a tested chain." />
   <meta property="og:image" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/cascade-og.png" />
   <meta property="og:image:secure_url" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/cascade-og.png" />
   <meta property="og:image:type" content="image/png" />
@@ -27,7 +27,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="NEON Cross-Product Response Atlas · Desert Data Labs" />
   <meta name="twitter:description"
-    content="Align NEON climate and biological records and inspect selected direct associations. The displayed layers are not a tested trophic chain." />
+    content="Who moves with the weather? NEON's weather and nine living records on one shared calendar. The displayed layers are not a tested trophic chain." />
   <meta name="twitter:image" content="https://tgilbert14.github.io/NEON-Driver-Cascade/assets/cascade-og.png" />
   <meta name="twitter:image:alt"
     content="Vintage screen-print of a desert monsoon: storm and rain on the left, quail at a fresh rain pool beneath saguaros and a research instrument tower on the right." />
@@ -193,19 +193,46 @@
       .suite-grid li:last-child { grid-column: auto }
     }
     .exp {
-      position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 44px;
-      padding: 18px 18px 16px; border-radius: 16px; text-decoration: none;
+      position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+      min-height: 172px; padding: 68px 18px 15px; border-radius: 16px; text-decoration: none;
+      overflow: hidden; isolation: isolate;
       background: rgba(255, 255, 255, .035);
       border: 1px solid rgba(243, 232, 203, .16); border-left: 4px solid var(--hc);
-      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .25s ease;
     }
-    .exp:hover { transform: translateY(-2px); border-color: var(--hc); background: rgba(255, 255, 255, .06) }
+    /* each card wears its own app's published cover art */
+    .exp .skin { position: absolute; inset: 0; z-index: -1; pointer-events: none }
+    .exp .skin img {
+      width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, 50% 50%);
+      opacity: var(--dim, .78); filter: saturate(.95);
+      transition: opacity .25s ease, transform .45s ease;
+    }
+    .exp .skin::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(0deg, rgba(7, 13, 31, .92) 0%, rgba(7, 13, 31, .46) 48%, rgba(7, 13, 31, .08) 100%);
+    }
+    .skin-water {
+      background-color: rgba(110, 230, 240, .07);
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='58'%3E%3Cpath d='M15 7c-5.5 8-9 12.5 0 18 9-5.5 5.5-10 0-18Z' fill='%236ee6f0' opacity='.3'/%3E%3Cpath d='M43 31c-4.5 6.5-7.5 10.5 0 15 7.5-4.5 4.5-8.5 0-15Z' fill='%236ee6f0' opacity='.18'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='58'%3E%3Cpath d='M15 7c-5.5 8-9 12.5 0 18 9-5.5 5.5-10 0-18Z' fill='%236ee6f0' opacity='.3'/%3E%3Cpath d='M43 31c-4.5 6.5-7.5 10.5 0 15 7.5-4.5 4.5-8.5 0-15Z' fill='%236ee6f0' opacity='.18'/%3E%3C/svg%3E");
+      background-size: 58px 58px, 91px 91px;
+    }
+    .exp:hover {
+      transform: translateY(-2px); border-color: var(--hc);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+    }
+    .exp:hover .skin img, .exp:focus-visible .skin img { opacity: .88; transform: scale(1.06) }
     .exp .name {
       display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
       font-weight: 800; font-size: .98rem; color: var(--paper);
+      text-shadow: 0 1px 3px rgba(7, 13, 31, .6);
     }
     .exp .name .arr { color: var(--hc); font-size: .85em }
-    .exp .ask { font-family: var(--serif); font-style: italic; font-size: .95rem; color: var(--paper-dim) }
+    .exp .ask {
+      font-family: var(--serif); font-style: italic; font-size: .95rem; color: var(--paper-dim);
+      text-shadow: 0 1px 3px rgba(7, 13, 31, .6);
+    }
     @supports (color: color-mix(in srgb, red 50%, white)) {
       .exp .ask { color: color-mix(in srgb, var(--hc) 68%, #f3e8cb) }
     }
@@ -295,6 +322,7 @@
       html { scroll-behavior: auto }
       *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important }
       .button:hover, .exp:hover { transform: none }
+      .exp:hover .skin img, .exp:focus-visible .skin img { transform: none }
     }
     @media (prefers-contrast: more) {
       .lead, .warm, .band-head p { color: var(--paper) }
@@ -331,7 +359,7 @@
           <p class="kicker">Driver Cascade &middot; NEON Response Atlas &middot; unofficial</p>
           <h1 aria-label="Who moves with the weather?"><span>Who moves</span> <em>with the weather?</em></h1>
           <p class="lead">One shared calendar lines up NEON&rsquo;s weather with nine living records &mdash;
-            co-displayed to explore, never a tested chain.</p>
+            side by side to explore, not a tested chain.</p>
           <a class="button" href="https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/">
             Launch the Response Atlas
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
@@ -339,7 +367,7 @@
               <path d="M4 12h15M13 6l6 6-6 6" />
             </svg>
           </a>
-          <p class="warm">The hosted app may need a moment to start after you activate Launch.</p>
+          <p class="warm">The hosted app can take a few seconds to wake up.</p>
         </div>
         <figure class="poster-art">
           <picture>
@@ -363,37 +391,37 @@
             calendars meet the weather.</p>
         </div>
         <ul class="suite-grid">
-          <li><a class="exp" style="--hc:#dce319" href="https://tgilbert14.github.io/NEON-Small-Mammal-Tracker-App/"
-              aria-label="NEON Small Mammal Tracker"><span class="name">Small Mammals <span class="arr"
+          <li><a class="exp" style="--hc:#dce319; --pos:18% 62%" href="https://tgilbert14.github.io/NEON-Small-Mammal-Tracker-App/"
+              aria-label="NEON Small Mammal Tracker"><span class="skin" aria-hidden="true"><img src="assets/covers/small-mammals.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Small Mammals <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">Who moves after dark?</span></a></li>
-          <li><a class="exp" style="--hc:#f2b64b" href="https://tgilbert14.github.io/NEON-Breeding-Birds/"
-              aria-label="NEON Breeding Bird Explorer"><span class="name">Birds <span class="arr"
+          <li><a class="exp" style="--hc:#f2b64b; --pos:72% 32%" href="https://tgilbert14.github.io/NEON-Breeding-Birds/"
+              aria-label="NEON Breeding Bird Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/birds.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Birds <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">Who&rsquo;s singing where?</span></a></li>
-          <li><a class="exp" style="--hc:#dc7f49" href="https://tgilbert14.github.io/NEON-Ground-Beetle-Tracker/"
-              aria-label="NEON Ground Beetle Tracker"><span class="name">Ground Beetles <span class="arr"
+          <li><a class="exp" style="--hc:#dc7f49; --pos:55% 40%" href="https://tgilbert14.github.io/NEON-Ground-Beetle-Tracker/"
+              aria-label="NEON Ground Beetle Tracker"><span class="skin" aria-hidden="true"><img src="assets/covers/ground-beetles.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Ground Beetles <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">What moves at ground level?</span></a></li>
-          <li><a class="exp" style="--hc:#b56545" href="https://tgilbert14.github.io/NEON-Plant-Diversity/"
-              aria-label="NEON Plant Diversity Explorer"><span class="name">Plant Diversity <span class="arr"
+          <li><a class="exp" style="--hc:#b56545; --pos:62% 78%; --dim:.62" href="https://tgilbert14.github.io/NEON-Plant-Diversity/"
+              aria-label="NEON Plant Diversity Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/plant-diversity.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Plant Diversity <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">How much can one square hold?</span></a>
           </li>
-          <li><a class="exp" style="--hc:#b9de75" href="https://tgilbert14.github.io/NEON-Plant-Phenology-Explorer/"
-              aria-label="NEON Plant Phenology Explorer"><span class="name">Plant Phenology <span class="arr"
+          <li><a class="exp" style="--hc:#b9de75; --pos:58% 55%" href="https://tgilbert14.github.io/NEON-Plant-Phenology-Explorer/"
+              aria-label="NEON Plant Phenology Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/plant-phenology.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Plant Phenology <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">Read the seasons.</span></a></li>
-          <li><a class="exp" style="--hc:#f0bd4f"
+          <li><a class="exp" style="--hc:#f0bd4f; --pos:50% 55%"
               href="https://tgilbert14.github.io/NEON-Vegetation-Structure-Explorer/"
-              aria-label="NEON Vegetation Structure Explorer"><span class="name">Veg Structure <span class="arr"
+              aria-label="NEON Vegetation Structure Explorer"><span class="skin" aria-hidden="true"><img src="assets/covers/veg-structure.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Veg Structure <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">Tagged. Measured. Still changing.</span></a>
           </li>
           <li><a class="exp" style="--hc:#6ee6f0"
               href="https://tgilbert14.github.io/NEON-WaterChemistry-Analyte-Viewer-App/"
-              aria-label="NEON Water Chemistry Analyte Viewer"><span class="name">Water Chemistry <span class="arr"
-                  aria-hidden="true">&#8599;</span></span><span class="ask">Explore NEON water chemistry.</span></a>
+              aria-label="NEON Water Chemistry Analyte Viewer"><span class="skin skin-water" aria-hidden="true"></span><span class="name">Water Chemistry <span class="arr"
+                  aria-hidden="true">&#8599;</span></span><span class="ask">What&rsquo;s in the water?</span></a>
           </li>
-          <li><a class="exp" style="--hc:#d0dc39" href="https://tgilbert14.github.io/NEON-Mosquito-Pulse/"
-              aria-label="NEON Mosquito Pulse"><span class="name">Mosquitoes <span class="arr"
+          <li><a class="exp" style="--hc:#d0dc39; --pos:68% 45%" href="https://tgilbert14.github.io/NEON-Mosquito-Pulse/"
+              aria-label="NEON Mosquito Pulse"><span class="skin" aria-hidden="true"><img src="assets/covers/mosquitoes.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Mosquitoes <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">What rises after rain?</span></a></li>
-          <li><a class="exp" style="--hc:#e2a448" href="https://tgilbert14.github.io/NEON-My-Little-Inverts/"
-              aria-label="NEON My Little Inverts"><span class="name">Little Inverts <span class="arr"
+          <li><a class="exp" style="--hc:#e2a448; --pos:75% 50%" href="https://tgilbert14.github.io/NEON-My-Little-Inverts/"
+              aria-label="NEON My Little Inverts"><span class="skin" aria-hidden="true"><img src="assets/covers/little-inverts.webp" alt="" loading="lazy" decoding="async" width="640" height="360" /></span><span class="name">Little Inverts <span class="arr"
                   aria-hidden="true">&#8599;</span></span><span class="ask">What lives below the surface?</span></a>
           </li>
         </ul>
@@ -404,10 +432,10 @@
       <div class="measure">
         <div class="band-head">
           <p class="kicker">What this shows you</p>
-          <h2>Weather and biological responses, <em>aligned&mdash;not assumed to form a chain.</em></h2>
+          <h2>Weather and living records, <em>aligned &mdash; not assumed to form a chain.</em></h2>
           <p>Four measurement layers share an annual calendar. The atlas evaluates only explicitly eligible direct
-            pairings; visual order does not establish a mechanism, mediation, or trophic transfer, and the atlas does
-            not estimate mediation or causation.</p>
+            pairings; visual order does not establish a mechanism, mediation, or trophic transfer. The atlas does not
+            estimate mediation or causation.</p>
         </div>
         <div class="layers-cols">
         <div class="flow">
