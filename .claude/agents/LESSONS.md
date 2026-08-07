@@ -81,3 +81,8 @@
   mediation/causation sentence in the layers band, verbatim methods copy in the footer disclosure.
   Gotcha: art director agents will push to strip hero caveats and recolor canonical layer hues — both are
   governed, reject with reasons. Owner taste beats reviewer palette notes on decorative art.
+- [2026-08-07] cass · confirmed · Hub card skins are STATIC copies of companion cover art
+  (docs/assets/covers/*.webp): any sibling poster refresh must also refresh its Driver thumb, or the hub
+  silently shows stale art. Water Chem got its living-poster cover the same day (repo PR #18) using the
+  same token spec + art pipeline; its hub card question "What's in the water?" is now the real cover
+  headline, not hub-authored copy.
