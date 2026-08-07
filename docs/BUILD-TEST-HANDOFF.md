@@ -4194,3 +4194,33 @@ Rules:
   No scientific Driver rebuild is required. Publish this exact documentation/
   default head through review, and require Driver CI, Pages, Connect, and public
   verification for the governance receipt.
+
+### 2026-08-06 17:05 MST - Driver context publication receipt / [Codex]
+
+- **Governance scope:** PR #64 (`44acb7a8088515023a6b4873c712206dffa69c79`) merged
+  normally as `1eb361f8eb5ba87f3f332a91b31fb7f36c35c63c`. The change is limited to
+  the four Driver Markdown handoff/context files listed above; canonical cascade,
+  search, meta, codebook, and manifest SHA-256 values remain unchanged.
+- **Exact post-merge CI:** `31116430000` attempt 3 completed successfully at
+  `2026-08-07T00:00:06Z`; the recovered Seal-1 job was `92725619087` and its
+  dependent Seal-2 parity job was `92725879418`. Every scientific, rebuild,
+  offline, and parity job passed. Attempts 1 and 2 are retained as infrastructure
+  evidence only: hosted-runner action-download service failures during the GitHub
+  Actions outage, with no project-step failure.
+- **Exact post-merge Pages:** `31116427918` attempt 3 completed successfully at
+  `2026-08-06T23:57:17Z`; deploy job `92725623059` published the exact merged
+  default head. The earlier attempts failed only during hosted action-download
+  setup while GitHub Actions/Pages were degraded; the build and report jobs were
+  green.
+- **Connect publication:** Driver Connect deployment #123 remains exact at
+  content `019ee1cf-a484-44eb-a181-cd495df24b3b`, history
+  `019fd7b5-aa8e-ad8e-1811-420dc7259d01`, commit
+  `1eb361f8eb5ba87f3f332a91b31fb7f36c35c63c`, and publish request
+  `77a5f775-ff95-4a85-9b90-4f36a1e3937b` (R 4.5.2 / 73 packages).
+- **Public verification:** the live Driver Pages root returned the updated
+  Response Atlas context with no host/Shiny error, root overflow, retired cover
+  disclaimer, or visible `figcaption`; Connect remained exact and healthy.
+- **Closeout:** all nine registered companion Pages/Connect surfaces have passed
+  the final responsive/accessibility sweep. This receipt closes the suite-wide
+  cover-disclaimer removal and publication pass; no app science, data, runtime,
+  or Driver canonical artifact bytes were changed.
