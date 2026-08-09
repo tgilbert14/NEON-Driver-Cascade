@@ -4554,3 +4554,37 @@ Rules:
   registries from the receipt, confirm exact-head CI, merge; then dispatch with
   `siblings=current` (or `refresh-data.yml` with `publish=false`) to read the
   mosquito deltas before publication.
+
+### 2026-08-09 17:45 MST - CI-built family promoted / [Claude]
+
+- **Path taken:** the durable fix first. `regenerate-artifacts.yml` landed on
+  master via PR #69 (7/7 green, no build input, no artifact touched), was
+  dispatched against this branch at `ba0b705` with `siblings=pinned`, and run
+  `31323917044` succeeded. Its uploaded family was downloaded, verified against
+  the run's own SHA-256 receipt (5/5 OK), and promoted here. These bytes come
+  from the CI runner itself, so they satisfy the byte contract that the agent
+  container could not.
+- **Values did not move, independently reproduced.** Component comparison of the
+  CI-built `cascade.rds` against the committed baseline repeats the earlier local
+  finding exactly: `annual`, `codebook`, `pooled`, `priors`, `signals`,
+  `site_meta`, and `suite_links` all identical; `meta` differs only in
+  `build_script_md5`, `source_adapters_md5`, and the `local_build_inputs` row
+  carrying them; `search_index.rds` differs only in `source_bundle_md5`. The
+  codebook stayed byte-identical at `a79cc754...`, confirming again that
+  `cascade_mosq_effort_note()` held the base sentence on the `trap_nights` path.
+- **New canonical SHA-256 (CI-built, authoritative):** cascade
+  `e2a1fb39f67940b7ab9e8267406745b95ec36537880e2a496f924449ba201f3e`, search
+  `dc354b115502d071b0e34fede06b4fa3be3b07abe4d305a4895f3a8aeae8096c`, meta
+  `0cf51b0222d4a01fb07591d7675cdd5b148d63697087809347c3b9eafa05425b`, codebook
+  unchanged `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`,
+  manifest `e9128a76cf63c06ae517bfc30b2b3ec667992be1ead805d74a521d02c5f201e9`.
+  Re-registered across all eight live registries; the spec authority chain moved
+  to `SPEC_SHA256` `04666026...` / `SPEC_BLOB` `b7751e97...`.
+- **Local sweep green on this head:** boot integrity, `test_helpers.R`,
+  `test_suite_synthesis.R`, `verify_manifest.R`, `test_manifest_compare.R`,
+  `test_phenology_adapter_v2.R`, `test_discharge_f1_contract.py`,
+  `test_discharge_feasibility_contract.R`, `test_trusted_publish.py`,
+  `git diff --check`.
+- **Next action:** confirm exact-head CI green and merge; then dispatch
+  `regenerate-artifacts.yml` with `siblings=current` to exercise the
+  `effort_days` path and read the mosquito delta report before any publication.

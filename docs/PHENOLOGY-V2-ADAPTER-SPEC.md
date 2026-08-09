@@ -110,11 +110,11 @@ The unchanged Driver baseline hashes are an additional no-mutation receipt:
 
 | Artifact | SHA-256 |
 |---|---|
-| `data/cascade.rds` | `47b98e48ebf3891c151588c87691fee63760bdf8b66196dc4e7ffa3d0ae1f3fe` |
-| `data/search_index.rds` | `a11a072d331afc72fe04aeedfe200bfab28a3122f59dfd556ee78901c0374f0e` |
-| `data/cascade_meta.rds` | `00120c52a156fffe49146d952cfc3b871805ce8911869374e51fa2ac5b8d14de` |
+| `data/cascade.rds` | `e2a1fb39f67940b7ab9e8267406745b95ec36537880e2a496f924449ba201f3e` |
+| `data/search_index.rds` | `dc354b115502d071b0e34fede06b4fa3be3b07abe4d305a4895f3a8aeae8096c` |
+| `data/cascade_meta.rds` | `0cf51b0222d4a01fb07591d7675cdd5b148d63697087809347c3b9eafa05425b` |
 | `data/neon-cascade-codebook.csv` | `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3` |
-| `manifest.json` | `92b46277d4aa9cee08941855a3693296298c14c74c774d7b5452f93a63441e79` |
+| `manifest.json` | `e9128a76cf63c06ae517bfc30b2b3ec667992be1ead805d74a521d02c5f201e9` |
 
 ## 3. Source boundary and schemas
 
