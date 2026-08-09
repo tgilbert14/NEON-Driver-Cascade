@@ -899,8 +899,35 @@ ann_veg <- function(site) {                       # producer standing stock -- a
     veg_design_status = "supported", veg_design_basis = support$basis,
     stringsAsFactors = FALSE)
 }
-# ---- assemble over the union of all seven required product site sets ----
-all_sites <- sort(unique(unlist(lapply(names(APP), sites_in), use.names = FALSE)))
+# ---- site scope: this is a weather -> response atlas, so a site enters only
+# with a weather record ----
+# The union of the seven product site sets is the CANDIDATE universe, not the
+# atlas universe. Every companion refreshes independently, and a sibling release
+# can add a site the climate overlay does not cover (the 2026-08-05 Mosquito
+# release added PUUM, which no `data/env` bundle reaches). Such a site would join
+# with every climate column NA: it can enter no pairing, no pooled vote, and no
+# sensitivity check, while still inflating the published site count. Scope is
+# therefore defined by the climate overlay that `ann_env`/`ann_env_seasonal`
+# read, and anything outside it is excluded BY RULE and named in the build log,
+# never dropped silently. If the overlay later covers a site, that site becomes
+# eligible on the next build with no code change; if a site has weather but no
+# registered domain, the strict `neon_sites` guard below still fails closed.
+climate_sites <- {
+  d <- file.path(APP$mammal, "data/env")
+  if (!dir.exists(d)) character(0) else sub("\\.rds$", "", list.files(d, "\\.rds$"))
+}
+if (!length(climate_sites))
+  stop("climate overlay directory is empty; refusing to build an atlas with no weather layer",
+       call. = FALSE)
+candidate_sites <- sort(unique(unlist(lapply(names(APP), sites_in), use.names = FALSE)))
+all_sites <- sort(intersect(candidate_sites, climate_sites))
+out_of_scope <- setdiff(candidate_sites, climate_sites)
+if (length(out_of_scope))
+  cat("excluding", length(out_of_scope), "site(s) with no climate overlay:",
+      paste(sort(out_of_scope), collapse = ", "), "\n")
+if (!length(all_sites))
+  stop("no candidate site has a climate overlay; refusing to build an empty atlas",
+       call. = FALSE)
 cat("assembling", length(all_sites), "sites...\n")
 join_all <- function(site) {
   parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site), ann_mosq(site), ann_beetle(site)))

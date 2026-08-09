@@ -4635,3 +4635,52 @@ Rules:
   new upstream sites are excluded by decision rather than by omission. (b)
   preserves the current published family; (a) expands it and needs a coverage
   review. Do not simply append a row to silence the guard.
+
+### 2026-08-09 18:40 MST - Site scope bound to weather coverage (PUUM) / [Claude]
+
+- **Disposition on the PUUM blocker: exclude by rule, keep the reviewed 46.**
+  Evidence gathered first. Three siblings ship PUUM on their fresh heads
+  (Breeding Birds `data/sites` + `data/env`, Mosquito Pulse `data/sites`,
+  Vegetation Structure `data/sites`); Small Mammal, Ground Beetle, Plant
+  Diversity, and Plant Phenology do not. Decisive fact: the Driver's climate
+  overlay is read from ONE place — `ann_env()` / `ann_env_seasonal()` load
+  `APP$mammal/data/env/<site>.rds` (`scripts/build_cascade.R:295`) — and the
+  Small Mammal app publishes exactly 46 env bundles with no PUUM on its current
+  head. Birds' own `data/env/PUUM.rds` is never read by the Driver.
+- **Why not register the site:** PUUM would join with every climate column NA. It
+  could enter no eligible pairing, no pooled vote, and no sensitivity check, while
+  adding a 47th site to the published count and implying coverage the atlas does
+  not have. Separately, a single Hawaiian tropical montane site in a 46-site
+  continental family is its own domain of one, so it cannot be checked against
+  anything in the spatial sensitivity structure. Both are reasons to wait for
+  evidence, not to append a lookup row.
+- **Change:** `scripts/build_cascade.R` now separates the CANDIDATE universe (the
+  union of the seven product site sets) from the ATLAS universe (candidates that
+  the climate overlay actually covers). Out-of-scope sites are excluded by rule
+  and NAMED in the build log, never dropped silently. Two new fail-closed stops:
+  an empty climate-overlay directory and an empty post-intersection site set both
+  abort generation rather than emit a weatherless atlas. The strict `neon_sites`
+  domain guard is untouched and still fails closed for any site that has weather
+  but no registered domain — the two guards now cover different failures instead
+  of one masking the other.
+- **Self-maintaining:** if Small Mammal later publishes a PUUM climate bundle, the
+  site becomes eligible on the next build with no code change, and the coverage
+  question re-opens on evidence rather than on omission.
+- **Verified under pinned siblings:** the build logs
+  `excluding 1 site(s) with no climate overlay: PUUM` then `assembling 46
+  sites...`, and the artifact family is value-neutral — `annual` (46 sites both
+  before and after), `codebook`, `pooled`, `priors`, `signals`, `site_meta`, and
+  `suite_links` all identical; only `build_script_md5` and the
+  `local_build_inputs` row carrying it moved. Local gates green: `global.R` boot,
+  `test_helpers.R`, `test_suite_synthesis.R`, `verify_manifest.R`,
+  `git diff --check`. The two registry tripwires
+  (`registered generated-artifact baseline`, `driver_artifact_changed`) fired as
+  designed against the container rebuild and will be satisfied by re-registering
+  the CI-built family.
+- **Note on why PUUM never broke the pinned build:** `join_all()` has no
+  vegetation part, so a Vegetation-only PUUM produced no `annual` row and never
+  reached `ALL_SITES`. The 2026-08-05 Mosquito release was the first to give PUUM
+  a joined product, which is why the guard fired only on a fresh-sibling build.
+- **Next action:** regenerate via `regenerate-artifacts.yml` (`siblings=pinned`),
+  promote, re-register, merge; then dispatch `siblings=current` to confirm the
+  fresh build completes past PUUM and to read the mosquito effort deltas.
