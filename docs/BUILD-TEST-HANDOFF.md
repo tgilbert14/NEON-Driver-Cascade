@@ -4320,3 +4320,58 @@ Rules:
 - **Driver implication: NONE** (no data/runtime/manifest byte changed).
 - **Next action:** after Water PR #18 merges, pin its merge SHA in the register
   addendum on this branch, merge this PR to master, and verify both live Pages.
+
+### 2026-08-09 14:20 MST - Mosquito effort-schema adoption (source pass) / [Claude]
+
+- **Incident:** the scheduled refresh `31298345511` (2026-08-09 06:11 UTC, head
+  `0f61ee63`) failed in `rebuild` with `ABBY mosquito effort table lacks required
+  field(s): trap_nights`. `validate-artifacts` and `publish` skipped, so no
+  artifact byte was written. Canonical SHA-256 verified still cascade
+  `47b98e48...`, search `a11a072d...`, meta `00120c52...`; hub Pages and the
+  Connect app both returned 200 on the last good family. The cover release
+  (`bb56bd35` / `0f61ee63`) is not implicated: `docs/` is outside the build
+  surface and the same code reproduced exactly in every PR run.
+- **Root cause (upstream, not ABBY-specific):** the Mosquito release merged as
+  `fdb9aa1` on 2026-08-05 rebuilt every site bundle under
+  `R/mos_bundle_contract.R`, whose `effort_week` emits `effort_days`,
+  `opportunities`, and `zero_catches` — no `trap_nights`. The Driver required
+  `c("year", "trap_nights")`, so it stopped at the first site alphabetically.
+  Timeline fits exactly: Driver refresh 2026-08-02 succeeded on the old bundles,
+  the mosquito release merged 08-05, the 08-09 refresh failed.
+- **Semantics (this is not a rename):** old
+  `trap_nights = ifelse(trapHours > 0, trapHours/24, 0)` summed over every trap
+  row; new `effort_days = ifelse(valid_effort, trapHours/24, 0)` summed over
+  `valid` rows only, where `valid_effort = occurred & duration_ok & identity_ok`.
+  Same unit, QC-screened population. The refreshed denominator can only shrink,
+  so `mosq_activity` can only rise, on site-years that contained unusable
+  deployments. Mosquito rows are descriptive context and enter no pooled vote, so
+  no inferential claim changes.
+- **Change in this pass (source only):** `R/source_adapters.R` gains
+  `cascade_mosq_effort_field()` (prefers `effort_days`, falls back to
+  `trap_nights`, fails closed when neither exists, and refuses a bundle set that
+  mixes bases) plus `cascade_mosq_effort_note()`, which appends the QC-screened
+  sentence to the published `mosq_trap_nights` codebook entry only when the build
+  actually read `effort_days`. `scripts/build_cascade.R` resolves the field and
+  uses the note. `scripts/test_helpers.R` resolves the same two names literally
+  in the independent recomputation so that check stays independent of the build
+  helper. New report-only `scripts/report_mosq_effort_delta.R` prints moved
+  mosquito site-years; `refresh-data.yml` gains a `publish` dispatch input
+  (default true) that can only narrow publication, and a step that writes the
+  delta report to the job summary before staging.
+- **Expected CI state:** `data/cascade_meta.rds` records `build_script_md5` and
+  `source_adapters_md5`, so editing the builder or the adapters necessarily
+  changes the regenerated meta and the exact-reproduction gate
+  (`git diff --exit-code`) is EXPECTED TO FAIL on this source head. Under CI's
+  pinned siblings the adapter falls back to `trap_nights`, so cascade/search/
+  codebook values and the codebook sentence are expected to be byte-identical and
+  only the recorded build-code hashes should move. Confirm that expectation from
+  the run log before promoting anything.
+- **Blocked here:** this container has no R, so the artifact family could not be
+  regenerated and the value deltas could not be measured locally. Regeneration
+  must use the supported entry point (`Rscript --vanilla scripts/rebuild_all.R`)
+  with the seven sibling clones present.
+- **Next action:** run `scripts/rebuild_all.R` on a machine with the pinned R
+  4.5.2 toolchain, confirm only the two build-code hashes moved under pinned
+  siblings, commit the regenerated family as a direct child of this source head,
+  and merge. Then dispatch `refresh-data.yml` with `publish=false` to read the
+  mosquito delta report against fresh siblings before any scheduled publication.

@@ -756,11 +756,11 @@ ann_mosq <- function(site) {                      # consumer/vector: CO2-trap ac
   ew <- cascade_bundle_table(b, "effort_week", "mosquito", site)
   cascade_require_columns(o, CASCADE_MOSQ_OBS_REQUIRED,
                           sprintf("%s mosquito observation table", site))
-  cascade_require_columns(ew, CASCADE_MOSQ_EFFORT_REQUIRED,
+  eff_field <- cascade_mosq_effort_field(ew,
                           sprintf("%s mosquito effort table", site))
   tg <- o[o$is_target %in% TRUE, , drop = FALSE]
   eff <- ew %>% group_by(year) %>%
-    summarise(tn = sum(.data$trap_nights, na.rm = TRUE), .groups = "drop")
+    summarise(tn = sum(.data[[eff_field]], na.rm = TRUE), .groups = "drop")
   if (!nrow(tg) && !nrow(eff)) return(NULL)
   catch <- tg %>% group_by(year) %>% summarise(
     total = sum(.data$count, na.rm=TRUE),
@@ -1143,7 +1143,7 @@ support_codebook <- tibble::tribble(
   "bird_observed_point_visits", "Observed bird point-count occasions", "consumer", "point-visits", "more observed effort", "NA when the catch-only observation table has no detections that year; zero-detection visits are unavailable.", ">0 required for bird_index",
   "bird_nonflyover_birds", "Non-flyover bird detections", "consumer", "birds", "more detections", "NA when no observation rows exist that year; cluster sizes exclude detectionMethod=flyover.", "numerator of bird_index",
   "bird_flyover_birds", "Excluded flyover detections", "consumer", "birds", "more excluded detections", "NA when no observation rows exist that year; retained for audit but excluded from index and richness.", "audit only",
-  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", "NA when effort_week is unavailable that year; includes attempted zero-catch deployments.", ">0 required for mosq_activity",
+  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", cascade_mosq_effort_note(), ">0 required for mosq_activity",
   "mosq_total_catch", "Whole-trap mosquito catch", "consumer", "mosquitoes (estimated)", "more catch", "Zero when positive recorded effort has no target catch; NA when neither effort nor catch is available.", "numerator of mosq_activity",
   "beetle_catch_event_trap_nights", "Ground-beetle catch-event effort", "consumer", "trap-nights", "more recorded effort", "NA when no catch-bearing event with effort exists; source bundles omit zero-catch events.", ">0 required for beetle_activity; incomplete denominator",
   "beetle_total_catch", "Ground-beetle catch", "consumer", "individuals", "more catch", "NA when the catch-only beetle bundle has no positive catch that year.", "numerator of beetle_activity")

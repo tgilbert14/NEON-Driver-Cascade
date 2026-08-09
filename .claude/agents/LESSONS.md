@@ -86,3 +86,17 @@
   silently shows stale art. Water Chem got its living-poster cover the same day (repo PR #18) using the
   same token spec + art pipeline; its hub card question "What's in the water?" is now the real cover
   headline, not hub-authored copy.
+- [2026-08-09] cass · confirmed · A sibling can break the DERIVED Driver build without touching the Driver:
+  Mosquito's release renamed `effort_week$trap_nights` to `effort_days` AND narrowed it to QC-valid rows
+  (`occurred & duration_ok & identity_ok`), so the Driver refresh failed closed at the first site (ABBY was
+  alphabetical, not special) while every PR stayed green — because `ci.yml` rebuilds against the sibling
+  commits recorded INSIDE `data/cascade.rds` (source-lock), whereas `refresh-data.yml` pulls moving sibling
+  HEADs. Two lessons: (1) green PR CI is NOT evidence that the next scheduled refresh will build; the pinned
+  and moving lanes can diverge silently, so read a sibling's release notes before its data reaches a refresh;
+  (2) when adopting a renamed upstream field, check whether the POPULATION changed too, not just the name —
+  here the denominator became a subset, so derived rates move. Fix shape that works: resolve the field
+  (prefer the current name, fall back to the old, fail closed on neither, refuse mixed bases across one
+  bundle set) and make the codebook sentence conditional on the resolved basis, so the caveat travels with
+  the number and the byte gate stays meaningful under pinned siblings. Gotcha: `cascade_meta.rds` records
+  `build_script_md5`/`source_adapters_md5`, so ANY build-code edit necessarily fails the exact-reproduction
+  gate and needs a regenerated family promoted as a direct child — expect that red, don't "fix" it.
