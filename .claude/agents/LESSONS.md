@@ -100,3 +100,17 @@
   the number and the byte gate stays meaningful under pinned siblings. Gotcha: `cascade_meta.rds` records
   `build_script_md5`/`source_adapters_md5`, so ANY build-code edit necessarily fails the exact-reproduction
   gate and needs a regenerated family promoted as a direct child — expect that red, don't "fix" it.
+- [2026-08-09] connor · confirmed · Promoting a regenerated Driver artifact family is a TWO-LAYER job, and the
+  second layer is easy to miss: after `rebuild_all.R` writes the four data files, EIGHT live registries pin the
+  canonical SHA-256 set and fail closed until re-registered — `ci.yml` (inline sha256sum asserts),
+  `discharge-f1-inventory.yml`, `test_phenology_adapter_v2.R` ("registered generated-artifact baseline"),
+  `discharge_f1_contract.py`, `verify_discharge_f1_inventory.py`, plus the live tables in
+  DISCHARGE-FEASIBILITY-SPEC / PHENOLOGY-V2-ADAPTER-SPEC / DRIVER-V2-SYNTHESIS. There is a SECOND-ORDER chain:
+  editing DISCHARGE-FEASIBILITY-SPEC.md changes its own registered identity, so `SPEC_SHA256` + `SPEC_BLOB`
+  (git hash-object, not sha256) must be re-registered in the three discharge files or the F1 contract fails
+  `spec_authority_mismatch`. Never sed the hash globally: dated handoff receipts are HISTORY (rewriting them
+  falsifies the record) and `prototypes/` records what it was DERIVED FROM. Also proved: this agent container
+  can reproduce the pinned build contract exactly (noble 24.04 == CI), but the closure MUST be installed with
+  pak — plain install.packages() omits the Remote* fields and trips "RSPM provenance is not the canonical
+  pinned snapshot", while a versioned pak spec (pkg@ver) adds RemoteEtag/RemotePackaged and trips "unexpected
+  package provenance field(s)"; install unpinned from the dated snapshot instead.

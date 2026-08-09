@@ -4439,3 +4439,39 @@ Rules:
 - **Next action:** confirm exact-head CI green on the promoted head, merge, then
   dispatch `refresh-data.yml` with `publish=false` and read the delta report
   before any scheduled run publishes.
+
+### 2026-08-09 16:05 MST - Canonical-family re-registration / [Claude]
+
+- **Why more changed than the artifacts:** promoting a new artifact family is not
+  finished when the four data files are committed. Five LIVE gates and three LIVE
+  spec tables pin the canonical SHA-256 set, and CI run `31320826587` failed
+  `phenology-v2-seal1-synthetic` and `discharge-feasibility-f1-offline` on exactly
+  that tripwire (`[FAIL] registered generated-artifact baseline`) while
+  `rebuild-contracts` failed its own inline `sha256sum` assertions. This is the
+  design working: an artifact family cannot move without a conscious
+  re-registration.
+- **Re-registered (old -> new):** cascade `47b98e48` -> `b398d41a`, search
+  `a11a072d` -> `64da05fa`, meta `00120c52` -> `1e3a55d4`, manifest `92b46277` ->
+  `9af0d211`; codebook stays `a79cc754` (unchanged, as expected). Updated in
+  `.github/workflows/ci.yml`, `.github/workflows/discharge-f1-inventory.yml`,
+  `scripts/test_phenology_adapter_v2.R`, `scripts/discharge_f1_contract.py`,
+  `scripts/verify_discharge_f1_inventory.py`, `docs/DISCHARGE-FEASIBILITY-SPEC.md`,
+  `docs/PHENOLOGY-V2-ADAPTER-SPEC.md`, and `docs/DRIVER-V2-SYNTHESIS.md`.
+- **Second-order authority chain:** editing `DISCHARGE-FEASIBILITY-SPEC.md` changed
+  the spec's own registered identity, so `test_discharge_f1_contract.py` then failed
+  `spec_authority_mismatch`. Its `SPEC_SHA256` `831baf97...` -> `9a007397...` and
+  `SPEC_BLOB` `643dbaa3...` -> `97df24d0...` were re-registered in the same three
+  discharge files. Expect this chain on any future spec-table edit.
+- **Deliberately NOT touched:** dated receipts in this handoff (35 historical
+  references to the old hashes remain, because rewriting a dated receipt would
+  falsify the record), and `prototypes/site-explorer/*`, which is outside the build
+  surface and whose recorded hash documents the artifact it was DERIVED FROM.
+- **Local gate sweep, all green on this head:** `global.R` boot integrity,
+  `test_helpers.R`, `test_suite_synthesis.R`, `verify_manifest.R`,
+  `test_manifest_compare.R`, `test_phenology_adapter_v2.R`,
+  `test_discharge_f1_contract.py`, `test_discharge_feasibility_contract.R`,
+  `test_trusted_publish.py`, `workflow_guard.R self-test`, `git diff --check`.
+  (`test_discharge_inverts_authority.R` and `verify_discharge_f1_inventory.py`
+  require CI-supplied path arguments and were not runnable standalone here.)
+- **Next action:** confirm exact-head CI green, merge, then dispatch
+  `refresh-data.yml` with `publish=false` to read the mosquito delta report.
