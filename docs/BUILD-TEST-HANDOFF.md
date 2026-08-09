@@ -4384,3 +4384,58 @@ Rules:
   siblings, commit the regenerated family as a direct child of this source head,
   and merge. Then dispatch `refresh-data.yml` with `publish=false` to read the
   mosquito delta report against fresh siblings before any scheduled publication.
+
+### 2026-08-09 15:40 MST - Regenerated artifact family (promotion) / [Claude]
+
+- **Regeneration environment:** the agent container turned out to be the same
+  platform as CI (Ubuntu 24.04.4 noble, x86_64), so the pinned toolchain was
+  reproduced rather than approximated: R 4.5.2 from Posit r-builds, OpenBLAS
+  0.3.26 with `OPENBLAS_CORETYPE=Haswell` and one thread, `TZ=UTC`, and the
+  package closure installed with pak from the canonical snapshot
+  `https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15`
+  (bslib 0.11.0, plotly 4.12.0, dplyr 1.2.1, 73 manifest packages). Siblings were
+  cloned detached at the seven commits recorded in the artifact's own source lock
+  and each SHA verified. Entry point was the supported
+  `Rscript --vanilla scripts/rebuild_all.R`; all 9/9 stages passed and promoted.
+- **Two manifest-policy stops hit and fixed correctly, not bypassed:** plain
+  `install.packages()` records no `Remote*` fields, so `Repository: RSPM` without
+  `RemoteRepos` tripped `RSPM provenance is not the canonical pinned snapshot: DT`
+  — fixed by installing the closure with pak, exactly as CI's
+  `setup-r-dependencies` does. A versioned pak spec (`plotly@4.12.0`) then wrote
+  `RemoteEtag`/`RemotePackaged`, tripping `unexpected package provenance
+  field(s)`; since the pinned snapshot already serves 4.12.0, the redundant
+  version pin was dropped and plotly reinstalled clean. No policy was relaxed.
+- **What actually moved (prediction was WRONG about scope, right about values):**
+  an earlier entry predicted only `cascade_meta.rds` would change. In fact
+  `cascade.rds`, `search_index.rds`, `cascade_meta.rds`, and `manifest.json` all
+  changed, because the build-code lineage is embedded in `cascade.rds$meta` and
+  propagates. Component-level comparison against the committed baseline shows
+  **every scientific component byte-identical**: `annual` (510 x 54), `pooled`
+  (12 x 20), `priors`, `signals`, `codebook` (52 x 7), `site_meta` (46 x 24),
+  `suite_links` (552 x 33). Only `meta` differs, in exactly three entries:
+  `build_script_md5` `76ebf785...` -> `74f9c9e0...`, `source_adapters_md5`
+  `c6d129ba...` -> `e05f7dbc...`, and the `local_build_inputs` inventory row
+  carrying those same two hashes (the other four input hashes unchanged). In
+  `search_index.rds` only `source_bundle_md5` differs (the digest of
+  `cascade.rds`); `links`, `link_catalog`, `site_strength`, `prior_pooled`,
+  every version/note field, `built`, `n_sites`, and `n_links` are identical.
+  `data/neon-cascade-codebook.csv` is byte-identical, which independently
+  confirms `cascade_mosq_effort_note()` returned the base sentence because the
+  pinned mosquito bundle still publishes `trap_nights`.
+- **New canonical SHA-256:** cascade
+  `b398d41a653ea878145c217bad8d01b029ef05bc0f9d327164d636870c873799`, search
+  `64da05fa7e30ca6d77c4734ff0a76ad599bd45692370d3570e9962e1537dc8cb`, meta
+  `1e3a55d4a787c6ef104914b7d8443d138ed77d5e77ace80f538423357b710051`, codebook
+  unchanged at `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3`.
+- **Local gates green before push:** `global.R` boots (the exact guard that failed
+  CI run `31318332872`), plus `workflow_guard.R self-test`, `test_helpers.R`,
+  `test_suite_synthesis.R`, `verify_manifest.R`, and `test_manifest_compare.R`.
+  Mosquito contract tests passed at 416 site-years including
+  `mosquito index matches effort-calendar source recomputation`, so the adapter's
+  `trap_nights` fallback is proved against the pinned bundles.
+- **Still unproved here:** no fresh-sibling build was run, so the `effort_days`
+  path and the size of the mosquito value deltas remain unmeasured. That evidence
+  comes only from a `publish=false` dry run after merge.
+- **Next action:** confirm exact-head CI green on the promoted head, merge, then
+  dispatch `refresh-data.yml` with `publish=false` and read the delta report
+  before any scheduled run publishes.
