@@ -4684,3 +4684,49 @@ Rules:
 - **Next action:** regenerate via `regenerate-artifacts.yml` (`siblings=pinned`),
   promote, re-register, merge; then dispatch `siblings=current` to confirm the
   fresh build completes past PUUM and to read the mosquito effort deltas.
+
+### 2026-08-09 19:15 MST - PUUM scope fix verified; THIRD upstream drift found / [Claude]
+
+- **The scope fix works on real data.** Fresh-sibling regeneration run
+  `31326013244` (`siblings=current`) logged
+  `excluding 1 site(s) with no climate overlay: PUUM` then
+  `assembling 46 sites...`, so PUUM is excluded by rule on live upstream data and
+  the domain guard no longer fires. That is two of the three blockers cleared:
+  the mosquito effort field and the PUUM site scope.
+- **A third independent drift is now exposed, in Vegetation Structure:**
+  `vegetation structure plot table has duplicate/conflicting plotID/area records`
+  for 33 ABBY plots, raised by `cascade_plot_design()`
+  (`R/source_adapters.R:470`).
+- **Cause: the sibling restructured `plots` from one row per plot to one row per
+  plot per sampling event.** At its current head (`fa08329`) ABBY's `plots` table
+  has 155 rows over 36 plotIDs, keyed by `eventID` (`vst_ABBY_2016`,
+  `vst_ABBY_2019`, `vst_ABBY_2024`) with `date`/`year` columns and a large new
+  opportunity/support column family. `cascade_plot_design()` requires `plotID` to
+  be unique, so it aborts.
+- **This is NOT a benign duplicate, and must not be de-duplicated blindly.** The
+  sampled areas genuinely vary across events: at ABBY alone 6 plots vary in
+  `area_trees` and 15 vary in `area_shrub`, and some events carry `NA` area
+  (ABBY_003 is 400 in 2017 and `NA` in 2019). The Driver's contract assumed a
+  time-invariant plot design — one area per plot, usable as a stable denominator.
+  That assumption is now false upstream, so "take the first row" would silently
+  bind the atlas to an arbitrary year's sampled area.
+- **Scientific decision required (`cass`), not a build repair.** The Driver
+  already selects a tree SNAPSHOT via `cascade_tree_snapshot()`; the coherent fix
+  is probably to reduce `plots` on the SAME event basis the snapshot uses, so the
+  area denominator and the measured stems come from one sampling event. That is a
+  real design choice about what "the plot design" means when it varies by year,
+  and it needs an explicit disposition plus a codebook note, because
+  `veg_stand_basis` / `veg_class_basis` / `veg_design_status` describe it.
+  Alternatives: pin to the latest event with a non-NA area, or hold the
+  vegetation context layer until the basis is registered.
+- **Blast radius is limited:** `join_all()` has no vegetation part, so this layer
+  feeds `site_meta` context only and enters no pairing or pooled vote. The atlas's
+  inferential surface is unaffected either way.
+- **Pattern worth naming:** three distinct drifts (mosquito effort field,
+  mosquito coverage expansion, vegetation plot-design restructure) accumulated
+  while the refresh was failing, and each was invisible until the previous one was
+  fixed, because the build aborts at the first failure. Expect at least one more
+  and budget for it; a fail-fast pipeline hides the tail of a backlog.
+- **Next action:** disposition on the vegetation plot-design basis. Independently,
+  this branch's PUUM scope fix is complete and value-neutral under pinned
+  siblings, so it can be regenerated, promoted, and merged on its own.
