@@ -86,3 +86,40 @@
   silently shows stale art. Water Chem got its living-poster cover the same day (repo PR #18) using the
   same token spec + art pipeline; its hub card question "What's in the water?" is now the real cover
   headline, not hub-authored copy.
+- [2026-08-09] cass · confirmed · A sibling can break the DERIVED Driver build without touching the Driver:
+  Mosquito's release renamed `effort_week$trap_nights` to `effort_days` AND narrowed it to QC-valid rows
+  (`occurred & duration_ok & identity_ok`), so the Driver refresh failed closed at the first site (ABBY was
+  alphabetical, not special) while every PR stayed green — because `ci.yml` rebuilds against the sibling
+  commits recorded INSIDE `data/cascade.rds` (source-lock), whereas `refresh-data.yml` pulls moving sibling
+  HEADs. Two lessons: (1) green PR CI is NOT evidence that the next scheduled refresh will build; the pinned
+  and moving lanes can diverge silently, so read a sibling's release notes before its data reaches a refresh;
+  (2) when adopting a renamed upstream field, check whether the POPULATION changed too, not just the name —
+  here the denominator became a subset, so derived rates move. Fix shape that works: resolve the field
+  (prefer the current name, fall back to the old, fail closed on neither, refuse mixed bases across one
+  bundle set) and make the codebook sentence conditional on the resolved basis, so the caveat travels with
+  the number and the byte gate stays meaningful under pinned siblings. Gotcha: `cascade_meta.rds` records
+  `build_script_md5`/`source_adapters_md5`, so ANY build-code edit necessarily fails the exact-reproduction
+  gate and needs a regenerated family promoted as a direct child — expect that red, don't "fix" it.
+- [2026-08-09] connor · confirmed · Promoting a regenerated Driver artifact family is a TWO-LAYER job, and the
+  second layer is easy to miss: after `rebuild_all.R` writes the four data files, EIGHT live registries pin the
+  canonical SHA-256 set and fail closed until re-registered — `ci.yml` (inline sha256sum asserts),
+  `discharge-f1-inventory.yml`, `test_phenology_adapter_v2.R` ("registered generated-artifact baseline"),
+  `discharge_f1_contract.py`, `verify_discharge_f1_inventory.py`, plus the live tables in
+  DISCHARGE-FEASIBILITY-SPEC / PHENOLOGY-V2-ADAPTER-SPEC / DRIVER-V2-SYNTHESIS. There is a SECOND-ORDER chain:
+  editing DISCHARGE-FEASIBILITY-SPEC.md changes its own registered identity, so `SPEC_SHA256` + `SPEC_BLOB`
+  (git hash-object, not sha256) must be re-registered in the three discharge files or the F1 contract fails
+  `spec_authority_mismatch`. Never sed the hash globally: dated handoff receipts are HISTORY (rewriting them
+  falsifies the record) and `prototypes/` records what it was DERIVED FROM. Also proved: this agent container
+  can reproduce the pinned build contract exactly (noble 24.04 == CI), but the closure MUST be installed with
+  pak — plain install.packages() omits the Remote* fields and trips "RSPM provenance is not the canonical
+  pinned snapshot", while a versioned pak spec (pkg@ver) adds RemoteEtag/RemotePackaged and trips "unexpected
+  package provenance field(s)"; install unpinned from the dated snapshot instead.
+- [2026-08-09] connor · confirmed · Matching the platform is NOT the same as being byte-compatible. This agent
+  container (Ubuntu 24.04.4 noble == CI's runner OS, Posit R 4.5.2, pinned RSPM closure via pak) computed
+  byte-identical CONTENT and passed every content contract, yet could not reproduce master's own committed
+  `cascade.rds`: 110113 bytes (CI) vs 110122 (container) on `identical content: TRUE` — a ~9-byte deflate-stream
+  difference that no gzip/xz/bzip2 level 1-9 sweep could dial in. DECISIVE TEST for any future "can I build the
+  artifacts here?" question: rebuild UNMODIFIED master in a clean worktree and diff against its own committed
+  artifacts. If that fails, the environment cannot produce publishable artifacts, full stop — do not ship them
+  and do not re-register hashes from them. Text artifacts (the codebook CSV) still match, so a diff where only
+  the compressed RDS move is the tell-tale signature of an encoding, not content, difference.

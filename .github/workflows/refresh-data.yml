@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: "0 6 * * 0"
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Commit the refreshed family to master (a push to master deploys). Set false for a rebuild-only dry run that still runs every gate."
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -138,6 +143,13 @@ jobs:
       - name: Rebuild and validate the complete artifact family
         run: Rscript --vanilla scripts/rebuild_all.R
 
+      - name: Report mosquito effort-basis deltas against the committed baseline
+        run: |
+          set -euo pipefail
+          git show HEAD:data/cascade.rds > "$RUNNER_TEMP/cascade-baseline.rds"
+          Rscript --vanilla scripts/report_mosq_effort_delta.R \
+            "$RUNNER_TEMP/cascade-baseline.rds" data/cascade.rds "$GITHUB_STEP_SUMMARY"
+
       - name: Stage exactly four data artifacts and write SHA-256 receipt
         run: |
           set -euo pipefail
@@ -233,7 +245,10 @@ jobs:
 
   publish:
     needs: [gate, rebuild, validate-artifacts]
-    if: github.ref == 'refs/heads/master' && needs.gate.outputs.run == 'true'
+    # A manual dry run (publish=false) still executes every build and validation
+    # gate; it only withholds the commit. This condition can narrow publication,
+    # never widen it: scheduled runs are unaffected.
+    if: github.ref == 'refs/heads/master' && needs.gate.outputs.run == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:

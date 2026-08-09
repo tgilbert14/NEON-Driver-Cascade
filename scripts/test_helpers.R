@@ -2561,7 +2561,10 @@ if (nzchar(source_root)) {
   mosq_files <- list.files(mosq_dir, pattern = "\\.rds$", full.names = TRUE)
   mosq_expected <- do.call(rbind, lapply(mosq_files, function(path) {
     b <- readRDS(path); ew <- b$effort_week
-    eff <- stats::aggregate(as.numeric(ew$trap_nights), list(year = ew$year), sum, na.rm = TRUE)
+    # Resolved literally here, not through the build helper, so this stays an
+    # independent recomputation of whichever effort basis the bundle publishes.
+    ew_field <- if ("effort_days" %in% names(ew)) "effort_days" else "trap_nights"
+    eff <- stats::aggregate(as.numeric(ew[[ew_field]]), list(year = ew$year), sum, na.rm = TRUE)
     names(eff)[2] <- "expected_tn"
     o <- b$obs
     tg <- if ("is_target" %in% names(o)) o[o$is_target %in% TRUE, , drop = FALSE] else o

@@ -18,7 +18,16 @@ CASCADE_BIRD_OBS_REQUIRED <- c(
   "scientificName")
 CASCADE_MOSQ_OBS_REQUIRED <- c(
   "year", "is_target", "count", "genus", "is_species", "scientificName")
-CASCADE_MOSQ_EFFORT_REQUIRED <- c("year", "trap_nights")
+CASCADE_MOSQ_EFFORT_REQUIRED <- c("year")
+# The mosquito sibling renamed its weekly effort column in the release merged
+# 2026-08-05: `trap_nights` became `effort_days`. Both hold the same unit
+# (trapHours / 24), but the new column sums only deployments the source marks
+# valid (sampled, usable duration and identity) instead of every row with
+# positive trap hours, so a refreshed denominator can be smaller than an
+# earlier published one and raise mosq_activity. Read whichever name the bundle
+# publishes, preferring the current one exactly as the producing app does;
+# neither present stays fatal, and one bundle set must resolve to one basis.
+CASCADE_MOSQ_EFFORT_FIELDS <- c("effort_days", "trap_nights")
 CASCADE_BEETLE_REQUIRED <- c(
   "collectDate", "plotID", "scientificName", "taxonRank",
   "individualCount", "trapnights")
@@ -125,6 +134,36 @@ cascade_require_columns <- function(x, required, label) {
     stop(sprintf("%s lacks required field(s): %s", label,
                  paste(missing, collapse = ", ")), call. = FALSE)
   invisible(x)
+}
+
+# Resolve the mosquito weekly-effort column and remember which basis the whole
+# bundle set used, so the published codebook states the effort basis that
+# actually produced the numbers rather than a fixed sentence.
+.cascade_mosq_effort_state <- new.env(parent = emptyenv())
+
+cascade_mosq_effort_field <- function(x, label) {
+  cascade_require_columns(x, CASCADE_MOSQ_EFFORT_REQUIRED, label)
+  present <- CASCADE_MOSQ_EFFORT_FIELDS[CASCADE_MOSQ_EFFORT_FIELDS %in% names(x)]
+  if (!length(present))
+    stop(sprintf("%s lacks required field(s): one of %s", label,
+                 paste(CASCADE_MOSQ_EFFORT_FIELDS, collapse = ", ")), call. = FALSE)
+  field <- present[1L]
+  seen <- .cascade_mosq_effort_state$field
+  if (!is.null(seen) && !identical(seen, field))
+    stop(sprintf("%s resolves mosquito effort to '%s' after '%s'; one bundle set must use one effort basis",
+                 label, field, seen), call. = FALSE)
+  .cascade_mosq_effort_state$field <- field
+  field
+}
+
+cascade_mosq_effort_basis <- function() .cascade_mosq_effort_state$field
+
+cascade_mosq_effort_note <- function() {
+  base <- "NA when effort_week is unavailable that year; includes attempted zero-catch deployments."
+  if (identical(cascade_mosq_effort_basis(), "effort_days"))
+    return(paste(base,
+                 "Effort counts only deployments the source bundle marks valid (sampled, usable duration and identity), so this denominator can be smaller than an earlier published one."))
+  base
 }
 
 # Resolve mammal effort at the physical-trap-event level. A canonical NEON grid
