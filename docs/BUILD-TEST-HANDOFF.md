@@ -4526,3 +4526,31 @@ Rules:
   promotion. (a) is the documented entry point; (c) is the durable fix.
 - **Next action:** owner decision on the above. The weekly refresh stays red until
   a conforming family lands. No live surface is affected meanwhile.
+
+### 2026-08-09 17:10 MST - PR-scoped regeneration workflow (durable fix) / [Claude]
+
+- **Closes the design gap** recorded in the 16:40 entry: a build-code change
+  rewrites the recorded lineage, so `rebuild-contracts` can never go green on a
+  source-only head, and this repository had no in-CI way to obtain a
+  byte-conforming family from a PR branch. New
+  `.github/workflows/regenerate-artifacts.yml` runs on `workflow_dispatch` from
+  any branch, rebuilds on the same runtime as `rebuild-contracts`
+  (`ubuntu-24.04`, R 4.5.2, identical dependency pins and action SHAs, OpenBLAS
+  Haswell / one thread), and uploads the four data artifacts plus `manifest.json`
+  and a SHA-256 receipt for reviewed promotion.
+- **Safety shape:** `permissions: contents: read`, `persist-credentials: false`,
+  no commit/push/deploy step; the family leaves only as a workflow artifact and
+  promotion stays a reviewed step. It omits exactly two things from
+  `rebuild-contracts` — the `source("global.R")` boot guard (which fails by
+  design on the head being regenerated; that failure is the workflow's reason to
+  exist) and the byte-reproduction gate (bytes are expected to move). Every other
+  contract still runs inside `rebuild_all.R`, which stays fail-closed.
+- **`siblings` input:** `pinned` (default) rebuilds against the recorded source
+  lock, so values must not move and only lineage changes — the correct mode for
+  promoting this PR. `current` fetches each sibling default branch and is the
+  mode that will exercise the mosquito `effort_days` path.
+- **Next action:** dispatch it on `claude/mosq-effort-schema-adopt` with
+  `siblings=pinned`, promote the uploaded family, re-register the eight canonical
+  registries from the receipt, confirm exact-head CI, merge; then dispatch with
+  `siblings=current` (or `refresh-data.yml` with `publish=false`) to read the
+  mosquito deltas before publication.
