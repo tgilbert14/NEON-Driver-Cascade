@@ -114,3 +114,12 @@
   pak — plain install.packages() omits the Remote* fields and trips "RSPM provenance is not the canonical
   pinned snapshot", while a versioned pak spec (pkg@ver) adds RemoteEtag/RemotePackaged and trips "unexpected
   package provenance field(s)"; install unpinned from the dated snapshot instead.
+- [2026-08-09] connor · confirmed · Matching the platform is NOT the same as being byte-compatible. This agent
+  container (Ubuntu 24.04.4 noble == CI's runner OS, Posit R 4.5.2, pinned RSPM closure via pak) computed
+  byte-identical CONTENT and passed every content contract, yet could not reproduce master's own committed
+  `cascade.rds`: 110113 bytes (CI) vs 110122 (container) on `identical content: TRUE` — a ~9-byte deflate-stream
+  difference that no gzip/xz/bzip2 level 1-9 sweep could dial in. DECISIVE TEST for any future "can I build the
+  artifacts here?" question: rebuild UNMODIFIED master in a clean worktree and diff against its own committed
+  artifacts. If that fails, the environment cannot produce publishable artifacts, full stop — do not ship them
+  and do not re-register hashes from them. Text artifacts (the codebook CSV) still match, so a diff where only
+  the compressed RDS move is the tell-tale signature of an encoding, not content, difference.
