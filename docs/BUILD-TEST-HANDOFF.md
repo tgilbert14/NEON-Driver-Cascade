@@ -4588,3 +4588,50 @@ Rules:
 - **Next action:** confirm exact-head CI green and merge; then dispatch
   `regenerate-artifacts.yml` with `siblings=current` to exercise the
   `effort_days` path and read the mosquito delta report before any publication.
+
+### 2026-08-09 18:05 MST - Mosquito fix merged; SECOND upstream drift found / [Claude]
+
+- **Merged:** PR #68 (`c4fff672`) with 7/7 green, including `rebuild-contracts`.
+  The mosquito effort adapter and the CI-built family are on `master`; the
+  canonical set is cascade `e2a1fb39`, search `dc354b11`, meta `0cf51b02`,
+  codebook `a79cc754` (unchanged), manifest `e9128a76`. PR #69 (`c4a4bdf6`) added
+  `regenerate-artifacts.yml`, which produced that family.
+- **The mosquito fix works.** The first fresh-sibling regeneration
+  (run `31324614386`, `siblings=current`) got PAST the mosquito adapter — it
+  reached `assembling 47 sites` — so `effort_days` resolved without error on real
+  upstream data. The `trap_nights` failure that broke the 2026-08-09 refresh is
+  closed.
+- **A second, independent drift was hiding behind the first,** exactly as the
+  2026-08-09 14:20 entry warned (the build aborts at the first failure, so nothing
+  downstream had ever been exercised). The fresh build now fails closed at
+  `scripts/build_cascade.R:1009` with
+  `missing strict NEON-domain mapping for: PUUM`.
+- **Cause:** the same Mosquito release that renamed the effort column also
+  EXPANDED COVERAGE from 46 to 47 sites. Pinned mosquito ships 46 site bundles and
+  no PUUM; fresh mosquito `main` ships 47 including `PUUM.rds`. `ALL_SITES` is
+  derived from the assembled annual table, so PUUM enters the site set, and
+  `R/site_metadata.R` (`neon_sites`, 46 rows) has no PUUM row — no domain, so the
+  strict one-to-one domain guard aborts generation. Vegetation Structure also
+  carries a PUUM bundle even at its pinned commit, so the site becomes reachable
+  the moment any sibling contributes it to `annual`.
+- **NOT a mechanical fix — needs an explicit disposition.** Adding PUUM to
+  `neon_sites` is a coverage decision, not a lookup repair: it changes the atlas's
+  site universe, the published "46 NEON sites" figure on the cover and in the
+  stats row, the per-site biome/domain classification, and potentially
+  pooled-vote eligibility and spatial sensitivity groupings. PUUM is Pu'u Maka'ala
+  (Hawaii); its NEON domain must be taken from NEON's authoritative site table,
+  not asserted from memory, and it needs the same `neon_sites` fields every other
+  row carries (name, state, lat/lng, biome description). Whether a single-product
+  Hawaiian tropical site should join a 46-site continental family at all is a
+  scientific call for `cass`/`hk`, not a build repair.
+- **Nothing is at risk meanwhile:** no bytes were written by the failed run, the
+  canonical family and both live surfaces are current and healthy, and the merged
+  mosquito fix means the next scheduled refresh will reach exactly this point
+  rather than the earlier one.
+- **Next action (owner/`cass` decision):** either (a) register PUUM in
+  `neon_sites` with authoritative NEON domain/metadata and accept a 47-site atlas
+  (updating the cover's site count and the register), or (b) add an explicit,
+  documented site-scope filter so the Driver's universe stays the reviewed 46 and
+  new upstream sites are excluded by decision rather than by omission. (b)
+  preserves the current published family; (a) expands it and needs a coverage
+  review. Do not simply append a row to silence the guard.
