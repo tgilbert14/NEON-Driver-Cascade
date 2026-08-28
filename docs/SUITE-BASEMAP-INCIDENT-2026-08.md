@@ -223,6 +223,18 @@ Domain to give: the Connect Cloud share domain (`*.share.connect.posit.cloud`). 
 that domain is actually enforced as a referer lock or merely recorded — CARTO documents no allowlist
 feature and there is no console, since there is no account. Treat it as informational.
 
+**Verified 2026-08-28 — a CARTO *platform* API Access Token does NOT work as the basemap key.** The owner
+created a Workspace token scoped to the Maps API and it was tested against the raster CDN at confirmed
+origin cache misses (`x-cache: MISS`) under five auth forms — `?key=`, `?access_token=`, `?api_key=`,
+`?apikey=`, and an `Authorization: Bearer` header. Every response was still the watermarked tile. The
+token itself is valid (the platform API recognizes it and echoes `allowed_apis: ["maps"]`); the "maps"
+scope is CARTO's Maps API for data layers, not the public basemap CDN. CARTO's key page confirms the
+split: platform credentials cover Builder/Workflows and in-platform use — external embedding needs the
+form-issued basemap key, a separate credential. **Do not re-test platform tokens; use the form.**
+Also learned: the CDN ignores the query string in its cache key (a keyed request can get `x-cache: HIT`
+on the unkeyed cached tile), so any smoke test of the real key must be done on an origin-MISS tile —
+deep zoom over an obscure spot — or the cached watermarked tile will masquerade as a key failure.
+
 ### 4.2 The key is NOT a secret — this is load-bearing
 
 CARTO's key rides in the tile URL, and every tile request is issued **client-side by the browser**. The key
