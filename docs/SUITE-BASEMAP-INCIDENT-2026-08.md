@@ -1,7 +1,8 @@
 # Suite incident: CARTO stamps "API KEY REQUIRED" on every basemap tile
 
-**Status: DIAGNOSED — root cause verified and measured. The FIRST proposed fix was refuted by evidence (§3)
-and replaced by a per-role plan (§4). Two owner decisions (§5) now block rollout. Nothing applied to the
+**Status: DIAGNOSED and DECIDED. The first proposed fix was refuted by evidence (§3). The owner's decision
+is to take the free CARTO key and keep the existing basemaps unchanged (§4). BLOCKED on one owner action —
+requesting the key at <https://carto.com/basemaps/apikey> — which no agent can do. Nothing applied to the
 nine apps yet.**
 **Opened 2026-08-28 · Driver-Cascade branch `claude/neon-maps-api-key-eocg8r` · tagged `[Claude]`.**
 
@@ -202,79 +203,149 @@ watermark. This must land in the same wave, not "separately".
 
 ---
 
-## 4. The corrected plan — split by map ROLE
+## 4. DECIDED: take the free CARTO key (owner, 2026-08-28)
 
-The single biggest correction: **there is no one right basemap here, because these apps have two kinds of
-map with opposite requirements.**
+**Disposition: `ADOPT`.** Keep `CartoDB.Positron` and `CartoDB.DarkMatter` exactly as they are and
+authenticate them. This is the only option that changes nothing visually: same tiles, same `maxZoom = 20`,
+same retina, zero blank tiles, no marker-palette or CSS re-tuning, no contrast regression, no attribution
+regression, and the ground-beetle dark theme keeps working unchanged. Every defect in §3 exists *because*
+the other options moved the basemap; this one does not move it.
 
-### 4a. National site-picker maps (z2–5) → `Esri.WorldGrayCanvas`, keyless
+### 4.1 The one step only the owner can do
 
-At picker zoom the grey canvas is fine — 0/46 blank, and it carries country and ocean labels (verified by
-eye at z4). It is a "pick a dot" navigation control, not a detail map. **Caveat to carry:** it shows
-country outlines and a state-boundary hairline but *not* state or city names, where Positron did. If that
-reads too bare, pair it with the keyless label layer
-`Canvas/World_Light_Gray_Reference` (verified live, transparent PNG, 5,346 B at z4) via a raw `addTiles()`
-— at the cost of doubling this suite's exposure to the sunsetting Esri service.
+**Request the key at <https://carto.com/basemaps/apikey>.** Verbatim from that page: *"Tell us your email,
+the domain you will use the basemaps on, and roughly what you are building. We email the key straight back —
+there is no approval queue and you do not need a CARTO account."* A JS-less fallback is emailing CARTO
+support. Fair use is **5 million tile requests per calendar month**, counted across raster and vector — for
+nine low-traffic academic apps that is orders of magnitude of headroom.
 
-Apply to: small-mammal `server.R:1189`; plant-diversity `R/map_picker.R:58`; veg-structure
-`R/map_picker.R:88`; breeding-birds `server.R:711` and `:723`; mosquito `server.R:578` and `:588`;
-phenology `server.R:145` and `:177`; little-inverts `server.R:940` and `:963`; water-chemistry `app.R:2110`;
-ground-beetle `R/map_picker.R:57`.
+Domain to give: the Connect Cloud share domain (`*.share.connect.posit.cloud`). **Not confirmed** whether
+that domain is actually enforced as a referer lock or merely recorded — CARTO documents no allowlist
+feature and there is no console, since there is no account. Treat it as informational.
 
-### 4b. Per-site / plot-scale maps → NOT the grey canvas
+### 4.2 The key is NOT a secret — this is load-bearing
 
-Do **not** put `Esri.WorldGrayCanvas` on any per-site map or in any Basemap dropdown. Either drop the
-"Light" choice or point it at a provider with content at z13–16 (`Esri.WorldTopoMap`, `USGS.USTopo` and
-`OpenStreetMap.Mapnik` all measured 0/46 blank).
+CARTO's key rides in the tile URL, and every tile request is issued **client-side by the browser**. The key
+therefore lands in page source and in the network tab on first map paint, whatever you do. CARTO's terms
+**§9.c prohibits server-side proxying or caching of tiles**, so routing them through the Shiny server to
+hide the key is not allowed either.
 
-Two apps currently **default** their plot map to Light and must change: `neon-vegetation-structure-explorer/ui.R:259`
-(`selected = "CartoDB.Positron"`) and `neon-plant-phenology-explorer/ui.R:215` (Light is first, therefore
-selected). Small Mammal, Birds and Plant Diversity already default to Satellite/Terrain.
+So: **treat it as a public, rate-limited identifier, not a credential.** Storing it in
+`Sys.getenv("CARTO_BASEMAP_KEY")` buys exactly two things — it keeps the key out of nine public git
+histories, and it makes rotation a Connect Cloud setting change rather than nine releases. That is worth
+doing. It does not make the key private, and no part of this plan should be written as though it does.
 
-### 4c. Dark → `Canvas/World_Dark_Gray_Base` via raw `addTiles()`
+Posit Connect Cloud **does** support this: content settings have a *Variables* section ("Add, update, or
+remove your secret environment variables"), values are encrypted at rest, and `Sys.getenv()` reads them at
+runtime. They are **not** part of `manifest.json` — the manifest describes files and packages only. Cost to
+be honest about: **nine apps × one manual variable each**, and Posit's docs do not say whether an edit takes
+effect immediately or needs a republish — **assume a republish until tested**.
 
-Not a CSS filter. See §3.2.
+### 4.3 The code — one helper, keyed with a keyless fallback
 
-### 4d. Attribution must be set explicitly
+`addProviderTiles()` **cannot** carry the key: the pinned `leaflet.providers` CartoDB template has an `{r}`
+retina slot but no `{apikey}` placeholder. It must be a raw `addTiles()` with attribution supplied by hand.
 
-Because the bundled provider strings are stale and drop the OSM credit (§3.4), any call that adopts an
-Esri layer should pass an explicit `attribution` matching the service's live `copyrightText`, and
-`attributionControl = FALSE` must come out of small-mammal `server.R:2491`/`:2514`.
+Add to each app's `global.R` (or the top of `app.R` for water-chemistry):
 
-### 4e. A string sweep is not sufficient
+```r
+# --- basemap -----------------------------------------------------------------
+# CARTO began watermarking UNAUTHENTICATED basemaps.cartocdn.com raster tiles on
+# 2026-08-26 (see docs/SUITE-BASEMAP-INCIDENT-2026-08.md in NEON-Driver-Cascade).
+# This key is a PUBLIC, rate-limited identifier, not a credential: it rides in the
+# tile URL and is visible in the browser. Sys.getenv keeps it out of git and makes
+# rotation a Connect Cloud setting rather than a release.
+CARTO_KEY <- Sys.getenv("CARTO_BASEMAP_KEY", "")
 
-`neon-my-little-inverts/server.R:940` and `:963` use the **object form**
-`leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)` — no quoted provider name. A
-`grep '"CartoDB'` leaves that app fully watermarked. Use:
+# CARTO's terms require BOTH credits visible; do not suppress the attribution control.
+CARTO_ATTR <- paste(
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  '&copy; <a href="https://carto.com/attributions">CARTO</a>')
+ESRI_CANVAS_ATTR <- 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
 
-```sh
-grep -rn --include='*.R' -E 'CartoDB[."$]|cartocdn' .
+# variant: "light_all" (= CartoDB.Positron) or "dark_all" (= CartoDB.DarkMatter).
+# With a key: the exact tiles the suite has always used. Without one: a keyless Esri
+# canvas — never a watermarked tile. The fallback is deliberately NOT used at plot
+# scale; see §3.1 (Esri's canvas is blank at z16 for 37% of NEON sites).
+add_suite_basemap <- function(map, variant = "light_all", ...) {
+  if (nzchar(CARTO_KEY)) {
+    leaflet::addTiles(map,
+      urlTemplate = sprintf(
+        "https://{s}.basemaps.cartocdn.com/%s/{z}/{x}/{y}{r}.png?key=%s", variant, CARTO_KEY),
+      attribution = CARTO_ATTR,
+      options = leaflet::tileOptions(subdomains = "abcd", maxZoom = 20,
+                                     detectRetina = TRUE, ...))
+  } else {
+    leaflet::addTiles(map,
+      urlTemplate = sprintf(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_%s_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+        if (identical(variant, "dark_all")) "Dark" else "Light"),
+      attribution = ESRI_CANVAS_ATTR,
+      options = leaflet::tileOptions(maxNativeZoom = 16, maxZoom = 19, ...))
+  }
+}
 ```
 
-The complete CARTO surface is **22 lines across 9 repos**. `R/map_picker.R` is a *forked shared module*
-present in three repos (ground-beetle:57, plant-diversity:58, veg-structure:88) and must move in lockstep.
+Then every call site becomes `add_suite_basemap(map, "light_all")` / `"dark_all"`, and the `input$view`
+dropdowns keep their `Esri.*` options routed through `addProviderTiles()` as today, with `"CartoDB.Positron"`
+/ `"CartoDB.DarkMatter"` dispatched to the helper.
+
+> **Smoke-test the URL form ONCE before rolling to nine repos.** The `?key=` query-parameter shape is taken
+> from CARTO's own docs. It could not be verified here: an *invalid* key returns the **byte-identical
+> watermarked tile** as no key at all (same ETag), so there is no negative test — only a real key proves it.
+> Fetch one tile with the real key and confirm the watermark is gone before any PR is opened.
+
+### 4.4 Attribution must be restored at the same time
+
+`neon-small-mammal-tracker-app/server.R:2491` and `:2514` set `leafletOptions(attributionControl = FALSE)`.
+CARTO's terms require visible CARTO **and** OpenStreetMap credit, so those two lines are **non-compliant
+today** and must come out as part of this change — not as a follow-up.
+
+### 4.5 What this decision retires
+
+- The blanket `Esri.WorldGrayCanvas` swap — **REJECTED** (blank at plot scale, §3.1).
+- The CSS-invert dark canvas — **REJECTED, superseded** (§3.2; and moot now that Positron/DarkMatter stay).
+- The per-map-role split — **retained only as the keyless fallback path** in `add_suite_basemap()`, so a
+  missing or revoked key degrades to a clean canvas instead of a defaced one.
+- The two questions in the previous revision (UA institutional ArcGIS licence; tileless picker) — **not
+  needed for this fix.** Both stay on the register as durability options, since CARTO is retiring raster
+  basemaps eventually (§6).
 
 ---
 
-## 5. Two questions that should have been asked first
+## 5. Rollout — what a patch must clear in each repo
 
-Both could dissolve most of the work above. Neither has been put to the owner:
+**The manifest is the real gate, and it bites at runtime as well as in CI.** Every companion repo ships a
+`manifest.json` with per-file checksums, and `ui.R` / `server.R` / `R/*.R` / `global.R` are all on the deploy
+surface. So a source edit **requires the manifest to be regenerated in the same commit.**
 
-1. **Is there a University of Arizona institutional ArcGIS Online licence?** (`tsgilbert@arizona.edu` —
-   near-universal at US R1s.) That yields a keyed, supported, non-sunsetting Esri basemap at no cost and
-   removes the "keyless or bust" constraint this entire plan is built on.
-2. **Why a tile basemap for the picker at all?** It needs a national outline and ~46 dots. `prototypes/site-explorer`
-   already proves this suite can render real geography with no tiles and no key; `docs/_phase23_plan.md`
-   P3-3 specifies a plotly `scattergeo` for exactly this map; and the Water Chemistry repo's
-   `assets/wc_sitemap.png` shows **the suite already shipped a tileless scattergeo picker once.** It is the
-   only option with no vendor, no key, no watermark and no sunset.
+- **Never hand-edit `manifest.json`.** Small Mammal and Vegetation Structure carry a blessed
+  `.github/workflows/regenerate-manifest.yml` — `workflow_dispatch`-only, refuses to run on `main`,
+  regenerates twice and requires byte-identical output. Its own header says it exists to end the loop that
+  "made the ChatGPT/Codex cover rework fail merges over and over". **Use it.**
+- Byte-exact manifest gates, per repo: small-mammal `ci.yml:156`; breeding-birds `:185`; ground-beetle
+  `:129`; mosquito `:111`; phenology `:165`; plant-diversity `:165-177` (regenerates twice, requires
+  identical sha256, then `verify_bundle.R`); veg-structure `:179-195` (regenerates twice, `verify_manifest.R`,
+  then a `git status --porcelain` equivalent).
+- **`neon-my-little-inverts` and `neon-waterchemistry-analyte-viewer-app` have NO `ci.yml`** — both still
+  ship a `manifest.json`, so their patch needs a **manually regenerated** manifest with nothing to catch a
+  stale one. Highest-risk two repos; do them last, with the most care.
+- **Driver-Cascade enforces manifest checksums at RUNTIME** (`global.R:106-112`, before any repo code is
+  sourced; `DEPLOY.md:74-76`). It has no map so it is unaffected — but if that integrity pattern is ever
+  promoted to the siblings, a stale-manifest basemap patch stops being a red check and becomes a
+  **production outage**.
+- **No test anywhere in the suite asserts a provider string** — a grep across every `scripts/`,
+  `test_*`, `check_*`, `verify_*` and smoke file in all nine repos returns zero hits. CI sources the app but
+  never fetches a tile, so **CI cannot detect a bad provider or a defaced tile.** That is exactly why this
+  shipped unnoticed.
+- **Branch targets differ and so do the deploy rules.** Driver-Cascade: Connect watches `master` and a push
+  to `master` *is* the deploy. Small Mammal: Connect watches `main` and `DEPLOY.md:9-13` states **"no
+  automation may push there directly — a human-reviewed merge is the explicit production decision."**
+  So: open a PR per repo; **do not merge them.**
 
-A third option, deliberately re-opened: **the free CARTO key** (no account, emailed on request, ~5M
-tiles/month fair use) restores the exact current design — Positron *and* DarkMatter, retina, maxZoom 20,
-zero blank tiles, no palette or CSS re-tuning. Its real costs are that the key is visible client-side
-(inherent to browser tile fetching, and it is free and rotatable) and that CARTO requires visible
-attribution — which small-mammal suppresses today regardless. It was filed as a last resort; on the
-measured evidence it deserved to be a leading option.
+Suggested order, safest first: ground-beetle → mosquito → phenology → breeding-birds → plant-diversity →
+veg-structure → small-mammal → little-inverts → water-chemistry. Canary the first one end to end (patch,
+manifest, merge, deploy, look at the live map) before touching the rest.
 
 ---
 
@@ -288,8 +359,10 @@ cause of the blanking in §3.1.
 
 So: no imminent cliff, but this adopts a **frozen, decaying** service. And several apps move from 2-of-3 to
 3-of-3 Esri plus the always-visible picker, so every map surface in those apps then retires on one date.
-That concentration is the genuine durability defect. **Disposition: `HOLD` on any blanket Esri swap;
-`ADOPT` scoped to the national pickers only**, with a scheduled re-check.
+**Disposition: `ADOPT` the keyed CARTO basemaps (§4); `HOLD` on any blanket Esri swap** — Esri is now only
+the keyless fallback in `add_suite_basemap()`, which is why that fallback is capped at `maxNativeZoom = 16`
+and is not used to justify plot-scale detail. CARTO states raster basemaps are being retired in favour of
+vector, so the key buys time, not permanence: schedule a re-check.
 
 Durable options, none part of this fix: self-host a minimal canvas for ~46 points; draw states/coastlines
 from a committed GeoJSON; or go tileless per §5.2.
@@ -341,20 +414,30 @@ Done:
 - [x] Blank-at-plot-scale quantified (37% of NEON sites at z16); attribution regression identified.
 - [x] Gate asymmetry across the nine repos mapped.
 
-Open, in order — **first two are owner decisions and block the rest**:
+- [x] Owner decision recorded: **take the free CARTO key**, keep Positron/DarkMatter unchanged (§4).
+- [x] Key mechanics settled: `?key=` query param, raw `addTiles()`, helper + keyless fallback written (§4.3).
+- [x] Connect Cloud confirmed to support runtime env vars via a Variables UI; key confirmed NOT secret (§4.2).
+- [x] Per-repo manifest gates, branch targets and deploy rules mapped (§5).
 
-- [ ] **Answer §5.1** — is there a UA institutional ArcGIS licence?
-- [ ] **Answer §5.2 / the CARTO key** — tileless picker, free CARTO key, or keyless Esri split by role?
-- [ ] Apply §4 per-role patch to the nine repos, one branch + draft PR each, respecting each repo's default
-      branch (Driver-Cascade `master`; Small Mammal and Vegetation `main`) and its gate config from §7.
-      Land ground-beetle's dark branch in the same wave (§3.5).
-- [ ] Fix attribution (§3.4) — explicit strings; remove `attributionControl = FALSE`.
-- [ ] Re-tune marker strokes and the palest fills against the new ground (§3.3); note `www/styles.css` is
-      manifest-tracked in several repos, so bundle it into the same commit.
-- [ ] Add the regression guard: a CI grep asserting zero matches for `CartoDB[."$]|cartocdn`, plus a
-      scheduled tile canary that decodes tiles and fails on a single-colour or placeholder result.
+Open, in order — **the first is an owner action and blocks everything after it**:
+
+- [ ] **Request the key at <https://carto.com/basemaps/apikey>** — email + domain + one-line description,
+      emailed straight back, no account, no queue. *No agent can do this step.*
+- [ ] **Smoke-test the URL form once** with the real key (§4.3) — an invalid key is byte-identical to no key,
+      so only a real one proves the format.
+- [ ] Set `CARTO_BASEMAP_KEY` in Connect Cloud content settings → Variables, for each of the nine apps.
+      Assume a republish is needed for it to take effect.
+- [ ] Add the `add_suite_basemap()` helper to each app and route its call sites through it (§4.3), removing
+      `attributionControl = FALSE` from small-mammal `server.R:2491`/`:2514` in the same change (§4.4).
+- [ ] **Regenerate `manifest.json` in the same commit, never by hand** — use `regenerate-manifest.yml` where
+      it exists; hand-regenerate for the two repos with no CI (§5).
+- [ ] One canary repo end to end — patch, manifest, merge, deploy, *look at the live map* — before the rest.
+- [ ] Open a PR per repo; **do not merge them** (Small Mammal `DEPLOY.md:9-13`: a human-reviewed merge is the
+      production decision).
+- [ ] Add the regression guard: a CI grep asserting no unkeyed `cartocdn` URL, plus a scheduled tile canary
+      that decodes a tile and fails on a watermark, a single-colour result, or the Esri placeholder.
 - [ ] Record the basemap contract in `docs/neonize-playbook.md` §2g — it currently names **no provider at
-      all**, so nothing stops the next app reintroducing CARTO.
+      all**, so nothing stops the next app reintroducing an unkeyed CARTO layer.
 - [ ] Visually verify each deployed app after merge. `HTTP 200` is not verification (§8).
 
 ### Per-app call-site inventory

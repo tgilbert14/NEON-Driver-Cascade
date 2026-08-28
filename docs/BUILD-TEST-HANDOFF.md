@@ -4736,3 +4736,54 @@ Rules:
   deliberately re-opened as a third option: it restores Positron AND DarkMatter with
   zero re-tuning and no blank tiles. Do not start the nine-repo rollout before these
   are answered.
+
+### 2026-08-28 (decision) - [Claude] basemap: take the free CARTO key
+
+- **Owner decision:** take the free CARTO basemap key and keep `CartoDB.Positron`
+  and `CartoDB.DarkMatter` exactly as they are. Disposition `ADOPT`. This is the
+  only option that changes nothing visually — same tiles, same `maxZoom = 20`,
+  same retina, zero blank tiles, no marker-palette or CSS re-tuning, no contrast
+  regression, no attribution regression, and ground-beetle's dark theme keeps
+  working untouched. Every defect recorded in the previous entry exists *because*
+  the alternatives moved the basemap; this one does not.
+- **Retired by this decision:** the blanket `Esri.WorldGrayCanvas` swap (REJECTED
+  — blank at plot scale) and the CSS-invert dark canvas (REJECTED, superseded).
+  The per-map-role split survives only as the keyless fallback inside the new
+  helper, so a missing or revoked key degrades to a clean canvas rather than a
+  defaced one. The two blocking questions from the previous entry (UA institutional
+  ArcGIS licence; tileless picker) are no longer needed for the fix and move to the
+  register as durability options.
+- **BLOCKED on one owner action no agent can perform:** request the key at
+  <https://carto.com/basemaps/apikey> (email + domain + one-line description;
+  emailed straight back, no account, no approval queue; fair use 5M tile
+  requests/calendar month). Everything downstream is written and waiting.
+- **Key mechanics settled and recorded in §4 of the incident doc:** it is a `?key=`
+  QUERY PARAMETER; `addProviderTiles()` cannot carry it (the pinned CartoDB template
+  has an `{r}` slot but no `{apikey}` placeholder), so it needs a raw `addTiles()`
+  with attribution supplied by hand. An `add_suite_basemap()` helper is written,
+  keyed with a keyless Esri-canvas fallback.
+- **The key is NOT a secret, and the plan says so explicitly.** It rides in the tile
+  URL and every request is issued client-side, so it lands in page source regardless;
+  CARTO's terms §9.c bans server-side proxying, so it cannot be hidden.
+  `Sys.getenv("CARTO_BASEMAP_KEY")` buys exactly two things — it keeps the key out of
+  nine public git histories and makes rotation a Connect Cloud setting rather than
+  nine releases. Connect Cloud does support this (content settings → Variables,
+  encrypted at rest, read at runtime; NOT part of `manifest.json`). Cost: nine apps
+  × one manual variable, and a republish is likely needed — untested.
+- **Cannot be verified without the real key:** an INVALID key returns the
+  byte-identical watermarked tile as no key at all (same ETag), so there is no
+  negative test. Smoke-test the URL form once with the real key before any PR opens.
+- **Rollout gate discovered and recorded (§5):** every companion repo has a
+  byte-exact `manifest.json` gate and `ui.R`/`server.R`/`R/*.R`/`global.R` are all on
+  the deploy surface, so a source edit REQUIRES the manifest regenerated in the same
+  commit. Never hand-edit it — Small Mammal and Vegetation carry a blessed
+  `regenerate-manifest.yml` whose own header says it exists to end the loop that
+  "made the ChatGPT/Codex cover rework fail merges over and over". The two repos with
+  NO `ci.yml` (little-inverts, water-chemistry) still ship a manifest and have nothing
+  to catch a stale one — do those last. Small Mammal `DEPLOY.md:9-13` forbids
+  automation pushing to `main`: open PRs, do not merge them.
+- **Nothing at risk:** docs-only again; `docs/` and `.claude/` stay outside
+  `DEPLOY_APP_FILES`; no companion repo touched.
+- **Next action:** owner requests the key; then smoke-test the URL form, set the
+  Connect variable, and canary ONE repo end to end — patch, manifest, merge, deploy,
+  and actually look at the live map — before touching the other eight.
