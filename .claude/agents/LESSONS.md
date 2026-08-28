@@ -137,3 +137,22 @@
   tile provider is an unversioned, uncontracted runtime dependency of the deploy surface that no manifest pin
   covers — the fix (`Esri.WorldGrayCanvas`) has a shelf life too, because Esri has already announced the same
   sunset for the legacy `server.arcgisonline.com` endpoints. Full record: `docs/SUITE-BASEMAP-INCIDENT-2026-08.md`.
+- [2026-08-28] cass · confirmed · "Unwatermarked" is not "usable", and HTTP 200 proves neither. The obvious fix
+  for the CARTO watermark — swap `CartoDB.Positron` for the keyless `Esri.WorldGrayCanvas` — was REFUTED by
+  measurement after it had already been written down as decided. `Canvas/World_Light_Gray_Base` has had no
+  content update since 2021: at z16 it returns a tile with exactly ONE distinct colour (RGB 239,239,239) for
+  17 of NEON's 46 terrestrial sites, and SCBI z15/z16 are byte-identical, so the `maxNativeZoom = 16` mitigation
+  upscales an already-blank tile and HIDES the defect from an eyeball check. DECISIVE TEST for any basemap
+  change: decode the tile and count distinct RGB values at the zooms the app actually uses (the picker's z3-4
+  AND the plot map's z13-16) — a single-colour tile is blank, and Esri's "Map data not yet available"
+  placeholder is md5 `f27d9de7f80c13501f470595e327aa6d`. Three further traps found the same way: the swap makes
+  marker contrast ~8-10% WORSE (three sub-audits asserted the opposite — #efefef is darker than Positron's
+  #fafaf8, and every marker palette is darker still); `leaflet.providers` hardcodes a STALE Esri attribution
+  ("DeLorme, NAVTEQ") that omits the OpenStreetMap credit the service's own live `copyrightText` requires, so
+  the swap trades a compliant credit line for a non-compliant one; and a `grep '"CartoDB'` misses
+  `leaflet::providers$CartoDB.Positron` (the object form, used in My Little Inverts) — sweep with
+  `-E 'CartoDB[."$]|cartocdn'`. GENERAL LESSON: ask what the PROVIDER serves, not what the wrapper exposes. The
+  "there is no keyless dark canvas" claim in the first draft of this incident was false — `Canvas/World_Dark_Gray_Base`
+  is real, keyless and labelled; it is simply absent from leaflet-providers. That single mis-framed question had
+  already produced a signed-off CSS-invert workstream that was pure waste. Full record + per-role plan:
+  `docs/SUITE-BASEMAP-INCIDENT-2026-08.md`.

@@ -4686,3 +4686,53 @@ Rules:
   each, respecting each repo's default branch (Driver-Cascade `master`; Small Mammal and
   Vegetation `main`) and its CI manifest gate, which is byte-exact in the siblings where
   Driver-Cascade's is semantic.
+
+### 2026-08-28 (later) - [Claude] the basemap fix was refuted by its own audit
+
+- **What changed:** the fix recorded in the entry above — blanket
+  `CartoDB.Positron` → `Esri.WorldGrayCanvas` plus a CSS-invert dark canvas — was
+  put through a nine-app audit and a four-lens adversarial review. **All four
+  lenses refuted it.** The plan in `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` is now
+  a per-map-ROLE plan (§4), and two owner decisions (§5) block rollout. The
+  diagnosis in the earlier entry is unchanged and still correct; only the remedy moved.
+- **Why, measured:** `Canvas/World_Light_Gray_Base` has had no content update since
+  2021. At z16 it returns a single-colour blank tile (`RGB(239,239,239)`) for **17 of
+  46** NEON terrestrial sites; SCBI z15 and z16 are byte-identical; above z16 every
+  request is the same 2,521-byte "Map data not yet available" placeholder. Verified
+  by hand for SCBI: z13 = 224 distinct colours (hairline roads, no labels), z16 = 1.
+  `Esri.WorldTopoMap`, `Esri.WorldImagery`, `USGS.USTopo`, `USGS.USImageryTopo`,
+  `OpenStreetMap.Mapnik` and `CartoDB.Positron` are all 0/46 blank. So the swap is
+  sound for the national pickers (z2-5) and wrong for every plot-scale map.
+- **The proposed `maxNativeZoom = 16` mitigation does not mitigate** — it upscales an
+  already-blank tile and hides the defect from a visual check.
+- **The CSS-invert workstream is cancelled, superseded not deferred.**
+  `Canvas/World_Dark_Gray_Base` is a real, keyless, labelled dark canvas — verified
+  live (z4: 5,456 B, 283 distinct colours, dominant `RGB(63,63,65)`). It is simply
+  absent from `leaflet.providers`, so it needs a raw `addTiles()`. The earlier
+  "there is no keyless dark canvas" line was FALSE; the question asked what the
+  wrapper exposed, never what the provider serves.
+- **Three further defects the audit surfaced:** the swap makes marker contrast ~8-10%
+  WORSE (Esri `#efefef` is darker than Positron `#fafaf8`, and every marker palette is
+  darker still); `leaflet.providers` emits a stale Esri attribution ("DeLorme, NAVTEQ")
+  that omits the OpenStreetMap credit the service's own live `copyrightText` requires,
+  so the swap would trade a compliant credit line for a non-compliant one; and
+  `neon-my-little-inverts` uses the object form `leaflet::providers$CartoDB.Positron`,
+  which a quoted-string grep misses entirely. Sweep with `-E 'CartoDB[."$]|cartocdn'`.
+- **Also found:** ground-beetle's dark branch is read inside `renderLeaflet`, so dark
+  mode cannot be deferred to a later wave; small-mammal `server.R:2491`/`:2514` suppress
+  attribution entirely and are non-compliant today with CARTO and equally with Esri;
+  and `neon-my-little-inverts` and `neon-waterchemistry-analyte-viewer-app` have **no
+  `ci.yml` at all** — the two repos with the two non-standard idioms are the two with
+  no pre-merge gate. No repo in the suite asserts any provider string, which is why
+  this shipped unnoticed.
+- **Nothing at risk:** docs-only again; `docs/` and `.claude/` stay outside
+  `DEPLOY_APP_FILES`, no artifact or manifest moved, and no companion repo was touched.
+- **Next action (owner decision, blocking):** two questions in
+  `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §5 that could dissolve most of the work —
+  (1) is there a University of Arizona institutional ArcGIS Online licence, which
+  removes the "keyless or bust" constraint entirely; (2) should the picker be tileless
+  at all, given `prototypes/site-explorer` already renders real geography with no tiles
+  and the suite once shipped a tileless scattergeo picker. The free CARTO key is
+  deliberately re-opened as a third option: it restores Positron AND DarkMatter with
+  zero re-tuning and no blank tiles. Do not start the nine-repo rollout before these
+  are answered.
