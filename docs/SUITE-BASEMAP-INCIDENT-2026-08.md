@@ -437,12 +437,20 @@ Done:
 - [x] Connect Cloud confirmed to support runtime env vars via a Variables UI; key confirmed NOT secret (§4.2).
 - [x] Per-repo manifest gates, branch targets and deploy rules mapped (§5).
 
-Open, in order — **the first is an owner action and blocks everything after it**:
+Open, in order:
 
-- [ ] **Request the key at <https://carto.com/basemaps/apikey>** — email + domain + one-line description,
-      emailed straight back, no account, no queue. *No agent can do this step.*
-- [ ] **Smoke-test the URL form once** with the real key (§4.3) — an invalid key is byte-identical to no key,
-      so only a real one proves the format.
+- [x] **Key requested and issued** (2026-08-28, owner via the form; the platform `api_token` route was
+      tested first and does NOT work — see §4.1). Key starts `cb1_…`; it lives in the owner's email and in
+      Connect Cloud variables, **never in any repo**.
+- [x] **Key verified against live tiles**: clean at CDN origin misses for `light_all` AND `dark_all`, and —
+      the deployment worry — the previously-cached watermarked picker zooms return CLEAN with the key (the
+      CDN caches keyed responses separately). Unkeyed control stays watermarked. `?key=` is the confirmed form.
+- [x] **Canary PR open**: Ground-Beetle-Tracker#22 (branch `claude/carto-basemap-key`) — adds
+      `add_suite_basemap()` to `global.R`, routes both call sites (`R/map_picker.R:57`,
+      `server.R:1633-1634`), dark toggle preserved via `dark_all`. Manifest deliberately untouched in the
+      first commit: the pinned CI validator regenerates it and the validated candidate artifact lands in a
+      follow-up commit (AGENTS.md forbids hand edits; the repo has no regenerate-manifest.yml dispatch).
+      Expect the canary's FIRST run red at the byte-match gate — that is the designed flow.
 - [ ] Set `CARTO_BASEMAP_KEY` in Connect Cloud content settings → Variables, for each of the nine apps.
       Assume a republish is needed for it to take effect.
 - [ ] Add the `add_suite_basemap()` helper to each app and route its call sites through it (§4.3), removing
