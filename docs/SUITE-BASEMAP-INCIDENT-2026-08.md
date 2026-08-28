@@ -223,6 +223,12 @@ Domain to give: the Connect Cloud share domain (`*.share.connect.posit.cloud`). 
 that domain is actually enforced as a referer lock or merely recorded — CARTO documents no allowlist
 feature and there is no console, since there is no account. Treat it as informational.
 
+**Also verified 2026-08-28 — the key-request form cannot be submitted programmatically.** It is a HubSpot
+form (portal `474999`, form `4545f275-9bc1-408f-ba2f-963a53a14803`) and HubSpot's API-submission path
+returns `FORM_HAS_RECAPTCHA_ENABLED` — captcha is enforced server-side, so a human must submit it in a
+browser. The page's own fallback: email **support-basemaps@carto.com** and "we will issue a key by hand."
+Do not re-attempt an API submission.
+
 **Verified 2026-08-28 — a CARTO *platform* API Access Token does NOT work as the basemap key.** The owner
 created a Workspace token scoped to the Maps API and it was tested against the raster CDN at confirmed
 origin cache misses (`x-cache: MISS`) under five auth forms — `?key=`, `?access_token=`, `?api_key=`,
