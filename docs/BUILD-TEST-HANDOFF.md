@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-08-06
+Last updated: 2026-08-28
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -4635,3 +4635,54 @@ Rules:
   new upstream sites are excluded by decision rather than by omission. (b)
   preserves the current published family; (a) expands it and needs a coverage
   review. Do not simply append a row to silence the guard.
+
+### 2026-08-28 - [Claude] suite basemap outage: CARTO "API KEY REQUIRED" watermark
+
+- **Reported:** the maps in the NEON explorer apps display "need api key for
+  layers/basemap" across the basemap, in a lot — as it turns out, all — of the suite.
+- **Diagnosed:** CARTO now burns an `API KEY REQUIRED / carto.com/basemaps/apikey`
+  watermark into unauthenticated raster tiles from `basemaps.cartocdn.com`,
+  server-side. The tile request still returns HTTP 200 with a valid PNG, so no app
+  errors, logs, or falls back — the map simply renders defaced. Verified by fetching
+  `light_all` (`CartoDB.Positron`) and `dark_all` (`CartoDB.DarkMatter`) tiles and
+  inspecting the images. Both variants are affected.
+- **Scope:** all **nine** companion apps, **on first load** — every one of them puts
+  `CartoDB.Positron` on its landing/site-picker map, which needs no interaction.
+  Apps whose main explore map defaults to an `Esri.*` layer look correct until the
+  user switches the Basemap select to "Light". **Driver-Cascade is unaffected:** it
+  ships no Leaflet map (no `leaflet`, `addTiles`, or `addProviderTiles` in
+  `global.R`, `ui.R`, `server.R`, or `R/`), and this change touched only `docs/` and
+  `.claude/`, both outside the `DEPLOY_APP_FILES` allowlist, so no artifact,
+  manifest, or deploy surface moved.
+- **Ruled out with evidence, so no one re-walks it:** not an R package regression
+  (`leaflet.providers` 2.0.0 and 3.0.0 ship byte-identical CartoDB/Esri url
+  templates with no `{apikey}` placeholder, and the apps pinning each version were
+  equally affected); not a leaflet-providers API-key code path (the bundled JS only
+  throws `No such provider`); not referer/Origin/CORS (identical watermarked bytes
+  returned with browser headers and a live Connect Cloud referer); not CSP, not a
+  manifest pin, not something a redeploy clears; and no app's own source contains an
+  "api key" string.
+- **Decided (owner, 2026-08-28):** `CartoDB.Positron` → `Esri.WorldGrayCanvas`
+  (keyless, fetched and visually confirmed clean); `CartoDB.DarkMatter` → CSS-invert
+  the Leaflet **tile pane only**, synthesising a dark canvas from the same grey
+  basemap so markers, labels and the attribution control are untouched; existing
+  `Esri.*` choices unchanged. A CARTO API key was rejected (public in any
+  client-side tile URL, nine deployments to manage, and CARTO is retiring raster
+  basemaps regardless).
+- **Caveat carried on the fix:** Esri has already announced the same sunset for the
+  legacy `server.arcgisonline.com` basemap endpoints this moves onto. This is a fix
+  with a shelf life, recorded as a standing risk rather than presented as settled.
+- **Not done here:** the nine companion repos are **not yet patched**. Their per-file
+  call sites, the CSS-invert open questions, the max-zoom check, and a rebuild recipe
+  for the local sibling checkouts are all in
+  `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §6.
+- **Environment limit found:** headless-browser verification of the deployed apps is
+  impossible in this container — Chromium is installed and Playwright configured, but
+  every navigation fails `net::ERR_CONNECTION_RESET`, including `https://example.com`,
+  routed through the agent proxy or not. `curl` works. The evidence here is therefore
+  tile-level: decisive for the cause, but no one has yet *seen* a fixed app.
+- **Next action:** settle the CSS-invert selector and the `Canvas/World_Light_Gray_Base`
+  max zoom, then apply the patch to the nine companion repos — one branch and draft PR
+  each, respecting each repo's default branch (Driver-Cascade `master`; Small Mammal and
+  Vegetation `main`) and its CI manifest gate, which is byte-exact in the siblings where
+  Driver-Cascade's is semantic.

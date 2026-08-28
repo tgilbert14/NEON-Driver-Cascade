@@ -123,3 +123,17 @@
   artifacts. If that fails, the environment cannot produce publishable artifacts, full stop — do not ship them
   and do not re-register hashes from them. Text artifacts (the codebook CSV) still match, so a diff where only
   the compressed RDS move is the tell-tale signature of an encoding, not content, difference.
+- [2026-08-28] cass · confirmed · A third-party basemap can break EVERY app in the suite at once with no
+  error, no log line, and no deploy: on 2026-08-28 CARTO began burning an "API KEY REQUIRED" watermark into
+  unauthenticated `basemaps.cartocdn.com` raster tiles server-side. The request still returns HTTP 200 and a
+  valid PNG, so nothing fails loudly — the map just renders defaced. All nine companion apps were hit on
+  FIRST LOAD because every one of them puts `CartoDB.Positron` on its landing/site-picker map; Driver-Cascade
+  was untouched only because it ships no Leaflet map. DECISIVE TEST when a hosted map "looks wrong": fetch one
+  raw tile with curl and LOOK AT THE IMAGE (`curl -s -o t.png "https://a.basemaps.cartocdn.com/light_all/6/13/24.png"`).
+  Do not start from the R package — the two `leaflet.providers` versions in the suite (2.0.0 and 3.0.0) ship
+  byte-identical CartoDB/Esri url templates with no `{apikey}` placeholder, and the apps pinning each were
+  equally affected, which by itself rules the package out. Referer/Origin/CORS were also ruled out: the same
+  watermarked bytes come back with browser headers and a live Connect Cloud referer. GENERAL LESSON: a free
+  tile provider is an unversioned, uncontracted runtime dependency of the deploy surface that no manifest pin
+  covers — the fix (`Esri.WorldGrayCanvas`) has a shelf life too, because Esri has already announced the same
+  sunset for the legacy `server.arcgisonline.com` endpoints. Full record: `docs/SUITE-BASEMAP-INCIDENT-2026-08.md`.
