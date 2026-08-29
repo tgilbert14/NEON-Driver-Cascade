@@ -464,7 +464,50 @@ Open, in order:
       that decodes a tile and fails on a watermark, a single-colour result, or the Esri placeholder.
 - [ ] Record the basemap contract in `docs/neonize-playbook.md` §2g — it currently names **no provider at
       all**, so nothing stops the next app reintroducing an unkeyed CARTO layer.
+- [x] **Canary MERGED and confirmed live** — Ground Beetle #22 merged as `e136aeb`; `main` CI, the
+      production-verification workflow and Pages all green, no issue opened, and the owner confirmed the
+      live map shows Positron/DarkMatter with no watermark. That closed the last unproven link: the
+      Connect `CARTO_BASEMAP_KEY` variable really does reach the running app.
+- [x] **All eight remaining repos patched, pushed, PRs open** (2026-08-29) — see the rollout table below.
+- [ ] Merge the eight PRs (owner decision per repo) and set `CARTO_BASEMAP_KEY` in each app's Connect
+      Cloud Variables **before** merging, or the deploy shows the keyless Esri fallback.
 - [ ] Visually verify each deployed app after merge. `HTTP 200` is not verification (§8).
+
+
+### Rollout status (2026-08-29)
+
+The helper landed in every app as `add_suite_basemap()`. It accepts **either** a leaflet provider name or a
+CARTO variant, which is why **no `ui.R` Basemap dropdown needed changing anywhere** — the choice vectors and
+their defaults are untouched, CARTO entries route to keyed tiles, and every `Esri.*` entry passes straight
+through to `addProviderTiles()` exactly as before.
+
+| App | PR | Base | Call sites | Notes |
+|---|---|---|---|---|
+| Ground Beetle | #22 **MERGED** | `main` | `R/map_picker.R:57`, `server.R:1633` | canary; live map confirmed |
+| Mosquito Pulse | #12 | `master` | `server.R:537`, `:578`, `:588` | — |
+| Breeding Birds | #6 | `master` | `server.R:645`, `:711`, `:723` | manifest gate also covers `docs/release.json` |
+| Plant Phenology | #12 | `master` | `server.R:145`, `:177`, `:779` | "Light" is the **default** basemap |
+| Plant Diversity | #18 | `master` | `R/map_picker.R:58`, `server.R:1495` | `www/runtime-receipt.txt` regenerated with the repo's own script |
+| Vegetation Structure | #16 | `main` | `R/map_picker.R:88`, `server.R:1375`, `:1398` | `ui.R` `selected =` made it the **default** |
+| Small Mammal | #93 | `main` | `server.R:1189`, `:2492`, `:2515` | **also removes `attributionControl = FALSE`** (§4.4) |
+| My Little Inverts | #10 | `main` | `server.R:940`, `:963` | **object form**; source-only, needs validator regen |
+| Water Chemistry | #19 | `main` | `app.R:2110` | no CI; manifest MD5 updated in-PR |
+
+**Default branches really are split** — `master` for Mosquito, Birds, Phenology, Plant Diversity;
+`main` for Ground Beetle, Vegetation, Small Mammal, Inverts, Water Chem. Checked per repo, never assumed.
+
+**The seven repos with CI follow the canary's two-step flow:** first run goes red at the byte-match gate by
+design, its validated manifest artifact is committed as a second commit, second run goes green.
+
+**The two repos with no `ci.yml` were handled differently, and differently from each other:**
+- *My Little Inverts* — `AGENTS.md` forbids hand-editing or casually regenerating `manifest.json`, and its
+  `release/production-identity.json` hashes `global.R`/`ui.R`/`server.R` into `runtime_payload_sha256`.
+  Nothing was fabricated: the PR is **source-only and explicitly not mergeable** until both are regenerated
+  in the clean validator.
+- *Water Chemistry* — no such prohibition, and `write_manifest.R` warns a stale checksum can make Connect
+  serve yesterday's bytes, which would silently drop the fix. Its manifest is plain per-file MD5s with the
+  package block restored verbatim from a reviewed lock, so the single `app.R` checksum was updated in-PR
+  after verifying all six committed checksums reproduce exactly.
 
 ### Per-app call-site inventory
 
