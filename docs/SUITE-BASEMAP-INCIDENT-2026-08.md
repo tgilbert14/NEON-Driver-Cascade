@@ -483,18 +483,38 @@ through to `addProviderTiles()` exactly as before.
 
 | App | PR | Base | Call sites | Notes |
 |---|---|---|---|---|
-| Ground Beetle | #22 **MERGED** | `main` | `R/map_picker.R:57`, `server.R:1633` | canary; live map confirmed |
-| Mosquito Pulse | #12 | `master` | `server.R:537`, `:578`, `:588` | — |
-| Breeding Birds | #6 | `master` | `server.R:645`, `:711`, `:723` | manifest gate also covers `docs/release.json` |
-| Plant Phenology | #12 | `master` | `server.R:145`, `:177`, `:779` | "Light" is the **default** basemap |
-| Plant Diversity | #18 | `master` | `R/map_picker.R:58`, `server.R:1495` | `www/runtime-receipt.txt` regenerated with the repo's own script |
-| Vegetation Structure | #16 | `main` | `R/map_picker.R:88`, `server.R:1375`, `:1398` | `ui.R` `selected =` made it the **default** |
-| Small Mammal | #93 | `main` | `server.R:1189`, `:2492`, `:2515` | **also removes `attributionControl = FALSE`** (§4.4) |
-| My Little Inverts | #10 | `main` | `server.R:940`, `:963` | **object form**; source-only, needs validator regen |
-| Water Chemistry | #19 | `main` | `app.R:2110` | no CI; manifest MD5 updated in-PR |
+| Ground Beetle | #22 | `main` | `R/map_picker.R:57`, `server.R:1633` | **MERGED + DEPLOYED**; live map confirmed by owner |
+| Plant Diversity | #18 | `master` | `R/map_picker.R:58`, `server.R:1495` | **GREEN, ready**; `www/runtime-receipt.txt` regenerated with the repo's own node script — matched the validator byte-for-byte |
+| Small Mammal | #93 | `main` | `server.R:1189`, `:2492`, `:2515` | **GREEN, ready**; also removes `attributionControl = FALSE` (§4.4) |
+| Vegetation Structure | #16 | `main` | `R/map_picker.R:88`, `server.R:1375`, `:1398` | **GREEN, ready**; `ui.R` `selected =` made it the default |
+| Water Chemistry | #19 | `main` | `app.R:2110` | **GREEN, ready**; passed a real `connect_cold_start` — proves the hand-set manifest MD5 and the `app.R` patch both boot |
+| Plant Phenology | #12 | `master` | `server.R:145`, `:177`, `:779` | **GREEN, ready**; "Light" is the default basemap |
+| Mosquito Pulse | #12 | `master` | `server.R:537`, `:578`, `:588` | **BLOCKED on owner** — everything passed except the manifest byte gate, and this repo's artifact upload is conditional on an *earlier* failure, so no validated manifest is exported. Needs `Rscript scripts/write_manifest.R` |
+| Breeding Birds | #6 | `master` | `server.R:645`, `:711`, `:723` | **BLOCKED on owner** — `write_release_stamp.R` binds `global.R`/`ui.R`/`server.R`; failed at the stamp check before packages installed. Needs manifest **then** stamp |
+| My Little Inverts | #10 | `main` | `server.R:940`, `:963` | **BLOCKED on owner** — object form; validator lives in `refresh-data.yml` (not `ci.yml`), failed at "Reject a stale committed identity". Producer artifact byte-compared: 36/36 identical |
 
 **Default branches really are split** — `master` for Mosquito, Birds, Phenology, Plant Diversity;
 `main` for Ground Beetle, Vegetation, Small Mammal, Inverts, Water Chem. Checked per repo, never assumed.
+
+**Six of nine are green or merged.** The two-step flow (first run red at the byte gate by design → commit its
+validated manifest artifact → second run green) worked for Ground Beetle, Plant Diversity, Small Mammal,
+Vegetation Structure and Plant Phenology. In every shuttle the ONLY file that differed was `manifest.json` —
+every data file, search index and receipt in the validator's artifact was already byte-identical to the
+branch, which is independent evidence the patch moved nothing it shouldn't.
+
+**Three are blocked on the owner, for two distinct reasons — neither faked:**
+- *Mosquito Pulse* — a CI-shape gap, not a code problem: its `Upload unvalidated manifest` step is
+  `if: failure() && …` and sits BEFORE the byte gate, so when the gate is the only failure nothing has failed
+  yet, the upload is skipped, and the validated manifest dies with the runner. Five sibling repos upload
+  theirs unconditionally. Worth aligning separately; deliberately not changed in a basemap PR.
+- *Breeding Birds* and *My Little Inverts* — their generated authority **binds the app source**
+  (`write_release_stamp.R`; `runtime_payload_sha256` in `production-identity.json`), so editing `global.R`
+  or `server.R` invalidates it by construction. Regenerating needs R in the pinned validator. Each PR carries
+  the validator's own command sequence, lifted verbatim from its workflow.
+
+**Correction worth keeping:** "no `ci.yml`" is NOT the same as "no CI". My Little Inverts and Water Chemistry
+both run validators from `refresh-data.yml`. Water Chemistry's even includes a `connect_cold_start` job that
+cold-boots the deploy bundle — the strongest single check in the suite, and it passed.
 
 **The seven repos with CI follow the canary's two-step flow:** first run goes red at the byte-match gate by
 design, its validated manifest artifact is committed as a second commit, second run goes green.
