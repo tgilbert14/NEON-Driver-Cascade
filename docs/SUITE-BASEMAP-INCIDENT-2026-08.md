@@ -720,14 +720,20 @@ documents. The `message()` line makes it self-diagnosing thereafter.
 | App | PR | Base | State at end of session |
 |---|---|---|---|
 | Ground Beetle | #22 | `main` | **MERGED + DEPLOYED**, live map confirmed by owner |
-| Water Chemistry | #19 | `main` | **MERGED + DEPLOYED**; receipt-verified live. Blank map → **PR #20** (§10.3) |
-| Plant Diversity | #18 | `master` | Green, ready |
-| Small Mammal | #93 | `main` | Green, ready |
-| Vegetation Structure | #16 | `main` | Green, ready |
-| Plant Phenology | #12 | `master` | Green, ready |
-| Mosquito Pulse | #12 | `master` | **UNBLOCKED** — CI now exports the validated manifest; artifact shuttled (§10.6) |
-| My Little Inverts | #10 | `main` | **UNBLOCKED** — dispatched validator succeeded, all 3 authority files shuttled (§10.6) |
-| Breeding Birds | #6 | `master` | **UNBLOCKED** — authority regenerated (§10.2) **and** repairs `master` (§10.1) |
+| Water Chemistry | #19 | `main` | **MERGED + DEPLOYED**; receipt-verified live. Blank map → #20, **also merged** (§10.3) |
+| Plant Diversity | #18 | `master` | **MERGED** (owner, 15:28Z) |
+| Small Mammal | #93 | `main` | **MERGED** (owner, 15:28Z); also restores the suppressed attribution control |
+| Vegetation Structure | #16 | `main` | **MERGED** (owner, 15:28Z) |
+| Plant Phenology | #12 | `master` | **MERGED** (owner, 15:28Z) |
+| Mosquito Pulse | #12 | `master` | **MERGED** — CI now exports the validated manifest; artifact shuttled (§10.6) |
+| My Little Inverts | #10 | `main` | **MERGED** — dispatched validator succeeded, all 3 authority files shuttled (§10.6) |
+| Breeding Birds | #6 | `master` | Authority regenerated (§10.2, §10.7) **and** repairs `master` (§10.1) |
+
+**Eight of nine merged.** Breeding Birds is the last, and merging it also repairs `master`'s invalid manifest.
+
+**Spotting a missed Connect variable:** an app whose `CARTO_BASEMAP_KEY` was not set comes up on Esri's grey
+canvas rather than Positron — correct and clean, but visibly greyer than Ground Beetle. That contrast is the
+fastest cross-suite check that all nine variables really are set.
 
 ### 10.6 How the last two shuttles were done
 
@@ -738,6 +744,44 @@ change moves. Everything else differing from the committed manifest is a package
 them** — recording when the validator compiled each source package. That is precisely the non-determinism
 this repo's byte-exact gate flaps on, and the reason the bytes must be *taken* from the validator rather than
 reconstructed. **This is the case for promoting `compare_manifests.R` to the byte-exact siblings.**
+
+### 10.7 CONFIRMED — the `Built` drift is upstream, and adopting the validator's manifest converges
+
+Birds' first rerun failed at the **second** stamp verify, and the failure named the real design flaw:
+
+```
+Error: Candidate release stamp does not match its payload and manifest contract.
+```
+
+Not a defect in the regeneration. That run's own manifest agreed with the committed one on **all 121 file
+checksums**, and the *first* stamp verify passed on the committed pair. The 146 differing lines were **73
+package `Built` timestamps and nothing else** — and those feed `manifest_contract_sha256`, because the
+schema-v3 contract hashes the entire `packages` block.
+
+**So package metadata that the change never touched invalidates the release identity.** That is the flaw.
+
+The open question was whether adopting the validator's manifest converges or loops forever. It converges,
+and this is now *measured*, not assumed:
+
+| Evidence | Result |
+|---|---|
+| Birds run 33411176784 (16:09Z) vs Mosquito run 33409103282 (15:47Z) — different repos, different runners | All **83 shared packages** carry byte-identical `Built` values |
+| The window | `2026-08-12 19:35:57 – 19:50:19 UTC`, identical in both |
+| Mosquito's rerun after shuttling | **Green** — CI regenerated the manifest and it byte-matched |
+
+Those are **Posit Package Manager's own binary build times** for the pinned 2026-07-15 jammy snapshot, rebuilt
+server-side on 2026-08-12 — not per-run compiles. Stable across runs and across repos.
+
+Birds was therefore fixed by taking the validator's manifest verbatim and **rebinding the stamp to it**
+(`manifest_contract_sha256 80ac0012… → cf90c33b…`, `release_id 9492231a… → 243036a9…`), with
+`payload_sha256` unchanged at `d62ebd6d…` because no source byte moved. The contract-digest implementation
+was validated the same way as everything else here: it reproduces the known-good `80ac0012…` exactly from
+the committed manifest before being used on the new one.
+
+**This is the strongest argument yet for promoting `compare_manifests.R`.** In Mosquito the drift only trips
+a byte-diff gate. In Birds it corrupts the **release identity of an unchanged app** — an upstream binary
+rebuild is enough to invalidate a release. A semantic comparison (package identity / version / checksum)
+would be immune to both. Candidate follow-up for `connor` + `neonize`.
 
 *Inverts* — the dispatched `refresh-data.yml` run (`skip_download`) succeeded in all four jobs against the PR
 head, and its publish job wrote the validated tree to `automation/invert-data-refresh`. Before shuttling, the
