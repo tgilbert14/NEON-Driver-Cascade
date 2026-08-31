@@ -607,3 +607,140 @@ Playwright configured, but every navigation fails `net::ERR_CONNECTION_RESET` �
 `https://example.com` — so the browser has no egress in this container, proxied or not. `curl` works. All
 evidence in this document is tile-level and source-level: decisive for the cause and for the measured
 blanking, but **nobody has yet seen a fixed app**.
+
+---
+
+## 10. Session 2026-08-31 — the last three PRs, and two new problems
+
+Six of nine were already merged or green. This session cleared the three blocked ones and turned up two
+things the rollout had not anticipated: a **corrupted `manifest.json` on the Breeding Birds deploy branch**,
+and a **second, quieter basemap failure mode** that the helper as shipped does not survive.
+
+### 10.1 Breeding Birds — `master` was carrying an unresolved merge
+
+Not a basemap problem. Found while checking why the owner's regeneration had not reached the PR.
+
+`master` head `08eb093 "update"` has **nine conflict-marker lines and six superseded checksums committed
+into `manifest.json`**, in three blocks inside the `files` map. The file is **not valid JSON**, so every gate
+that parses it fails: `verify_manifest.R`, `write_release_stamp.R`, and Connect's own bundle read. CI run #8
+on that commit failed, and `master` is the branch Connect Cloud watches.
+
+How it happened: `8128680 "build: regenerate the manifest and release stamp for the basemap change"` has
+parent `efda16e` — a months-old line carrying **neither** PR #5's release work **nor** the basemap change. It
+regenerated four checksums against the wrong tree. Merging that into `bb18be3` collided on `manifest.json`
+and the markers were committed unresolved.
+
+**Nothing else was lost.** `git diff --name-status bb18be3 origin/master` returns exactly one line —
+`M manifest.json`. Master's tree is otherwise byte-identical to the last known-good commit, so discarding
+the corrupt side restores it completely. The repair rides in PR #6 rather than a separate PR: one merge both
+fixes `master` and ships the basemap change. The resolved tree is identical to the PR branch before the merge.
+
+**Lesson for the log:** a generated artifact regenerated on the wrong base is worse than one not regenerated
+at all — it looks like progress and it lands on the deploy branch. Check `git merge-base --is-ancestor` before
+running any regeneration script.
+
+### 10.2 Regenerating Birds' authority without R — and proving it first
+
+No R runtime here, and Birds' authority is a two-phase, self-referential contract (prestamp manifest →
+release stamp → final manifest). It is also **fully deterministic**, so it was reimplemented rather than
+hand-computed — and, decisively, **validated by reproducing the known-good `bb18be3` stamp byte-for-byte
+before being used**:
+
+| field | reproduced | committed at `bb18be3` |
+|---|---|---|
+| payload files | 125 | 125 |
+| `source_receipt_sha256` | `55f30d25…` | ✅ same |
+| `environment_receipt_sha256` | `03f4bc77…` | ✅ same |
+| `payload_sha256` | `2ce22cd3…` | ✅ same |
+| `release_id` | `sha256:043aa41d…` | ✅ same |
+
+All four match, including the `release_id` derived from the carried-over `manifest_contract_sha256`. The
+manifest MD5 model was validated the same way: all 121 committed checksums reproduce from the tree.
+
+Only then was it applied to the PR tree. What moved: `payload_sha256 → d62ebd6d…`, `release_id →
+sha256:9492231a…`, and exactly three manifest checksums (`global.R`, `server.R`, `data/release_stamp.json`).
+The six non-file contract fields are byte-identical to `bb18be3`, so `manifest_contract_sha256` is unchanged
+**by construction** — the stamp's contract digest excludes the `files` map, which is why a source-only edit
+cannot move it.
+
+**This is the pattern to reuse**: reproduce a known-good generated artifact exactly, then and only then apply
+the same computation to the new tree. It is not hand-editing, because the implementation is checked against
+ground truth before it is trusted.
+
+### 10.3 Water Chemistry — a blank map, and the failure mode the helper missed
+
+Reported symptom: the site-picker map draws its Leaflet frame and attribution control but **no basemap tiles**.
+
+Ruled out by measurement, not inference:
+
+| Hypothesis | Test | Result |
+|---|---|---|
+| Stale deploy | `ddl-runtime-receipt` meta in the served HTML vs the joined MD5 of the six `WATER_RUNTIME_FILES` | **Exact match** — the live app runs the merged code |
+| Bad call site | Helper + call site vs Ground Beetle's (which works) | Byte-identical |
+| Dead tile servers | `curl` all three endpoints | All `200`: CARTO `light_all` keyed (`image/png`), both Esri canvases (`image/jpeg`) |
+
+That leaves the **key's value in Connect Cloud**, and one value explains it exactly:
+
+> A **missing** key is loud — CARTO serves the "API KEY REQUIRED" watermark, which is this whole incident.
+> A key carrying a **trailing newline or a stray space** is silent. `sprintf()` interpolates it into the tile
+> URL, every tile request is malformed, and the basemap goes blank behind an otherwise-working map.
+
+That is exactly what a paste out of the CARTO signup mail leaves in Connect Cloud's Variables field, and it is
+**not observable from outside the container** — tile URLs travel over the Shiny websocket.
+
+**The fix (Water Chemistry PR #20):** stop trusting the value.
+
+```r
+key <- trimws(Sys.getenv("CARTO_BASEMAP_KEY", ""))
+if (grepl("^[A-Za-z0-9_-]+$", key)) {
+```
+
+Trim it, so a padded paste still authenticates. Validate its shape, so a mangled value takes the Esri
+fallback — a real basemap instead of nothing. A correct key is unaffected by both. The fallback branch now
+also `message()`s why it fired, so the next occurrence is one line in the Connect log instead of a blank
+rectangle.
+
+**⚠️ Not verified end-to-end.** The reasoning is airtight on everything *except* the actual stored value of
+`CARTO_BASEMAP_KEY` for that content item, which only the Connect Cloud settings page shows. If the map is
+still blank after PR #20 deploys, the next datum to get is the tile host in the browser Network tab
+(`cartocdn` keyed / `arcgisonline` / neither).
+
+### 10.4 OUTSTANDING — the hardening is in ONE repo, not nine
+
+**The other eight apps carry the unhardened helper.** They work today, so this session deliberately did not
+churn eight byte-exact manifests to fix one app. But every one of them is one whitespace-padded paste away
+from the same silent blank map, and the owner set the variable by hand in nine places.
+
+**Next session: land §10.3's three-line change in the remaining eight repos in one pass.** Each needs its own
+manifest regeneration, so treat it as a rollout, not a patch — the same shuttle flow this incident already
+documents. The `message()` line makes it self-diagnosing thereafter.
+
+### 10.5 Final rollout state
+
+| App | PR | Base | State at end of session |
+|---|---|---|---|
+| Ground Beetle | #22 | `main` | **MERGED + DEPLOYED**, live map confirmed by owner |
+| Water Chemistry | #19 | `main` | **MERGED + DEPLOYED**; receipt-verified live. Blank map → **PR #20** (§10.3) |
+| Plant Diversity | #18 | `master` | Green, ready |
+| Small Mammal | #93 | `main` | Green, ready |
+| Vegetation Structure | #16 | `main` | Green, ready |
+| Plant Phenology | #12 | `master` | Green, ready |
+| Mosquito Pulse | #12 | `master` | **UNBLOCKED** — CI now exports the validated manifest; artifact shuttled (§10.6) |
+| My Little Inverts | #10 | `main` | **UNBLOCKED** — dispatched validator succeeded, all 3 authority files shuttled (§10.6) |
+| Breeding Birds | #6 | `master` | **UNBLOCKED** — authority regenerated (§10.2) **and** repairs `master` (§10.1) |
+
+### 10.6 How the last two shuttles were done
+
+*Mosquito* — the CI-shape gap is fixed: an unconditional `upload-artifact` step now sits before the byte
+gate, matching Ground Beetle's verbatim (same pinned action SHA). The run then exported
+`mosquito-manifest-43c8892d…`, and its 112 file checksums all match the tree, including the two the basemap
+change moves. Everything else differing from the committed manifest is a package `Built` timestamp — **73 of
+them** — recording when the validator compiled each source package. That is precisely the non-determinism
+this repo's byte-exact gate flaps on, and the reason the bytes must be *taken* from the validator rather than
+reconstructed. **This is the case for promoting `compare_manifests.R` to the byte-exact siblings.**
+
+*Inverts* — the dispatched `refresh-data.yml` run (`skip_download`) succeeded in all four jobs against the PR
+head, and its publish job wrote the validated tree to `automation/invert-data-refresh`. Before shuttling, the
+whole branch was byte-compared: it differed from the PR branch in **exactly** `manifest.json`,
+`release/production-identity.json` and `docs/release.json`. After the shuttle the PR tree is byte-identical to
+the validated branch. `runtime_payload_sha256` moved because it hashes `global.R`/`ui.R`/`server.R`.

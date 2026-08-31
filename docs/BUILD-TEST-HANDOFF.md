@@ -4787,3 +4787,51 @@ Rules:
 - **Next action:** owner requests the key; then smoke-test the URL form, set the
   Connect variable, and canary ONE repo end to end — patch, manifest, merge, deploy,
   and actually look at the live map — before touching the other eight.
+
+## 2026-08-31 [Claude] — clear the last three PRs; two new problems found
+
+**Done.** The three blocked basemap PRs are unblocked; all nine repos now have a
+mergeable PR. Two problems surfaced that the rollout had not anticipated — one of
+them a production incident unrelated to basemaps. Full record:
+`docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §10.
+
+- **Breeding Birds `master` was broken, and it is the branch Connect watches.** Head
+  `08eb093 "update"` carries an unresolved merge: nine conflict-marker lines committed
+  inside `manifest.json`'s `files` map, so the file is not valid JSON and every gate
+  that parses it fails. CI run #8 on that commit failed. Cause: `8128680` regenerated
+  the manifest on `efda16e`, a months-old base with neither PR #5's release work nor
+  the basemap change. Bounded by luck — `git diff --name-status bb18be3 origin/master`
+  is exactly one line — so the corrupt side was discarded wholesale. The repair rides
+  in PR #6: one merge fixes `master` and ships the basemap change together.
+- **Birds' authority regenerated without R, and proved before use.** The schema-v3
+  stamp is deterministic, so it was reimplemented and validated by reproducing the
+  committed `bb18be3` stamp byte-for-byte (125 payload files, both receipt digests,
+  `payload_sha256`, and the derived `release_id` — all four match) before being applied
+  to the new tree. Manifest MD5 model validated the same way, 121/121. Exactly three
+  checksums moved; the six non-file contract fields are unchanged, so
+  `manifest_contract_sha256` holds by construction.
+- **Mosquito and Inverts shuttled.** Mosquito's CI now exports its validated manifest
+  unconditionally (the gap was CI shape, not code); its artifact's 112 checksums all
+  match the tree, everything else differing is 73 package `Built` timestamps — a fresh
+  case for promoting this repo's semantic `compare_manifests.R` to the byte-exact
+  siblings. Inverts' dispatched validator succeeded in all four jobs; its three
+  authority files were shuttled after byte-comparing the whole branch.
+- **Water Chemistry's map is blank, and the cause is NOT the code.** The live app is
+  provably running the merged bytes (`ddl-runtime-receipt` matches the six file MD5s
+  exactly), the helper is byte-identical to Ground Beetle's, and all three tile
+  endpoints answer 200. That leaves the key's *value*: a trailing newline in Connect
+  Cloud's Variables field interpolates into the tile URL and blanks the basemap
+  silently — a *missing* key is loud (the watermark), a *malformed* one is not.
+  PR #20 adds `trimws()` + a shape check + a `message()` in the fallback branch.
+
+**⚠️ Not verified end-to-end.** The Water Chem diagnosis is airtight except for the
+actual stored value of `CARTO_BASEMAP_KEY`, which only the Connect settings page shows.
+Tile URLs travel over the Shiny websocket, so they are not observable from a container.
+
+**Nothing at risk here:** docs-only in this repo; `docs/` and `.claude/` stay outside
+`DEPLOY_APP_FILES`.
+
+**Next action:** land the §10.3 hardening in the remaining EIGHT repos in one pass —
+they all carry the unhardened helper and are each one padded paste away from the same
+silent blank map. Each needs its own manifest regeneration, so run it as a rollout
+using the shuttle flow already documented here, not as a drive-by patch.
