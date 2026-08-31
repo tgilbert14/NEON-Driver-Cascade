@@ -1,6 +1,6 @@
 # Build, test, and handoff record
 
-Last updated: 2026-08-06
+Last updated: 2026-08-28
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
@@ -4635,3 +4635,203 @@ Rules:
   new upstream sites are excluded by decision rather than by omission. (b)
   preserves the current published family; (a) expands it and needs a coverage
   review. Do not simply append a row to silence the guard.
+
+### 2026-08-28 - [Claude] suite basemap outage: CARTO "API KEY REQUIRED" watermark
+
+- **Reported:** the maps in the NEON explorer apps display "need api key for
+  layers/basemap" across the basemap, in a lot — as it turns out, all — of the suite.
+- **Diagnosed:** CARTO now burns an `API KEY REQUIRED / carto.com/basemaps/apikey`
+  watermark into unauthenticated raster tiles from `basemaps.cartocdn.com`,
+  server-side. The tile request still returns HTTP 200 with a valid PNG, so no app
+  errors, logs, or falls back — the map simply renders defaced. Verified by fetching
+  `light_all` (`CartoDB.Positron`) and `dark_all` (`CartoDB.DarkMatter`) tiles and
+  inspecting the images. Both variants are affected.
+- **Scope:** all **nine** companion apps, **on first load** — every one of them puts
+  `CartoDB.Positron` on its landing/site-picker map, which needs no interaction.
+  Apps whose main explore map defaults to an `Esri.*` layer look correct until the
+  user switches the Basemap select to "Light". **Driver-Cascade is unaffected:** it
+  ships no Leaflet map (no `leaflet`, `addTiles`, or `addProviderTiles` in
+  `global.R`, `ui.R`, `server.R`, or `R/`), and this change touched only `docs/` and
+  `.claude/`, both outside the `DEPLOY_APP_FILES` allowlist, so no artifact,
+  manifest, or deploy surface moved.
+- **Ruled out with evidence, so no one re-walks it:** not an R package regression
+  (`leaflet.providers` 2.0.0 and 3.0.0 ship byte-identical CartoDB/Esri url
+  templates with no `{apikey}` placeholder, and the apps pinning each version were
+  equally affected); not a leaflet-providers API-key code path (the bundled JS only
+  throws `No such provider`); not referer/Origin/CORS (identical watermarked bytes
+  returned with browser headers and a live Connect Cloud referer); not CSP, not a
+  manifest pin, not something a redeploy clears; and no app's own source contains an
+  "api key" string.
+- **Decided (owner, 2026-08-28):** `CartoDB.Positron` → `Esri.WorldGrayCanvas`
+  (keyless, fetched and visually confirmed clean); `CartoDB.DarkMatter` → CSS-invert
+  the Leaflet **tile pane only**, synthesising a dark canvas from the same grey
+  basemap so markers, labels and the attribution control are untouched; existing
+  `Esri.*` choices unchanged. A CARTO API key was rejected (public in any
+  client-side tile URL, nine deployments to manage, and CARTO is retiring raster
+  basemaps regardless).
+- **Caveat carried on the fix:** Esri has already announced the same sunset for the
+  legacy `server.arcgisonline.com` basemap endpoints this moves onto. This is a fix
+  with a shelf life, recorded as a standing risk rather than presented as settled.
+- **Not done here:** the nine companion repos are **not yet patched**. Their per-file
+  call sites, the CSS-invert open questions, the max-zoom check, and a rebuild recipe
+  for the local sibling checkouts are all in
+  `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §6.
+- **Environment limit found:** headless-browser verification of the deployed apps is
+  impossible in this container — Chromium is installed and Playwright configured, but
+  every navigation fails `net::ERR_CONNECTION_RESET`, including `https://example.com`,
+  routed through the agent proxy or not. `curl` works. The evidence here is therefore
+  tile-level: decisive for the cause, but no one has yet *seen* a fixed app.
+- **Next action:** settle the CSS-invert selector and the `Canvas/World_Light_Gray_Base`
+  max zoom, then apply the patch to the nine companion repos — one branch and draft PR
+  each, respecting each repo's default branch (Driver-Cascade `master`; Small Mammal and
+  Vegetation `main`) and its CI manifest gate, which is byte-exact in the siblings where
+  Driver-Cascade's is semantic.
+
+### 2026-08-28 (later) - [Claude] the basemap fix was refuted by its own audit
+
+- **What changed:** the fix recorded in the entry above — blanket
+  `CartoDB.Positron` → `Esri.WorldGrayCanvas` plus a CSS-invert dark canvas — was
+  put through a nine-app audit and a four-lens adversarial review. **All four
+  lenses refuted it.** The plan in `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` is now
+  a per-map-ROLE plan (§4), and two owner decisions (§5) block rollout. The
+  diagnosis in the earlier entry is unchanged and still correct; only the remedy moved.
+- **Why, measured:** `Canvas/World_Light_Gray_Base` has had no content update since
+  2021. At z16 it returns a single-colour blank tile (`RGB(239,239,239)`) for **17 of
+  46** NEON terrestrial sites; SCBI z15 and z16 are byte-identical; above z16 every
+  request is the same 2,521-byte "Map data not yet available" placeholder. Verified
+  by hand for SCBI: z13 = 224 distinct colours (hairline roads, no labels), z16 = 1.
+  `Esri.WorldTopoMap`, `Esri.WorldImagery`, `USGS.USTopo`, `USGS.USImageryTopo`,
+  `OpenStreetMap.Mapnik` and `CartoDB.Positron` are all 0/46 blank. So the swap is
+  sound for the national pickers (z2-5) and wrong for every plot-scale map.
+- **The proposed `maxNativeZoom = 16` mitigation does not mitigate** — it upscales an
+  already-blank tile and hides the defect from a visual check.
+- **The CSS-invert workstream is cancelled, superseded not deferred.**
+  `Canvas/World_Dark_Gray_Base` is a real, keyless, labelled dark canvas — verified
+  live (z4: 5,456 B, 283 distinct colours, dominant `RGB(63,63,65)`). It is simply
+  absent from `leaflet.providers`, so it needs a raw `addTiles()`. The earlier
+  "there is no keyless dark canvas" line was FALSE; the question asked what the
+  wrapper exposed, never what the provider serves.
+- **Three further defects the audit surfaced:** the swap makes marker contrast ~8-10%
+  WORSE (Esri `#efefef` is darker than Positron `#fafaf8`, and every marker palette is
+  darker still); `leaflet.providers` emits a stale Esri attribution ("DeLorme, NAVTEQ")
+  that omits the OpenStreetMap credit the service's own live `copyrightText` requires,
+  so the swap would trade a compliant credit line for a non-compliant one; and
+  `neon-my-little-inverts` uses the object form `leaflet::providers$CartoDB.Positron`,
+  which a quoted-string grep misses entirely. Sweep with `-E 'CartoDB[."$]|cartocdn'`.
+- **Also found:** ground-beetle's dark branch is read inside `renderLeaflet`, so dark
+  mode cannot be deferred to a later wave; small-mammal `server.R:2491`/`:2514` suppress
+  attribution entirely and are non-compliant today with CARTO and equally with Esri;
+  and `neon-my-little-inverts` and `neon-waterchemistry-analyte-viewer-app` have **no
+  `ci.yml` at all** — the two repos with the two non-standard idioms are the two with
+  no pre-merge gate. No repo in the suite asserts any provider string, which is why
+  this shipped unnoticed.
+- **Nothing at risk:** docs-only again; `docs/` and `.claude/` stay outside
+  `DEPLOY_APP_FILES`, no artifact or manifest moved, and no companion repo was touched.
+- **Next action (owner decision, blocking):** two questions in
+  `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §5 that could dissolve most of the work —
+  (1) is there a University of Arizona institutional ArcGIS Online licence, which
+  removes the "keyless or bust" constraint entirely; (2) should the picker be tileless
+  at all, given `prototypes/site-explorer` already renders real geography with no tiles
+  and the suite once shipped a tileless scattergeo picker. The free CARTO key is
+  deliberately re-opened as a third option: it restores Positron AND DarkMatter with
+  zero re-tuning and no blank tiles. Do not start the nine-repo rollout before these
+  are answered.
+
+### 2026-08-28 (decision) - [Claude] basemap: take the free CARTO key
+
+- **Owner decision:** take the free CARTO basemap key and keep `CartoDB.Positron`
+  and `CartoDB.DarkMatter` exactly as they are. Disposition `ADOPT`. This is the
+  only option that changes nothing visually — same tiles, same `maxZoom = 20`,
+  same retina, zero blank tiles, no marker-palette or CSS re-tuning, no contrast
+  regression, no attribution regression, and ground-beetle's dark theme keeps
+  working untouched. Every defect recorded in the previous entry exists *because*
+  the alternatives moved the basemap; this one does not.
+- **Retired by this decision:** the blanket `Esri.WorldGrayCanvas` swap (REJECTED
+  — blank at plot scale) and the CSS-invert dark canvas (REJECTED, superseded).
+  The per-map-role split survives only as the keyless fallback inside the new
+  helper, so a missing or revoked key degrades to a clean canvas rather than a
+  defaced one. The two blocking questions from the previous entry (UA institutional
+  ArcGIS licence; tileless picker) are no longer needed for the fix and move to the
+  register as durability options.
+- **BLOCKED on one owner action no agent can perform:** request the key at
+  <https://carto.com/basemaps/apikey> (email + domain + one-line description;
+  emailed straight back, no account, no approval queue; fair use 5M tile
+  requests/calendar month). Everything downstream is written and waiting.
+- **Key mechanics settled and recorded in §4 of the incident doc:** it is a `?key=`
+  QUERY PARAMETER; `addProviderTiles()` cannot carry it (the pinned CartoDB template
+  has an `{r}` slot but no `{apikey}` placeholder), so it needs a raw `addTiles()`
+  with attribution supplied by hand. An `add_suite_basemap()` helper is written,
+  keyed with a keyless Esri-canvas fallback.
+- **The key is NOT a secret, and the plan says so explicitly.** It rides in the tile
+  URL and every request is issued client-side, so it lands in page source regardless;
+  CARTO's terms §9.c bans server-side proxying, so it cannot be hidden.
+  `Sys.getenv("CARTO_BASEMAP_KEY")` buys exactly two things — it keeps the key out of
+  nine public git histories and makes rotation a Connect Cloud setting rather than
+  nine releases. Connect Cloud does support this (content settings → Variables,
+  encrypted at rest, read at runtime; NOT part of `manifest.json`). Cost: nine apps
+  × one manual variable, and a republish is likely needed — untested.
+- **Cannot be verified without the real key:** an INVALID key returns the
+  byte-identical watermarked tile as no key at all (same ETag), so there is no
+  negative test. Smoke-test the URL form once with the real key before any PR opens.
+- **Rollout gate discovered and recorded (§5):** every companion repo has a
+  byte-exact `manifest.json` gate and `ui.R`/`server.R`/`R/*.R`/`global.R` are all on
+  the deploy surface, so a source edit REQUIRES the manifest regenerated in the same
+  commit. Never hand-edit it — Small Mammal and Vegetation carry a blessed
+  `regenerate-manifest.yml` whose own header says it exists to end the loop that
+  "made the ChatGPT/Codex cover rework fail merges over and over". The two repos with
+  NO `ci.yml` (little-inverts, water-chemistry) still ship a manifest and have nothing
+  to catch a stale one — do those last. Small Mammal `DEPLOY.md:9-13` forbids
+  automation pushing to `main`: open PRs, do not merge them.
+- **Nothing at risk:** docs-only again; `docs/` and `.claude/` stay outside
+  `DEPLOY_APP_FILES`; no companion repo touched.
+- **Next action:** owner requests the key; then smoke-test the URL form, set the
+  Connect variable, and canary ONE repo end to end — patch, manifest, merge, deploy,
+  and actually look at the live map — before touching the other eight.
+
+## 2026-08-31 [Claude] — clear the last three PRs; two new problems found
+
+**Done.** The three blocked basemap PRs are unblocked; all nine repos now have a
+mergeable PR. Two problems surfaced that the rollout had not anticipated — one of
+them a production incident unrelated to basemaps. Full record:
+`docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §10.
+
+- **Breeding Birds `master` was broken, and it is the branch Connect watches.** Head
+  `08eb093 "update"` carries an unresolved merge: nine conflict-marker lines committed
+  inside `manifest.json`'s `files` map, so the file is not valid JSON and every gate
+  that parses it fails. CI run #8 on that commit failed. Cause: `8128680` regenerated
+  the manifest on `efda16e`, a months-old base with neither PR #5's release work nor
+  the basemap change. Bounded by luck — `git diff --name-status bb18be3 origin/master`
+  is exactly one line — so the corrupt side was discarded wholesale. The repair rides
+  in PR #6: one merge fixes `master` and ships the basemap change together.
+- **Birds' authority regenerated without R, and proved before use.** The schema-v3
+  stamp is deterministic, so it was reimplemented and validated by reproducing the
+  committed `bb18be3` stamp byte-for-byte (125 payload files, both receipt digests,
+  `payload_sha256`, and the derived `release_id` — all four match) before being applied
+  to the new tree. Manifest MD5 model validated the same way, 121/121. Exactly three
+  checksums moved; the six non-file contract fields are unchanged, so
+  `manifest_contract_sha256` holds by construction.
+- **Mosquito and Inverts shuttled.** Mosquito's CI now exports its validated manifest
+  unconditionally (the gap was CI shape, not code); its artifact's 112 checksums all
+  match the tree, everything else differing is 73 package `Built` timestamps — a fresh
+  case for promoting this repo's semantic `compare_manifests.R` to the byte-exact
+  siblings. Inverts' dispatched validator succeeded in all four jobs; its three
+  authority files were shuttled after byte-comparing the whole branch.
+- **Water Chemistry's map is blank, and the cause is NOT the code.** The live app is
+  provably running the merged bytes (`ddl-runtime-receipt` matches the six file MD5s
+  exactly), the helper is byte-identical to Ground Beetle's, and all three tile
+  endpoints answer 200. That leaves the key's *value*: a trailing newline in Connect
+  Cloud's Variables field interpolates into the tile URL and blanks the basemap
+  silently — a *missing* key is loud (the watermark), a *malformed* one is not.
+  PR #20 adds `trimws()` + a shape check + a `message()` in the fallback branch.
+
+**⚠️ Not verified end-to-end.** The Water Chem diagnosis is airtight except for the
+actual stored value of `CARTO_BASEMAP_KEY`, which only the Connect settings page shows.
+Tile URLs travel over the Shiny websocket, so they are not observable from a container.
+
+**Nothing at risk here:** docs-only in this repo; `docs/` and `.claude/` stay outside
+`DEPLOY_APP_FILES`.
+
+**Next action:** land the §10.3 hardening in the remaining EIGHT repos in one pass —
+they all carry the unhardened helper and are each one padded paste away from the same
+silent blank map. Each needs its own manifest regeneration, so run it as a rollout
+using the shuttle flow already documented here, not as a drive-by patch.

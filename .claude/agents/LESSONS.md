@@ -123,3 +123,65 @@
   artifacts. If that fails, the environment cannot produce publishable artifacts, full stop — do not ship them
   and do not re-register hashes from them. Text artifacts (the codebook CSV) still match, so a diff where only
   the compressed RDS move is the tell-tale signature of an encoding, not content, difference.
+- [2026-08-28] cass · confirmed · A third-party basemap can break EVERY app in the suite at once with no
+  error, no log line, and no deploy: on 2026-08-28 CARTO began burning an "API KEY REQUIRED" watermark into
+  unauthenticated `basemaps.cartocdn.com` raster tiles server-side. The request still returns HTTP 200 and a
+  valid PNG, so nothing fails loudly — the map just renders defaced. All nine companion apps were hit on
+  FIRST LOAD because every one of them puts `CartoDB.Positron` on its landing/site-picker map; Driver-Cascade
+  was untouched only because it ships no Leaflet map. DECISIVE TEST when a hosted map "looks wrong": fetch one
+  raw tile with curl and LOOK AT THE IMAGE (`curl -s -o t.png "https://a.basemaps.cartocdn.com/light_all/6/13/24.png"`).
+  Do not start from the R package — the two `leaflet.providers` versions in the suite (2.0.0 and 3.0.0) ship
+  byte-identical CartoDB/Esri url templates with no `{apikey}` placeholder, and the apps pinning each were
+  equally affected, which by itself rules the package out. Referer/Origin/CORS were also ruled out: the same
+  watermarked bytes come back with browser headers and a live Connect Cloud referer. GENERAL LESSON: a free
+  tile provider is an unversioned, uncontracted runtime dependency of the deploy surface that no manifest pin
+  covers — the fix (`Esri.WorldGrayCanvas`) has a shelf life too, because Esri has already announced the same
+  sunset for the legacy `server.arcgisonline.com` endpoints. Full record: `docs/SUITE-BASEMAP-INCIDENT-2026-08.md`.
+- [2026-08-28] cass · confirmed · "Unwatermarked" is not "usable", and HTTP 200 proves neither. The obvious fix
+  for the CARTO watermark — swap `CartoDB.Positron` for the keyless `Esri.WorldGrayCanvas` — was REFUTED by
+  measurement after it had already been written down as decided. `Canvas/World_Light_Gray_Base` has had no
+  content update since 2021: at z16 it returns a tile with exactly ONE distinct colour (RGB 239,239,239) for
+  17 of NEON's 46 terrestrial sites, and SCBI z15/z16 are byte-identical, so the `maxNativeZoom = 16` mitigation
+  upscales an already-blank tile and HIDES the defect from an eyeball check. DECISIVE TEST for any basemap
+  change: decode the tile and count distinct RGB values at the zooms the app actually uses (the picker's z3-4
+  AND the plot map's z13-16) — a single-colour tile is blank, and Esri's "Map data not yet available"
+  placeholder is md5 `f27d9de7f80c13501f470595e327aa6d`. Three further traps found the same way: the swap makes
+  marker contrast ~8-10% WORSE (three sub-audits asserted the opposite — #efefef is darker than Positron's
+  #fafaf8, and every marker palette is darker still); `leaflet.providers` hardcodes a STALE Esri attribution
+  ("DeLorme, NAVTEQ") that omits the OpenStreetMap credit the service's own live `copyrightText` requires, so
+  the swap trades a compliant credit line for a non-compliant one; and a `grep '"CartoDB'` misses
+  `leaflet::providers$CartoDB.Positron` (the object form, used in My Little Inverts) — sweep with
+  `-E 'CartoDB[."$]|cartocdn'`. GENERAL LESSON: ask what the PROVIDER serves, not what the wrapper exposes. The
+  "there is no keyless dark canvas" claim in the first draft of this incident was false — `Canvas/World_Dark_Gray_Base`
+  is real, keyless and labelled; it is simply absent from leaflet-providers. That single mis-framed question had
+  already produced a signed-off CSS-invert workstream that was pure waste. Full record + per-role plan:
+  `docs/SUITE-BASEMAP-INCIDENT-2026-08.md`.
+- [2026-08-31] cass · confirmed · A generated artifact regenerated on the WRONG BASE is worse than one not
+  regenerated at all: it looks like progress and it lands on the deploy branch. Breeding Birds `master` head
+  `08eb093 "update"` shipped NINE conflict-marker lines inside `manifest.json`'s `files` map, making the file
+  invalid JSON and failing every gate that parses it (`verify_manifest.R`, `write_release_stamp.R`, Connect's
+  own bundle read) — on the branch Posit Connect Cloud watches. Root cause: `8128680` ran the regeneration on
+  `efda16e`, a months-old line with neither the release work nor the change it claimed to regenerate for, then
+  was merged without resolving the collision. CHECK `git merge-base --is-ancestor <base> HEAD` BEFORE running
+  any regeneration script, and treat conflict markers in a generated file as a production incident, not a merge
+  nit. Blast radius was bounded only by luck: `git diff --name-status bb18be3 origin/master` returned exactly
+  one line, so the corrupt side could be discarded wholesale.
+- [2026-08-31] cass · confirmed · You CAN regenerate a deterministic authority artifact without its runtime —
+  but only by reproducing a KNOWN-GOOD one byte-for-byte first. Birds' schema-v3 release stamp (a two-phase,
+  self-referential manifest→stamp→manifest contract) was reimplemented outside R and validated by reproducing
+  the committed `bb18be3` stamp exactly: same 125 payload files, same receipt digests, same `payload_sha256`,
+  same `release_id`. Only then was it applied to the new tree. That is not hand-editing — the implementation is
+  checked against ground truth before it is trusted, and a mismatch anywhere aborts. Same technique validated
+  the manifest MD5 model (121/121 checksums reproduced). Corollary: a contract digest that EXCLUDES the files
+  map cannot move on a source-only edit, so carrying it over verbatim is provable, not assumed.
+- [2026-08-31] cass · confirmed · A free-tier API key is a runtime input, so validate it like one. The CARTO
+  basemap key rides in the tile URL via `sprintf()`; a value pasted into Connect Cloud's Variables field with a
+  TRAILING NEWLINE interpolates straight into the URL and every tile request fails — the map goes BLANK behind
+  an otherwise-working Leaflet frame. Note the asymmetry that makes this nasty: a MISSING key is loud (CARTO's
+  "API KEY REQUIRED" watermark, the incident that started all this), a MALFORMED key is silent, and neither
+  errors or logs. Tile URLs travel over the Shiny websocket, so it is invisible from outside the container.
+  Fix is three characters of defence — `trimws()` plus `grepl("^[A-Za-z0-9_-]+$", key)` — so a padded paste
+  still authenticates and a mangled one degrades to a working fallback instead of nothing, plus a `message()`
+  in the fallback branch so the next occurrence is one log line rather than a blank rectangle. GENERAL LESSON:
+  when a human pastes a value into a settings box, the code owns the whitespace. Full record:
+  `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §10.3.
