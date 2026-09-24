@@ -4,6 +4,7 @@
 ui <- bslib::page_fillable(
   theme = app_theme, title = "NEON Cross-Product Response Atlas", lang = "en",
   tags$head(
+    tags$link(rel = "icon", href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230f6a5b'/%3E%3Cpath d='M3 11 6.5 6.5 9 9l4-5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
 
     tags$link(rel = "stylesheet", href = asset_url("styles.css")),
     tags$link(rel = "stylesheet", href = asset_url("cascade.css")),
@@ -72,7 +73,7 @@ ui <- bslib::page_fillable(
             div(
               class = "sp-field",
               selectInput("response",
-                label = tagList(bs_icon("bullseye"), " Driver Lab: explore…"),
+                label = tagList(bs_icon("bullseye"), " Response to explore (Driver Lab)"),
                 choices = local({
                   keys <- unique(as.character(PRIORS$to))
                   labels <- vapply(keys, sig_label, character(1))
@@ -164,14 +165,14 @@ ui <- bslib::page_fillable(
               class = "ladder-note", bs_icon("info-circle"),
               tags$span(HTML("Each line is <b>standardised</b>"), cpop("zscore"), HTML(": <b>0 = that signal's own average year</b>, up = above average, down = below. Compare the <b>timing</b> of the bumps across strips, not their heights, and each link carries a <b>lag</b>"), cpop("lag"), HTML(". Some clicked years won't trace because climate is missing or lagged downstream years are missing at this site; that's expected and is called out in the banner."))
             ),
-            spin(plotlyOutput("ladderPlot", height = "560px"))
+            spin(plotlyOutput("ladderPlot", height = "640px"))
           ),
           card(
             card_head(
               "link-45deg", "Direct association screens",
               info_pop("Link cards", p("Each card is one literature-motivated driver–response pairing with a stated direction and lag. Colour summarizes that pair only; adjacent cards do not combine into a tested pathway."))
             ),
-            uiOutput("linkChips")
+            div(class = "ladder-links-body", uiOutput("linkChips"))
           )
         ),
         card(
