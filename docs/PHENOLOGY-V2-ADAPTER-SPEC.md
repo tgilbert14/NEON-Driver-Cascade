@@ -114,7 +114,7 @@ The unchanged Driver baseline hashes are an additional no-mutation receipt:
 | `data/search_index.rds` | `a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af` |
 | `data/cascade_meta.rds` | `6ed4fd964dd626f57fa17f1fde3098e7073bd9fc94ebc0cecc4f95f8316cf2ec` |
 | `data/neon-cascade-codebook.csv` | `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3` |
-| `manifest.json` | `065e0c9779b8138cf7fdcbbcd4e2e5cb2672a5f8f79b39d0f9c3f32d96c6ceb8` |
+| `manifest.json` | `f4c29889e6ee54896701ed28e8613ea090f7b001dcae1371adba26ec9368fcbf` |
 
 ## 3. Source boundary and schemas
 

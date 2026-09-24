@@ -336,9 +336,6 @@ server <- function(input, output, session) {
                   if (pr$verdict=="match") "aligned with" else "counter to", pr$dst_z)) }
     }
     plist <- lapply(present, function(L){ dd <- dl[[L]]; lm <- LAYER_META[[L]]
-      layer_title_col <- if (is_dark()) lm$col else
-        switch(L, climate="#176b98", phenology="#4b7314",
-               producer="#287a3b", consumer="#b74338", "#53606d")
       ramp <- LADDER_PAL[[L]] %||% c("#2f7fb5","#16386e","#6db3e0"); j <- 0L
       p <- plotly::plot_ly()
       for (k in unique(dd$key)) { sub <- dd[dd$key==k,]; sub <- sub[order(sub$year),]; j <- j + 1L
@@ -355,16 +352,28 @@ server <- function(input, output, session) {
           text=~lab, textposition="top center", textfont=list(size=9, color=if(is_dark())"#e8eef2" else "#1f2a30"),
           marker=list(size=16, color=h$color, symbol=h$sym, line=list(color=pulse_outline, width=2)),
           name="pulse", legendgroup=L, showlegend=FALSE, hovertext=h$lab, hoverinfo="text") }
-      p %>% plotly::layout(yaxis=list(title=list(text=lm$title, font=list(size=11, color=layer_title_col)),
+      p %>% plotly::layout(yaxis=list(title=list(text=""),
         zeroline=TRUE, zerolinecolor=if(is_dark())"rgba(220,230,240,0.25)" else "rgba(31,42,48,0.18)",
         gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)", tickfont=list(size=9)))
     })
     narrow <- isTRUE((input$vw %||% 1200) < 760)
-    sp <- plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=TRUE, margin=0.035) %>%
+    # Layer names sit horizontally above each strip: rotated y-titles were taller
+    # than a strip and overlapped their neighbours.
+    strip_notes <- lapply(seq_along(present), function(i) {
+      L <- present[i]
+      col <- if (is_dark()) LAYER_META[[L]]$col else
+        switch(L, climate="#176b98", phenology="#4b7314", producer="#287a3b", consumer="#b74338", "#53606d")
+      list(text = paste0("<b>", toupper(LAYER_META[[L]]$title), "</b>"), font = list(size = 10.5, color = col),
+           xref = "paper", x = 0, xanchor = "left",
+           yref = paste0(if (i == 1) "y" else paste0("y", i), " domain"), y = 1, yanchor = "bottom",
+           showarrow = FALSE)
+    })
+    sp <- plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=FALSE, margin=c(0, 0, 0.055, 0.02)) %>%
       theme_plotly() %>%
       plotly::layout(showlegend = TRUE, legend=list(orientation="h", y=-0.08, font=list(size=if (narrow) 9 else 10)),
         xaxis=list(title="", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
-        margin = list(l = 60, r = 20, t = 36, b = if (narrow) 110 else 40))
+        annotations = strip_notes,
+        margin = list(l = 44, r = 20, t = 30, b = if (narrow) 110 else 40))
     # capture a dot click -> Shiny input$tracedYear (re-attached on every render; plotly purge wipes handlers)
     htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
       if (d && d.points && d.points.length){ var yr = d.points[0].x;
@@ -374,11 +383,11 @@ server <- function(input, output, session) {
   output$pulseBanner <- renderUI({
     t0 <- traced()
     if (is.null(t0)) return(div(class="pulse-banner pulse-idle", bs_icon("hand-index-thumb"),
-      HTML(" <b>Inspect a climate year:</b> select a dot or use the year selector. Vote-eligible direct climate pairings light at their stated lag: <span class='pulse-key pk-match'>● moved in the stated direction</span> or <span class='pulse-key pk-miss'>✕ moved oppositely</span>. Exact-zero driver or response anomalies abstain and are excluded from the denominator. This is an anecdotal trace, not a recursively inferred food-web path."),
-      cpop("pulse")))
+      tags$span(class="pb-text", HTML(" <b>Inspect a climate year:</b> select a dot or use the year selector. Vote-eligible direct climate pairings light at their stated lag: <span class='pulse-key pk-match'>● moved in the stated direction</span> or <span class='pulse-key pk-miss'>✕ moved oppositely</span>. Exact-zero driver or response anomalies abstain and are excluded from the denominator. This is an anecdotal trace, not a recursively inferred food-web path."),
+      cpop("pulse"))))
     paths <- pulse_paths(ann(), t0, biome = bclass())
     if (is.null(paths) || !nrow(paths)) return(div(class="pulse-banner pulse-active", bs_icon("activity"),
-      HTML(sprintf(" <b>Year %d</b> has no annual climate signal to trace here. ", t0)),
+      tags$span(class="pb-text", HTML(sprintf(" <b>Year %d</b> has no annual climate signal to trace here. ", t0))),
       actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear")))
     k <- sum(paths$verdict == "match")
     tot <- sum(paths$verdict %in% c("match", "miss"))
@@ -390,8 +399,8 @@ server <- function(input, output, session) {
                                abstain, if (abstain == 1) "" else "s",
                                if (abstain == 1) "was" else "were") else "")
     div(class="pulse-banner pulse-active", bs_icon("activity"),
-      HTML(sprintf(" <b>Inspecting %d:</b> %d of %d directly linked response%s moved in the stated direction.%s <i>One year is an anecdote; inspect the full series, uncertainty, support, and pooled sensitivity summary.</i> ",
-        t0, k, tot, if (tot==1) "" else "s", audit)),
+      tags$span(class="pb-text", HTML(sprintf(" <b>Inspecting %d:</b> %d of %d directly linked response%s moved in the stated direction.%s <i>One year is an anecdote; inspect the full series, uncertainty, support, and pooled sensitivity summary.</i> ",
+        t0, k, tot, if (tot==1) "" else "s", audit))),
       actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear"))
   })
 

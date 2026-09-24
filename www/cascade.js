@@ -211,7 +211,12 @@ function cascadeEnhanceDom(root) {
 }
 
 // ---- Plotly hidden-tab reflow + viewport signal -------------------------------
-document.addEventListener("shown.bs.tab", function () {
+document.addEventListener("shown.bs.tab", function (event) {
+  // On a narrow, horizontally scrolling tab strip keep the active tab in view.
+  var tab = event && event.target;
+  if (tab && tab.closest && tab.closest(".main-tabs-wrap") && tab.scrollIntoView) {
+    try { tab.scrollIntoView({ block: "nearest", inline: "nearest", behavior: cascadeReducedMotion() ? "auto" : "smooth" }); } catch (e) {}
+  }
   setTimeout(function () {
     cascadeEnhanceDom(document);
     try { window.dispatchEvent(new Event("resize")); } catch (e) {}
@@ -335,6 +340,11 @@ document.addEventListener("shown.bs.tab", function () {
     }
 
     if (closeButton) closeButton.addEventListener("click", dismiss);
+    // Switching tabs means the visitor has found the navigation; retire the tip
+    // instead of leaving it parked over charts on every tab.
+    document.addEventListener("shown.bs.tab", function () {
+      if (guide.classList.contains("show")) dismiss();
+    });
     setTimeout(function () {
       guide.hidden = false;
       setGuideInert(guide, false);

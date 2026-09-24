@@ -4894,3 +4894,46 @@ entry asked for an owner disposition; it is now given.
   area matching and held-event rules) with old/new parity on the pinned bundle; then
   dispatch `regenerate-artifacts.yml` with `siblings=current` to find any fourth
   drift before publication.
+
+## 2026-09-24 [Claude] — UI/UX pass (revamp §4D): layout and accessibility fixes, no data change
+
+Screenshot audit of all 7 tabs at 1400px and 390px, light and dark, against
+`docs/NEON-SUITE-REVAMP-PLAN.md` §4D. Fixed what was visibly broken; changed no
+scientific copy, data artifact, or input id.
+
+- **Compact site header clipped text mid-line** on every non-Overview tab (its
+  `max-height` counted padding, and positioned `<b>` runs painted past the clamp).
+  Now a clean 2-line clamp (3 on phones) with an ellipsis; the site-group pill is
+  hidden in compact mode only (the full Overview header still shows it).
+- **Inline ⓘ icons inflated every line they sat on** (a 70px inline box for the 44px
+  target), leaving big gaps in the Timeline note and the Driver Lab p/CI note. The
+  44px hit area now lives on an absolutely positioned `::before`, so WCAG 2.2 target
+  size is kept and the text line stays 18px.
+- **The first-visit tip sat over charts on every tab** (and a fifth of a phone
+  screen). It now retires when the visitor switches tabs, and on phones it is a slim
+  bar without mascots.
+- **Timeline:** rotated layer titles were taller than their strips and overlapped;
+  they are now horizontal labels above each strip (`<axis> domain` annotations). The
+  chart is 640px tall, and on ≥992px the association-card column scrolls at 760px
+  instead of stretching the chart card.
+- **"Inspect a climate year" banner** fragmented into flex items (". Exact-zero…"
+  on its own line); its text is now one wrapped span, in all three banner states.
+- **Phone tab strip:** the trailing edge fades to show it scrolls, and the active tab
+  scrolls into view.
+- Overview picker label "Driver Lab: explore…" → "Response to explore (Driver Lab)"
+  (same `response` id). Added an inline SVG favicon.
+- **Gates:** manifest checksums refreshed with `trusted_publish.py update-manifest`;
+  manifest re-registered (`065e0c97…` → `f4c29889…`) across the eight registries;
+  spec chain → `SPEC_BLOB` `cf95db9d…`. Locally green: `smoke_app.R`,
+  `test_boot_integrity.R`, `test_helpers.R`, `test_suite_synthesis.R`,
+  `test_trusted_publish.py`, `test_discharge_f1_contract.py`, `verify-manifest`,
+  `node --check`. `test_phenology_adapter_v2.R` fails identically on unmodified
+  `master` in this R 4.3.3 container (environment only), so CI's pinned R 4.5.2 is
+  the arbiter.
+- **Not done (needs `cass`):** the Overview hero sentence is still a dense
+  statistical paragraph (Holm p, site votes) and runs to ~16 lines on a phone. A
+  plain-language lead with the statistics as a secondary line would follow the
+  playbook, but it rewrites scientific copy, so it needs a disposition. Tab
+  consolidation to Overview/Explore/Compare/Data & QC/Methods is also still open.
+- **Next action:** confirm the live Connect app after the merge deploy; then take the
+  hero-copy rewrite to `cass`.

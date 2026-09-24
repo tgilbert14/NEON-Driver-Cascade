@@ -376,7 +376,11 @@ tr.dt-dim { opacity: 1; }
   color: var(--sky, #2f7fb5); opacity: .7; font-size: .82em; vertical-align: middle; transition: opacity .12s ease;
   /* keep the small inline glyph but give this disclosure trigger a >=44px hit box;
      negative margins absorb the padding so surrounding text isn't pushed around */
-  min-width: 44px; min-height: 44px; padding: 13px; margin: -13px -13px -13px -9px; box-sizing: content-box; }
+  /* The >=44px hit box lives on ::before, so the glyph stays one text line tall.
+     (Padding on the inline box itself stretched every line it sat on.) */
+  position: relative; margin: 0 2px 0 3px; line-height: 1; }
+.concept-i::before { content: ""; position: absolute; left: 50%; top: 50%;
+  width: 44px; height: 44px; transform: translate(-50%, -50%); }
 .concept-i:hover { opacity: 1; }
 .casc-node-h .concept-i { margin-left: auto; }   /* push the layer ⓘ to the right of the node header */
 
@@ -712,17 +716,23 @@ html .reveal-card.is-visible { opacity: 1; transform: none; will-change: auto; }
 .hero-band.hero-band-compact { padding: 10px 14px; margin-bottom: 10px; border-radius: 12px; }
 .hero-band-compact .hero-title { margin-bottom: 6px; font-size: 14px; }
 .hero-band-compact .hero-verdict {
-  margin: 0; padding: 7px 10px; font-size: 12.5px; line-height: 1.4;
-  max-height: 4.25em; overflow: hidden; display: -webkit-box;
-  -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  margin: 0; padding: 7px 10px 0; border-bottom: 7px solid transparent; background-clip: padding-box;
+  font-size: 12.5px; line-height: 1.45;
+  overflow: hidden; display: -webkit-box;
+  -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  /* positioned <b> runs paint past a line clamp, so also cap the box exactly */
+  box-sizing: content-box; max-height: calc(2 * 1.45em);
 }
+.hero-band-compact .hero-verdict:hover { transform: none; }
+.hero-band-compact .biome-tag { display: none; }  /* shown in full on Overview */
 .hero-band-compact .hero-grid { display: none; }
 .hero-change { display: inline-flex !important; align-items: center; min-height: 44px; padding: 8px 2px 8px 10px; }
 
 @media (max-width: 480px) {
   .hero-grid { grid-template-columns: 1fr; }
   .hero-band { padding: 14px 13px; border-radius: 14px; }
-  .hero-band-compact .hero-verdict { max-height: 6em; }
+  .hero-band-compact .hero-verdict { -webkit-line-clamp: 3; line-clamp: 3; max-height: calc(3 * 1.45em); }
+  .biome-tag { white-space: normal; }
   .sb-scroll { margin-inline: -6px; padding-inline: 6px; }
 }
 
@@ -933,3 +943,26 @@ html .reveal-card.is-visible { opacity: 1; transform: none; will-change: auto; }
   background: linear-gradient(120deg, #5eead4, #43b8e8) !important;
 }
 [data-bs-theme="dark"] .handoff-chip:focus-visible { outline: 3px solid #ffd24a; outline-offset: 3px; }
+
+/* ---- 2026-09 UX pass --------------------------------------------------------- */
+/* Tab strip: when the seven tabs overflow a phone, fade the trailing edge so the
+   strip visibly continues (it scrolls; JS keeps the active tab in view). */
+@media (max-width: 760px) {
+  .main-tabs-wrap .nav-tabs {
+    -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
+            mask-image: linear-gradient(90deg, #000 88%, transparent);
+    padding-right: 28px;
+  }
+}
+/* First-visit guide: a slim bar on phones instead of a fifth of the viewport. */
+@media (max-width: 480px) {
+  .cascade-guide { padding: 10px 44px 10px 12px; border-radius: 12px; }
+  .cascade-guide .cg-mascots { display: none; }
+  .cg-bubble { font-size: .8rem; }
+}
+/* Timeline: the association-card column tracks the chart instead of stretching
+   the chart card into a tall empty panel. */
+@media (min-width: 992px) {
+  .ladder-links-body { max-height: 760px; overflow-y: auto; overscroll-behavior: contain; }
+}
+.pulse-banner .pb-text { flex: 1 1 18rem; min-width: 0; }

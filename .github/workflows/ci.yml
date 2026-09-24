@@ -1340,7 +1340,7 @@ jobs:
           test "$(sha256sum data/neon-cascade-codebook.csv | awk '{print $1}')" = \
             "a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3"
           test "$(sha256sum manifest.json | awk '{print $1}')" = \
-            "065e0c9779b8138cf7fdcbbcd4e2e5cb2672a5f8f79b39d0f9c3f32d96c6ceb8"
+            "f4c29889e6ee54896701ed28e8613ea090f7b001dcae1371adba26ec9368fcbf"
           git diff --check
 
   phenology-v2-seal1-synthetic:
