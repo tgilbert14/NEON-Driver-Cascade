@@ -25,8 +25,8 @@ from urllib.parse import unquote, urlsplit
 CONTRACT_VERSION = "discharge-feasibility-f1-v1"
 F0_AUTHORITY_MERGE = "b75996a85809ed0cd8ba89121e0de18e22063cc7"
 F0_AUTHORITY_TREE = "8e7b774da4fc8486fb3c41e790317c61d5af9379"
-SPEC_BLOB = "b7751e976df0855eb308f67cfbb58db3c53bc74d"
-SPEC_SHA256 = "04666026d607c7aaa8b7d9b9922bb44b93ec4283e8a74e9142d6da72a97337f5"
+SPEC_BLOB = "faaba86f556540faa672c8d1715b4dbabba97dfc"
+SPEC_SHA256 = "0621ebb57ba22b272686ea751e3e46ebf1842ab823f0b80b76fa8e65790dba59"
 
 PRODUCT_CODE = "DP4.00130.001"
 PRODUCT_NAME = "Continuous discharge"
@@ -123,11 +123,11 @@ QC_FIELD_KEYS = frozenset({
 })
 
 CANONICAL_DRIVER_HASHES = {
-    "cascade": "e2a1fb39f67940b7ab9e8267406745b95ec36537880e2a496f924449ba201f3e",
-    "search": "dc354b115502d071b0e34fede06b4fa3be3b07abe4d305a4895f3a8aeae8096c",
-    "meta": "0cf51b0222d4a01fb07591d7675cdd5b148d63697087809347c3b9eafa05425b",
+    "cascade": "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478",
+    "search": "a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af",
+    "meta": "6ed4fd964dd626f57fa17f1fde3098e7073bd9fc94ebc0cecc4f95f8316cf2ec",
     "codebook": "a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3",
-    "manifest": "e9128a76cf63c06ae517bfc30b2b3ec667992be1ead805d74a521d02c5f201e9",
+    "manifest": "065e0c9779b8138cf7fdcbbcd4e2e5cb2672a5f8f79b39d0f9c3f32d96c6ceb8",
 }
 CANONICAL_DRIVER_PATHS = {
     "cascade": "data/cascade.rds",

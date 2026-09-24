@@ -497,11 +497,11 @@ run_static_lock <- function() {
         sprintf("public API %s", required_api[["climate"]]))
 
   expected_sha256 <- c(
-    "data/cascade.rds" = "e2a1fb39f67940b7ab9e8267406745b95ec36537880e2a496f924449ba201f3e",
-    "data/search_index.rds" = "dc354b115502d071b0e34fede06b4fa3be3b07abe4d305a4895f3a8aeae8096c",
-    "data/cascade_meta.rds" = "0cf51b0222d4a01fb07591d7675cdd5b148d63697087809347c3b9eafa05425b",
+    "data/cascade.rds" = "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478",
+    "data/search_index.rds" = "a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af",
+    "data/cascade_meta.rds" = "6ed4fd964dd626f57fa17f1fde3098e7073bd9fc94ebc0cecc4f95f8316cf2ec",
     "data/neon-cascade-codebook.csv" = "a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3",
-    "manifest.json" = "e9128a76cf63c06ae517bfc30b2b3ec667992be1ead805d74a521d02c5f201e9"
+    "manifest.json" = "065e0c9779b8138cf7fdcbbcd4e2e5cb2672a5f8f79b39d0f9c3f32d96c6ceb8"
   )
   actual_sha256 <- vapply(names(expected_sha256), sha256_file, character(1L))
   check_identical(unname(actual_sha256), unname(expected_sha256),

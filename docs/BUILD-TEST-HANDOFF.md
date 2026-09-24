@@ -4835,3 +4835,62 @@ Tile URLs travel over the Shiny websocket, so they are not observable from a con
 they all carry the unhardened helper and are each one padded paste away from the same
 silent blank map. Each needs its own manifest regeneration, so run it as a rollout
 using the shuttle flow already documented here, not as a drive-by patch.
+
+## 2026-09-24 [Claude] — PUUM held out by decision; metafor pinned; THIRD drift (Vegetation) found
+
+**Why:** the scheduled refresh has been red since 2026-08 (run `34741752015`,
+2026-09-13: `missing strict NEON-domain mapping for: PUUM`). The 2026-08-09 18:05
+entry asked for an owner disposition; it is now given.
+
+- **Owner disposition (2026-09-24): HOLD at 46 sites.** `scripts/build_cascade.R`
+  now carries an explicit `DRIVER_SITE_SCOPE` (the 46 reviewed codes, checked
+  unique and each present in `neon_sites`). Assembly is the intersection of the
+  upstream union with that scope; any upstream site outside it is named in the build
+  log (`site scope: excluding 1 upstream site(s) … : PUUM`), never silently absorbed
+  and never a crash. The strict domain guard is untouched. Expanding scope stays a
+  coverage review; adding a code to the vector alone is not enough, and the comment
+  says so. This is option (b) of the 2026-08-09 entry.
+- **Found and fixed: metafor floated in every rebuild install.** `ci.yml`
+  (`rebuild-contracts`), `refresh-data.yml` (×2) and `regenerate-artifacts.yml`
+  requested `metafor` unpinned. On a cache miss, pak built **metafor 5.2-1** even
+  though the workflows name a 2026-07-15 PPM snapshot (regen run `35958204671`), and
+  `metafor_version` / `build_toolchain` are persisted inside `cascade_meta.rds`. The
+  meta values were bit-identical, but the bytes moved, so a scheduled refresh could
+  have published a family CI cannot reproduce. All four installs now pin
+  `metafor@5.0-1`, the version the committed family was built with and the one the
+  phenology seal jobs already pin.
+- **Promoted a CI-built family, values unchanged.** `regenerate-artifacts.yml` run
+  `35958710091` (`siblings=pinned`, head `63d4bbf`) passed 9/9; its receipt verified
+  5/5. Compared with the prior family: `annual`, `signals`, `priors`, `codebook`,
+  `suite_links`, `pooled` and `site_meta` are identical; `meta` differs only in
+  `build_script_md5` and `local_build_inputs`; `search_index` only in
+  `source_bundle_md5`; `cascade_meta` values are bit-identical, and only its three
+  lineage attributes moved (metafor is back at 5.0.1). Manifest: three data
+  checksums plus package `Built` timestamps (the semantic gate ignores those).
+  New canonical SHA-256: cascade `dababae4…f478`, search `a7aa0d5e…a8af`, meta
+  `6ed4fd96…f2ec`, codebook unchanged `a79cc754…38c3`, manifest `065e0c97…ceb8`.
+  Re-registered across the eight live registries, and the spec chain moved to
+  `SPEC_BLOB` `faaba86f…` / `SPEC_SHA256` `0621ebb5…`.
+- **THIRD upstream drift. It blocks the refresh and needs a science disposition.**
+  With PUUM excluded, the `siblings=current` build (run `35958206479`) now fails
+  closed in `cascade_plot_design()`: `vegetation structure plot table has
+  duplicate/conflicting plotID/area records: ABBY_001, …`. This was first seen on
+  2026-08-09 (run `31326013244`, the unmerged `claude/site-scope-weather-coverage`
+  branch) and never recorded. **Cause:** Vegetation `main` (`53667a1`) changed
+  `plots` from one row per plot (7 columns, pinned `5e73e0d`) to one row per
+  plot × `eventID` (62 columns, including `tree_support` /
+  `held_opportunity_unknown` states). `trees` kept every old column and the same
+  rows. **It cannot be collapsed mechanically:** the design areas
+  (`area_trees` / `area_shrub`) genuinely differ between events for the same plot at
+  45 of 46 sites (e.g. a shrub area of 80 m² in one survey and 400 m² in another);
+  only WOOD collapses cleanly, and it gains 14 new plots. A correct adapter must
+  divide each measurement by the area of ITS OWN event and decide how held events
+  count. That moves `veg_ba_ha` / the structure classification, so it is a Driver
+  value change that needs a `cass`/`hk` disposition, not a build repair.
+- **Nothing at risk:** pinned values did not move; PUUM was never in the published
+  family; the refresh stays red until the Vegetation adapter lands (as it already
+  was).
+- **Next action (`cass`/`hk`):** specify a Vegetation plot×event adapter (per-event
+  area matching and held-event rules) with old/new parity on the pinned bundle; then
+  dispatch `regenerate-artifacts.yml` with `siblings=current` to find any fourth
+  drift before publication.
