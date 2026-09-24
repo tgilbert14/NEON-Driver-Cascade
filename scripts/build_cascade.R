@@ -899,8 +899,29 @@ ann_veg <- function(site) {                       # producer standing stock -- a
     veg_design_status = "supported", veg_design_basis = support$basis,
     stringsAsFactors = FALSE)
 }
+# ---- Driver site scope: the reviewed 46-site universe, fixed by decision ----
+# Siblings may add sites upstream (Mosquito added PUUM, Hawaii, in 2026-08). A new
+# site changes the atlas universe, the published site count, biome groupings and
+# pooled-vote eligibility, so it is a coverage decision, not a lookup repair.
+# Owner disposition 2026-09-24: HOLD at 46. Sites outside this list are excluded
+# and reported, never silently absorbed. Expanding it needs a coverage review and
+# a matching R/site_metadata.R row; appending a code here alone is not enough.
+DRIVER_SITE_SCOPE <- c(
+  "HARV", "BART", "BLAN", "SCBI", "SERC", "DSNY", "JERC", "OSBS",
+  "GUAN", "LAJA", "STEI", "TREE", "UNDE", "KONA", "KONZ", "UKFS",
+  "GRSM", "MLBS", "ORNL", "DELA", "LENO", "TALL", "DCFS", "NOGP",
+  "WOOD", "CPER", "RMNP", "STER", "CLBJ", "OAES", "YELL", "MOAB",
+  "NIWO", "JORN", "SRER", "ONAQ", "ABBY", "WREF", "SJER", "SOAP",
+  "TEAK", "BARR", "TOOL", "BONA", "DEJU", "HEAL")
+if (anyDuplicated(DRIVER_SITE_SCOPE) || !all(DRIVER_SITE_SCOPE %in% neon_sites$site))
+  stop("DRIVER_SITE_SCOPE must be unique and every code must have a neon_sites row", call. = FALSE)
 # ---- assemble over the union of all seven required product site sets ----
-all_sites <- sort(unique(unlist(lapply(names(APP), sites_in), use.names = FALSE)))
+upstream_sites <- sort(unique(unlist(lapply(names(APP), sites_in), use.names = FALSE)))
+out_of_scope <- setdiff(upstream_sites, DRIVER_SITE_SCOPE)
+if (length(out_of_scope))
+  message(sprintf("site scope: excluding %d upstream site(s) outside the reviewed Driver scope: %s",
+                  length(out_of_scope), paste(out_of_scope, collapse = ", ")))
+all_sites <- intersect(upstream_sites, DRIVER_SITE_SCOPE)
 cat("assembling", length(all_sites), "sites...\n")
 join_all <- function(site) {
   parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site), ann_mosq(site), ann_beetle(site)))
