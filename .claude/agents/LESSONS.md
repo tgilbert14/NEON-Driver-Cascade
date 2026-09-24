@@ -185,3 +185,12 @@
   in the fallback branch so the next occurrence is one log line rather than a blank rectangle. GENERAL LESSON:
   when a human pastes a value into a settings box, the code owns the whitespace. Full record:
   `docs/SUITE-BASEMAP-INCIDENT-2026-08.md` §10.3.
+- [2026-09-24] cass · confirmed · A NAMED package snapshot is not a PINNED package. The rebuild workflows
+  set a dated PPM URL, yet on a cache miss pak built metafor 5.2-1 while the committed family carried 5.0.1.
+  Values were bit-identical, but `metafor_version` is persisted in `cascade_meta.rds`, so the BYTES moved.
+  Any package whose version is written into a byte-gated artifact must be pinned by `pkg@version` in every
+  install line that can build that artifact. Check the persisted toolchain attributes when diffing a
+  regenerated family, not only the values.
+- [2026-09-24] cass · confirmed · A fail-closed build hides drifts in series, so record every failure a
+  side-branch run reveals, even when that branch is abandoned. The Vegetation plot×event change was first
+  hit on 2026-08-09 by an unmerged branch's regen run and went unrecorded for six weeks, behind PUUM.
