@@ -19,8 +19,8 @@ promotion. Direct artifact writers refuse to run outside that generation context
    showcase (`docs/index.html`) like the siblings. The app + CI work while private.
 
 ## Automatic refresh (already wired — idle until step 1)
-`.github/workflows/refresh-data.yml` runs the **second Saturday night** of each month
-(Arizona, off-peak — one week after the siblings refresh on the first Saturday). It clones the
+`.github/workflows/refresh-data.yml` runs the **second Saturday morning** of each month
+(about 6 am Arizona, off-peak — one week after the siblings refresh on the first Saturday). It clones the
 seven allowlisted origins at detached commits and executes the complete rebuild in a job with no
 write token. Exactly four data files plus a SHA-256 receipt pass to a fresh read-only validation job.
 Only after that succeeds does a write-enabled publisher verify the receipt without deserializing RDS
