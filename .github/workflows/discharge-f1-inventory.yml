@@ -102,10 +102,10 @@ jobs:
           spec=source/docs/DISCHARGE-FEASIBILITY-SPEC.md
           ledger=source/docs/receipts/discharge-inverts-response-site-years.tsv
           test "$(sha256sum "$spec" | awk '{print $1}')" = \
-            c8fc3db935548d9cc6f15e2a422f88e15aa6ec6b3d41552f750287ac5e1e0be2
+            5ae08e73204974139e720a6ec9ecc04bcaeb0da658c6687b8b633037ef9abb2b
           test "$(git -C source hash-object --no-filters \
             docs/DISCHARGE-FEASIBILITY-SPEC.md)" = \
-            cf95db9dde744a8928eb569c46f43c91dc7bcea2
+            edb1a53c83b659c04063152568758a6b07e9fe31
           test "$(sha256sum "$ledger" | awk '{print $1}')" = \
             79bb45911ab734ffc64444f248ac17ca42a78005707657fbe16effaef25e5296
           test "$(git -C source hash-object --no-filters \
@@ -135,7 +135,7 @@ jobs:
             awk '{print $1}')" = \
             a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3
           test "$(sha256sum source/manifest.json | awk '{print $1}')" = \
-            f4c29889e6ee54896701ed28e8613ea090f7b001dcae1371adba26ec9368fcbf
+            98bad5c426dc1ac687ec3ccb36e68cfbf51939ff400c2db4b6bf7ae2f31489dd
 
           test -z "$(git -C source status --porcelain=v1 --untracked-files=all)"
           test -z "$(git -C source config --local --get-regexp \
@@ -298,7 +298,7 @@ jobs:
             awk '{print $1}')" = \
             a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3
           test "$(sha256sum source/manifest.json | awk '{print $1}')" = \
-            f4c29889e6ee54896701ed28e8613ea090f7b001dcae1371adba26ec9368fcbf
+            98bad5c426dc1ac687ec3ccb36e68cfbf51939ff400c2db4b6bf7ae2f31489dd
           test "$(git -C source rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
           test -z "$(git -C source status --porcelain=v1 --untracked-files=all)"
           test -z "$(git -C source remote)"
