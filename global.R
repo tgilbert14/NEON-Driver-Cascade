@@ -634,6 +634,14 @@ site_ba_se <- function(site) {
   r <- SITE_META[SITE_META$site == site, , drop = FALSE]
   if (nrow(r) && "veg_ba_se" %in% names(r) && is.finite(r$veg_ba_se[1])) r$veg_ba_se[1] else NA_real_
 }
+# The Vegetation sibling's plot-event contract. A bundle built from it carries
+# per-survey audit columns; a legacy bundle keeps the original wording.
+VEG_EVENT_CONTRACT_ID <- "NEON-VST-DP1.10098.001-v2"
+veg_rows_event_contract <- function(rows) {
+  is.data.frame(rows) && nrow(rows) > 0L && "veg_source_contract" %in% names(rows) &&
+    any(as.character(rows$veg_source_contract) %in% VEG_EVENT_CONTRACT_ID)
+}
+VEG_EVENT_SHAPED <- veg_rows_event_contract(SITE_META)
 # read the precomputed direct-pair rows for a site (no live recompute / permutations)
 site_links_cached <- function(site) {
   if (nrow(SUITE_LINKS) && "site" %in% names(SUITE_LINKS)) {
@@ -814,6 +822,7 @@ CONCEPT <- list(
   expected  = list(t = "“Vote-eligible”", b = "A direct association allowed to enter the exploratory site-vote summary. Most displayed plant and animal pairings are context-only because their effort, response window, proxy, or directional basis is not strong enough for inferential voting."),
   pulse     = list(t = "The year trace", b = "Choose a year to inspect direct pairings available then. A response layer marks whether it moved in the stated direction. This one-year view is an anecdote, not a recursively inferred food-web path or evidence by itself."),
   standing  = list(t = "Conditional woody structure", b = "Live basal area (m²/ha) is averaged only among plots containing qualifying stem records. The source cannot distinguish sampled-zero from unsampled plots, so zero-stem and unobserved plots are not imputed; plot-support denominators remain visible. This intermittent structural context is neither site-wide standing stock, annual productivity, nor a causal rung."),
+  standing_events = list(t = "Conditional woody structure", b = "Live basal area (m²/ha) is averaged over plots whose selected survey has at least one qualifying live stem. Each plot contributes one survey, its latest usable NEON survey, and its stems are divided by that survey's own sampled area. The Atlas keeps the conditional estimand: plots whose selected survey has no qualifying live stem, including NEON-recorded absences, are left out rather than counted as zero. Plot-support counts remain visible. This intermittent structural context is neither site-wide standing stock, annual productivity, nor a causal rung."),
   permp     = list(t = "The permutation p", b = "A gap-aware circular-shift null: the response is rotated over the full calendar grid, with missing years retained, to preserve order, annual spacing, and its gap pattern while breaking the original alignment. Its exact floor is 1/(valid null shifts + 1), reported per link. It is a coarse diagnostic, not a per-site significance claim and does not set the verdict. Across-site exact-binomial p-values are reported raw and Holm-adjusted."),
   bootci    = list(t = "The bootstrap interval", b = "Circular moving-block bootstrap interval (wide at this n; indicative, not a precision claim). It resamples contiguous wrapped blocks on the full calendar grid, retaining missing years, to preserve annual spacing and short-range temporal structure while showing how unstable the relationship is.")
 )
