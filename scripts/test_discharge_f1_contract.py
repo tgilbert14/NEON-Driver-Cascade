@@ -724,7 +724,9 @@ def exercise_receipt_and_authorities() -> None:
         for label, relative in contract.CANONICAL_DRIVER_PATHS.items():
             target = root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(seal_family_root() / relative, target)
+            # Content only: the CI-materialized frozen family is read-only, and
+            # this scratch copy must stay writable for the mutation fixture.
+            shutil.copyfile(seal_family_root() / relative, target)
         assert contract.verify_driver_hashes(root) == contract.CANONICAL_DRIVER_HASHES
         (root / contract.CANONICAL_DRIVER_PATHS["manifest"]).write_bytes(b"mutation")
         expect_error("driver_artifact_changed", lambda: contract.verify_driver_hashes(root), "Driver artifact mutation")
