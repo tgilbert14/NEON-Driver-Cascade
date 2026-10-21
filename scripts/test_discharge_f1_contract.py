@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 
 import discharge_f1_acquire as acquire
@@ -21,6 +22,39 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SHA = "a" * 40
 SECRET_SENTINEL = "fixture-secret-must-never-escape-123456"
 OBSERVATION_CANARY = "https://observation-canary.invalid/must-never-be-read?secret=1"
+_SEAL_FAMILY_TEMP: list[tempfile.TemporaryDirectory] = []
+
+
+def seal_family_root() -> Path:
+    """Use the workflow-materialized frozen family, or read it from git here.
+
+    The Driver hash seal is anchored to the frozen commit SEAL_FAMILY_SHA, never
+    to the working tree. CI materializes the five blobs in a trusted step before
+    this networkless process starts and names the directory in the environment.
+    A local run without that variable reads the same blobs with git cat-file and
+    fails closed if git or the frozen commit is unavailable.
+    """
+    existing = os.environ.get(contract.SEAL_FAMILY_ROOT_ENV, "")
+    if existing:
+        return Path(existing)
+    holder = tempfile.TemporaryDirectory(prefix="discharge-f1-seal-family-")
+    _SEAL_FAMILY_TEMP.append(holder)
+    root = Path(holder.name)
+    for relative in contract.CANONICAL_DRIVER_PATHS.values():
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "cat-file", "blob",
+             f"{contract.SEAL_FAMILY_SHA}:{relative}"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+        )
+        if result.returncode != 0:
+            raise SystemExit(
+                f"seal family blob {contract.SEAL_FAMILY_SHA}:{relative} is unavailable; fetch it first"
+            )
+        target.write_bytes(result.stdout)
+    os.environ[contract.SEAL_FAMILY_ROOT_ENV] = str(root)
+    return root
 
 
 def classify_fixture(
@@ -648,7 +682,7 @@ def replace_record(record: contract.FileRecord, raw: bytes) -> tuple[contract.Fi
 def exercise_receipt_and_authorities() -> None:
     records, schema = records_and_schema()
     ledger = contract.verify_ledger(REPO_ROOT / "docs/receipts/discharge-inverts-response-site-years.tsv")
-    hashes = contract.verify_driver_hashes(REPO_ROOT)
+    hashes = contract.verify_driver_hashes(seal_family_root())
     outputs = contract.build_receipt_bytes(
         source_sha=SOURCE_SHA,
         availability_sha256="f" * 64,
@@ -690,7 +724,7 @@ def exercise_receipt_and_authorities() -> None:
         for label, relative in contract.CANONICAL_DRIVER_PATHS.items():
             target = root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(REPO_ROOT / relative, target)
+            shutil.copy2(seal_family_root() / relative, target)
         assert contract.verify_driver_hashes(root) == contract.CANONICAL_DRIVER_HASHES
         (root / contract.CANONICAL_DRIVER_PATHS["manifest"]).write_bytes(b"mutation")
         expect_error("driver_artifact_changed", lambda: contract.verify_driver_hashes(root), "Driver artifact mutation")
@@ -964,7 +998,22 @@ def exercise_workflow_policy() -> None:
     assert "automation/discharge-f1-[0-9]+-[0-9]+" in ci_text
 
 
+def exercise_seal_family_anchor() -> None:
+    family = seal_family_root()
+    assert contract.verify_driver_hashes(family) == contract.CANONICAL_DRIVER_HASHES
+    assert contract.SEAL_FAMILY_SHA == verifier.SEAL_FAMILY_SHA
+    assert contract.SEAL_FAMILY_ROOT_ENV == verifier.SEAL_FAMILY_ROOT_ENV
+    assert contract.CANONICAL_DRIVER_HASHES == verifier.CANONICAL_DRIVER_HASHES
+    saved = os.environ.pop(contract.SEAL_FAMILY_ROOT_ENV)
+    try:
+        expect_error("driver_artifact_changed", contract.seal_family_root, "missing seal family root")
+    finally:
+        os.environ[contract.SEAL_FAMILY_ROOT_ENV] = saved
+
+
 def main() -> None:
+    seal_family_root()
+    exercise_seal_family_anchor()
     exercise_json_and_release()
     exercise_filename_classifier()
     exercise_query_contract()

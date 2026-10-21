@@ -30,6 +30,9 @@ env:
   CONFIRM_SCOPE: ${{ inputs.confirm_scope }}
   F0_AUTHORITY_SHA: b75996a85809ed0cd8ba89121e0de18e22063cc7
   F0_AUTHORITY_TREE: 8e7b774da4fc8486fb3c41e790317c61d5af9379
+  # The unchanged-Driver seal is anchored to this frozen family, never to the
+  # working tree: its five blobs are read with git cat-file.
+  SEAL_FAMILY_SHA: 543fee44e3bbb8ba47ece1cde1a199fdae9b4d50
 
 jobs:
   acquire-and-propose:
@@ -68,7 +71,8 @@ jobs:
           sanitized_root="$RUNNER_TEMP/discharge-f1-sanitized-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           verify_tmp="$RUNNER_TEMP/discharge-f1-verify-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           askpass_path="$RUNNER_TEMP/discharge-f1-askpass-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          for path in "$raw_root" "$sanitized_root" "$verify_tmp" "$askpass_path"; do
+          seal_root="$RUNNER_TEMP/discharge-f1-seal-family-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          for path in "$raw_root" "$sanitized_root" "$verify_tmp" "$askpass_path" "$seal_root"; do
             case "$path" in
               "$RUNNER_TEMP"/*) ;;
               *) echo "runner_path_escape" >&2; exit 1 ;;
@@ -79,6 +83,7 @@ jobs:
             printf 'SANITIZED_ROOT=%s\n' "$sanitized_root"
             printf 'VERIFY_TMP=%s\n' "$verify_tmp"
             printf 'ASKPASS_PATH=%s\n' "$askpass_path"
+            printf 'SEAL_FAMILY_ROOT=%s\n' "$seal_root"
           } >> "$GITHUB_ENV"
 
       - name: Checkout only the exact reviewed acquisition authority
@@ -125,17 +130,38 @@ jobs:
             awk '{print $1}')" = \
             cbae89b4c42193b0d0163fcd2bc332251de018d90c8411722042fcfd4244c874
 
-          test "$(sha256sum source/data/cascade.rds | awk '{print $1}')" = \
+          # Unchanged-Driver seal on the frozen family SEAL_FAMILY_SHA, never the
+          # working tree. The contract and verifier hash a read-only copy of these
+          # blobs because neither may spawn a subprocess.
+          [[ "$SEAL_FAMILY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git -C source rev-parse "$SEAL_FAMILY_SHA^{commit}")" = \
+            "$SEAL_FAMILY_SHA"
+          git -C source merge-base --is-ancestor "$SEAL_FAMILY_SHA" HEAD
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/cascade.rds" | \
+            sha256sum | awk '{print $1}')" = \
             dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478
-          test "$(sha256sum source/data/search_index.rds | awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/search_index.rds" | \
+            sha256sum | awk '{print $1}')" = \
             a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af
-          test "$(sha256sum source/data/cascade_meta.rds | awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/cascade_meta.rds" | \
+            sha256sum | awk '{print $1}')" = \
             6ed4fd964dd626f57fa17f1fde3098e7073bd9fc94ebc0cecc4f95f8316cf2ec
-          test "$(sha256sum source/data/neon-cascade-codebook.csv | \
-            awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/neon-cascade-codebook.csv" | \
+            sha256sum | awk '{print $1}')" = \
             a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3
-          test "$(sha256sum source/manifest.json | awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:manifest.json" | \
+            sha256sum | awk '{print $1}')" = \
             98bad5c426dc1ac687ec3ccb36e68cfbf51939ff400c2db4b6bf7ae2f31489dd
+          expected_seal="$RUNNER_TEMP/discharge-f1-seal-family-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          test "$SEAL_FAMILY_ROOT" = "$expected_seal"
+          test ! -e "$SEAL_FAMILY_ROOT"
+          install -d -m 0700 "$SEAL_FAMILY_ROOT" "$SEAL_FAMILY_ROOT/data"
+          for path in data/cascade.rds data/search_index.rds data/cascade_meta.rds \
+                      data/neon-cascade-codebook.csv manifest.json; do
+            git -C source cat-file blob "$SEAL_FAMILY_SHA:$path" > \
+              "$SEAL_FAMILY_ROOT/$path"
+          done
+          chmod -R a-w "$SEAL_FAMILY_ROOT"
 
           test -z "$(git -C source status --porcelain=v1 --untracked-files=all)"
           test -z "$(git -C source config --local --get-regexp \
@@ -195,6 +221,7 @@ jobs:
               "TZ": "UTC",
               "TMPDIR": raw_root,
               "PYTHONDONTWRITEBYTECODE": "1",
+              "CASCADE_SEAL_FAMILY_ROOT": os.environ["SEAL_FAMILY_ROOT"],
           }
           os.environ.clear()
           os.environ.update(safe_environment)
@@ -275,6 +302,7 @@ jobs:
             PYTHONDONTWRITEBYTECODE=1 \
             HOST_NET="$host_net" \
             SOURCE_ROOT="$GITHUB_WORKSPACE/source" \
+            CASCADE_SEAL_FAMILY_ROOT="$SEAL_FAMILY_ROOT" \
             SANITIZED_ROOT="$SANITIZED_ROOT" \
             bash --noprofile --norc -c '
               set -euo pipefail
@@ -288,17 +316,27 @@ jobs:
                 "$SANITIZED_ROOT"
             '
 
-          test "$(sha256sum source/data/cascade.rds | awk '{print $1}')" = \
+          # Re-prove the frozen family and its read-only copy after verification.
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/cascade.rds" | \
+            sha256sum | awk '{print $1}')" = \
             dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478
-          test "$(sha256sum source/data/search_index.rds | awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/search_index.rds" | \
+            sha256sum | awk '{print $1}')" = \
             a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af
-          test "$(sha256sum source/data/cascade_meta.rds | awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/cascade_meta.rds" | \
+            sha256sum | awk '{print $1}')" = \
             6ed4fd964dd626f57fa17f1fde3098e7073bd9fc94ebc0cecc4f95f8316cf2ec
-          test "$(sha256sum source/data/neon-cascade-codebook.csv | \
-            awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:data/neon-cascade-codebook.csv" | \
+            sha256sum | awk '{print $1}')" = \
             a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3
-          test "$(sha256sum source/manifest.json | awk '{print $1}')" = \
+          test "$(git -C source cat-file blob "$SEAL_FAMILY_SHA:manifest.json" | \
+            sha256sum | awk '{print $1}')" = \
             98bad5c426dc1ac687ec3ccb36e68cfbf51939ff400c2db4b6bf7ae2f31489dd
+          for path in data/cascade.rds data/search_index.rds data/cascade_meta.rds \
+                      data/neon-cascade-codebook.csv manifest.json; do
+            git -C source cat-file blob "$SEAL_FAMILY_SHA:$path" | \
+              cmp -s - "$SEAL_FAMILY_ROOT/$path"
+          done
           test "$(git -C source rev-parse 'HEAD^{commit}')" = "$SOURCE_SHA"
           test -z "$(git -C source status --porcelain=v1 --untracked-files=all)"
           test -z "$(git -C source remote)"
@@ -451,9 +489,11 @@ jobs:
           test "$SANITIZED_ROOT" = "$expected_sanitized"
           test "$VERIFY_TMP" = "$expected_verify"
           test "$ASKPASS_PATH" = "$expected_askpass"
+          expected_seal="$RUNNER_TEMP/discharge-f1-seal-family-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          test "$SEAL_FAMILY_ROOT" = "$expected_seal"
 
           cleanup_failed=0
-          for path in "$RAW_ROOT" "$SANITIZED_ROOT" "$VERIFY_TMP"; do
+          for path in "$RAW_ROOT" "$SANITIZED_ROOT" "$VERIFY_TMP" "$SEAL_FAMILY_ROOT"; do
             if test -L "$path"; then
               sudo rm -f -- "$path" || cleanup_failed=1
               cleanup_failed=1

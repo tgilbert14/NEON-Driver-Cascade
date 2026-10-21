@@ -443,6 +443,53 @@ sha256_file <- function(path) {
   sub("[[:space:]].*$", "", output[[1L]])
 }
 
+# The generated-artifact seal is a tamper check on one frozen family, not on the
+# working tree: a validated data refresh changes the working-tree artifacts and
+# must not turn this seal red. The digests below are the bytes of each path in
+# the commit SEAL_FAMILY_SHA (543fee44, the family registered on 2026-10-21).
+# The working-tree artifact bytes are never read for this check. Fails closed
+# when git or the frozen commit is unavailable.
+SEAL_FAMILY_SHA_DEFAULT <- "543fee44e3bbb8ba47ece1cde1a199fdae9b4d50"
+
+seal_family_sha <- function() {
+  sha <- Sys.getenv("CASCADE_SEAL_FAMILY_SHA", SEAL_FAMILY_SHA_DEFAULT)
+  if (!nzchar(sha)) sha <- SEAL_FAMILY_SHA_DEFAULT
+  if (!grepl("^[0-9a-f]{40}$", sha))
+    fail("SHA-256 baseline", sprintf("CASCADE_SEAL_FAMILY_SHA '%s' is not a full commit id", sha))
+  sha
+}
+
+git_output <- function(args) {
+  git <- Sys.which("git")
+  if (!nzchar(git)) fail("SHA-256 baseline", "git is required to read the frozen family")
+  output <- suppressWarnings(system2(git, args = args, stdout = TRUE, stderr = TRUE))
+  status <- attr(output, "status", exact = TRUE)
+  list(output = output, status = if (is.null(status)) 0L else status)
+}
+
+sha256_frozen_blob <- function(path, family_sha) {
+  spec <- sprintf("%s:%s", family_sha, path)
+  blob <- tempfile("seal-family-blob-")
+  on.exit(unlink(blob), add = TRUE)
+  git <- Sys.which("git")
+  if (!nzchar(git)) fail("SHA-256 baseline", "git is required to read the frozen family")
+  status <- suppressWarnings(system2(git, args = c("cat-file", "blob", spec),
+                                     stdout = blob, stderr = FALSE))
+  if (!identical(as.integer(status), 0L) || !file.exists(blob))
+    fail("SHA-256 baseline", sprintf("cannot read frozen blob %s", spec))
+  sha256_file(blob)
+}
+
+frozen_family_sha256 <- function(paths) {
+  family_sha <- seal_family_sha()
+  verified <- git_output(c("rev-parse", "--verify", "--quiet",
+                           sprintf("%s^{commit}", family_sha)))
+  if (verified$status != 0L || !identical(verified$output, family_sha))
+    fail("SHA-256 baseline",
+         sprintf("frozen family commit %s is not available; fetch it first", family_sha))
+  vapply(paths, sha256_frozen_blob, character(1L), family_sha = family_sha)
+}
+
 run_static_lock <- function() {
   missing <- required_modules[!file.exists(required_modules)]
   check(!length(missing), "Seal-1 module surface",
@@ -503,9 +550,9 @@ run_static_lock <- function() {
     "data/neon-cascade-codebook.csv" = "a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3",
     "manifest.json" = "98bad5c426dc1ac687ec3ccb36e68cfbf51939ff400c2db4b6bf7ae2f31489dd"
   )
-  actual_sha256 <- vapply(names(expected_sha256), sha256_file, character(1L))
+  actual_sha256 <- frozen_family_sha256(names(expected_sha256))
   check_identical(unname(actual_sha256), unname(expected_sha256),
-                  "registered generated-artifact baseline")
+                  "registered generated-artifact baseline (frozen family)")
 
   ok("static-lock mode", "effect paths unreachable and artifacts read-only")
 }

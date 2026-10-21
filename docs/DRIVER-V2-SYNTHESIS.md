@@ -317,5 +317,12 @@ At this decision point the canonical hashes remain:
 | `data/neon-cascade-codebook.csv` | `a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3` |
 | `manifest.json` | `98bad5c426dc1ac687ec3ccb36e68cfbf51939ff400c2db4b6bf7ae2f31489dd` |
 
+> **Seal anchor (2026-10-21).** The five registries that check these digests (ci.yml Seal-2
+> parity, `scripts/test_phenology_adapter_v2.R` static-lock, the Discharge F1 contract and
+> verifier, and `discharge-f1-inventory.yml`) are now anchored to `SEAL_FAMILY_SHA`
+> `543fee44e3bbb8ba47ece1cde1a199fdae9b4d50`: they hash the blobs of these paths at that commit
+> with `git cat-file` and no longer track the working tree, so a reviewed data refresh of the
+> Cross-Product Response Atlas does not re-register them. The digests are unchanged.
+
 Canonical Ubuntu 24.04 / R 4.5.2 / dated 2026-07-15 snapshot / Haswell /
 one-thread CI must still rebuild and prove those bytes unchanged before merge.
