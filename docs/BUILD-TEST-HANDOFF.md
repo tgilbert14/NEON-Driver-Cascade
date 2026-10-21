@@ -21,7 +21,13 @@ changed deploy files only, and `scripts/smoke_app.R` names the new output ids.
 Gates run locally on 2026-10-20: parse, `trusted_publish.py update-manifest`,
 `smoke_app.R` (510 rows, 12 associations), `test_boot_integrity.R` (12 fixtures,
 6 cuts), `git diff --check`, and a browser pass at 375 and 1440 px on SRER, SCBI
-and WOOD. Next action: after the merge, confirm the Connect app serves the four
+and WOOD. CI on PR #74 is red on the hash registries by design: `manifest.json`
+moved from `f4c29889...` to `98bad5c4...`, and that value is frozen in
+`ci.yml`, `discharge-f1-inventory.yml`, `test_phenology_adapter_v2.R`,
+`discharge_f1_contract.py`, `verify_discharge_f1_inventory.py` and the three spec
+tables (the second-order `SPEC_BLOB`/`SPEC_SHA256` chain follows); the Claude
+session was refused that re-registration by its permission classifier, so the
+owner runs the recipe in the PR description, as cd3a9d9 did. Next action: after the merge, confirm the Connect app serves the four
 tabs and the cover reads "seven living records"; then the Wave 2 pipeline items
 (coverage-regression gate, `publish` default, review-branch migration).
 
