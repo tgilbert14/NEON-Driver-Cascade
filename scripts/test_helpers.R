@@ -2404,8 +2404,19 @@ if (nzchar(source_root) && !dir.exists(source_root))
   fail("source-level product recomputations",
        sprintf("CASCADE_ROOT does not exist: %s", source_root))
 if (nzchar(source_root)) {
+  # The reviewed Driver site scope (owner disposition 2026-09-24, HOLD at 46)
+  # excludes upstream sites such as PUUM, which Mosquito and Breeding Birds now
+  # publish. Every product expectation is restricted to the site universe the
+  # build assembled, as the vegetation section below already does, so a
+  # sibling adding an out-of-scope site cannot fail calendar parity; the
+  # excluded upstream sites are printed so the exclusion stays visible.
   build_window <- function(x) {
-    x[is.finite(x$year) & x$year >= cascade$meta$min_year &
+    outside <- sort(unique(as.character(x$site[!x$site %in% annual_sites])))
+    if (length(outside))
+      cat(sprintf("[INFO] source rows outside the assembled site scope ignored: %s\n",
+                  paste(outside, collapse = ", ")))
+    x[x$site %in% annual_sites & is.finite(x$year) &
+        x$year >= cascade$meta$min_year &
         x$year <= cascade$meta$last_complete_year, , drop = FALSE]
   }
   product_key <- function(x) paste(x$site, x$year, sep = "|")
