@@ -24,3 +24,10 @@ Thumbs.db
 
 # transient owner record for the single-writer artifact rebuild
 .cascade-rebuild.lock/
+
+# local secrets (.env.example is the committed template)
+.env
+*.env
+!.env.example
+.Renviron
+.Renviron.*
