@@ -24,9 +24,23 @@ promotion. Direct artifact writers refuse to run outside that generation context
 seven allowlisted origins at detached commits and executes the complete rebuild in a job with no
 write token. Exactly four data files plus a SHA-256 receipt pass to a fresh read-only validation job.
 Only after that succeeds does a write-enabled publisher verify the receipt without deserializing RDS
-payloads, install those four files, refresh checksums in the already-reviewed manifest package graph,
-and push the four data files plus `manifest.json` to `master` (= the deploy). Run it any time from the
-**Actions** tab (`workflow_dispatch`).
+payloads, install those four files, and refresh checksums in the already-reviewed manifest package graph.
+The publisher never pushes `master`. It commits the four data files plus `manifest.json` as a direct
+child of the validated master commit and pushes the fixed review branch `automation/atlas-data-refresh`
+(it will not overwrite human review edits already on that branch). A person opens or updates the PR
+from that branch, approves its CI runs, and merges it; the merge to `master` is the deploy. Run it any
+time from the **Actions** tab (`workflow_dispatch`); the `publish` input defaults to `false`, a dry run
+that still runs every gate, so set it to `true` to propose a review branch.
+
+After every push to `master`, `.github/workflows/post-deploy.yml` waits for the GitHub Pages cover and
+the live Connect Cloud app, drives the app in headless Chromium, and requires the About tab's
+"Snapshot and provenance" fold to show the `built_when` of the pushed `data/cascade.rds`. A failure
+opens or updates the issue "Production health: Cross-Product Response Atlas smoke failed"; the next
+healthy run closes it.
+
+The generated-artifact seals in CI (Seal-2 parity, the Phenology static lock, and the Discharge F1
+contract) check the frozen family at `SEAL_FAMILY_SHA` 543fee44 with `git cat-file`, not the working
+tree, so a merged refresh does not require re-registering their digests.
 
 Workflow Actions are pinned to full commit SHAs. Ubuntu 24.04, R 4.5.2, and the
 dated 2026-07-15 Posit Package Manager snapshot are the canonical release-byte

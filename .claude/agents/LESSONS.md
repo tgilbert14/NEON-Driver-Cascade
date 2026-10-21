@@ -202,3 +202,7 @@
 - [2026-10-20] lead · gap · DEFAULT_SITE's "has green-up" guard meant the owner's SRER default never fired
   (the app opened on SCBI); a default rule that depends on data coverage needs a test that the default
   actually resolves to the settled site.
+- [2026-10-21] twinblade · gap · Re-anchoring a seal to a frozen SHA must respect each consumer's sandbox:
+  the Discharge F1 contract/acquirer/verifier ban subprocess (AST-tested, token-bearing process), so
+  they hash a read-only copy the workflow materializes with git cat-file; sparse checkouts are blob:none,
+  so read the frozen blobs before `git remote remove origin` or the later cat-file has no promisor.
