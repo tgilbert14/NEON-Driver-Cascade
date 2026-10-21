@@ -1380,7 +1380,7 @@ saveRDS(cascade_bundle, "data/cascade.rds")
 cat("\nannual rows:", nrow(annual), "| sites:", length(unique(annual$site)), "\n")
 covg <- annual %>% group_by(site) %>% summarise(
   yrs = dplyr::n(), greenup = sum(!is.na(greenup_doy)), plant = sum(!is.na(plant_richness)),
-  mammal = sum(!is.na(mammal_cpue)), bird = sum(!is.na(bird_index)), precip = sum(!is.na(precip)),
+  mammal = sum(!is.na(mammal_cpue)), bird = sum(!is.na(bird_index)), precip_n = sum(!is.na(precip)),
   layers = (any(!is.na(precip)|!is.na(temp))) + (any(!is.na(greenup_doy))) +
            (any(!is.na(plant_richness)|!is.na(fruiting_pct))) + (any(!is.na(mammal_cpue)|!is.na(bird_index))),
   .groups="drop") %>% arrange(desc(layers), desc(greenup+plant))

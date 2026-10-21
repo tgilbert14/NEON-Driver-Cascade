@@ -682,8 +682,8 @@ CASCADE_VEG_EVENT_CLASSIFICATION_BASIS <- paste(
   "admissible tree-channel event over that event's area_trees, and shrub",
   "basalStemDiameter >0 from each plot's latest admissible shrub-channel event",
   "over that event's area_shrub; latest-date rows per individual within the",
-  "event are stems (stemID unavailable), and events with area <=50 m2 are not",
-  "admissible")
+  "event are stems (exact duplicate rows retained; the protocol stem locator",
+  "is not used yet), and events with area <=50 m2 are not admissible")
 CASCADE_VEG_EVENT_DESIGN_BASIS <- paste(
   "per channel a plot event is admissible only under the contract v2 support",
   "rules (sampled with records, metric-invalid rows dropped, recorded absence",
