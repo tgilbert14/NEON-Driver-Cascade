@@ -51,6 +51,14 @@ SEAL2_ARTIFACTS <- c(
   "data/cascade.rds", "data/search_index.rds", "data/cascade_meta.rds",
   "data/neon-cascade-codebook.csv", "manifest.json"
 )
+# Seal-2 certifies that the v2 adapter on the frozen legacy Phenology tree
+# reproduces the v1 family built from that same tree. That family is the frozen
+# seal family (SEAL_FAMILY_SHA), not the working tree: a refreshed family built
+# from newer Phenology data must not be compared with the legacy tree. The
+# workflow materializes the frozen cascade.rds blob and names it here; only that
+# exact digest is accepted.
+SEAL2_FROZEN_BASELINE_SHA256 <-
+  "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478"
 
 seal2_condition <- function(code) {
   structure(
@@ -979,9 +987,19 @@ seal2_legacy_authority <- function() {
   list(root = root, files = files)
 }
 
+seal2_frozen_baseline_path <- function() {
+  path <- Sys.getenv("PHENOLOGY_V2_SEAL2_BASELINE", unset = "")
+  seal2_assert(length(path) == 1L && nzchar(path) && file.exists(path) &&
+                 !dir.exists(path), "baseline_authority")
+  digest <- unname(tools::sha256sum(path))
+  seal2_assert(identical(digest, SEAL2_FROZEN_BASELINE_SHA256),
+               "baseline_frozen_digest")
+  path
+}
+
 seal2_load_baseline <- function() {
   object <- tryCatch(
-    readRDS("data/cascade.rds"),
+    readRDS(seal2_frozen_baseline_path()),
     error = function(condition) seal2_abort("baseline_read")
   )
   seal2_assert(is.list(object) && is.data.frame(object$annual),

@@ -902,6 +902,16 @@ jobs:
                       data/neon-cascade-codebook.csv manifest.json; do
             git cat-file blob "$SEAL_FAMILY_SHA:$path" > /dev/null
           done
+          # The legacy parity baseline is the frozen family's cascade.rds, never the
+          # working tree, so a refreshed family cannot be compared with the legacy tree.
+          frozen="$RUNNER_TEMP/phenology-v2-seal2-frozen"
+          test ! -e "$frozen"
+          install -d -m 0755 "$frozen"
+          git cat-file blob "$SEAL_FAMILY_SHA:data/cascade.rds" > "$frozen/cascade.rds"
+          test "$(sha256sum "$frozen/cascade.rds" | awk '{print $1}')" = \
+            "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478"
+          chmod 0444 "$frozen/cascade.rds"
+          chmod 0555 "$frozen"
           git remote remove origin
           test -z "$(git remote)"
           for path in \
@@ -1165,8 +1175,10 @@ jobs:
           PHENOLOGY_V2_LEGACY_ROOT: ${{ runner.temp }}/phenology-v2-seal2-incoming/sites
           PHENOLOGY_V2_LEGACY_COMMIT: 81e339e9ed6f34d3d04ca45a7030fea51c4147a5
           PHENOLOGY_V2_LEGACY_TREE: 30abe869b0f78931929c21e544ffc85ec2238e35
+          PHENOLOGY_V2_SEAL2_BASELINE: ${{ runner.temp }}/phenology-v2-seal2-frozen/cascade.rds
         run: |
           set -euo pipefail
+          test -f "$PHENOLOGY_V2_SEAL2_BASELINE"
           for name in \
             CASCADE_ROOT \
             PHENOLOGY_ORIGIN \
@@ -1210,6 +1222,7 @@ jobs:
             PHENOLOGY_V2_LEGACY_ROOT="$PHENOLOGY_V2_LEGACY_ROOT" \
             PHENOLOGY_V2_LEGACY_COMMIT="$PHENOLOGY_V2_LEGACY_COMMIT" \
             PHENOLOGY_V2_LEGACY_TREE="$PHENOLOGY_V2_LEGACY_TREE" \
+            PHENOLOGY_V2_SEAL2_BASELINE="$PHENOLOGY_V2_SEAL2_BASELINE" \
             Rscript --vanilla scripts/test_phenology_adapter_v2_legacy.R \
             > "$raw_stdout" 2> "$raw_stderr"
           child_status=$?
