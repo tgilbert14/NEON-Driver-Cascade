@@ -32,6 +32,16 @@ from that branch, approves its CI runs, and merges it; the merge to `master` is 
 time from the **Actions** tab (`workflow_dispatch`); the `publish` input defaults to `false`, a dry run
 that still runs every gate, so set it to `true` to propose a review branch.
 
+Before staging, the rebuild job runs `scripts/check_coverage_regression.R` against the committed
+`data/cascade.rds`. It refuses the candidate when a product loses more than 10% of its finite
+site-years or sites, its last year moves back, or it disappears. It also refuses per vegetation site
+when basal area moves more than 15%, plots fall below 80% of the committed count, the forest or
+shrubland label flips, or a value goes missing. A refusal stops the run before anything is staged,
+and the step summary prints each refusal with a paste-ready override row. To accept a reviewed change,
+commit that row to `data/coverage-overrides.tsv` by PR with a reason, approver and date, then dispatch
+the refresh with `publish` set to `true`. A row names the exact baseline and candidate values and the
+candidate's sibling commit, so it approves one transition only and goes stale on any later change.
+
 After every push to `master`, `.github/workflows/post-deploy.yml` waits for the GitHub Pages cover and
 the live Connect Cloud app, drives the app in headless Chromium, and requires the About tab's
 "Snapshot and provenance" fold to show the `built_when` of the pushed `data/cascade.rds`. A failure
