@@ -38,6 +38,16 @@
 #   rule           one of the eight rule names above
 #   scope          "*" for the four product rules; a 4-letter site code for the
 #                  four veg_* parity rules (those require product "veg")
+#   baseline_value, candidate_value
+#                  the exact transition being approved, copied from the gate's
+#                  "Rule hits" table or override template. An absent value is
+#                  written NA (product_absent and veg_absent have candidate NA).
+#                  Value types by rule: site_years, n_sites, max_year,
+#                  veg_n_plots, product_absent are integers and match exactly;
+#                  veg_ba_ha and veg_absent are numbers and match within a
+#                  relative tolerance of 1e-6 of the gate's value (rows are
+#                  pasted from a printed report with up to 10 significant
+#                  digits); veg_type is a string and matches exactly.
 #   source_commit  40-hex commit of the product's sibling as recorded in the
 #                  CANDIDATE's meta$source_products$commit (veg -> the
 #                  vegetation commit; climate -> the mammal commit, because
@@ -45,10 +55,14 @@
 #   reason, approved_by   non-empty
 #   approved_on    YYYY-MM-DD, a real calendar date
 # A refusal is bypassed only by a row whose product, rule, scope and
-# source_commit all equal the refusal and the candidate exactly. A row whose
-# source_commit differs from the candidate is STALE and bypasses nothing, so an
-# override cannot be carried onto a later candidate. Any malformed row, a
-# missing or unknown column, or a duplicate key is exit 2.
+# source_commit all equal the refusal and the candidate exactly AND whose
+# baseline_value and candidate_value equal the refused transition. A row whose
+# source_commit differs from the candidate, or whose key matches but whose
+# values differ (for example after an adapter change on the same sibling
+# commit), is STALE and bypasses nothing, so an approval is single-use: it
+# covers only the transition a reviewer saw. Any malformed row (including an
+# empty or unparsable value for a numeric rule), a missing or unknown column,
+# or a duplicate row is exit 2.
 
 GATE_SIGNALS <- data.frame(
   product = c("mammal", "plant", "bird", "phe", "mosq", "beetle",
@@ -63,8 +77,47 @@ COMMIT_SOURCE <- c(mammal = "mammal", plant = "plant", bird = "bird",
                    climate = "mammal", veg = "veg")
 PRODUCT_RULES <- c("site_years", "n_sites", "max_year", "product_absent")
 VEG_RULES <- c("veg_ba_ha", "veg_n_plots", "veg_type", "veg_absent")
-OVERRIDE_COLUMNS <- c("product", "rule", "scope", "source_commit", "reason",
+OVERRIDE_COLUMNS <- c("product", "rule", "scope", "baseline_value",
+                      "candidate_value", "source_commit", "reason",
                       "approved_by", "approved_on")
+INTEGER_VALUE_RULES <- c("site_years", "n_sites", "max_year", "veg_n_plots",
+                         "product_absent")
+NUMERIC_VALUE_RULES <- c("veg_ba_ha", "veg_absent")
+STRING_VALUE_RULES <- "veg_type"
+VALUE_REL_TOLERANCE <- 1e-6
+
+# Paste-ready rendering: NA, integers in full, other numbers to 10 significant
+# digits without scientific notation, strings as is.
+fmt_value <- function(x) {
+  if (length(x) != 1L || is.na(x)) return("NA")
+  if (is.character(x)) return(x)
+  if (x == round(x) && abs(x) < 1e15) return(format(x, scientific = FALSE, trim = TRUE))
+  format(signif(x, 10), digits = 10, scientific = FALSE, trim = TRUE)
+}
+# Parse one override value field for a rule; returns list(ok, value).
+parse_value <- function(rule, text) {
+  if (identical(text, "NA"))
+    return(list(ok = TRUE, value = if (rule %in% STRING_VALUE_RULES) NA_character_ else NA_real_))
+  if (!nzchar(text)) return(list(ok = FALSE))
+  if (rule %in% INTEGER_VALUE_RULES) {
+    if (!grepl("^-?[0-9]+$", text)) return(list(ok = FALSE))
+    return(list(ok = TRUE, value = as.numeric(text)))
+  }
+  if (rule %in% NUMERIC_VALUE_RULES) {
+    v <- suppressWarnings(as.numeric(text))
+    if (!grepl("^-?([0-9]+[.]?[0-9]*|[.][0-9]+)([eE][-+]?[0-9]+)?$", text) || !is.finite(v))
+      return(list(ok = FALSE))
+    return(list(ok = TRUE, value = v))
+  }
+  list(ok = TRUE, value = text)
+}
+value_matches <- function(rule, row_value, gate_value) {
+  if (is.na(row_value) || is.na(gate_value)) return(is.na(row_value) && is.na(gate_value))
+  if (rule %in% STRING_VALUE_RULES) return(identical(row_value, as.character(gate_value)))
+  if (rule %in% NUMERIC_VALUE_RULES)
+    return(abs(row_value - gate_value) <= VALUE_REL_TOLERANCE * abs(gate_value))
+  row_value == gate_value
+}
 DROP_TOLERANCE_TENTHS <- 1L  # 10%: refuse when (base - cand) * 10 > base
 VEG_BA_TOLERANCE <- 0.15
 VEG_PLOTS_FLOOR <- c(num = 4L, den = 5L)  # refuse when cand * 5 < base * 4
@@ -156,25 +209,25 @@ compare_products <- function(base, cand) {
       hit <- "product_absent"
       refusals[[length(refusals) + 1L]] <- list(
         product = p, rule = "product_absent", scope = "*", signal = s,
-        baseline = sprintf("%d finite", b$site_years), candidate = "0 finite")
+        base_val = b$site_years, cand_val = NA_real_)
     } else {
       if (drop_exceeds(b$site_years, c$site_years)) {
         hit <- c(hit, "site_years")
         refusals[[length(refusals) + 1L]] <- list(
           product = p, rule = "site_years", scope = "*", signal = s,
-          baseline = as.character(b$site_years), candidate = as.character(c$site_years))
+          base_val = b$site_years, cand_val = c$site_years)
       }
       if (drop_exceeds(b$n_sites, c$n_sites)) {
         hit <- c(hit, "n_sites")
         refusals[[length(refusals) + 1L]] <- list(
           product = p, rule = "n_sites", scope = "*", signal = s,
-          baseline = as.character(b$n_sites), candidate = as.character(c$n_sites))
+          base_val = b$n_sites, cand_val = c$n_sites)
       }
       if (!is.na(b$max_year) && !is.na(c$max_year) && c$max_year < b$max_year) {
         hit <- c(hit, "max_year")
         refusals[[length(refusals) + 1L]] <- list(
           product = p, rule = "max_year", scope = "*", signal = s,
-          baseline = as.character(b$max_year), candidate = as.character(c$max_year))
+          base_val = b$max_year, cand_val = c$max_year)
       }
     }
     trend <- if (length(hit)) "refuse" else if (
@@ -211,11 +264,10 @@ compare_veg <- function(base, cand) {
   m <- merge(b, c, by = "site", all = TRUE, suffixes = c("_b", "_c"), sort = TRUE)
   refusals <- list()
   m$rules <- ""
-  fmt <- function(x) if (is.na(x)) "NA" else if (is.numeric(x)) format(signif(x, 6)) else x
   add <- function(i, rule, field_b, field_c) {
     refusals[[length(refusals) + 1L]] <<- list(
       product = "veg", rule = rule, scope = m$site[[i]], signal = rule,
-      baseline = fmt(field_b), candidate = fmt(field_c))
+      base_val = field_b, cand_val = field_c)
     m$rules[[i]] <<- paste(c(if (nzchar(m$rules[[i]])) m$rules[[i]], rule), collapse = ",")
   }
   for (i in seq_len(nrow(m))) {
@@ -294,10 +346,18 @@ read_overrides <- function(path) {
                        where, r$approved_on)
     if (!nzchar(r$reason) || !nzchar(r$approved_by))
       gate_input_error("%s: reason and approved_by must be non-empty", where)
+    for (field in c("baseline_value", "candidate_value"))
+      if (!parse_value(r$rule, r[[field]])$ok)
+        gate_input_error("%s: %s '%s' is not a valid %s value for rule %s (write NA for absent)",
+                         where, field, r[[field]],
+                         if (r$rule %in% INTEGER_VALUE_RULES) "integer" else
+                           if (r$rule %in% NUMERIC_VALUE_RULES) "numeric" else "string",
+                         r$rule)
   }
-  key <- paste(ov$product, ov$rule, ov$scope, ov$source_commit, sep = "|")
+  key <- paste(ov$product, ov$rule, ov$scope, ov$baseline_value, ov$candidate_value,
+               ov$source_commit, sep = "|")
   if (anyDuplicated(key))
-    gate_input_error("overrides file repeats a product/rule/scope/source_commit key")
+    gate_input_error("overrides file repeats a row (same key, values and source_commit)")
   ov
 }
 
@@ -332,14 +392,28 @@ run_gate <- function(args) {
     cc <- unname(cand_commit[ov$product])
     ifelse(!is.na(cc) & ov$source_commit == cc, "unused", "stale")
   } else character()
+  ov$detail <- rep("", nrow(ov))
   bypassed <- logical(length(refusals))
-  for (j in seq_along(refusals)) {
-    r <- refusals[[j]]
-    hit <- which(ov$status != "stale" & ov$product == r$product & ov$rule == r$rule &
-                   ov$scope == r$scope)
+  for (i in seq_len(nrow(ov))) {
+    if (ov$status[i] == "stale") next
+    same_key <- which(vapply(refusals, function(r)
+      r$product == ov$product[i] && r$rule == ov$rule[i] && r$scope == ov$scope[i],
+      logical(1)))
+    if (!length(same_key)) next
+    bv <- parse_value(ov$rule[i], ov$baseline_value[i])$value
+    cv <- parse_value(ov$rule[i], ov$candidate_value[i])$value
+    hit <- same_key[vapply(refusals[same_key], function(r)
+      value_matches(ov$rule[i], bv, r$base_val) && value_matches(ov$rule[i], cv, r$cand_val),
+      logical(1))]
     if (length(hit)) {
-      bypassed[[j]] <- TRUE
-      ov$status[hit] <- "applied"
+      bypassed[hit] <- TRUE
+      ov$status[i] <- "applied"
+    } else {
+      ov$status[i] <- "stale_values"
+      ov$detail[i] <- paste(vapply(refusals[same_key], function(r)
+        sprintf("row %s -> %s, gate %s -> %s", ov$baseline_value[i], ov$candidate_value[i],
+                fmt_value(r$base_val), fmt_value(r$cand_val)), character(1)),
+        collapse = "; ")
     }
   }
   open <- refusals[!bypassed]
@@ -405,22 +479,33 @@ run_gate <- function(args) {
       c("product", "scope", "signal", "rule", "baseline", "candidate", "status"),
       lapply(seq_along(refusals), function(j) {
         r <- refusals[[j]]
-        c(r$product, r$scope, r$signal, r$rule, r$baseline, r$candidate,
+        c(r$product, r$scope, r$signal, r$rule, fmt_value(r$base_val), fmt_value(r$cand_val),
           if (bypassed[[j]]) "overridden" else "REFUSE")
       })), "")
+  }
+  if (length(open)) {
+    out <- c(out, "### Override template (only if a reviewer approves this exact transition)", "",
+             "```", paste(OVERRIDE_COLUMNS, collapse = "\t"),
+             vapply(open, function(r) paste(
+               r$product, r$rule, r$scope, fmt_value(r$base_val), fmt_value(r$cand_val),
+               cand_commit[[r$product]], "<reason>", "<approved_by>", "<YYYY-MM-DD>",
+               sep = "\t"), character(1)), "```", "")
   }
   out <- c(out, "### Overrides", "")
   if (!nrow(ov)) {
     out <- c(out, "No override rows.", "")
   } else {
     out <- c(out, md_table(
-      c("product", "rule", "scope", "source_commit", "candidate commit", "status",
-        "approved_by", "approved_on", "reason"),
+      c("product", "rule", "scope", "baseline -> candidate", "source_commit",
+        "candidate commit", "status", "approved_by", "approved_on", "reason"),
       lapply(seq_len(nrow(ov)), function(i) c(
-        ov$product[i], ov$rule[i], ov$scope[i], substr(ov$source_commit[i], 1, 12),
+        ov$product[i], ov$rule[i], ov$scope[i],
+        sprintf("%s -> %s", ov$baseline_value[i], ov$candidate_value[i]),
+        substr(ov$source_commit[i], 1, 12),
         substr(cand_commit[[ov$product[i]]], 1, 12),
         switch(ov$status[i], applied = "applied",
                stale = "STALE (commit differs from candidate; bypasses nothing)",
+               stale_values = sprintf("STALE (values differ: %s; bypasses nothing)", ov$detail[i]),
                unused = "unused (no matching refusal)"),
         ov$approved_by[i], ov$approved_on[i], ov$reason[i]))), "")
   }

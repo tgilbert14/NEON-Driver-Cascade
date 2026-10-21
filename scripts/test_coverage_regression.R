@@ -83,8 +83,9 @@ save_candidate <- function(b) {
   saveRDS(b, path)
   path
 }
-write_overrides <- function(rows, header = c("product", "rule", "scope", "source_commit",
-                                             "reason", "approved_by", "approved_on")) {
+OV_HEADER <- c("product", "rule", "scope", "baseline_value", "candidate_value",
+               "source_commit", "reason", "approved_by", "approved_on")
+write_overrides <- function(rows, header = OV_HEADER) {
   counter <<- counter + 1L
   path <- file.path(WORK, sprintf("overrides-%02d.tsv", counter))
   writeLines(c(paste(header, collapse = "\t"),
@@ -190,9 +191,10 @@ check(r$status == 0L && has(r, "rise (NA -> finite)") && has(r, "| veg | veg_ba_
 
 # ---- overrides ------------------------------------------------------------------------
 row <- function(product = "bird", rule = "max_year", scope = "*",
-                commit = COMMITS[["bird"]], date = "2026-10-21")
-  c(product, rule, scope, commit, "provisional 2025 bird year withdrawn upstream",
-    "Tim", date)
+                commit = COMMITS[["bird"]], date = "2026-10-21",
+                base = "2025", cand = "2024")
+  c(product, rule, scope, base, cand, commit,
+    "provisional 2025 bird year withdrawn upstream", "Tim", date)
 
 r <- run_gate(BASE, BIRD_BACK, "--overrides", write_overrides(list(row())))
 check(r$status == 0L && has(r, "max_year (overridden)") && has(r, "| applied |") &&
@@ -222,9 +224,58 @@ check(r$status == 0L && has(r, "unused (no matching refusal)"),
 
 b <- make_bundle(); b$site_meta$veg_type[3] <- "shrubland"
 r <- run_gate(BASE, save_candidate(b), "--overrides", write_overrides(list(
-  row("veg", "veg_type", SITES[3], COMMITS[["veg"]]))))
+  row("veg", "veg_type", SITES[3], COMMITS[["veg"]], base = "forest", cand = "shrubland"))))
 check(r$status == 0L && has(r, "veg_type (overridden)"),
       "veg override keyed to its site bypasses the flip", final_line(r))
+
+r <- run_gate(BASE, BIRD_BACK, "--overrides", write_overrides(list(row(cand = "2023"))))
+check(r$status == 1L && has(r, "STALE (values differ: row 2025 -> 2023, gate 2025 -> 2024") &&
+        final_line(r) == "COVERAGE GATE: REFUSE (1 rule(s))",
+      "matching key with a different candidate value is stale", final_line(r))
+
+r <- run_gate(BASE, BIRD_BACK, "--overrides", write_overrides(list(row(base = "2025", cand = "2024"))))
+check(r$status == 0L && has(r, "| applied |"),
+      "max_year override with the exact years passes", final_line(r))
+
+r <- run_gate(BASE, BIRD_BACK)
+check(has(r, "| bird | * | bird_index | max_year | 2025 | 2024 | REFUSE |") &&
+        has(r, paste("bird", "max_year", "*", "2025", "2024", COMMITS[["bird"]], sep = "\t")),
+      "refusal prints paste-ready values and an override template", final_line(r))
+
+VEG_TARGET <- 21 * 0.8 + 1 / 3   # an 18.4% drop with a non-terminating value: 17.13333333...
+b <- make_bundle(); b$site_meta$veg_ba_ha[1] <- VEG_TARGET
+VEG_DROP <- save_candidate(b)
+r <- run_gate(BASE, VEG_DROP)
+check(r$status == 1L && has(r, "| 21 | 17.13333333 | REFUSE |"),
+      "veg_ba_ha refusal prints 10 significant digits", final_line(r))
+veg_row <- function(cand) row("veg", "veg_ba_ha", SITES[1], COMMITS[["veg"]],
+                              base = "21", cand = cand)
+r <- run_gate(BASE, VEG_DROP, "--overrides", write_overrides(list(veg_row("17.13333333"))))
+check(r$status == 0L && has(r, "veg_ba_ha (overridden)"),
+      "veg_ba_ha override at printed precision passes", final_line(r))
+r <- run_gate(BASE, VEG_DROP, "--overrides",
+              write_overrides(list(veg_row(format(VEG_TARGET * (1 + 0.9e-6), digits = 15)))))
+check(r$status == 0L, "veg_ba_ha override within 1e-6 relative passes", final_line(r))
+r <- run_gate(BASE, VEG_DROP, "--overrides",
+              write_overrides(list(veg_row(format(VEG_TARGET * (1 + 1e-4), digits = 15)))))
+check(r$status == 1L && has(r, "STALE (values differ"),
+      "veg_ba_ha override off by 1e-4 relative is stale", final_line(r))
+
+b <- make_bundle(); b$site_meta$veg_ba_ha[5] <- NA_real_
+r <- run_gate(BASE, save_candidate(b), "--overrides", write_overrides(list(
+  row("veg", "veg_absent", SITES[5], COMMITS[["veg"]], base = "25", cand = "NA"))))
+check(r$status == 0L && has(r, "veg_absent (overridden)"),
+      "veg_absent override with candidate NA passes", final_line(r))
+
+b <- make_bundle(); b$annual$beetle_activity <- NA_real_
+BEETLE_GONE <- save_candidate(b)
+r <- run_gate(BASE, BEETLE_GONE, "--overrides", write_overrides(list(
+  row("beetle", "product_absent", "*", COMMITS[["beetle"]], base = "1000", cand = "NA"))))
+check(r$status == 0L, "product_absent override with candidate NA passes", final_line(r))
+r <- run_gate(BASE, BEETLE_GONE, "--overrides", write_overrides(list(
+  row("beetle", "product_absent", "*", COMMITS[["beetle"]], base = "1000", cand = "0"))))
+check(r$status == 1L && has(r, "STALE (values differ"),
+      "product_absent override with candidate 0 instead of NA is stale", final_line(r))
 
 r <- run_gate(BASE, BASE, "--overrides", file.path(ROOT, "data", "coverage-overrides.tsv"))
 check(r$status == 0L && has(r, "No override rows."),
@@ -232,16 +283,22 @@ check(r$status == 0L && has(r, "No override rows."),
 
 # ---- malformed input -> exit 2 ---------------------------------------------------------
 malformed <- list(
-  "missing column" = write_overrides(list(row()[-7]),
-                                     header = c("product", "rule", "scope", "source_commit",
-                                                "reason", "approved_by")),
+  "missing column" = write_overrides(list(row()[-9]), header = OV_HEADER[-9]),
+  "missing value columns" = write_overrides(list(row()[-(4:5)]), header = OV_HEADER[-(4:5)]),
+  "empty candidate value" = write_overrides(list(row(cand = ""))),
+  "non-integer year" = write_overrides(list(row(cand = "2024.5"))),
+  "text in an integer value" = write_overrides(list(row(base = "twenty"))),
+  "unparsable veg_ba_ha value" = write_overrides(list(row("veg", "veg_ba_ha", SITES[1],
+                                                          COMMITS[["veg"]], base = "21",
+                                                          cand = "17,64"))),
   "short commit" = write_overrides(list(row(commit = "abc123"))),
   "uppercase commit" = write_overrides(list(row(commit = toupper(strrep("ab", 20))))),
   "impossible date" = write_overrides(list(row(date = "2026-02-30"))),
   "unformatted date" = write_overrides(list(row(date = "10/21/2026"))),
   "unknown rule" = write_overrides(list(row(rule = "everything"))),
   "unknown product" = write_overrides(list(row(product = "fish"))),
-  "veg rule with wildcard" = write_overrides(list(row("veg", "veg_type", "*", COMMITS[["veg"]]))),
+  "veg rule with wildcard" = write_overrides(list(row("veg", "veg_type", "*", COMMITS[["veg"]],
+                                                      base = "forest", cand = "shrubland"))),
   "product rule with site scope" = write_overrides(list(row(scope = SITES[1]))),
   "duplicate key" = write_overrides(list(row(), row())))
 for (label in names(malformed)) {
