@@ -132,6 +132,17 @@ jobs:
       - name: Regenerate every artifact and run the full contract suite
         run: Rscript --vanilla scripts/rebuild_all.R
 
+      # Same gate as the refresh workflow: a candidate that loses coverage against
+      # the committed baseline is refused (exit 1) unless a reviewed override row,
+      # keyed to this candidate's exact sibling commit, accepts that one rule.
+      - name: Refuse a coverage regression against the committed baseline
+        run: |
+          set -euo pipefail
+          git show HEAD:data/cascade.rds > "$RUNNER_TEMP/cascade-baseline.rds"
+          Rscript --vanilla scripts/check_coverage_regression.R \
+            "$RUNNER_TEMP/cascade-baseline.rds" data/cascade.rds \
+            --overrides data/coverage-overrides.tsv --summary "$GITHUB_STEP_SUMMARY"
+
       - name: Report what moved
         run: |
           set -euo pipefail

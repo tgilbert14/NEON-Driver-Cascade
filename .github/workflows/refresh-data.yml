@@ -139,6 +139,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
           Rscript --vanilla scripts/workflow_guard.R self-test
           Rscript --vanilla scripts/test_helpers.R
+          Rscript --vanilla scripts/test_coverage_regression.R
           Rscript --vanilla scripts/test_suite_synthesis.R
           Rscript --vanilla scripts/verify_manifest.R
           Rscript --vanilla scripts/workflow_guard.R approved-sources "$RUNNER_TEMP/approved-sources.tsv"
@@ -169,10 +170,25 @@ jobs:
       - name: Rebuild and validate the complete artifact family
         run: Rscript --vanilla scripts/rebuild_all.R
 
-      - name: Report mosquito effort-basis deltas against the committed baseline
+      # Refuses a candidate that loses coverage against the committed baseline
+      # (exit 1) unless a reviewed row in data/coverage-overrides.tsv, keyed to
+      # this candidate's exact sibling commit, accepts that one rule. A refusal
+      # skips staging, so nothing reaches validate-artifacts or the publisher.
+      - name: Refuse a coverage regression against the committed baseline
+        id: coverage_gate
         run: |
           set -euo pipefail
           git show HEAD:data/cascade.rds > "$RUNNER_TEMP/cascade-baseline.rds"
+          Rscript --vanilla scripts/check_coverage_regression.R \
+            "$RUNNER_TEMP/cascade-baseline.rds" data/cascade.rds \
+            --overrides data/coverage-overrides.tsv --summary "$GITHUB_STEP_SUMMARY"
+
+      # Report-only. Runs after a coverage refusal too, so the moved mosquito
+      # site-years are visible exactly when the gate stops the run.
+      - name: Report mosquito effort-basis deltas against the committed baseline
+        if: ${{ !cancelled() && steps.coverage_gate.outcome != 'skipped' }}
+        run: |
+          set -euo pipefail
           Rscript --vanilla scripts/report_mosq_effort_delta.R \
             "$RUNNER_TEMP/cascade-baseline.rds" data/cascade.rds "$GITHUB_STEP_SUMMARY"
 
@@ -267,6 +283,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE=1 python scripts/test_trusted_publish.py
           Rscript --vanilla scripts/workflow_guard.R self-test
           Rscript --vanilla scripts/test_helpers.R
+          Rscript --vanilla scripts/test_coverage_regression.R
           Rscript --vanilla scripts/test_suite_synthesis.R
 
   publish:
