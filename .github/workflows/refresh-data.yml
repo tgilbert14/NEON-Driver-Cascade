@@ -1,8 +1,11 @@
-name: Refresh NEON Driver Cascade bundle
+name: Refresh the Cross-Product Response Atlas family
 
 # The build job reads public sibling data but has no write token. Its four data
 # outputs cross two independent receipt checks and a fresh read-only contract job
 # before the publisher receives them. The publisher never deserializes incoming RDS.
+# The publisher never pushes master: it proposes the validated family on the fixed
+# review branch automation/atlas-data-refresh. A person reviews and merges that PR;
+# the merge to master is the deploy, and post-deploy.yml then verifies the live app.
 on:
   schedule:
     # Every Saturday 13:17 UTC == 06:17 America/Phoenix (no DST), clear of the
@@ -12,9 +15,9 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: "Commit the refreshed family to master (a push to master deploys). Set false for a rebuild-only dry run that still runs every gate."
+        description: "Push the validated candidate to the review branch automation/atlas-data-refresh (a person merges its PR; the merge to master is the deploy). Leave false for a rebuild-only dry run that still runs every gate."
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: read
@@ -268,20 +271,24 @@ jobs:
 
   publish:
     needs: [gate, rebuild, validate-artifacts]
-    # A manual dry run (publish=false) still executes every build and validation
-    # gate; it only withholds the commit. This condition can narrow publication,
-    # never widen it: scheduled runs are unaffected.
+    # A manual dry run (publish=false, the default) still executes every build and
+    # validation gate; it only withholds the review branch. This condition can
+    # narrow publication, never widen it: scheduled runs are unaffected. Nothing in
+    # this workflow pushes to master; a person merges the review PR to deploy.
     if: github.ref == 'refs/heads/master' && needs.gate.outputs.run == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Checkout current master for the allowlisted publish
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: master
-          fetch-depth: 1
+          # Full history so the review-branch merge base with master is always
+          # computable without guessing.
+          fetch-depth: 0
 
       - name: Refuse a stale or advanced master
         run: |
@@ -289,7 +296,6 @@ jobs:
           test "$(git rev-parse HEAD)" = "$BUILD_SHA"
           git fetch --quiet --no-tags origin master
           test "$(git rev-parse origin/master)" = "$BUILD_SHA"
-
 
       - name: Download the read-only-validated candidate
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -320,9 +326,12 @@ jobs:
           python scripts/trusted_publish.py verify-receipt "$BUILD_SHA" incoming
           rm -rf -- incoming
 
-      - name: Commit and push only the approved publish surface
+      - name: Publish or update the review branch (never master)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          publish_paths='^(data/cascade[.]rds|data/search_index[.]rds|data/cascade_meta[.]rds|data/neon-cascade-codebook[.]csv|manifest[.]json)$'
           test -z "$(git ls-files --others --exclude-standard)"
           while IFS= read -r path; do
             case "$path" in
@@ -330,14 +339,114 @@ jobs:
               *) echo "Unexpected publisher change: $path" >&2; exit 1 ;;
             esac
           done < <(git diff --name-only)
-          git config user.name "neon-data-bot"
-          git config user.email "neon-data-bot@users.noreply.github.com"
-          git add data/cascade.rds data/search_index.rds data/cascade_meta.rds data/neon-cascade-codebook.csv manifest.json
-          if git diff --cached --quiet; then
-            echo "No artifact change; nothing to deploy."
+          if git diff --quiet -- data/cascade.rds data/search_index.rds data/cascade_meta.rds data/neon-cascade-codebook.csv manifest.json; then
+            echo "No artifact change; no review branch proposed." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          git commit -m "data: monthly response-atlas rebuild [bot]"
           git fetch --quiet --no-tags origin master
-          test "$(git rev-parse origin/master)" = "$BUILD_SHA"
-          git push origin HEAD:master
+          remote_master=$(git rev-parse origin/master)
+          if [ "$remote_master" != "$BUILD_SHA" ]; then
+            echo "::error title=Stale refresh base::master moved from $BUILD_SHA to $remote_master; rebuild the candidate."
+            exit 1
+          fi
+          branch="automation/atlas-data-refresh"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          remote_head=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
+          if [ -n "$remote_head" ]; then
+            git fetch --no-tags origin \
+              "refs/heads/$branch:refs/remotes/origin/$branch"
+            merge_base=$(git merge-base origin/master "refs/remotes/origin/$branch" || true)
+            if [ -z "$merge_base" ]; then
+              git fetch --no-tags --deepen=200 origin master "$branch"
+              merge_base=$(git merge-base origin/master "refs/remotes/origin/$branch" || true)
+            fi
+            if [ -z "$merge_base" ]; then
+              echo "::error title=Refresh review history unavailable::could not establish the existing review branch base without risking an overwrite"
+              exit 1
+            fi
+            human_review_paths=$(git diff --name-only "$merge_base" \
+              "refs/remotes/origin/$branch" | grep -Ev "$publish_paths" || true)
+            if [ -n "$human_review_paths" ]; then
+              pr_url=$(gh pr list --head "$branch" --base master --state open --json url --jq '.[0].url // ""')
+              notice="A newer validated candidate is available from ${run_url}, but automation did not overwrite the active human review changes: ${human_review_paths//$'\n'/, }."
+              if [ -n "$pr_url" ]; then gh pr comment "$pr_url" --body "$notice"; fi
+              echo "::notice title=Human refresh review preserved::$notice"
+              exit 0
+            fi
+          fi
+          git switch -C "$branch"
+          git config user.name "neon-data-bot"
+          git config user.email "neon-data-bot@users.noreply.github.com"
+          git add -- data/cascade.rds data/search_index.rds data/cascade_meta.rds data/neon-cascade-codebook.csv manifest.json
+          if git diff --cached --quiet; then
+            echo "No artifact change after staging; no review branch proposed." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "data: propose validated response-atlas rebuild [bot]" \
+                     -m "Source ${BUILD_SHA}; validator run ${run_url}. Four data files passed the SHA-256 receipt, the read-only contract job, and the stdlib publisher checks; manifest.json checksums were refreshed without changing the reviewed package graph."
+          published_commit=$(git rev-parse HEAD)
+          if [ "$(git rev-parse HEAD^)" != "$BUILD_SHA" ]; then
+            echo "::error title=Candidate identity mismatch::promotion commit is not a direct child of the exact validated master revision"
+            exit 1
+          fi
+          if [ -n "$remote_head" ]; then
+            git push --force-with-lease="refs/heads/$branch:$remote_head" origin "$branch:refs/heads/$branch"
+          else
+            git push origin "$branch:refs/heads/$branch"
+          fi
+          pushed_commit=""
+          for _ in 1 2 3 4 5; do
+            pushed_commit=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
+            [ "$pushed_commit" = "$published_commit" ] && break
+            sleep 2
+          done
+          if [ "$pushed_commit" != "$published_commit" ]; then
+            echo "::error title=Published branch identity mismatch::review branch does not resolve to the validated candidate commit"
+            exit 1
+          fi
+
+          compare_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/master...${branch}?expand=1"
+          body="Validated Cross-Product Response Atlas candidate from ${run_url}, built from master ${BUILD_SHA}. Merging this PR to master is the explicit production deploy decision; post-deploy.yml then verifies the live app."
+          pr_count=$(gh pr list --head "$branch" --base master --state open \
+            --json url --jq 'length')
+          if [ "$pr_count" -gt 1 ]; then
+            echo "::error title=Ambiguous refresh review::more than one open master PR exists for $branch"
+            exit 1
+          fi
+          if [ "$pr_count" -eq 0 ]; then
+            {
+              echo "### Validated Cross-Product Response Atlas review branch ready"
+              echo "- Branch: ${branch}"
+              echo "- Exact head: ${published_commit}"
+              echo "- Source commit: ${BUILD_SHA}"
+              echo "- Validator run: ${run_url}"
+              echo "- [Open the review PR](${compare_url})"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=Validated review branch ready::Open a PR from $branch to master at ${compare_url} after reviewing run ${GITHUB_RUN_ID}; that pull_request event is the exact-head CI trigger. $body Exact candidate head: $published_commit."
+            exit 0
+          fi
+
+          pr_record=""
+          for _ in 1 2 3 4 5; do
+            pr_record=$(gh pr list --head "$branch" --base master --state open \
+              --json url,baseRefName,headRefName,headRefOid \
+              --jq 'if length == 1 then .[0] | [.url,.baseRefName,.headRefName,.headRefOid] | @tsv else "" end')
+            case "$pr_record" in
+              *$'\t'"$published_commit") break ;;
+            esac
+            sleep 2
+          done
+          IFS=$'\t' read -r pr_url pr_base pr_head pr_oid <<< "$pr_record"
+          if [ -z "$pr_record" ] || [ "$pr_base" != master ] || \
+             [ "$pr_head" != "$branch" ] || [ "$pr_oid" != "$published_commit" ]; then
+            echo "::error title=Refresh PR identity mismatch::open PR does not match master <- $branch at the exact validated head"
+            exit 1
+          fi
+          gh pr comment "$pr_url" --body "$body Exact candidate head: ${published_commit}. GitHub will hold the pull_request synchronize checks triggered by this automation update for approval; a repository write user must select **Approve workflows to run**. Do not merge until checks are green on exact head ${published_commit}."
+          {
+            echo "### Cross-Product Response Atlas review PR updated"
+            echo "- PR: ${pr_url}"
+            echo "- Exact head: ${published_commit}"
+            echo "- Validator run: ${run_url}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Approve exact-head review checks::Existing PR updated to $published_commit. A repository write user must approve workflows and verify green checks on that exact head before merging; the merge to master is the deploy. Compare: ${compare_url}"
