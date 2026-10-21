@@ -1878,16 +1878,12 @@ check(neutral_tally$n == 0L && neutral_tally$k == 0L &&
         neutral_pool$median_r[neutral_pool$from == "x"] == 0,
       "constant/tie rows abstain from sign tests while finite zero stays in effect summaries")
 global_source <- paste(readLines("global.R", warn = FALSE), collapse = "\n")
-server_source <- paste(readLines("server.R", warn = FALSE), collapse = "\n")
+# The pulse tracer UI left the visitor surface on 2026-10-20 (docs/SIMPLIFY-PLAN-2026-10-20.md,
+# card T1; its code is kept under docs/history/archive, outside the staged code surface).
+# The abstention rule itself stays in global.R and is still pinned here.
 check(grepl('else if (is.na(predicted) || is.na(dst_direction)) "neutral"',
-            global_source, fixed = TRUE) &&
-        grepl('tot <- sum(paths$verdict %in% c("match", "miss"))',
-              server_source, fixed = TRUE) &&
-        grepl('abstain <- sum(paths$verdict == "neutral")',
-              server_source, fixed = TRUE) &&
-        grepl('if (pr$verdict %in% c("nodata", "neutral")) next',
-              server_source, fixed = TRUE),
-      "pulse exact-zero states abstain from markers and direction denominators")
+            global_source, fixed = TRUE),
+      "pulse exact-zero states abstain from direction verdicts")
 
 context_prior <- data.frame(
   from = "x", to = "y", lag = 0L, sign = 1L, conf = "none",

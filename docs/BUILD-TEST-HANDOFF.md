@@ -1,10 +1,35 @@
 # Build, test, and handoff record
 
-Last updated: 2026-08-28
+Last updated: 2026-10-20
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
 can continue safely without relying on chat history.
+
+## 2026-10-20 [Claude]: the app simplified to four tabs (PR to `master`)
+
+The visitor surface was rebuilt on branch `claude/simplify-2026-10-20` from the
+card-by-card plan in `docs/SIMPLIFY-PLAN-2026-10-20.md` (the MSC plot-catalog
+method): four tabs (This site, One pairing, All sites, About), SRER opens first,
+one name (NEON Response Atlas), a counts-first line in the hero, the twelve
+pairings as one plain table, the two judged pairings as the All sites headline, the
+four plain lines (Shows, Example, From, Cannot) under every chart, and the Search
+and QC tabs folded into All sites and About. The pulse tracer and the lag-and-season
+explorer are archived under `docs/history/archive/`. No scientific artifact, helper,
+script or workflow changed; `manifest.json` carries refreshed checksums for the
+changed deploy files only, and `scripts/smoke_app.R` names the new output ids.
+Gates run locally on 2026-10-20: parse, `trusted_publish.py update-manifest`,
+`smoke_app.R` (510 rows, 12 associations), `test_boot_integrity.R` (12 fixtures,
+6 cuts), `git diff --check`, and a browser pass at 375 and 1440 px on SRER, SCBI
+and WOOD. CI on PR #74 is red on the hash registries by design: `manifest.json`
+moved from `f4c29889...` to `98bad5c4...`, and that value is frozen in
+`ci.yml`, `discharge-f1-inventory.yml`, `test_phenology_adapter_v2.R`,
+`discharge_f1_contract.py`, `verify_discharge_f1_inventory.py` and the three spec
+tables (the second-order `SPEC_BLOB`/`SPEC_SHA256` chain follows); the Claude
+session was refused that re-registration by its permission classifier, so the
+owner runs the recipe in the PR description, as cd3a9d9 did. Next action: after the merge, confirm the Connect app serves the four
+tabs and the cover reads "seven living records"; then the Wave 2 pipeline items
+(coverage-regression gate, `publish` default, review-branch migration).
 
 ## Canonical Driver artifact state
 
