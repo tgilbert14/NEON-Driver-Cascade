@@ -1,5 +1,5 @@
 /* =========================================================================
-   cascade.css: NEON Response Atlas additions.
+   cascade.css: NEON Cross-Product Response Atlas additions.
    ========================================================================= */
 :root {
   --tier-consistent-bg: #2dd4bf;
@@ -80,7 +80,9 @@
   min-height: 44px; display: inline-flex; align-items: center; }
 @media (max-width: 620px) {
   .top-bar { padding: 7px 10px; flex-wrap: nowrap; gap: 7px; }
-  .top-bar-actions { margin-left: auto; gap: 4px; flex-wrap: nowrap; }
+  .top-bar-actions { margin-left: auto; gap: 4px; flex-wrap: nowrap; flex: none; }
+  .top-bar-brand { flex: 1 1 auto; }
+  .top-bar-brand .tb-title { white-space: normal; }
   .top-bar-brand .tb-sub { display: none; }
   .top-bar-actions .tb-help, .top-bar-actions .tb-report {
     width: 44px; padding-inline: 0; justify-content: center;

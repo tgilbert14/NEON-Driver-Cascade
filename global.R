@@ -1,5 +1,5 @@
 # ===========================================================================
-# NEON Cross-Product Response Atlas — global.R
+# NEON Cross-Product Response Atlas, global.R
 # The capstone of the NEONize family: a cross-product response atlas of
 # direct weather-response associations, co-displayed by measurement layer.
 # assembled from seven sibling apps' bundles (mammals, birds, plants, veg,
@@ -656,18 +656,26 @@ SITE_LAYERS <- vapply(ALL_SITES, site_layer_count, integer(1))
 RICH_SITES <- ALL_SITES[SITE_LAYERS >= 3]
 .has_phen <- function(s) unname(layers_present(site_annual(s), SIGNALS)["phenology"])
 DEFAULT_SITE <- {
-  # SRER opens the app whenever it is in the bundle: the seasonal-rain contrast is
-  # the clearest teaching case. The choice is thematic, not picked for a statistic.
-  # The fallback below applies only when SRER is absent.
+  # SRER (Santa Rita Experimental Range, AZ) is the owner's settled default site for
+  # the whole NEON suite. The choice is thematic, not picked for a statistic. The
+  # phenology card renders its honest empty state at SRER by design.
+  # Fallback, only when SRER is absent from the bundle: the first of JORN, ONAQ,
+  # SJER, MOAB that is in the candidate set, else the candidate with the most
+  # finite annual values. Any fallback is announced with message(), never silent.
   full <- ALL_SITES[vapply(ALL_SITES, .has_phen, logical(1)) & SITE_LAYERS >= 4]
   cand <- if (length(full)) full else if (length(RICH_SITES)) RICH_SITES else ALL_SITES
   if ("SRER" %in% ALL_SITES) {
     "SRER"
-  } else if ("SCBI" %in% cand) {
-    "SCBI"
   } else {
-    sc <- vapply(cand, function(s) sum(vapply(SIGNALS$key, function(k) sum(is.finite(site_annual(s)[[k]])), integer(1))), integer(1))
-    cand[which.max(sc)]
+    alt <- intersect(c("JORN", "ONAQ", "SJER", "MOAB"), cand)
+    sel <- if (length(alt)) {
+      alt[[1]]
+    } else {
+      sc <- vapply(cand, function(s) sum(vapply(SIGNALS$key, function(k) sum(is.finite(site_annual(s)[[k]])), integer(1))), integer(1))
+      cand[which.max(sc)]
+    }
+    message(sprintf("DEFAULT_SITE: SRER unavailable; falling back to %s", sel))
+    sel
   }
 }
 

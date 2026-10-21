@@ -170,7 +170,7 @@ Driver artifact.
 
 ## What the suite is today (recap)
 
-Ten apps: the **Driver Cross-Product Response Atlas** (the capstone integrator) plus **nine product
+Ten apps: the **NEON Cross-Product Response Atlas** (the capstone integrator) plus **nine product
 apps**. The Driver consumes **seven older pinned families** today; the aquatic pair is released and
 production-verified but not integrated.
 

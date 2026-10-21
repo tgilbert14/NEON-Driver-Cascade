@@ -1,5 +1,5 @@
 /* =========================================================================
-   cascade.js: small progressive-enhancement layer for the NEON Response Atlas.
+   cascade.js: small progressive-enhancement layer for the NEON Cross-Product Response Atlas.
 
    Native HTML remains the baseline. This file adds focus-safe popovers,
    delegated Shiny actions, keyboard activation for generated controls,
@@ -159,7 +159,7 @@ function cascadeCaptionFor(table) {
   if (table.classList.contains("more-tbl")) return "More numbers for the selected pairing";
   if (table.classList.contains("sig-tbl")) return "Signals measured at the selected site";
   if (table.classList.contains("sb-table")) return "Every site, every pairing";
-  return "NEON Response Atlas data table";
+  return "NEON Cross-Product Response Atlas data table";
 }
 
 function cascadeEnhanceTable(table) {

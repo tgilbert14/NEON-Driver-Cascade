@@ -60,6 +60,57 @@ app <- shiny::shinyApp(ui = ui, server = server)
 if (!inherits(app, "shiny.appobj"))
   stop("the staged UI and server did not construct a Shiny application", call. = FALSE)
 
+# DEFAULT_SITE: SRER is the owner's settled suite default. Pin it on the
+# committed bundle, then replay global.R's own DEFAULT_SITE expression with SRER
+# removed so the fallback is proven explicit (JORN/ONAQ/SJER/MOAB first) and
+# announced with message(), never silent.
+if (!identical(DEFAULT_SITE, "SRER"))
+  stop(sprintf("DEFAULT_SITE resolved to '%s' on the committed bundle; expected SRER",
+               DEFAULT_SITE), call. = FALSE)
+default_site_expr <- Filter(function(e)
+  is.call(e) && identical(e[[1L]], as.name("<-")) &&
+    identical(e[[2L]], as.name("DEFAULT_SITE")),
+  as.list(parse(file = "global.R", encoding = "UTF-8", keep.source = FALSE)))
+if (length(default_site_expr) != 1L)
+  stop("global.R must contain exactly one top-level DEFAULT_SITE assignment", call. = FALSE)
+resolve_default_site <- function(sites) {
+  env <- new.env(parent = globalenv())
+  env$ALL_SITES <- sites
+  env$SITE_LAYERS <- SITE_LAYERS[sites]
+  env$RICH_SITES <- intersect(RICH_SITES, sites)
+  msgs <- character()
+  value <- withCallingHandlers(
+    eval(default_site_expr[[1L]][[3L]], env),
+    message = function(m) {
+      msgs <<- c(msgs, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    })
+  list(value = value, messages = msgs)
+}
+with_srer <- resolve_default_site(ALL_SITES)
+if (!identical(with_srer$value, "SRER") || length(with_srer$messages))
+  stop("DEFAULT_SITE replay with SRER present must return SRER without a message",
+       call. = FALSE)
+preferred_fallback <- c("JORN", "ONAQ", "SJER", "MOAB")
+for (sites in list(setdiff(ALL_SITES, "SRER"),
+                   setdiff(ALL_SITES, c("SRER", preferred_fallback)))) {
+  fb <- resolve_default_site(sites)
+  expected_msg <- sprintf("DEFAULT_SITE: SRER unavailable; falling back to %s\n", fb$value)
+  if (length(fb$value) != 1L || !(fb$value %in% sites) ||
+      !identical(fb$messages, expected_msg))
+    stop(sprintf("DEFAULT_SITE fallback was not explicit and announced (got '%s')",
+                 paste(fb$value, collapse = ",")), call. = FALSE)
+  if (any(preferred_fallback %in% sites) && !(fb$value %in% preferred_fallback) &&
+      any(vapply(intersect(preferred_fallback, sites), function(s)
+        isTRUE(unname(.has_phen(s))) && SITE_LAYERS[[s]] >= 4L, logical(1))))
+    stop(sprintf("DEFAULT_SITE fallback skipped an eligible desert/arid site (got '%s')",
+                 fb$value), call. = FALSE)
+  cat(sprintf("[PASS] DEFAULT_SITE fallback without SRER%s -> %s (announced)\n",
+              if (any(preferred_fallback %in% sites)) "" else " or JORN/ONAQ/SJER/MOAB",
+              fb$value))
+}
+cat("[PASS] DEFAULT_SITE resolves to SRER on the committed bundle\n")
+
 rendered <- htmltools::renderTags(ui)
 rendered_points <- utf8ToInt(rendered$html)
 forbidden_controls <- c(0:8, 11:12, 14:31, 127:159)

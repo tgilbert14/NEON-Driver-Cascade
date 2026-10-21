@@ -1,4 +1,4 @@
-# Deploying the NEON Response Atlas
+# Deploying the NEON Cross-Product Response Atlas
 
 This app follows the NEON-suite standard: **Posit Connect Cloud, git-backed deploy**
 (a push to `master` auto-republishes). See `docs/neonize-playbook.md` §6.
