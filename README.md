@@ -1,4 +1,4 @@
-# NEON Cross-Product Response Atlas
+# NEON Response Atlas
 
 > **Explore:** [Launch the hosted atlas](https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/) · [Project home](https://tgilbert14.github.io/NEON-Driver-Cascade/) · [Repository](https://github.com/tgilbert14/NEON-Driver-Cascade)
 

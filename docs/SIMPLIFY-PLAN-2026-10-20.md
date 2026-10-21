@@ -162,3 +162,23 @@ the manifest to reproduce; nothing in `data/` moves.
 - A map site picker (the suite contract); the Atlas has a list only.
 - The prior notes in `cascade.rds` carry em dashes; they change at the next rebuild.
 - Per-product release labels and "data through" on the first view (audit item, provenance).
+
+## 7. Built (2026-10-20)
+
+Every card above was built as ruled, by two Opus 5.5 lanes at medium effort under the lead, on one
+branch, in one PR. Lead changes at integration: the site report CSV's summary line is now the hero's
+counts-first line plus the judged-pairing sentence; the QC flag text (which comes from the hashed
+helper and cannot change here) is mapped on screen so "Across NEON" reads "All sites" and
+"vote-eligible" reads "judged"; the timeline legend sits below the year labels on a phone; the three
+hero tiles share one row on a phone; a blank grid cell stays blank on screen and reads "not
+testable" to a screen reader; the cover's "How it stays honest" fold became "How the numbers are
+checked". Lane choices kept: a year counts as on record only when at least one signal has a value
+(SRER shows 10 years, 2016 to 2025, not 11); the About line says the lags and directions were set
+before the data were looked at and adjusted during earlier builds, which is what the repository
+history shows. Not done, by the rules: README.md and DEPLOY.md keep their em dashes outside the name
+lines (they are operating records, not visitor copy); the export CSV headers keep their old wording
+beyond the name.
+
+Measured after the build (local run, SRER): This site about 580 words, One pairing about 190,
+All sites about 650, About about 2,360 including the data checks (the twelve pairing notes from
+the bundle are most of it). The grid is 280 px wide on a 375 px phone with the context columns off.

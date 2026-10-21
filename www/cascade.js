@@ -1,19 +1,19 @@
 /* =========================================================================
-   cascade.js — small progressive-enhancement layer for the Response Atlas.
+   cascade.js: small progressive-enhancement layer for the NEON Response Atlas.
 
-   Native HTML remains the baseline. This file adds focus-safe popovers and
-   onboarding, delegated Shiny actions, keyboard activation for generated
-   controls, responsive Plotly reflow, and scoped visual polish.
+   Native HTML remains the baseline. This file adds focus-safe popovers,
+   delegated Shiny actions, keyboard activation for generated controls,
+   responsive Plotly reflow, and scoped visual polish.
    ========================================================================= */
 
 function cascadeReducedMotion() {
   return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 }
 
-// ---- "change site": open Overview, scroll to and focus the picker -----------
+// ---- "change site": open This site, scroll to and focus the picker ----------
 function cascadeChangeSite() {
-  var overview = document.querySelector('a.nav-link[data-value="overview"]');
-  if (overview) { try { overview.click(); } catch (e) {} }
+  var siteTab = document.querySelector('a.nav-link[data-value="site"]');
+  if (siteTab) { try { siteTab.click(); } catch (e) {} }
   setTimeout(function () {
     var panel = document.getElementById("sitePanel");
     if (panel && panel.scrollIntoView) {
@@ -107,8 +107,6 @@ function cascadeDispatchAction(element) {
   var value = null;
   if (action === "select-site") {
     inputName = "goSite"; value = element.getAttribute("data-site");
-  } else if (action === "goto-tab") {
-    inputName = "gotoTab"; value = element.getAttribute("data-tab");
   } else if (action === "inspect-qc") {
     inputName = "qcInspect"; value = element.getAttribute("data-key");
   } else if (action === "inspect-score") {
@@ -157,9 +155,10 @@ document.addEventListener("keydown", function (event) {
 
 // ---- generated-output accessibility ------------------------------------------
 function cascadeCaptionFor(table) {
-  if (table.classList.contains("driver-tbl")) return "Current build-locked driver pairings and their data verdicts";
+  if (table.classList.contains("pairings-tbl")) return "Pairings at this site";
+  if (table.classList.contains("more-tbl")) return "More numbers for the selected pairing";
   if (table.classList.contains("sig-tbl")) return "Signals measured at the selected site";
-  if (table.classList.contains("sb-table")) return "Site by current-pairing direction scoreboard";
+  if (table.classList.contains("sb-table")) return "Every site, every pairing";
   return "NEON Response Atlas data table";
 }
 
@@ -190,7 +189,16 @@ function cascadeEnhanceScoreCell(cell) {
   button.type = "button";
   button.className = "sb-cell-button";
   button.setAttribute("aria-label", label);
-  button.textContent = cell.textContent.trim() || "Open";
+  var text = cell.textContent.trim();
+  if (text) {
+    button.textContent = text;
+  } else {
+    // A blank cell means not testable: keep it blank on screen, named for readers.
+    var hidden = document.createElement("span");
+    hidden.className = "visually-hidden";
+    hidden.textContent = "not testable";
+    button.appendChild(hidden);
+  }
   cell.textContent = "";
   cell.removeAttribute("role");
   cell.removeAttribute("tabindex");
@@ -302,61 +310,4 @@ document.addEventListener("shown.bs.tab", function (event) {
     enhance();
     if (++tries > 9 || document.querySelector(".hero-verdict[data-holo]")) clearInterval(early);
   }, 350);
-})();
-
-// ---- first-visit guide: truly hidden/inert before and after use ---------------
-(function () {
-  var armed = false;
-
-  function setGuideInert(guide, value) {
-    if (value) guide.setAttribute("inert", "");
-    else guide.removeAttribute("inert");
-    try { guide.inert = value; } catch (e) {}
-  }
-
-  function showGuide() {
-    if (armed) return;
-    var guide = document.getElementById("cascadeGuide");
-    if (!guide) return;
-    var seen = false;
-    try { seen = window.localStorage.getItem("cascadeGuideSeen") === "1"; } catch (e) {}
-    armed = true;
-    if (seen) return;
-
-    var reduce = cascadeReducedMotion();
-    var closeButton = guide.querySelector(".cg-close");
-
-    function dismiss() {
-      var ownedFocus = guide.contains(document.activeElement);
-      try { window.localStorage.setItem("cascadeGuideSeen", "1"); } catch (e) {}
-      guide.classList.remove("show", "wave");
-      guide.setAttribute("aria-hidden", "true");
-      setGuideInert(guide, true);
-      if (ownedFocus) {
-        var main = document.getElementById("mainContent");
-        if (main && main.focus) main.focus();
-      }
-      setTimeout(function () { if (!guide.classList.contains("show")) guide.hidden = true; }, reduce ? 0 : 550);
-    }
-
-    if (closeButton) closeButton.addEventListener("click", dismiss);
-    // Switching tabs means the visitor has found the navigation; retire the tip
-    // instead of leaving it parked over charts on every tab.
-    document.addEventListener("shown.bs.tab", function () {
-      if (guide.classList.contains("show")) dismiss();
-    });
-    setTimeout(function () {
-      guide.hidden = false;
-      setGuideInert(guide, false);
-      guide.setAttribute("aria-hidden", "false");
-      window.requestAnimationFrame(function () {
-        guide.classList.add("show");
-        if (!reduce) guide.classList.add("wave");
-      });
-    }, 1200);
-  }
-
-  if (window.jQuery) window.jQuery(document).on("shiny:connected", function () { setTimeout(showGuide, 400); });
-  document.addEventListener("shiny:connected", function () { setTimeout(showGuide, 400); });
-  document.addEventListener("DOMContentLoaded", function () { setTimeout(showGuide, 1600); });
 })();

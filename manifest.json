@@ -2550,7 +2550,7 @@
       "checksum": "8c0de1fdf3ad1fb872415cc6add8056c"
     },
     "global.R": {
-      "checksum": "db362137ca27b5b253307f3bfb7a0992"
+      "checksum": "8d6049953991d3977a7be98f5b79877c"
     },
     "R/cascade_helpers.R": {
       "checksum": "56accf1074bca1b0b51ed6b0dddde4bb"
@@ -2559,16 +2559,16 @@
       "checksum": "d7105d93faffb467de9389cb3f70282c"
     },
     "server.R": {
-      "checksum": "1e76c3e01f34a2b42643560442672cfb"
+      "checksum": "f75402c7336fc7cef8145ba642f59dbe"
     },
     "ui.R": {
-      "checksum": "92001b1f8b79a643de7694d7c851f326"
+      "checksum": "33d995e0ee3f224b6a82b9fb6c018170"
     },
     "www/cascade.css": {
-      "checksum": "939733cd6fee6d8eedcaf4947e992ac5"
+      "checksum": "f80c36186c4bdbf98ff9ea570512914e"
     },
     "www/cascade.js": {
-      "checksum": "f3eaf0b5a2a4b542fd4969fd64cf882f"
+      "checksum": "1340b2d7afefeee93fbd9a52df83698b"
     },
     "www/styles.css": {
       "checksum": "75af0f452dc4722b8ca54aff8e1c2fe4"

@@ -194,3 +194,11 @@
 - [2026-09-24] cass · confirmed · A fail-closed build hides drifts in series, so record every failure a
   side-branch run reveals, even when that branch is abandoned. The Vegetation plot×event change was first
   hit on 2026-08-09 by an unmerged branch's regen run and went unrecorded for six weeks, behind PUUM.
+- [2026-10-20] lead+opus · confirmed · The MSC plot-catalog method carried to a Shiny app whole: one card
+  per surface, keep / fix / simplify / move / remove, the one-breath rule, the counts-first line and the
+  four plain lines. Two Opus lanes editing one server.R in named regions with Edit only collided nowhere;
+  the lead cut ui.R first as the id contract. The runtime integrity check means every local test of a
+  changed deploy file needs `trusted_publish.py update-manifest` first, and a lane must run it in a copy.
+- [2026-10-20] lead · gap · DEFAULT_SITE's "has green-up" guard meant the owner's SRER default never fired
+  (the app opened on SCBI); a default rule that depends on data coverage needs a test that the default
+  actually resolves to the settled site.

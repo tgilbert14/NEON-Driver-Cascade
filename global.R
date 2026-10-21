@@ -656,12 +656,12 @@ SITE_LAYERS <- vapply(ALL_SITES, site_layer_count, integer(1))
 RICH_SITES <- ALL_SITES[SITE_LAYERS >= 3]
 .has_phen <- function(s) unname(layers_present(site_annual(s), SIGNALS)["phenology"])
 DEFAULT_SITE <- {
+  # SRER opens the app whenever it is in the bundle: the seasonal-rain contrast is
+  # the clearest teaching case. The choice is thematic, not picked for a statistic.
+  # The fallback below applies only when SRER is absent.
   full <- ALL_SITES[vapply(ALL_SITES, .has_phen, logical(1)) & SITE_LAYERS >= 4]
   cand <- if (length(full)) full else if (length(RICH_SITES)) RICH_SITES else ALL_SITES
-  # Default to SRER because the seasonal-rain aggregation problem is the app's
-  # clearest teaching case. The choice is thematic, not selected for a favorable
-  # statistic; all site-level results remain short-series screens.
-  if ("SRER" %in% cand) {
+  if ("SRER" %in% ALL_SITES) {
     "SRER"
   } else if ("SCBI" %in% cand) {
     "SCBI"

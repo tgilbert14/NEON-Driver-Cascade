@@ -66,7 +66,7 @@ forbidden_controls <- c(0:8, 11:12, 14:31, 127:159)
 if (any(rendered_points %in% forbidden_controls))
   stop("rendered UI contains a forbidden control code point", call. = FALSE)
 if (!grepl("\u2192", rendered$html, fixed = TRUE))
-  stop("rendered Search choices lost their UTF-8 driver-to-response arrow", call. = FALSE)
+  stop("the rendered UI lost its UTF-8 driver-to-response arrow", call. = FALSE)
 if (!is.list(rendered) || !is.character(rendered$html) ||
     length(rendered$html) != 1L || !nzchar(rendered$html))
   stop("the staged UI could not be serialized", call. = FALSE)
@@ -127,23 +127,19 @@ if (nrow(wood_meta) != 1L ||
 shiny::testServer(server, {
   session$setInputs(
     site = DEFAULT_SITE,
-    response = "mammal_cpue",
-    tabs = "overview",
+    pairing = "precip_monsoon|mammal_cpue|1",
+    tabs = "site",
     colorMode = "light",
     sbSort = "default",
-    searchMode = "link",
-    searchLink = "temp|greenup_doy|0",
-    searchAlignedOnly = FALSE,
-    searchMinResolved = 0L,
-    expLag = 0L,
+    showContext = FALSE,
     vw = 1200L
   )
   session$flushReact()
   representative <- c(
-    "heroStats", "siteBio", "signalChips", "overviewInsight",
-    "cascadeSchematic", "signalTable", "driverTable", "linkScatterHeader",
-    "linkScatterNote", "pooledHeadline", "scoreboard", "qcFlags",
-    "aboutPanel", "ladderPlot", "linkScatter", "expCurve", "seasonalPlot")
+    "heroStats", "siteBio", "signalTable", "ladderPlot", "ladderLines",
+    "pairingsTable", "seasonalCard", "seasonalPlot", "pairingPicker",
+    "linkScatterHeader", "linkScatter", "scatterLines", "scatterMore",
+    "pooledHeadline", "scoreboard", "qcFlags", "aboutPanel")
   runtime_warnings <- character()
   materialized <- withCallingHandlers(
     stats::setNames(lapply(representative, function(id) output[[id]]),

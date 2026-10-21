@@ -1,5 +1,5 @@
 # ===========================================================================
-# NEON Cross-Product Response Atlas — server.R
+# NEON Response Atlas, server.R
 # ===========================================================================
 server <- function(input, output, session) {
   focus_after_update <- function(id = NULL, tab = NULL, delay = 160L) {
@@ -45,44 +45,60 @@ server <- function(input, output, session) {
   blabel <- reactive(site_blabel(input$site))
   bgroup <- reactive(if (identical(bclass(), "water-limited")) "dryland-keyword group" else "default other-site group")
 
-  # ---- Pulse Tracer state: the climate year being traced down the ladder ----
-  traced <- reactiveVal(NULL)
-  observeEvent(input$site, traced(NULL), ignoreInit = TRUE)          # reset on site change
-  observeEvent(input$tracedYear, {                                    # set by a ladder dot click (cascade.js onRender)
-    y <- suppressWarnings(as.integer(round(as.numeric(input$tracedYear$year))))
-    if (is.finite(y)) {
-      traced(y)
-      updateSelectInput(session, "traceYearPick", selected = as.character(y))
-    }
-  })
-  observeEvent(input$traceYearPick, {
-    y <- suppressWarnings(as.integer(input$traceYearPick))
-    traced(if (is.finite(y)) y else NULL)
-  }, ignoreInit = TRUE)
-  observeEvent(input$clearTrace, {
-    traced(NULL)
-    updateSelectInput(session, "traceYearPick", selected = "")
-    focus_after_update(id = "traceYearPick")
-  })
+  # ---- plain-word helpers shared by the This site and One pairing tabs ----
+  # Verdict words come from the bundle's tier field, never from its sentence.
+  TIER_WORDS <- c(consistent = "Fits the expected direction",
+                  apparent = "Fits, but the range includes zero",
+                  counter = "Runs the other way", neutral = "No direction",
+                  exploratory = "Too few years to judge", insufficient = "Not testable here")
+  tier_words <- function(t) { w <- unname(TIER_WORDS[as.character(t)]); ifelse(is.na(w), "No direction", w) }
+  pair_id <- function(from, to, lag) sprintf("%s|%s|%d", from, to, as.integer(lag))
+  JUDGED_IDS <- with(PRIORS[PRIORS$expected_class == "all", , drop = FALSE], pair_id(from, to, lag))
+  plain_unit <- function(k) switch(sig_unit(k),
+    "mm/yr" = "mm", "per 100 TN" = "per 100 trap-nights",
+    "per trap-nt" = "per trap-night", "DOY-anchored index" = "(day-of-year index)", sig_unit(k))
+  # Short lower-case names for sentences; the table keeps the bundle's labels.
+  plain_name <- function(k) switch(k,
+    precip = "annual rain", temp = "mean temperature", precip_winter = "winter rain",
+    precip_monsoon = "monsoon rain", temp_spring = "spring temperature",
+    greenup_doy = "green-up timing", mammal_cpue = "small-mammal catch",
+    fruiting_pct = "fruiting peak",
+    tolower(sub(" \\(.*\\)$", "", sig_label(k))))
+  cap_first <- function(x) paste0(toupper(substring(x, 1, 1)), substring(x, 2))
+  fmt_val <- function(v, k) {
+    if (length(v) == 0 || !is.finite(v)) return("no value")
+    d <- if (abs(v) >= 100) 0 else 1
+    u <- plain_unit(k)
+    sprintf("%s%s%s", format(round(v, d), big.mark = ",", nsmall = d, trim = TRUE),
+            if (identical(u, "°C")) "" else " ", u)
+  }
+  sig_product <- function(k) {
+    if (grepl("^(temp|precip)", k)) return("NEON and Daymet weather")
+    if (k %in% c("greenup_doy", "fruiting_pct")) return("NEON plant phenology (DP1.10055.001)")
+    if (grepl("^plant_", k)) return("NEON plant diversity (DP1.10058.001)")
+    if (grepl("^mammal_", k)) return("NEON small mammals (DP1.10072.001)")
+    if (grepl("^bird_", k)) return("NEON breeding birds (DP1.10003.001)")
+    if (grepl("^mosq_", k)) return("NEON mosquitoes (DP1.10043.001)")
+    if (grepl("^beetle_", k)) return("NEON ground beetles (DP1.10022.001)")
+    "NEON"
+  }
+  pairing_label <- function(from, to, lag, judged) {
+    if (lag > 0)
+      sprintf("%s, then %s the next year · %s", cap_first(plain_name(from)), plain_name(to), if (judged) "judged" else "context")
+    else
+      sprintf("%s and %s, same year · %s", cap_first(plain_name(from)), plain_name(to), if (judged) "judged" else "context")
+  }
+  # Four short lines under a chart: Shows, Example, From, Cannot.
+  plain_lines <- function(shows, example, from, cannot) {
+    row <- function(lab, txt) div(class = "plain-row", tags$b(class = "plain-lab", lab), span(class = "plain-txt", txt))
+    div(class = "plain-lines", row("Shows", shows), row("Example", example),
+        row("From", from), row("Cannot", cannot))
+  }
 
-  output$traceYearControl <- renderUI({
-    a <- ann(); req(nrow(a))
-    keys <- intersect(LADDER_KEYS, names(a))
-    has_signal <- if (length(keys)) rowSums(is.finite(as.matrix(a[, keys, drop = FALSE]))) > 0 else rep(FALSE, nrow(a))
-    yrs <- sort(unique(a$year[has_signal]))
-    if (!length(yrs)) return(NULL)
-    div(class = "trace-year-control",
-      selectInput("traceYearPick", "Keyboard alternative: choose a year to trace",
-        choices = c("Choose a year…" = "", stats::setNames(as.character(yrs), yrs)),
-        selected = if (is.null(traced())) "" else as.character(traced()),
-        selectize = FALSE, width = "100%"))
-  })
-
-  # ---- clickable scatter dots: the year being inspected in the Driver Lab ----
+  # ---- clickable scatter dots: the year being inspected on One pairing ----
   scatterYear <- reactiveVal(NULL)
-  observeEvent(input$response, scatterYear(NULL), ignoreInit = TRUE)
   observeEvent(input$site,     scatterYear(NULL), ignoreInit = TRUE)
-  observeEvent(input$labLink,  scatterYear(NULL), ignoreInit = TRUE)
+  observeEvent(input$pairing,  scatterYear(NULL), ignoreInit = TRUE)
   observeEvent(input$scatterYear, {
     y <- suppressWarnings(as.integer(round(as.numeric(input$scatterYear$year))))
     if (is.finite(y)) {
@@ -103,101 +119,62 @@ server <- function(input, output, session) {
   output$siteBio <- renderUI({ b <- site_bio(input$site); if (is.null(b)) return(NULL)
     div(class="site-bio", bs_icon("info-circle-fill"), span(b)) })
 
-  output$signalChips <- renderUI({ a <- ann(); req(nrow(a))
-    have <- LADDER_KEYS[vapply(LADDER_KEYS, function(k) sum(is.finite(a[[k]])) >= 2, logical(1))]
-    if (!length(have)) return(div(class="sig-chips-empty", "No multi-year signals here yet."))
-    div(class="sig-chips", lapply(have, function(k){ L <- SIGNALS$layer[SIGNALS$key==k]
-      span(class=paste0("sig-chip sig-", L), sig_label(k)) })) })
-
-  # ---- hero: ONE auto-written association summary (lead with the answer) ----
-  # The sentence is the comprehension fix; the four stat tiles demote to supporting evidence.
-  verdict_sentence <- function(site, lk, sm, blab) {
-    desert <- identical(site_bclass(site), "water-limited")
-    ok <- lk[lk$expected %in% TRUE & lk$n >= 6 & !is.na(lk$sign_match), , drop = FALSE]
-    best <- if (nrow(ok)) ok[order(match(ok$tier, c("consistent","apparent","counter","exploratory")),
-                                   -abs(ifelse(is.na(ok$r), 0, ok$r))), ][1, ] else NULL
-    mon <- lk[lk$from == "precip_monsoon" & lk$to == "mammal_cpue" & is.finite(lk$r), ]
-    # Suite-level context: summarize the best-supported row in the complete
-    # current literature-motivated family, selected by the displayed Holm value rather than by a
-    # hard-coded favourite. This is an ordered summary, not an extra hypothesis.
-    gp <- POOLED[(if ("poolable" %in% names(POOLED)) POOLED$poolable %in% TRUE else POOLED$sites >= 3) &
-                   is.finite(POOLED$p), , drop = FALSE]
-    if (nrow(gp)) {
-      ord_p <- if ("p_holm" %in% names(gp)) ifelse(is.finite(gp$p_holm), gp$p_holm, Inf) else rep(Inf, nrow(gp))
-      gp <- gp[order(ord_p, gp$p, -gp$sites, gp$from, gp$to), , drop = FALSE][1, , drop = FALSE]
-    }
-    suite_lead <- if (nrow(gp) && is.finite(gp$p[1])) {
-      adj <- if ("p_holm" %in% names(gp) && is.finite(gp$p_holm[1])) gp$p_holm[1] else NA_real_
-      prior_row <- PRIORS[PRIORS$from == gp$from[1] & PRIORS$to == gp$to[1] & PRIORS$lag == gp$lag[1], , drop = FALSE]
-      direction <- if (nrow(prior_row) && isTRUE(prior_row$sign[1] < 0)) "earlier / less" else "more"
-            sprintf("Exploratory cross-site context: the lowest Holm-adjusted direct-association row in the current literature-motivated family is <b>%s &rarr; %s %s</b>, with %d/%d site votes (raw p&nbsp;=&nbsp;%.3f%s)%s. The family evolved alongside inspection of these data, so this is not confirmatory. ",
-              sig_label(gp$from[1]), direction, sig_label(gp$to[1]), gp$k[1], gp$sites[1], gp$p[1],
-              if (is.finite(adj)) sprintf("; Holm p&nbsp;=&nbsp;%.3f", adj) else "",
-              if (is.finite(adj) && adj >= .05) ", but it does not clear the familywise 0.05 threshold" else "")
-    } else ""
-    lead <- sprintf("<span class='biome-tag biome-%s'>descriptive site group: %s</span> ",
-                    if (desert) "water" else "temp", blab)
-    group_note <- if (desert) {
-      s <- " This site enters the <b>dryland-keyword group</b> under a documented bio-text heuristic—not a measured water-limitation classification. The seasonal panel is an aggregation-sensitivity illustration, not a pooled pathway result."
-      ann_mon <- lk[lk$from == "precip" & lk$to == "mammal_cpue" & is.finite(lk$r), ]
-      if (nrow(mon) && mon$n[1] >= 3 && mon$r[1] > 0) {
-        ptxt <- if (is.finite(mon$p[1])) sprintf(", circular-shift p&nbsp;=&nbsp;%.3f", mon$p[1]) else ""
-        atxt <- if (nrow(ann_mon)) sprintf("; annual-rain r&nbsp;=&nbsp;%+.2f", ann_mon$r[1]) else ""
-        s <- paste0(s, sprintf(" At <b>this site</b>, the contextual monsoon-to-next-year-rodent pairing is <b>r&nbsp;=&nbsp;%+.2f</b> (n&nbsp;=&nbsp;%d%s%s): an illustrative seasonal contrast, not an inferential vote or a desert-wide result.",
-                               mon$r[1], mon$n[1], ptxt, atxt))
-      }
-      s
-    } else ""
-    body <- if (!is.null(best) && identical(best$tier, "consistent")) {
-      sprintf("%sAt this site, <b>%d of %d</b> testable, vote-eligible direct associations point in their stated direction; <b>%s&nbsp;→&nbsp;%s</b> has r&nbsp;=&nbsp;%+.2f and an interval excluding zero. That is a clean per-site direction—not significance, causation, mediation, or evidence of a trophic chain.%s",
-              suite_lead,
-              sm$k, sm$n, sig_label(best$from), sig_label(best$to), best$r, group_note)
-    } else if (!is.na(sm$n) && sm$n > 0) {
-      sprintf("%sOf the vote-eligible direct associations testable here, <b>%d of %d</b> point in their stated direction. These short raw-level series are exploratory; compare the trend sensitivities before interpreting them.%s", suite_lead, sm$k, sm$n, group_note)
-    } else {
-      paste0(suite_lead, "Not enough overlapping years support a vote-eligible direct association here. The measurements are co-displayed below without a site verdict.", group_note)
-    }
-    HTML(paste0(lead, body))
-  }
-  output$heroStats <- renderUI({
-    a <- ann(); req(nrow(a)); sm <- smatch(); lk <- links(); lp <- layers_present(a, SIGNALS)
-    yrs <- range(a$year[rowSums(!is.na(a[, SIGNALS$key, drop=FALSE])) > 0], na.rm=TRUE)
-    row <- neon_sites[neon_sites$site==input$site,]
-    compact <- !is.null(input$tabs) && !identical(input$tabs, "overview")
+  # ---- hero: one counts-first line, computed, then three tiles ----
+  site_facts <- reactive({
+    a <- ann(); req(nrow(a)); lk <- links(); lp <- layers_present(a, SIGNALS)
+    has_any <- rowSums(!is.na(a[, intersect(SIGNALS$key, names(a)), drop = FALSE])) > 0
+    yrs <- range(a$year[has_any], na.rm = TRUE)
+    row <- neon_sites[neon_sites$site == input$site, ]
     climate_years <- sum(("temp" %in% names(a) & is.finite(a$temp)) |
                          ("precip" %in% names(a) & is.finite(a$precip)))
-    hero <- function(v,l,icon,tone,ttl=NULL) div(class=paste0("hero-stat hero-",tone), title=ttl,
+    jid <- pair_id(lk$from, lk$to, lk$lag)
+    judged <- lk[jid %in% JUDGED_IDS, , drop = FALSE]
+    testable <- judged[judged$n >= 6 & is.finite(judged$r) & !is.na(judged$sign_match), , drop = FALSE]
+    # A year counts as on record when at least one signal has a value that year.
+    list(name = if (nrow(row)) row$name[1] else input$site, years = sum(has_any), yrs = yrs,
+         layers = sum(lp), n_layers = length(lp), climate_years = climate_years,
+         has_greenup = "greenup_doy" %in% names(a) && any(is.finite(a$greenup_doy)),
+         n_judged = nrow(judged), testable = testable)
+  })
+  judged_sentence <- function(f) {
+    tt <- f$testable; k <- sum(tt$sign_match %in% TRUE)
+    if (!nrow(tt)) {
+      if (!f$has_greenup) "No green-up record here, so neither judged pairing can be tested at this site."
+      else "Neither judged pairing has six or more years here, so neither can be tested at this site."
+    } else if (nrow(tt) == 1) {
+      sprintf("One judged pairing has enough years here and it %s.",
+              if (isTRUE(tt$sign_match[1])) "fits the expected direction" else "runs the other way")
+    } else {
+      sprintf("Both judged pairings have enough years here: %d of %d fit the expected direction.", k, nrow(tt))
+    }
+  }
+  counts_line <- function(f, site) {
+    sprintf("%s, %s: %d years on record (%s to %s), %d of %d measurement layers, %d years with complete weather.",
+            site, f$name, f$years, f$yrs[1], f$yrs[2], f$layers, f$n_layers, f$climate_years)
+  }
+  output$heroStats <- renderUI({
+    f <- site_facts()
+    compact <- !is.null(input$tabs) && !identical(input$tabs, "site")
+    hero <- function(v,l,icon,tone) div(class=paste0("hero-stat hero-",tone),
       div(class="hs-icon", bs_icon(icon)), div(div(class="hs-v", v), div(class="hs-l", l)))
     div(class=paste("hero-band", if (compact) "hero-band-compact" else ""),
-      div(class="hero-title", bs_icon("diagram-3-fill"), tags$b(sprintf("%s · %s", input$site, if (nrow(row)) row$name[1] else input$site)),
-        tags$span(class="hero-sub", sprintf(" · %s–%s", yrs[1], yrs[2])), cpop("biome"),
-        # "change site" affordance: the picker lives on the Overview select-panel now,
-        # so this hops to Overview and scrolls the panel into view (works on every width).
+      div(class="hero-title", bs_icon("diagram-3-fill"), tags$b(sprintf("%s · %s", input$site, f$name)),
+        tags$span(class="hero-sub", sprintf(" · %s to %s", f$yrs[1], f$yrs[2])),
+        # The site picker sits at the top of This site; the link opens that tab and
+        # scrolls the picker into view.
         tags$a(class="hero-change", href="#sitePanel", `data-cascade-action`="change-site",
           bs_icon("pin-map"), " change site")),
-      div(class="hero-verdict", verdict_sentence(input$site, lk, sm, blabel())),
-      div(class="hero-grid",
-        hero(sum(lp), "measurement layers", icon="layers", tone="navy", ttl="Weather, green-up timing, plant, and animal measurements present here"),
-        hero(if (sm$n>0) sprintf("%d/%d", sm$k, sm$n) else "—", "eligible associations agree", icon="check2-circle", tone="pine",
-             ttl="Of vote-eligible direct associations, how many point in the stated direction; descriptive only"),
-        hero(climate_years, "years with ≥1 complete annual climate signal", icon="cloud-sun", tone="gold",
-             ttl="Years with a complete annual temperature or precipitation signal"),
-        hero(nrow(a), "years on record", icon="calendar3", tone="terra")))
+      div(class="hero-verdict hero-line", counts_line(f, input$site), " ", judged_sentence(f)),
+      div(class="hero-grid hero-grid-3",
+        hero(f$years, "years on record", icon="calendar3", tone="terra"),
+        hero(sprintf("%d of %d", f$layers, f$n_layers), "measurement layers", icon="layers", tone="navy"),
+        hero(f$climate_years, "years with complete weather", icon="cloud-sun", tone="gold")))
   })
 
   output$siteStatus <- renderText({
-    a <- ann(); sm <- smatch(); lp <- layers_present(a, SIGNALS)
-    sprintf("%s loaded: %d measurement layers; descriptive group %s; %s vote-eligible associations point in the stated direction.", input$site, sum(lp), bgroup(),
-            if (sm$n > 0) sprintf("%d of %d", sm$k, sm$n) else "no testable")
-  })
-
-  output$overviewInsight <- renderUI({
-    sm <- smatch()
-    msg <- if (sm$n == 0)
-        "Not enough overlapping years support a vote-eligible direct association here. The measurements remain available for inspection; <b>Across NEON</b> shows which associations have enough site votes to summarize."
-      else
-        sprintf("Across the vote-eligible direct associations, <b>%s</b>. This is a descriptive site tally, not a test of a linked weather→plant→animal pathway.", sm$txt)
-    insight_banner("diagram-3", tone = "navy", HTML(msg))
+    f <- site_facts()
+    sprintf("%s loaded. %d years on record, %d of %d measurement layers, %d years with complete weather. %s",
+            input$site, f$years, f$layers, f$n_layers, f$climate_years, judged_sentence(f))
   })
 
   # Conditional woody-structure context. The source lacks visit effort needed to
@@ -239,21 +216,6 @@ server <- function(input, output, session) {
       tags$span(class = "ss-note", paste0(coverage,
         " Zero-stem and unobserved plots were not imputed; this is structural context, not productivity.")))
   })
-  # ---- overview measurement-layer schematic ----
-  output$cascadeSchematic <- renderUI({
-    a <- ann(); req(nrow(a))
-    lay <- list(climate="climate", phenology="phenology", producer="producer", consumer="consumer")
-    node <- function(L){ lm <- LAYER_META[[L]]
-      ks <- SIGNALS$key[SIGNALS$layer==L & SIGNALS$key %in% LADDER_KEYS]
-      have <- ks[vapply(ks, function(k) sum(is.finite(a[[k]]))>=2, logical(1))]
-        div(class=paste0("casc-node", if (!length(have)) " casc-empty" else ""),
-        div(class=paste("casc-node-h layer-text", paste0("layer-", L)), bs_icon(lm$icon), " ", lm$title, cpop(L)),
-        if (length(have)) div(class="casc-sigs", lapply(have, function(k) div(class="casc-sig", sig_label(k))))
-        else div(class="casc-sigs", em("no data here"))) }
-    sep <- div(class="casc-arrow casc-separator", `aria-hidden`="true", bs_icon("plus-lg"))
-    div(class="casc-flow", node("climate"), sep, node("phenology"), sep, node("producer"), sep, node("consumer"))
-  })
-
   output$signalTable <- renderUI({
     a <- ann(); req(nrow(a))
     rows <- lapply(c("climate","phenology","producer","consumer"), function(L){
@@ -265,33 +227,13 @@ server <- function(input, output, session) {
             span(class="sig-layer-name", lm$title)),
           tags$td(sig_label(k)),
           tags$td(class="st-unit", sig_unit(k)), tags$td(sprintf("%d yr", nf)),
-          tags$td(class="st-yr", sprintf("%s–%s", yrs[1], yrs[2]))) }) })
+          tags$td(class="st-yr", sprintf("%s to %s", yrs[1], yrs[2]))) }) })
     rows <- Filter(Negate(is.null), unlist(rows, recursive=FALSE))
     tags$table(class="inspect-tbl sig-tbl",
-      tags$caption(class="visually-hidden", "Signal coverage at the selected NEON site"),
+      tags$caption(class="visually-hidden", "Signals measured at the selected NEON site"),
       tags$thead(tags$tr(tags$th(scope="col", "Layer"), tags$th(scope="col", "Signal"),
-        tags$th(scope="col", "Unit"), tags$th(scope="col", "Coverage"), tags$th(scope="col", "Years"))),
+        tags$th(scope="col", "Unit"), tags$th(scope="col", "Years"), tags$th(scope="col", "Span"))),
       tags$tbody(rows))
-  })
-
-  # ---- Hill diversity profile (q0/q1/q2): the producer-diversity profile a raw richness
-  # count can't be — effective species at three weightings, median across this site's years.
-  # Descriptive (no prior, not on the ladder); surfaces the q0 vs q1/q2 gap that signals a
-  # few-species-dominate community where richness alone would overstate diversity (Hill 1973).
-  output$hillProfile <- renderUI({
-    a <- ann(); req(nrow(a))
-    if (!all(c("plant_q1","plant_q2") %in% names(a))) return(NULL)
-    med <- function(v) { v <- v[is.finite(v)]; if (length(v)) stats::median(v) else NA_real_ }
-    q0 <- med(a$plant_richness); q1 <- med(a$plant_q1); q2 <- med(a$plant_q2)
-    if (!is.finite(q1) && !is.finite(q2)) return(NULL)
-    tile <- function(lab, v, sub, hue) div(class = "hill-tile", style = sprintf("--hc: %s;", hue),
-      div(class = "hill-v", if (is.finite(v)) format(round(v)) else "—"),
-      div(class = "hill-lab", lab), div(class = "hill-sub", sub))
-    div(class = "hill-panel",
-      div(class = "hill-intro", bs_icon("diagram-2"),
-        HTML(" <b>Diversity profile</b> (Hill numbers, median across years): effective species at three weightings. <b>q0</b> counts every species equally (= richness, effort-sensitive); <b>q1</b> weights by commonness (exp-Shannon); <b>q2</b> by dominance (inverse-Simpson). When q1/q2 sit well below q0, a few species dominate, so richness alone overstates diversity.")),
-      div(class = "hill-tiles",
-        tile("q0", q0, "richness", "var(--sky)"), tile("q1", q1, "exp-Shannon", "var(--pine)"), tile("q2", q2, "inv-Simpson", "var(--terra)")))
   })
 
   # ---- flagship: the alignment ladder ----
@@ -301,7 +243,7 @@ server <- function(input, output, session) {
     dl <- lapply(layers, function(L) ladder_layer(a, SIGNALS, L))
     names(dl) <- layers; present <- layers[vapply(dl, function(x) !is.null(x) && nrow(x)>0, logical(1))]
     if (!length(present)) return(note_plot("No multi-year signals to align at this site"))
-    # Per-LAYER hue ramp (honest encoding): every line in a strip shares its layer's
+    # Per-LAYER hue ramp (one encoding): every line in a strip shares its layer's
     # colour family (climate=blue, green-up=lime, producers=forest, consumers=cardinal),
     # the SHADE distinguishes signals within the strip. Index resets per strip, so no
     # global counter ever bleeds one layer's hue into another or wraps into a clash.
@@ -316,42 +258,18 @@ server <- function(input, output, session) {
       producer  = c("#287a3b","#356f3e","#176d35","#486b38"),
       consumer  = c("#b74338","#a64237","#9e4c42","#8f3e36"))
     dark_hex <- function(hex) if (!is_dark()) hex else {     # col2rgb is 0-255; rgb2hsv's default
-      hsv <- grDevices::rgb2hsv(grDevices::col2rgb(hex))      # maxColorValue is 255 — do NOT pre-divide
+      hsv <- grDevices::rgb2hsv(grDevices::col2rgb(hex))      # maxColorValue is 255, do NOT pre-divide
       grDevices::hsv(hsv[1], max(0, hsv[2]*0.82), min(1, hsv[3]*1.1)) }   # ease saturation, gentle lift for dark bg
-    # ---- Pulse Tracer highlights for the traced year (built per signal key) ----
-    t0 <- traced(); paths <- if (!is.null(t0)) pulse_paths(a, t0, biome = bclass()) else NULL
-    hl <- list(); add_hl <- function(key, yr, z, color, sym, lab)
-      hl[[key]] <<- rbind(hl[[key]], data.frame(year=yr, z=z, color=color, sym=sym, lab=lab, stringsAsFactors=FALSE))
-    pulse_driver_col <- if (is_dark()) "#ffd24a" else "#7a5900"
-    pulse_outline <- "#07131f"
-    if (!is.null(paths) && nrow(paths)) {
-      vcol <- if (is_dark()) c(match="#2dd4bf", miss="#fb8a7e")
-              else c(match="#0b6f68", miss="#a6332b")
-      for (fk in unique(paths$from)) add_hl(fk, t0, paths$src_z[paths$from==fk][1], pulse_driver_col, "circle",
-        sprintf("%s · traced year %d (z=%.2f)", sig_label(fk), t0, paths$src_z[paths$from==fk][1]))
-      for (i in seq_len(nrow(paths))) { pr <- paths[i,]
-        if (pr$verdict %in% c("nodata", "neutral")) next
-        add_hl(pr$to, pr$dst_year, pr$dst_z, unname(vcol[[pr$verdict]]), if (pr$verdict=="match") "circle" else "x",
-          sprintf("%s · %d: %s the stated direction (z=%.2f)", sig_label(pr$to), pr$dst_year,
-                  if (pr$verdict=="match") "aligned with" else "counter to", pr$dst_z)) }
-    }
     plist <- lapply(present, function(L){ dd <- dl[[L]]; lm <- LAYER_META[[L]]
       ramp <- LADDER_PAL[[L]] %||% c("#2f7fb5","#16386e","#6db3e0"); j <- 0L
       p <- plotly::plot_ly()
       for (k in unique(dd$key)) { sub <- dd[dd$key==k,]; sub <- sub[order(sub$year),]; j <- j + 1L
         col <- dark_hex(ramp[(j-1) %% length(ramp) + 1])
-        dimmed <- if (!is.null(t0)) "rgba(150,160,175,0.55)" else col   # fade base lines while tracing
-        nfin <- sum(is.finite(sub$raw))   # surface coverage: a 3-yr z-line must not look as solid as a 12-yr one
+        nfin <- sum(is.finite(sub$raw))   # surface coverage: a 3-yr line must not look as solid as a 12-yr one
         p <- p %>% plotly::add_trace(data=sub, x=~year, y=~z, type="scatter", mode="lines+markers",
-          name=sprintf("%s (n=%d)", sub$label[1], nfin), legendgroup=L, line=list(width=2.6, color=if (!is.null(t0)) dimmed else col),
-          marker=list(size=6, color=if (!is.null(t0)) dimmed else col),
-          hovertemplate=paste0("<b>",sub$label[1],"</b> (n=",nfin,")<br>%{x}: z=%{y:.2f} (",lm$title,")<extra></extra>")) }
-      # overlay the pulse highlights for any signal in this strip
-      for (k in unique(dd$key)) if (!is.null(hl[[k]])) { h <- hl[[k]]
-        p <- p %>% plotly::add_trace(data=h, x=~year, y=~z, type="scatter", mode="markers+text", cliponaxis=FALSE,
-          text=~lab, textposition="top center", textfont=list(size=9, color=if(is_dark())"#e8eef2" else "#1f2a30"),
-          marker=list(size=16, color=h$color, symbol=h$sym, line=list(color=pulse_outline, width=2)),
-          name="pulse", legendgroup=L, showlegend=FALSE, hovertext=h$lab, hoverinfo="text") }
+          name=sprintf("%s (n=%d)", sub$label[1], nfin), legendgroup=L, line=list(width=2.6, color=col),
+          marker=list(size=6, color=col),
+          hovertemplate=paste0("<b>",sub$label[1],"</b> (n=",nfin,")<br>%{x}: %{y:.2f}, where 0 is its average year (",lm$title,")<extra></extra>")) }
       p %>% plotly::layout(yaxis=list(title=list(text=""),
         zeroline=TRUE, zerolinecolor=if(is_dark())"rgba(220,230,240,0.25)" else "rgba(31,42,48,0.18)",
         gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)", tickfont=list(size=9)))
@@ -368,139 +286,117 @@ server <- function(input, output, session) {
            yref = paste0(if (i == 1) "y" else paste0("y", i), " domain"), y = 1, yanchor = "bottom",
            showarrow = FALSE)
     })
-    sp <- plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=FALSE, margin=c(0, 0, 0.055, 0.02)) %>%
+    plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=FALSE, margin=c(0, 0, 0.055, 0.02)) %>%
       theme_plotly() %>%
-      plotly::layout(showlegend = TRUE, legend=list(orientation="h", y=-0.08, font=list(size=if (narrow) 9 else 10)),
+      plotly::layout(showlegend = TRUE, legend=list(orientation="h", y=if (narrow) -0.14 else -0.1, yanchor="top", font=list(size=if (narrow) 9 else 10)),
         xaxis=list(title="", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
         annotations = strip_notes,
-        margin = list(l = 44, r = 20, t = 30, b = if (narrow) 110 else 40))
-    # capture a dot click -> Shiny input$tracedYear (re-attached on every render; plotly purge wipes handlers)
-    htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
-      if (d && d.points && d.points.length){ var yr = d.points[0].x;
-        if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('tracedYear', {year: yr, n: Math.random()}); } }); }")
+        margin = list(l = 44, r = 20, t = 30, b = if (narrow) 190 else 80))
   })
 
-  output$pulseBanner <- renderUI({
-    t0 <- traced()
-    if (is.null(t0)) return(div(class="pulse-banner pulse-idle", bs_icon("hand-index-thumb"),
-      tags$span(class="pb-text", HTML(" <b>Inspect a climate year:</b> select a dot or use the year selector. Vote-eligible direct climate pairings light at their stated lag: <span class='pulse-key pk-match'>● moved in the stated direction</span> or <span class='pulse-key pk-miss'>✕ moved oppositely</span>. Exact-zero driver or response anomalies abstain and are excluded from the denominator. This is an anecdotal trace, not a recursively inferred food-web path."),
-      cpop("pulse"))))
-    paths <- pulse_paths(ann(), t0, biome = bclass())
-    if (is.null(paths) || !nrow(paths)) return(div(class="pulse-banner pulse-active", bs_icon("activity"),
-      tags$span(class="pb-text", HTML(sprintf(" <b>Year %d</b> has no annual climate signal to trace here. ", t0))),
-      actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear")))
-    k <- sum(paths$verdict == "match")
-    tot <- sum(paths$verdict %in% c("match", "miss"))
-    nd <- sum(paths$verdict == "nodata")
-    abstain <- sum(paths$verdict == "neutral")
-    audit <- paste0(
-      if (nd > 0) sprintf(" %d had no data that year.", nd) else "",
-      if (abstain > 0) sprintf(" %d exact-zero state%s abstained and %s excluded from the denominator.",
-                               abstain, if (abstain == 1) "" else "s",
-                               if (abstain == 1) "was" else "were") else "")
-    div(class="pulse-banner pulse-active", bs_icon("activity"),
-      tags$span(class="pb-text", HTML(sprintf(" <b>Inspecting %d:</b> %d of %d directly linked response%s moved in the stated direction.%s <i>One year is an anecdote; inspect the full series, uncertainty, support, and pooled sensitivity summary.</i> ",
-        t0, k, tot, if (tot==1) "" else "s", audit))),
-      actionLink("clearTrace", tagList(bs_icon("x-circle"), " clear"), class="pulse-clear"))
+  # ---- the four plain lines under the timeline ----
+  output$ladderLines <- renderUI({
+    a <- ann(); req(nrow(a)); f <- site_facts()
+    clim <- intersect(c("precip", "temp", "precip_monsoon", "precip_winter", "temp_spring"), names(a))
+    cons <- intersect(SIGNALS$key[SIGNALS$layer == "consumer" & SIGNALS$key %in% LADDER_KEYS], names(a))
+    ex <- NULL
+    for (i in order(a$year, decreasing = TRUE)) {
+      ck <- clim[vapply(clim, function(k) is.finite(a[[k]][i]), logical(1))]
+      rk <- cons[vapply(cons, function(k) is.finite(a[[k]][i]), logical(1))]
+      if (length(ck) && length(rk)) { ex <- list(year = a$year[i], ck = ck[1], rk = rk[1], i = i); break }
+    }
+    example <- if (is.null(ex))
+        sprintf("%s has no year with both a weather value and an animal count.", input$site)
+      else sprintf("In %d at %s, %s was %s and %s was %s.", ex$year, input$site,
+                   plain_name(ex$ck), fmt_val(a[[ex$ck]][ex$i], ex$ck),
+                   plain_name(ex$rk), fmt_val(a[[ex$rk]][ex$i], ex$rk))
+    keys <- LADDER_KEYS[vapply(LADDER_KEYS, function(k) k %in% names(a) && sum(is.finite(a[[k]])) >= 2, logical(1))]
+    prods <- unique(vapply(keys, sig_product, character(1)))
+    plain_lines(
+      shows = "Each line is one measurement, scaled to its own average year: 0 is that signal's average. Compare when lines rise and fall, not how high they sit.",
+      example = example,
+      from = sprintf("%s, %s to %s.", paste(prods, collapse = "; "), f$yrs[1], f$yrs[2]),
+      cannot = "Show that one line moves another. Heights are not comparable across lines.")
   })
 
-  # ---- link agreement chips (beside the ladder) ----
-  output$linkChips <- renderUI({
+  # ---- Pairings at this site: one plain table; a row opens One pairing ----
+  output$pairingsTable <- renderUI({
     lk <- links(); req(nrow(lk))
-    exp <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
-    lk <- lk[order(!exp, match(lk$tier, names(TIER_META))), , drop=FALSE]
-    exp <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
+    ids <- pair_id(lk$from, lk$to, lk$lag)
+    judged <- ids %in% JUDGED_IDS
+    row_ui <- function(i) { r <- lk[i, ]
+      tags$tr(class = "pt-row", role = "button", tabindex = "0",
+        `data-shiny-input` = "openPairing", `data-shiny-value` = ids[i],
+        `aria-label` = sprintf("Open %s", pairing_label(r$from, r$to, r$lag, judged[i])),
+        tags$td(sig_label(r$from)),
+        tags$td(sprintf("%s%s", sig_label(r$to), if (r$lag > 0) " (next year)" else "")),
+        tags$td(class = "pt-n", r$n),
+        tags$td(class = "pt-r", if (is.finite(r$r)) sprintf("r = %+.2f", r$r) else "-"),
+        tags$td(class = paste0("pt-reads tier-text tier-", r$tier), tier_words(r$tier)))
+    }
+    group_ui <- function(lab, idx) if (length(idx)) tagList(
+      tags$tr(class = "pt-group", tags$th(scope = "colgroup", colspan = "5", lab)),
+      lapply(idx, row_ui))
+    ord_j <- which(judged); ord_c <- which(!judged)
+    ord_c <- ord_c[order(-lk$n[ord_c])]
     tagList(
-      div(class="link-chips", lapply(seq_len(nrow(lk)), function(i){ r <- lk[i,]; tm <- TIER_META[[r$tier]]
-        arrow <- if (r$prior_sign>0) "↑" else "↓"
-        div(class=paste0("link-chip lc-", r$tier, if (!exp[i]) " lc-dim" else ""),
-          title = if (!exp[i]) "Context only by measurement/construct contract at every site; excluded from all tallies and pooled p-values" else "Vote-eligible at every site with enough support",
-          div(class="lc-top", span(class="lc-from", sig_label(r$from)), bs_icon("arrow-right"),
-            span(class="lc-to", sig_label(r$to)),
-            span(class="lc-lag", if (r$lag>0) sprintf("lag %dy", r$lag) else "same yr"),
-            span(class="lc-exp", if (exp[i]) "vote-eligible" else "context only")),
-          div(class="lc-mid",
-            span(class="lc-prior", sprintf("expect %s", arrow)),
-            if (is.finite(r$r)) span(class="lc-r", sprintf("r=%.2f%s", r$r,
-              if (is.finite(r$lo)) sprintf(" [%.2f, %.2f]", r$lo, r$hi) else "")) else span(class="lc-r","—"),
-            span(class="lc-n", sprintf("n=%d", r$n))),
-          div(class=paste("lc-verdict tier-text", paste0("tier-", r$tier)),
-            bs_icon(tm$icon), " ", r$verdict)) })),
-      p(class="qc-cap-note", style="margin-top:8px", bs_icon("info-circle"),
-        HTML(" Hatched, dashed links are <b>context-only at every site</b> because their response window, effort, proxy, or directional basis does not meet the voting contract. Only the temperature–green-up rows are vote-eligible, at every site with enough support.")))
+      tags$table(class = "inspect-tbl pairings-tbl",
+        tags$caption(class = "visually-hidden", "Pairings at this site"),
+        tags$thead(tags$tr(tags$th(scope = "col", "Driver"), tags$th(scope = "col", "Response"),
+          tags$th(scope = "col", "Years (n)"), tags$th(scope = "col", "Direction found"),
+          tags$th(scope = "col", "Reads as"))),
+        tags$tbody(group_ui("Judged", ord_j), group_ui("Shown for context", ord_c))),
+      p(class = "pt-note", "Judged pairings count toward the cross-site summary; context pairings are shown and never counted."))
+  })
+  observeEvent(input$openPairing, {
+    v <- input$openPairing
+    if (!v %in% pairing_choices()) return()
+    updateTabsetPanel(session, "tabs", selected = "pairing")
+    updateSelectInput(session, "pairing", selected = v)
+    focus_after_update(id = "pairing", delay = 220L)
   })
 
-  # ---- Driver Lab ----
-  output$labTitle <- renderText(sprintf("What is associated with %s here?", tolower(sig_label(input$response))))
-
-  lab_links <- reactive({ lk <- links(); lk[lk$to == input$response, , drop=FALSE] })
-
-  output$signMatchBanner <- renderUI({
-    lk <- lab_links()
-    if (!nrow(lk)) return(insight_banner("info-circle", tone="navy", "No literature-motivated driver pairing is catalogued for this response."))
-    eligible <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
-    nshow <- lk[eligible & lk$n >= 6 & !is.na(lk$sign_match), , drop=FALSE]
-    k <- sum(nshow$sign_match, na.rm=TRUE); tot <- nrow(nshow)
-    best <- if (any(eligible & lk$tier=="consistent")) lk[eligible & lk$tier=="consistent",][1,] else NULL
-    msg <- if (!any(eligible))
-        sprintf("All displayed pairings for <b>%s</b> are <b>context only</b> because their response window, effort, proxy, or directional basis does not support a site vote.", sig_label(input$response))
-      else if (!is.null(best)) sprintf("Among vote-eligible direct associations, <b>%s</b> is %s here.", sig_label(best$from), best$verdict)
-      else if (tot>0) sprintf("%d of %d vote-eligible direct associations point in the stated direction, but none has an interval excluding zero at this site's short series.", k, tot)
-      else "Too few overlapping years to evaluate a vote-eligible direct association here."
-    # precip-coverage caveat: only when a rain driver is among the registered pairings here
-    has_precip <- any(grepl("^precip", lk$from))
-    tagList(
-      insight_banner("bullseye", tone = if (!is.null(best)) "pine" else "navy", HTML(msg)),
-      if (has_precip) p(class="precip-coverage-note", bs_icon("info-circle"),
-        HTML(sprintf(" Complete annual precipitation is available at %d of %d NEON sites; annual-rain pairings are estimable only where all 12 months are present.", N_PRECIP_SITES, length(ALL_SITES)))))
+  # ---- One pairing: the picker and the selected link ----
+  pairing_choices <- reactive({
+    ids <- pair_id(PRIORS$from, PRIORS$to, PRIORS$lag)
+    labs <- vapply(seq_len(nrow(PRIORS)), function(i)
+      pairing_label(PRIORS$from[i], PRIORS$to[i], PRIORS$lag[i], ids[i] %in% JUDGED_IDS), character(1))
+    stats::setNames(ids, labs)
   })
-
-  output$driverTable <- renderUI({
-    lk <- lab_links(); if (!nrow(lk)) return(p(class="qc-cap-note","No literature-motivated driver pairing is catalogued for this response."))
-    lk <- lk[order(-lk$n, -abs(ifelse(is.na(lk$r),0,lk$r))), ]
-    expc <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
-    rows <- lapply(seq_len(nrow(lk)), function(i){ r <- lk[i,]; tm <- TIER_META[[r$tier]]
-      arrow <- if (r$prior_sign>0) "↑ +" else "↓ −"
-      tags$tr(class = if (!expc[i]) "dt-dim" else NULL,
-        tags$td(tags$b(sig_label(r$from)),
-          span(class="dt-exp", title=if (expc[i]) "Eligible for the exploratory site-vote summary" else "Context only; excluded from site tallies and pooled inference",
-               if (expc[i]) " vote" else " context") ),
-        tags$td(class="dt-prior", sprintf("%s, %s", arrow, if (r$lag>0) sprintf("lag %dy", r$lag) else "same yr")),
-        tags$td(class="dt-r", if (is.finite(r$r)) sprintf("%.2f", r$r) else "—"),
-        tags$td(class="dt-n", r$n),
-        tags$td(span(class=paste("dt-chip", paste0("tier-", r$tier)),
-          style=sprintf("background:%s;color:%s", tm$col, tm$ink), tm$lab))) })
-    div(
-      tags$table(class="inspect-tbl driver-tbl",
-        tags$caption(class="visually-hidden", "Literature-motivated driver pairings for the selected response"),
-        tags$thead(tags$tr(tags$th(scope="col", "Driver / use"), tags$th(scope="col", "Stated direction + lag"),
-          tags$th(scope="col", "r"), tags$th(scope="col", "n"), tags$th(scope="col", "Verdict"))),
-        tags$tbody(rows)),
-      p(class="qc-cap-note", style="margin-top:8px", bs_icon("info-circle"),
-        HTML(" Direction and lag settings are literature-motivated and locked for this build, but the family evolved alongside inspection of these data. Rows marked <b>context</b> never enter a site tally or pooled p-value. No verdict below 6 overlapping years. A &lsquo;counter&rsquo; direction can reflect low power, an imperfect proxy, confounding, a shared trend, or a genuinely opposite association; it is not automatically either refutation or noise.")))
+  default_pairing <- reactive({
+    lk <- links(); ids <- pair_id(lk$from, lk$to, lk$lag)
+    pref <- "temp|greenup_doy|0"
+    hit <- match(pref, ids)
+    if (!is.na(hit) && isTRUE(lk$n[hit] >= 6)) return(pref)
+    ids[which.max(lk$n)]
   })
-
-  # Explicit pairing selector for the scatter. The former implicit "largest n"
-  # choice made other registered drivers effectively unreachable in Driver Lab.
+  output$pairingPicker <- renderUI({
+    ch <- pairing_choices()
+    sel <- isolate(input$pairing)
+    if (is.null(sel) || !sel %in% ch) sel <- default_pairing()
+    selectInput("pairing", "Pairing", choices = ch, selected = sel, width = "100%")
+  })
+  # When the site changes, a pairing with no overlapping years falls back to the default.
+  observeEvent(input$site, {
+    sel <- input$pairing; lk <- links()
+    r <- lk[pair_id(lk$from, lk$to, lk$lag) == (sel %||% ""), , drop = FALSE]
+    if (!nrow(r) || r$n[1] < 3) updateSelectInput(session, "pairing", selected = default_pairing())
+  }, ignoreInit = TRUE)
   sel_link <- reactive({
-    lk <- lab_links(); lk <- lk[lk$n >= 3, , drop=FALSE]; if (!nrow(lk)) return(NULL)
-    ids <- sprintf("%s|%s|%d", lk$from, lk$to, lk$lag)
-    chosen <- input$labLink %||% ""
-    if (!chosen %in% ids) return(lk[which.max(lk$n), , drop=FALSE])
-    lk[match(chosen, ids), , drop=FALSE]
+    lk <- links(); ids <- pair_id(lk$from, lk$to, lk$lag)
+    chosen <- input$pairing %||% ""
+    if (!chosen %in% pairing_choices()) chosen <- default_pairing()
+    r <- lk[match(chosen, ids), , drop = FALSE]
+    if (!nrow(r) || is.na(r$from[1])) return(NULL)
+    r
   })
   output$linkScatterHeader <- renderUI({
-    lk <- lab_links(); lk <- lk[lk$n >= 3, , drop=FALSE]
-    if (!nrow(lk)) return(p(class="qc-cap-note", "No current build-locked pairing has three overlapping years here."))
-    ids <- sprintf("%s|%s|%d", lk$from, lk$to, lk$lag)
-    use <- ifelse(lk$expected %in% TRUE, "vote-eligible", "context only")
-    labels <- sprintf("%s → %s · %s · n=%d", vapply(lk$from, sig_label, character(1)),
-                      vapply(lk$to, sig_label, character(1)), use, lk$n)
-    selected <- input$labLink %||% ""
-    if (!selected %in% ids) selected <- ids[which.max(lk$n)]
-    div(class="scatter-link-picker",
-      selectInput("labLink", "Pairing shown in the scatter", choices=stats::setNames(ids, labels),
-                  selected=selected, width="100%"))
+    r <- sel_link(); if (is.null(r)) return(NULL)
+    judged <- pair_id(r$from, r$to, r$lag) %in% JUDGED_IDS
+    use <- if (judged) "judged" else "context"
+    p(class = "scatter-head", HTML(sprintf("<b>%s and %s</b>, %s · <span class=\"sh-use sh-%s\">%s</span>",
+      htmlEscape(cap_first(plain_name(r$from))), htmlEscape(plain_name(r$to)),
+      if (r$lag > 0) "response the next year" else "same year", use, use)))
   })
 
   output$linkScatter <- renderPlotly({
@@ -519,29 +415,17 @@ server <- function(input, output, session) {
     if (identical(md, "markers+text"))
       p <- p %>% plotly::style(text=m$year, textposition="top center",
         textfont=list(size=9, color=if(is_dark())"#9fb0c4" else "#53606d", family=APP_FONT_STACK))
-    # tier-honest fit line: GOLD only when the link clears the bar; thin GREY "shape only"
+    # tier-matched fit line: GOLD only when the link clears the bar; thin GREY "shape only"
     # for apparent/counter; OMITTED below n=6 (a slope on 5 points is theatre, not evidence)
     if (r$n >= 6 && is.finite(r$r)) { fit <- stats::lm(y ~ x, data=m); xr <- range(m$x)
       consistent <- identical(r$tier, "consistent")
       p <- p %>% plotly::add_lines(x=xr, y=predict(fit, newdata=data.frame(x=xr)), inherit=FALSE,
         line=list(color=if (consistent) fit_gold else fit_grey, width=2, dash="dot"), showlegend=FALSE, hoverinfo="skip") }
-    # on-figure stats — so a screenshot of the scatter carries its own evidence
-    stat_txt <- if (r$n >= 6 && is.finite(r$r))
-        sprintf("r = %+.2f   n = %d   p = %.3f%s", r$r, r$n, r$p,
-                if (is.finite(r$lo)) sprintf("\n95%% CI [%.2f, %.2f]", r$lo, r$hi) else "")
-      else if (is.finite(r$r)) sprintf("r = %+.2f   n = %d\n(exploratory: too few years for a p)", r$r, r$n)
-      else sprintf("n = %d, too few overlapping years to fit", r$n)
-    # Precomputed descriptive sensitivities use the exact same contract as the
-    # downloadable suite. They never change the raw-level verdict or add p-values.
-    if (r$n >= 6 && "r_detrended" %in% names(r) && is.finite(r$r_detrended))
-      stat_txt <- paste0(stat_txt, sprintf("\nlinear-year residuals: r = %+.2f (n = %d)",
-                                           r$r_detrended, r$n_detrended))
-    if (r$n >= 6 && "r_change" %in% names(r) && is.finite(r$r_change))
-      stat_txt <- paste0(stat_txt, sprintf("\nconsecutive-year change: r = %+.2f (nΔ = %d)",
-                                           r$r_change, r$n_change))
-    if (r$n >= 6 && "r_outcome_alt" %in% names(r) && is.finite(r$r_outcome_alt))
-      stat_txt <- paste0(stat_txt, sprintf("\nadditive green-up index: r = %+.2f (n = %d)",
-                                           r$r_outcome_alt, r$n_outcome_alt))
+    # On-figure box: r, n and the years only, so a screenshot carries its own support.
+    yr_rng <- range(m$year)
+    stat_txt <- if (is.finite(r$r))
+        sprintf("r = %+.2f   n = %d\n%d to %d", r$r, r$n, yr_rng[1], yr_rng[2])
+      else sprintf("n = %d   %d to %d", r$n, yr_rng[1], yr_rng[2])
     tier_plot_col <- if (is_dark()) tm$col else tm$text_col
     anns <- list(list(x=0.02, y=0.98, xref="paper", yref="paper", xanchor="left", yanchor="top",
       text=gsub("\n","<br>", stat_txt), showarrow=FALSE, align="left",
@@ -558,19 +442,47 @@ server <- function(input, output, session) {
       if (d && d.points && d.points.length){ var yr = d.points[0].customdata;
         if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('scatterYear', {year: yr, n: Math.random()}); } }); }")
   })
-  output$linkScatterNote <- renderUI({ r <- sel_link(); if (is.null(r)) return(NULL); tm <- TIER_META[[r$tier]]
-    div(class="scatter-note",
-      span(sprintf("%s → %s", sig_label(r$from), sig_label(r$to)), style="font-weight:600"),
-      if (r$lag>0) span(class="sn-lag", sprintf(" (response %d yr later)", r$lag)),
-      div(class=paste("scatter-tier tier-text", paste0("tier-", r$tier)), bs_icon(tm$icon), " ", r$verdict),
-      # stat-honesty labels on the two reported numbers (only meaningful once the link is gated)
-      if (r$n >= 6 && is.finite(r$p)) div(class="scatter-statcaveats",
-        span(class="ssc-item", bs_icon("info-circle"),
-          HTML(" <b>p</b> is a permutation null"), cpop("permp"),
-          HTML(sprintf(": %d paired years across a %d-year calendar span yield %d valid null shifts and a finite floor of %.3f. It does not set the verdict; Across NEON reports raw and Holm-adjusted site-vote evidence.",
-            r$n, r$series_span, r$n_null, r$p_floor)),
-          if (is.finite(r$lo)) tagList(HTML(" <b>95% CI</b> is a circular block-bootstrap interval"), cpop("bootci"),
-            HTML(": wide at this n, indicative, not a precision claim.")))))
+  # ---- the four plain lines under the scatter ----
+  output$scatterLines <- renderUI({
+    r <- sel_link(); if (is.null(r)) return(NULL)
+    m <- lag_pairs(ann(), r$from, r$to, r$lag)
+    example <- if (nrow(m)) {
+        e <- m[which.max(m$year), ]
+        sprintf("In %d at %s, %s was %s; %s %s was %s.", e$year, input$site,
+                plain_name(r$from), fmt_val(e$x, r$from),
+                if (r$lag > 0) sprintf("in %d,", e$year + r$lag) else "that year,",
+                plain_name(r$to), fmt_val(e$y, r$to))
+      } else sprintf("%s has no year with both values.", input$site)
+    prods <- unique(c(sig_product(r$from), sig_product(r$to)))
+    from_txt <- if (nrow(m)) sprintf("%s, %d to %d.", paste(prods, collapse = "; "), min(m$year), max(m$year))
+      else sprintf("%s.", paste(prods, collapse = "; "))
+    plain_lines(
+      shows = "One dot per year with both values: the driver across, the response up.",
+      example = example,
+      from = from_txt,
+      cannot = "Show cause. A slope on a handful of years is not evidence, and below six years no line is drawn.")
+  })
+  # ---- More numbers (inside the fold): what left the figure ----
+  output$scatterMore <- renderUI({
+    r <- sel_link(); if (is.null(r)) return(NULL)
+    num <- function(v, fmt) if (length(v) && is.finite(v)) sprintf(fmt, v) else "-"
+    col <- function(nm) if (nm %in% names(r)) r[[nm]][1] else NA_real_
+    item <- function(lab, val) tags$tr(tags$th(scope = "row", lab), tags$td(val))
+    p_txt <- if (is.finite(r$p))
+        sprintf("%.3f (smallest possible with these years: %s)", r$p, num(col("p_floor"), "%.3f"))
+      else "-"
+    ci_txt <- if (is.finite(r$lo)) sprintf("%+.2f to %+.2f", r$lo, r$hi) else "-"
+    sens <- function(rn, nn, lab) item(lab,
+      if (is.finite(col(rn))) sprintf("r = %+.2f (n = %d)", col(rn), as.integer(col(nn))) else "-")
+    tags$table(class = "inspect-tbl more-tbl",
+      tags$caption(class = "visually-hidden", "More numbers for the selected pairing"),
+      tags$tbody(
+        item("Permutation p", p_txt),
+        item("95% interval for r (block bootstrap)", ci_txt),
+        sens("r_detrended", "n_detrended", "After removing a straight-line year trend"),
+        sens("r_change", "n_change", "Year-to-year changes"),
+        sens("r_outcome_alt", "n_outcome_alt", "Additive green-up index"),
+        item("Bundle verdict", as.character(r$verdict))))
   })
   output$scatterYearPicker <- renderUI({
     r <- sel_link(); if (is.null(r)) return(NULL)
@@ -590,7 +502,7 @@ server <- function(input, output, session) {
     yr <- scatterYear(); r <- sel_link(); if (is.null(yr) || is.null(r)) return(NULL)
     a <- ann(); drow <- a[a$year == yr, , drop = FALSE]; if (!nrow(drow)) return(NULL)
     rrow <- a[a$year == (yr + r$lag), , drop = FALSE]
-    f <- function(v) if (length(v) == 0 || !is.finite(v)) "—" else format(round(v, 1), big.mark = ",", trim = TRUE)
+    f <- function(v) if (length(v) == 0 || !is.finite(v)) "-" else format(round(v, 1), big.mark = ",", trim = TRUE)
     dv <- drow[[r$from]][1]; rv <- if (nrow(rrow)) rrow[[r$to]][1] else NA_real_
     sigs <- LADDER_KEYS[vapply(LADDER_KEYS, function(k) length(drow[[k]]) && is.finite(drow[[k]][1]), logical(1))]
     div(id = "scatterDetailPanel", class = "scatter-detail", role = "region",
@@ -608,237 +520,6 @@ server <- function(input, output, session) {
         span(class = "sd-chip", tags$b(sig_label(k)), sprintf(" %s", f(drow[[k]][1]))))))
   })
 
-  # ============================================================================
-  # ---- LAG & SEASON EXPLORER (the Lag Experimenter) --------------------------
-  # A FOLDED tool that lets a user re-examine a registered pairing by sliding the lag
-  # and toggling annual vs seasonal climate. The max-statistic p accounts for the
-  # K-combination search while the interface keeps off-setting results explicitly
-  # exploratory; an n<6 hard gate refuses a p. The fixed scorecard / driverTable
-  # are untouched — the experimenter never alters them.
-  # ============================================================================
-  # the registered pairings for the CURRENT response, as "<from> -> <to>" choices
-  exp_choices <- reactive({
-    lk <- lab_links(); if (!nrow(lk)) return(character(0))
-    ids <- sprintf("%s|%s", lk$from, lk$to)
-    use <- if ("expected" %in% names(lk)) ifelse(lk$expected %in% TRUE, "vote-eligible", "context only") else "registered"
-    nms <- sprintf("%s → %s · %s", vapply(lk$from, sig_label, character(1)),
-                   vapply(lk$to, sig_label, character(1)), use)
-    stats::setNames(ids, nms)
-  })
-  output$expLinkUI <- renderUI({
-    ch <- exp_choices()
-    if (!length(ch)) return(div(class = "le-empty", "No current build-locked driver pairings for this response to explore."))
-    sl <- sel_link(); def <- if (!is.null(sl)) sprintf("%s|%s", sl$from, sl$to) else unname(ch[1])
-    if (!def %in% ch) def <- unname(ch[1])
-    selectInput("expLink", "Current build-locked pairing", choices = ch, selected = def, width = "100%")
-  })
-  # resolve from/to/prior_lag/prior_sign for the selected link (default = sel_link())
-  exp_link <- reactive({
-    lk <- lab_links(); if (!nrow(lk)) return(NULL)
-    id <- input$expLink
-    parts <- if (!is.null(id) && nzchar(id)) strsplit(id, "|", fixed = TRUE)[[1]] else NULL
-    r <- if (!is.null(parts) && length(parts) == 2)
-           lk[lk$from == parts[1] & lk$to == parts[2], , drop = FALSE] else lk[0, , drop = FALSE]
-    if (!nrow(r)) { sl <- sel_link(); if (!is.null(sl)) r <- sl else r <- lk[1, , drop = FALSE] }
-    r <- r[1, , drop = FALSE]
-    list(from = r$from, to = r$to, prior_lag = r$lag, prior_sign = r$prior_sign,
-         expected = if ("expected" %in% names(r)) isTRUE(r$expected) else TRUE,
-         conf = if ("conf" %in% names(r)) r$conf else NA_character_)
-  })
-  climate_family <- function(from) {
-    if (from %in% c("precip", "precip_winter", "precip_monsoon")) return("precip")
-    if (from %in% c("temp", "temp_spring")) return("temp")
-    NULL
-  }
-  prior_season <- function(from) if (from %in% c("precip_winter", "precip_monsoon", "temp_spring")) "seasonal" else "annual"
-  seasonal_col <- function(el) {
-    if (el$from %in% c("precip_winter", "precip_monsoon", "temp_spring")) return(el$from)
-    exp_driver_col(climate_family(el$from), "seasonal", el$to)
-  }
-  # Season radios cover both annual priors and priors already expressed on a
-  # seasonal column. That keeps the monsoon demo honest: it can compare the
-  # actual monsoon prior against annual rain instead of getting stuck on annual.
-  output$expSeasonUI <- renderUI({
-    el <- exp_link(); if (is.null(el) || is.null(climate_family(el$from))) return(NULL)
-    radioButtons("expSeason", "Climate driver",
-      c("Annual aggregate" = "annual", "Named seasonal climate window" = "seasonal"),
-      selected = prior_season(el$from), inline = TRUE)
-  })
-  observeEvent(input$expLink, {
-    el <- exp_link()
-    if (!is.null(el) && !is.null(climate_family(el$from)))
-      updateRadioButtons(session, "expSeason", selected = prior_season(el$from))
-  }, ignoreInit = TRUE)
-  # the candidate set the user can scan (this is K): every lag 0:3 x reachable season
-  exp_combos <- reactive({
-    el <- exp_link(); if (is.null(el)) return(list())
-    seasons <- if (!is.null(climate_family(el$from))) c("annual","seasonal") else "annual"
-    cm <- list()
-    for (se in seasons) for (L in 0:3) {
-      col <- if (se == "annual") climate_family(el$from) %||% el$from else seasonal_col(el)
-      cm[[length(cm) + 1L]] <- list(col = col, lag = L)
-    }
-    cm
-  })
-  # the SELECTED driver column + its season (annual when the driver isn't climate)
-  exp_sel_season <- reactive({
-    el <- exp_link(); if (is.null(el)) return("annual")
-    if (!is.null(climate_family(el$from))) (input$expSeason %||% prior_season(el$from)) else "annual"
-  })
-  exp_sel_col <- reactive({ el <- exp_link(); if (is.null(el)) return(NULL)
-    if (exp_sel_season() == "annual") climate_family(el$from) %||% el$from else seasonal_col(el) })
-
-  output$expCurve <- renderPlotly({
-    el <- exp_link(); if (is.null(el)) return(note_plot("Pick a current build-locked pairing to explore"))
-    a <- ann(); col <- exp_sel_col(); to <- el$to
-    cur <- exp_curve(a, col, to, 0:3); if (is.null(cur) || !nrow(cur)) return(note_plot("No overlapping years to plot"))
-    seasonal <- identical(exp_sel_season(), "seasonal")
-    curve_line_col <- if (is_dark()) "#9fb0cf" else "#596777"
-    curve_point_col <- if (is_dark()) "#43b8e8" else "#126c91"
-    comparison_col <- if (is_dark()) "rgba(159,176,207,0.78)" else "rgba(69,82,96,0.82)"
-    registered_col <- if (is_dark()) "#ffd24a" else "#7a5900"
-    registered_text_col <- if (is_dark()) "#e0b43a" else "#694c00"
-    marker_outline <- "#07131f"
-    # Only n>=3 correlations exist; unsupported lags remain explicit gaps.
-    solid <- cur[is.finite(cur$r) & cur$n >= 3, , drop = FALSE]
-    p <- plotly::plot_ly()
-    p <- p %>% plotly::add_trace(data = cur, x = ~lag, y = ~r, type = "scatter", mode = "lines",
-      line = list(color = curve_line_col, width = 2, dash = "solid"), name = "r by lag",
-      hoverinfo = "skip", showlegend = FALSE, connectgaps = FALSE)
-    if (nrow(solid)) p <- p %>% plotly::add_trace(data = solid, x = ~lag, y = ~r, type = "scatter", mode = "markers",
-      marker = list(size = 11, color = curve_point_col, line = list(color = marker_outline, width = 1)), name = "estimable (n>=3)",
-      text = ~sprintf("lag %d: r=%+.2f (n=%d)", lag, r, n), hoverinfo = "text", showlegend = FALSE)
-    # SRER-style overlay: when seasonal, draw the ANNUAL comparison on the same axes.
-    if (seasonal) { acur <- exp_curve(a, climate_family(el$from), to, 0:3)
-      if (!is.null(acur) && nrow(acur)) p <- p %>% plotly::add_trace(data = acur, x = ~lag, y = ~r,
-        type = "scatter", mode = "lines+markers", line = list(color = comparison_col, width = 1.6, dash = "dot"),
-        marker = list(size = 6, color = comparison_col), name = "annual driver (comparison)",
-        text = ~sprintf("annual, lag %d: r=%s (n=%d)", lag, ifelse(is.finite(r), sprintf("%+.2f", r), "-"), n),
-        hoverinfo = "text", showlegend = TRUE) }
-    # Mark the registered lag only when the selected driver window is also the
-    # registered one. Off-window scans must not relabel the selected curve as current.
-    pl <- el$prior_lag
-    registered_driver_selected <- identical(col, el$from)
-    shp <- list(list(
-      type = "line", x0 = -0.2, x1 = 3.2, y0 = 0, y1 = 0, xref = "x", yref = "y",
-      line = list(color = if (is_dark()) "rgba(220,230,240,0.25)" else "rgba(31,42,48,0.18)", width = 1)))
-    anns <- list()
-    if (registered_driver_selected) {
-      prow <- cur[cur$lag == pl, , drop = FALSE]
-      py <- if (nrow(prow) && is.finite(prow$r)) prow$r[1] else 0
-      p <- p %>% plotly::add_trace(x = c(pl), y = c(py), type = "scatter", mode = "markers",
-        marker = list(size = 18, color = registered_col, symbol = "diamond", line = list(color = marker_outline, width = 1.5)),
-        name = "current-family setting", hoverinfo = "text",
-        text = sprintf("Current literature-motivated setting: lag %d %s (locked for this build; exploratory)", pl, prior_season(el$from)), showlegend = TRUE)
-      shp <- c(shp, list(list(type = "line", x0 = pl, x1 = pl, y0 = -1, y1 = 1, xref = "x", yref = "y",
-        line = list(color = registered_col, width = 1.4, dash = "dash"))))
-      anns <- list(list(x = pl, y = 1, xref = "x", yref = "y", yanchor = "bottom", xanchor = if (pl >= 2) "right" else "left",
-        text = sprintf("Current family: lag %d %s", pl, prior_season(el$from)), showarrow = FALSE,
-        font = list(size = 10, color = registered_text_col, family = APP_FONT_STACK)))
-    }
-    p %>% theme_plotly() %>% plotly::layout(showlegend = TRUE,
-      legend = list(orientation = "h", y = -0.22, font = list(size = 10)),
-      shapes = shp, annotations = anns,
-      xaxis = list(title = "lag (years)", dtick = 1, range = c(-0.3, 3.3),
-        gridcolor = if (is_dark()) "rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
-      yaxis = list(title = "correlation r", range = c(-1, 1), zeroline = FALSE,
-        gridcolor = if (is_dark()) "rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
-      margin = list(l = 55, r = 20, t = 24, b = 40))
-  })
-
-  output$expReadout <- renderUI({
-    el <- exp_link(); if (is.null(el)) return(NULL)
-    a <- ann(); to <- el$to; col <- exp_sel_col(); season <- exp_sel_season()
-    combos <- exp_combos(); K <- length(combos)
-    m <- lag_pairs(a, col, to, input$expLag %||% el$prior_lag); n <- nrow(m)
-    observed_r <- if (n >= 3) suppressWarnings(stats::cor(m$x, m$y)) else NA_real_
-    observed_r <- if (is.finite(observed_r)) observed_r else NA_real_
-    # Exact single-setting circular-shift p. Avoid link_stat() here: its 2,000-draw
-    # bootstrap is unrelated to this value and would make a slider interaction slow.
-    selected_lag <- input$expLag %||% el$prior_lag
-    selected_grid <- if (n >= 6 && is.finite(observed_r)) lag_grid(a, col, to, selected_lag) else NULL
-    naive <- if (!is.null(selected_grid))
-        perm_circular_result(selected_grid$x, selected_grid$y)$p else NA_real_
-    # best-of-K, autocorrelation-preserving adjusted p for the SELECTED (col, lag)
-    adj <- if (n >= 6 && is.finite(observed_r)) exp_adj_p(a, to, combos, observed_r) else NA_real_
-    # Circular moving-block bootstrap CI on the selected full calendar grid
-    # (n>=6 observed pairs). Keeping missing calendar years explicit avoids
-    # turning separated observations into artificial neighbours.
-    ci <- if (n >= 6 && is.finite(observed_r)) {
-        g <- selected_grid
-        seed <- stable_link_seed(input$site, col, to, selected_lag, "lag-explorer")
-        bs <- with_preserved_rng(seed, function() circular_block_boot_cor(g$x, g$y, reps = 2000L))
-        c(lo = unname(round(stats::quantile(bs, 0.025, na.rm = TRUE), 2)),
-          hi = unname(round(stats::quantile(bs, 0.975, na.rm = TRUE), 2))) } else c(lo = NA_real_, hi = NA_real_)
-    on_prior <- (input$expLag %||% el$prior_lag) == el$prior_lag && identical(col, el$from)
-    # Sidak per-comparison cutoff controlling family-wise alpha at 0.05 after K
-    # independent looks. (The exact max-statistic adjusted p above is preferred.)
-    sidak <- 1 - (1 - 0.05)^(1 / max(K, 1))
-    n_ok <- n >= 6
-    # ---- setting badge: teal on the registered row vs grey off-setting scan ----
-    badge <- if (on_prior)
-        span(class = "le-badge le-onprior", bs_icon("lock-fill"),
-             if (isTRUE(el$expected)) " build-locked vote setting" else " build-locked context setting")
-      else
-        span(class = "le-badge le-explored", bs_icon("search"), " EXPLORED: not a verdict")
-    # The max-statistic p remains the valid familywise safeguard after selecting
-    # among the displayed K combinations. Historical family construction still
-    # makes it exploratory, and context-only pairings remain excluded from votes.
-    adj_disp <- if (!n_ok)
-        span(class = "le-adjp le-ngate", bs_icon("slash-circle"), " n<6: exploratory, no verdict")
-      else if (is.na(adj))
-        span(class = "le-adjp le-ngate", "p unavailable at this pairing")
-      else
-        span(class = "le-adjp le-adjp-live", sprintf("p_adj = %.3f", adj))
-    rline <- span(class = "le-r",
-      if (is.finite(observed_r)) sprintf("r = %+.2f", observed_r) else "r = —",
-      span(class = "le-n", sprintf("  n = %d", n)))
-    naive_line <- if (n_ok && is.finite(naive))
-      div(class = "le-naive", sprintf("unadjusted single-lag p = %.3f", naive),
-        span(class = "le-naive-note", " (ignores the other combinations scanned)"))
-    ci_line <- if (n_ok && is.finite(ci[["lo"]]))
-      div(class = "le-ci", sprintf("block-bootstrap 95%% CI [%.2f, %.2f]", ci[["lo"]], ci[["hi"]]),
-        span(class = "le-naive-note", " (wide at this n; indicative, not a precision claim)"))
-    sidak_line <- div(class = "le-sidak", bs_icon("shield-exclamation"),
-      sprintf(" Sidak reference after K = %d looks: per-look p < %.4f (the max-statistic adjusted p above is the actual safeguard)", max(K, 1), sidak))
-    # the desert-demo caption, only when the demo pairing is loaded
-    demo_caption <- if (identical(col, "precip_monsoon") && identical(to, "mammal_cpue") &&
-                        season == "seasonal" && (input$expLag %||% 0) == 1)
-      div(class = "le-demo-caption", bs_icon("brightness-high"),
-        HTML(sprintf(" This is the current build-locked <b>seasonal contextual setting</b>, excluded from site votes and pooling. The faint curve is annual rain for comparison. At this site and lag: n=%d%s. The max-statistic p accounts for the displayed lag/season scan, but the broader family was historically data-informed; read the contrast as an illustration, not an established result.",
-                     n, if (is.finite(naive)) sprintf(", circular-shift p=%.3f", naive) else "")))
-    div(class = paste0("le-readout", if (!on_prior) " le-readout-explored" else ""),
-      div(class = "le-headline",
-        badge,
-        span(class = "le-adjp-label",
-          sprintf(" p adjusted for searching K = %d candidates (best-of-K, autocorrelation-preserving): ", max(K, 1))),
-        adj_disp),
-      div(class = "le-stats", rline, naive_line, ci_line),
-      sidak_line,
-      if (n_ok && !is.na(adj))
-        div(class = "le-offnote",
-          if (on_prior && isTRUE(el$expected))
-            " The adjusted p protects against selecting among the displayed K settings; it remains exploratory because this association family was historically refined while these data were inspected."
-          else if (on_prior)
-            " This current build-locked setting is context-only and excluded from all votes and pooled p-values. The adjusted p controls the displayed scan but does not make the pairing inferential."
-          else
-            " This off-setting result is one of the K displayed combinations; the max-statistic adjustment accounts for that scan. It remains exploratory and does not alter the locked scorecard verdict."),
-      demo_caption)
-  })
-
-  # the desert demo: jump to precip_monsoon -> mammal_cpue, seasonal, lag 1 (if present)
-  observeEvent(input$expDesertDemo, {
-    ch <- exp_choices(); target <- "precip_monsoon|mammal_cpue"
-    if (target %in% ch) {
-      updateSelectInput(session, "expLink", selected = target)
-      updateRadioButtons(session, "expSeason", selected = "seasonal")
-      updateSliderInput(session, "expLag", value = 1)
-    } else {
-      showNotification("This pairing needs the small-mammal response. Set 'Driver Lab: explore…' to 'Small-mammal catch rate' on the Overview, then try again.",
-        type = "message", duration = 6)
-    }
-  })
-
   # ---- QC-flag panel (§7 gold standard): ranked "verify, not wrong" flags for the
   # selected site, behind its own tab (clean by default, never in the Overview). Each
   # flag is a chip that EXPANDS to the exact offending rows on click. ----
@@ -846,13 +527,21 @@ server <- function(input, output, session) {
   qc_icon <- function(level) switch(level, high="exclamation-octagon-fill",
     warn="exclamation-triangle-fill", info="info-circle-fill", "check-circle-fill")
 
+  # The flag text comes from the build-time helper; map its old tab names and
+  # jargon to the words on screen without touching the hashed helper file.
+  qc_plain <- function(x) {
+    x <- gsub("on Across NEON", "on All sites", x, fixed = TRUE)
+    x <- gsub("Across NEON", "All sites", x, fixed = TRUE)
+    x <- gsub("vote-eligible", "judged", x, fixed = TRUE)
+    x <- gsub("context-only", "context", x, fixed = TRUE)
+    gsub("\u2014", ", ", x)
+  }
   output$qcFlags <- renderUI({
     q <- qc(); qf <- q$flags
     has_real <- length(qf) && !identical(qf[[1]]$level, "clean")
     selected_key <- input$qcInspect %||% ""
     tagList(
-      div(class="qc-section-h", bs_icon("clipboard-check"), " Response-atlas data-quality review ",
-        tags$span(class="qcf-sub", "· verify, not errors"),
+      p(class="qc-cap-note qc-intro", "Each flag marks a value worth a second look, not an error. ",
         info_pop("Why these are flags, not bugs",
           p("The atlas uses explicit QC choices: bounded non-left-censored green-up intervals with recurrent-species/composition gates, complete-month climate gates, the within-site MAD temperature filter, and the CI-spans-zero guard on “apparent” rows."),
           p("This panel surfaces ", tags$b("where those rules bit"), " for the selected site, ranked worst-first, so a reader verifies a thin or missing value before reading too much into it. Activate any flag to list the exact rows behind it."))),
@@ -868,7 +557,7 @@ server <- function(input, output, session) {
           bs_icon(qc_icon(f$level)),
           div(class="qcf-body",
             div(class="qcf-title", f$title, if (f$n > 0) tags$span(class="qcf-n", f$n)),
-            div(class="qcf-detail", f$detail)),
+            div(class="qcf-detail", qc_plain(f$detail))),
           if (clickable) tags$span(class="qcf-go", bs_icon("chevron-right"))) })),
       if (has_real) div(class="qcf-hint", bs_icon("hand-index-thumb"),
         " activate a flag to list the exact rows behind it"),
@@ -887,7 +576,7 @@ server <- function(input, output, session) {
     st <- q$sets[[key]]; req(!is.null(st), nrow(st))
     f <- Filter(function(x) identical(x$key, key), q$flags)[[1]]
     cols <- names(st); head_n <- min(nrow(st), 200L); sv <- st[seq_len(head_n), cols, drop=FALSE]
-    fmt <- function(v) if (is.numeric(v)) ifelse(is.na(v), "—", format(round(v, 2), trim=TRUE)) else format(v)
+    fmt <- function(v) if (is.numeric(v)) ifelse(is.na(v), "NA", format(round(v, 2), trim=TRUE)) else format(v)
     div(id = "qcInspectRegion", class="qc-inspector", role = "region",
       tabindex = "-1", `aria-live` = "polite", `aria-atomic` = "true",
       `aria-label` = sprintf("Rows behind the %s quality-control flag", f$title),
@@ -904,7 +593,7 @@ server <- function(input, output, session) {
     filename = function() sprintf("%s-response-atlas-qc.csv", input$site),
     content = function(file){ rep <- cascade_qc_report(ann(), links(), SIGNALS, input$site)
       if (is.null(rep)) rep <- data.frame(note="No data-quality flags at this site.")
-      hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s data-quality review (verify, not wrong).", input$site),
+      hdr <- c(sprintf("# NEON Response Atlas · %s data-quality review (verify, not wrong).", input$site),
                "# Each flag is a value worth a second look, not automatically an error; review the documented QC rule and source record.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
       suppressWarnings(utils::write.table(rep, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double")) })
@@ -921,13 +610,12 @@ server <- function(input, output, session) {
       nm  <- if (nrow(row)) row$name[1] else s
       st  <- if (nrow(row)) row$state[1] else ""
       sm  <- smatch(); lk <- links(); a <- ann()
-      verdict <- tryCatch(verdict_sentence(s, lk, sm, blabel()), error = function(e) "")
-      # strip any HTML tags the verdict helper may carry, so the CSV stays plain text
-      verdict <- gsub("<[^>]+>", "", as.character(verdict))
+      f <- site_facts()
+      verdict <- paste(counts_line(f, s), judged_sentence(f))
       con <- file(file, open = "w", encoding = "UTF-8")
       on.exit(close(con))
       writeLines(c(
-        sprintf("# NEON Cross-Product Response Atlas - site report card: %s (%s%s)", s, nm,
+        sprintf("# NEON Response Atlas - site report card: %s (%s%s)", s, nm,
                 if (nzchar(st)) paste0(", ", st) else ""),
         sprintf("# Heuristic site group: %s", site_blabel(s)),
         sprintf("# NEON domain: %s", if (nrow(row)) row$domain[1] else "unknown"),
@@ -971,13 +659,18 @@ server <- function(input, output, session) {
     conf_badge <- function(c) {
       col <- switch(c %||% "", strong="#1a6b35", moderate="#e0b43a", weak="#9c2931", "#53606d")
       ink <- if (identical(c, "moderate")) "#2e2406" else "#ffffff"
-      tags$span(class="dt-chip", style=sprintf("background:%s;color:%s", col, ink), c %||% "—")
+      tags$span(class="dt-chip", style=sprintf("background:%s;color:%s", col, ink), c %||% "n/a")
     }
     eligibility_badge <- function(ec) {
       vote <- identical(as.character(ec), "all")
       tags$span(class="dt-chip", style=sprintf("background:%s;color:#fff", if (vote) "#1a6b35" else "#53606d"),
-                if (vote) "vote-eligible" else "context only")
+                if (vote) "Yes" else "No, context")
     }
+    about_fold <- function(icon, title, ...) tags$details(class = "picker-list about-fold",
+      tags$summary(class = "picker-list-summary",
+        tags$span(class = "pls-label", bs_icon(icon), " ", title),
+        tags$span(class = "pls-chevron", bs_icon("chevron-down"))),
+      div(class = "measured-body", ...))
     prow <- function(i){ r <- pr[i,]; arrow <- if (r$sign>0) "↑ more → more" else "↓ more → earlier/less"
       tags$tr(tags$td(sig_label(r$from)), tags$td(sig_label(r$to)), tags$td(arrow),
         tags$td(if (r$lag>0) sprintf("%d yr later", r$lag) else "same yr"),
@@ -985,20 +678,18 @@ server <- function(input, output, session) {
     gloss <- function(term, def) div(class="gloss-item", tags$b(term), tags$span(HTML(def)))
     div(class="about-wrap",
       div(class="about-card", h3("\U0001F517 What this is"),
-        p("The capstone of a family of NEON explorers. Each sibling app dives into one product: small mammals, birds, plant diversity, vegetation structure, plant phenology, mosquitoes, or ground beetles. This one ", tags$b("lines them up"),
-          " at shared sites as a ", tags$b("cross-product response atlas"), ": annual weather, plant timing and composition, and animal detection and catch summaries shown on one calendar.")),
+        p("The NEON Response Atlas puts annual weather, plant timing and animal counts from seven NEON products on one calendar, site by site. Each sibling app explores one of those products in depth; this one lines them up.")),
 
-      div(class="about-card about-plain", h3(bs_icon("exclamation-triangle"), " Construct status: this does not test a trophic cascade"),
-        p(HTML("The current data do <b>not</b> provide a defensible annual productivity or seed-resource signal connecting green-up to consumers, and the analysis does not fit a sequential or mediation model. Most non-phenology pairings are therefore contextual displays, not inferential votes.")),
-        p(class="qc-cap-note", "The layered timeline is a co-display of candidate bottom-up pathways. Arrows and visual ordering cannot supply missing producer→consumer rungs, so no page should be read as evidence that a mediated climate→plant→animal chain occurred.")),
-
-      div(class="about-card about-plain", h3(bs_icon("exclamation-diamond"), " Selection status: exploratory, not preregistered"),
-        p(HTML(sprintf("The current direction-and-lag family is <b>literature-motivated and locked for this build</b> (<code>%s</code>). Repository history shows that links and seasonal windows evolved while these same data were being inspected. The family therefore was <b>not fixed in advance</b>: correlations, intervals, raw p-values, Holm adjustments, and the companion meta-analysis are all exploratory screens, not confirmatory evidence.", PRIOR_FAMILY_VERSION))),
-        p(class="qc-cap-note", "The locked interface prevents additional silent tuning today, and the max-statistic adjustment accounts for the displayed lag/season scan. Neither safeguard can undo historical post-selection. A confirmatory analysis would require a dated immutable registry and genuinely held-out observations.")),
+      div(class="about-card about-plain", h3(bs_icon("exclamation-triangle"), " What this can and cannot say"),
+        tags$ul(
+          tags$li("It lines up annual weather, plant timing and animal counts from seven NEON products on one calendar."),
+          tags$li("It judges two pairings across sites, both temperature and green-up, and shows ten others for context."),
+          tags$li("The lags and seasons were set before the data were looked at and adjusted during earlier builds; they are fixed now, and the app does not let a reader slide them."),
+          tags$li("It cannot show that weather drives plants or that plants drive animals, and no page is a tested chain."))),
 
       local({
         m <- CASCADE$meta; sp <- m$source_products
-        div(class="about-card about-plain", h3(bs_icon("fingerprint"), " Snapshot and provenance"),
+        about_fold("fingerprint", "Snapshot and provenance",
           p(HTML(sprintf("The displayed snapshot ends at <b>%s</b> (<code>%s</code>). Its deterministic source-state timestamp is <code>%s</code>.",
             m$last_complete_year, m$last_complete_year_basis, m$built_when))),
           p(HTML(sprintf("Bundle schema <code>%s</code>; prior family <code>%s</code> (<b>%s</b>); source snapshot <code>%s</code>.",
@@ -1011,20 +702,17 @@ server <- function(input, output, session) {
             p(class="qc-cap-note", "The full relative-path input hashes and local build-code fingerprints are stored in the downloadable bundle metadata and repeated in export headers."))
           else p(class="qc-cap-note", "Source provenance is unavailable; this should have failed the runtime contract."))
       }),
-      div(class="about-card about-plain", h3(bs_icon("signpost-split"), " Site grouping is a keyword heuristic"),
-        p(HTML("The internal <code>water-limited</code>/<code>temperature-limited</code> labels are <b>not measured climate or resource-limitation classes</b>. A one-line site bio containing <code>desert</code>, <code>sagebrush</code>, or <code>semi-desert</code> enters the dryland-keyword group; every other site defaults to the other group.")),
-        p(class="qc-cap-note", "Dry forests, semiarid grasslands, Mediterranean systems, and mixed sagebrush–conifer sites can be misgrouped. The current vote-eligible green-up associations include all sites rather than conditioning their p-values on this rule; the grouping remains visible for descriptive context, and its exact basis and method are stored in the bundle.")),
+      div(class="about-card about-plain", h3(bs_icon("signpost-split"), " Site groups"),
+        p("The dryland group is a keyword rule on the site's one-line description (desert, sagebrush or semi-desert), not a measured climate class. It can misgroup dry forests, semiarid grasslands and mixed sites.")),
 
-      div(class="about-card about-plain", h3(bs_icon("chat-square-text"), " How to read this, in plain English"),
-        p("New to this? Start here. Start with the plain-language definitions; technical terms are defined where they appear."),
-        gloss("The big idea", "Weather, plant timing and composition, and animal observations can be aligned on the same calendar. This app evaluates selected <b>direct pairwise associations</b>; it does not estimate a sequential weather→plant→animal pathway."),
-        gloss("Green-up timing index", "A DOY-anchored, composition-adjusted index built from bounded, non-left-censored onset-interval midpoint estimates. Each repeatedly observed species is centered on its own across-year timing before species are weighted equally. A smaller value means earlier relative green-up, but it is not a literal pooled median date. Excluding first-visit-already-yes records avoids treating upper bounds as dates; it is <b>not</b> an interval-censored model and can select on monitoring start and visit cadence. Interval-width diagnostics remain visible in the export and QC panel. This is a retrospective full-panel standardization: recurrence, connectivity, species centers, and additive year effects are refit at refresh, so newly eligible observations can revise historical index values. Snapshot hashes preserve the exact published version."),
-        gloss("A “lag”", "A calendar offset. A <b>1-year lag</b> pairs this year's driver with <em>next</em> year's response. The offset encodes a proposed pathway; this observational screen does not prove that pathway."),
-        gloss("Catch rate (per 100 trap-nights)", "How many small mammals were caught for every 100 trap-nights of effort. It accounts for how hard we trapped, so years compare fairly, but it's a <b>relative index, not a true headcount</b>."),
-        gloss("The layered timeline", "Each strip is one measurement layer, drawn on a <b>standardised</b> within-signal scale: <b>0 = that signal's own average year</b>, up = above average, down = below. Compare timing, not heights. Stacking is a visual co-display, not a mediation test."),
-        gloss("Why deserts expose aggregation problems", "Desert ecology depends strongly on <b>when</b> rain falls. Winter rain and the summer monsoon support different pathways, so combining them into one annual total can hide or reverse a relationship. The current desert sample is thin; this is a measurement lesson, not a desert-wide result.")),
+      div(class="about-card about-plain", h3(bs_icon("chat-square-text"), " Plain words for the terms on screen"),
+        gloss("Green-up timing index", "A yearly index of when plants leafed out at a site, built from NEON phenology visits. Each species is centred on its own usual timing before species are averaged, so a smaller value means earlier than usual, not a calendar date. A data refresh can revise past values."),
+        gloss("Lag", "A calendar offset. A <b>one-year lag</b> pairs this year's weather with <em>next</em> year's response. The lag states a proposed pathway; the data cannot prove it."),
+        gloss("Catch rate (per 100 trap-nights)", "Small mammals caught for every 100 trap-nights of effort, so years with more trapping compare fairly. It is a <b>relative index within one site</b>, not a headcount."),
+        gloss("The timeline", "Each strip is one measurement layer, scaled to that signal's own average year: up is above average, down is below. Compare timing, not heights; stacking the strips does not test a chain.")),
 
-      div(class="about-card about-plain", h3(bs_icon("calculator"), " The statistics, in plain English"),
+      about_fold("calculator", "For statisticians",
+      div(class="about-card about-plain", h3(bs_icon("calculator"), " The statistics"),
         gloss("“Could this be luck?” (the circular-shift test)", "For each link we rotate the response over its full calendar grid, retaining missing years. That preserves order, annual spacing, and the gap pattern while breaking the original alignment. The exact finite floor is <b>1/(valid null shifts + 1)</b> and is reported for each link. This coarse p is transparency, not a per-site significance claim."),
         gloss("The uncertainty band (95% CI)", "An indicative range from a circular moving-block bootstrap, which resamples contiguous wrapped year blocks to retain short-range temporal structure. With only ~6 years it is often <b>very wide</b>; it diagnoses instability rather than promising precision."),
         gloss("“Too few years to judge”", "Below <b>6 overlapping years</b> we show the lined-up data but give <b>no verdict</b>; there simply isn't enough to tell signal from noise."),
@@ -1056,32 +744,25 @@ server <- function(input, output, session) {
           else p(class = "qc-cap-note", bs_icon("info-circle"),
             "No association met the companion meta-analysis eligibility contract in this snapshot."),
           p(class = "qc-cap-note", "The prediction interval and heterogeneity lead interpretation; the directional p-values are secondary. Knapp-Hartung inference reflects the small site sample, and Holm adjustment covers both eligible temperature-green-up rows. The Fisher-z sampling variance still assumes effectively independent paired years and does not model within-site serial dependence. The entire companion remains exploratory, is not a posterior probability, and does not upgrade any per-site verdict."))
-      }),
+      })),
 
-      div(class="about-card", h3(bs_icon("shield-check"), " What the safeguards do—and do not do"),
-        tags$ul(
-          tags$li(HTML("<b>Limits additional tuning in this build.</b> The current literature-motivated scorecard setting is locked in the interface. The Lag Explorer shows every scanned alternative and uses a max-statistic adjustment. The family itself nevertheless evolved during data inspection, so neither route is confirmatory.")),
-          tags$li(HTML("<b>n-gated.</b> Below 6 overlapping years, no verdict. At n&ge;6 the circular block-bootstrap interval sets a per-site DIRECTION verdict; the circular-shift p is transparency only. Across-site exact-binomial p-values are shown both raw and Holm-adjusted.")),
-          tags$li(HTML("<b>Honest about scope.</b> Several of these mechanisms are clearest <em>across regions</em> or in <em>deserts</em>; testing them within one site, year-to-year, is the hardest case, and the notes say so.")),
-          tags$li(HTML("<b>Direction over magnitude</b>, and <b>never “drives”/“causes.”</b>")))),
-
-      div(class="about-card", h3(bs_icon("diagram-3"), " The current literature-motivated association family"),
+      div(class="about-card", h3(bs_icon("diagram-3"), " The twelve pairings"),
         tags$table(class="inspect-tbl",
-          tags$caption(class="visually-hidden", "Current exploratory literature-motivated direct associations"),
+          tags$caption(class="visually-hidden", "The twelve pairings, their expected direction, lag and whether each is counted"),
           tags$thead(tags$tr(tags$th(scope="col", "Driver"), tags$th(scope="col", "Response"),
           tags$th(scope="col", "Stated direction"), tags$th(scope="col", "Lag"),
-            tags$th(scope="col", "Literature basis"), tags$th(scope="col", "Analysis use"), tags$th(scope="col", "In plain English"))),
+            tags$th(scope="col", "Literature basis"), tags$th(scope="col", "Counted?"), tags$th(scope="col", "In plain English"))),
           tags$tbody(lapply(seq_len(nrow(pr)), prow))),
         p(class="qc-cap-note", style="margin-top:8px", HTML("Sources: warmer-springs→earlier green-up · <b>Fu et al. 2015</b> (<i>Nature</i>), Richardson et al. 2013; rain→desert rodents (lagged, non-linear) · <b>Brown &amp; Ernest 2002</b>, Thibault et al. 2010; rain-timing · Zhang et al. 2021; dryland productivity~precipitation · Sala et al. 1988, Huxman et al. 2004, Knapp et al. 2017; the “green wave” · Merkle et al. 2016. A green-up→bird link is <b>deliberately omitted</b>: the mismatch literature is about timing-synchrony, not “later green-up → more birds.”"))),
 
-      div(class="about-card", h3(bs_icon("database"), " Data & honest limits"),
+      div(class="about-card", h3(bs_icon("database"), " Data and limits"),
         p("Per-site annual signals assembled from seven sibling apps' bundles plus the NEON-tower climate overlays. ",
           tags$b("Small-mammal catch rate"), " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites, so read within-site trends only. ",
           tags$b("Temperature"), " is either a complete annual average or a complete March–May average. Neither is guaranteed to precede the green-up events it is paired with, so both are contemporaneous proxies rather than trigger measurements. ",
           tags$b("Plant richness"), " is composition, not productivity. Beetle effort is observed only for catch-bearing events, so beetle indices are descriptive and cannot cast inferential votes. Other non-green-up links likewise remain contextual until their response windows, effort, and directional basis support stronger use."),
         p(bs_icon("envelope"), " ", tags$a(href="mailto:desertdatalabs@gmail.com","desertdatalabs@gmail.com"))),
 
-      div(class="about-card", h3(bs_icon("table"), " Codebook & data downloads"),
+      div(class="about-card", h3(bs_icon("table"), " Codebook and downloads"),
         p("Every signal, its units, how it's derived, and the n-gates, plus analysis-ready CSV exports."),
         uiOutput("codebook")),
 
@@ -1103,198 +784,214 @@ server <- function(input, output, session) {
     if (!nrow(d)) return(note_plot("No seasonal precipitation reconstructed for this site yet."))
     winter_col <- if (is_dark()) "#43b8e8" else "#126c91"
     monsoon_col <- if (is_dark()) "#ffd24a" else "#7a5900"
-    plotly::plot_ly(d, x=~year) %>%
-      plotly::add_bars(y=~precip_winter, name="Winter rain (Oct–Mar)", marker=list(color=winter_col)) %>%
-      plotly::add_bars(y=~precip_monsoon, name="Monsoon rain (Jul–Sep)", marker=list(color=monsoon_col)) %>%
+    # Each season's bars draw only the years that season has a value (no NA rows).
+    plotly::plot_ly() %>%
+      plotly::add_bars(data=d[is.finite(d$precip_winter), , drop=FALSE], x=~year, y=~precip_winter,
+                       name="Winter rain (Oct–Mar)", marker=list(color=winter_col)) %>%
+      plotly::add_bars(data=d[is.finite(d$precip_monsoon), , drop=FALSE], x=~year, y=~precip_monsoon,
+                       name="Monsoon rain (Jul–Sep)", marker=list(color=monsoon_col)) %>%
       theme_plotly() %>% plotly::layout(barmode="group", legend=list(orientation="h", y=-0.22),
         yaxis=list(title="precipitation (mm)"), xaxis=list(title="", dtick=1), margin=list(l=55,r=20,t=10,b=40))
   })
-  output$seasonalPanel <- renderUI({
-    if (!is_desert(input$site)) return(div(class="seasonal-note", bs_icon("info-circle"),
-      HTML(" This site is not classified in the descriptive dryland-keyword group, so the winter/monsoon illustration is hidden. That heuristic does not establish how many ecologically relevant rain seasons the site has, and no pathway test is implied.")))
-    a <- ann()
-    # Return r, n, and the same circular-shift p used everywhere else. Numbers
-    # are computed for the selected site—never copied from SRER into other sites.
-    rc <- function(from,to,lag){
-      if (!all(c(from,to) %in% names(a))) return(list(r=NA_real_, n=0L, p=NA_real_))
-      g <- lag_grid(a, from, to, lag)
-      m <- if (nrow(g)) g[is.finite(g$x) & is.finite(g$y), , drop=FALSE] else g
-      if (nrow(m) < 3) return(list(r=NA_real_, n=nrow(m), p=NA_real_))
-      r <- suppressWarnings(stats::cor(m$x, m$y))
-      prm <- if (nrow(m) >= 6 && is.finite(r)) perm_circular_result(g$x, g$y) else list(p=NA_real_)
-      list(r=if (is.finite(r)) round(r, 2) else NA_real_, n=nrow(m),
-           p=prm$p)
+  # ---- Winter rain and monsoon rain: dryland sites only, no card elsewhere ----
+  output$seasonalCard <- renderUI({
+    if (!is_desert(input$site)) return(NULL)
+    a <- ann(); req(nrow(a))
+    rc <- function(from, to, lag) {
+      if (!all(c(from, to) %in% names(a))) return(list(r = NA_real_, n = 0L, years = integer(0)))
+      m <- lag_pairs(a, from, to, lag)
+      r <- if (nrow(m) >= 3) suppressWarnings(stats::cor(m$x, m$y)) else NA_real_
+      list(r = if (is.finite(r)) r else NA_real_, n = nrow(m), years = m$year)
     }
-    ann_mam <- rc("precip","mammal_cpue",1);  mon_mam <- rc("precip_monsoon","mammal_cpue",1)
-    ann_rich <- rc("precip","plant_richness",0); win_rich <- rc("precip_winter","plant_richness",0)
-    rv <- function(x) if (is.na(x$r)) "—" else sprintf("r = %+.2f", x$r)
-    rn <- function(x) if (x$n > 0) span(class="sc-n", sprintf(" n=%d", x$n)) else NULL
-    # CVD: the contrast between the weak (annual) and strong (seasonal) r must NOT rest on
-    # colour alone (the two greens sit near 1.2:1 luminance). Pair the STRONG value with a
-    # non-colour cue (up-arrow + a "stronger" chip), and carry the honest stats (n + the
-    # p where it's the headline monsoon link) right on the number, never colour-only.
-    cmp <- function(lab, a1, lab1, a2, lab2) {
-      p_lab <- if (!is.na(a2$r) && is.finite(a2$p))
-        span(class="sc-p", sprintf(" p=%.3f", a2$p)) else NULL
-      is_stronger <- is.finite(a1$r) && is.finite(a2$r) && abs(a2$r) > abs(a1$r)
-      strong_cue <- if (is_stronger)
-        span(class="sc-stronger", bs_icon("arrow-up-short"), "stronger") else NULL
-      div(class="seasonal-cmp",
-        div(class="sc-title", lab),
-        div(class="sc-row", span(class="sc-k", lab1), span(class="sc-v sc-weak", rv(a1), rn(a1))),
-        div(class="sc-row", span(class="sc-k", lab2),
-          span(class="sc-v sc-strong", rv(a2), rn(a2), p_lab, strong_cue)))
-    }
-    mon_detail <- if (is.finite(mon_mam$r)) sprintf(
-      "At %s, monsoon rain → next-year rodents is r=%+.2f at n=%d%s.", input$site,
-      mon_mam$r, mon_mam$n, if (is.finite(mon_mam$p)) sprintf(", circular-shift p=%.3f", mon_mam$p) else "")
-      else sprintf("At %s, the monsoon-to-rodent pairing has too few overlapping years to estimate.", input$site)
-    div(
-      insight_banner("droplet-half", tone="navy", HTML("A single <b>annual</b> rainfall number can blend ecologically distinct seasons. The selected site's winter and monsoon contrasts show whether season choice changes the apparent relationship:"),
-        info_pop("Illustrative single-site contrast", HTML(paste0(mon_detail, " Read these as short-series illustrations of aggregation sensitivity, not a desert-wide result. The exploratory cross-site direction summary is on the Across&nbsp;NEON tab.")))),
-      div(class="seasonal-cmps",
-        cmp("Rain → next-year rodents", ann_mam, "annual rain", mon_mam, "monsoon rain"),
-        cmp("Rain → plant richness", ann_rich, "annual rain", win_rich, "winter (forb) rain")),
-      p(class="precip-coverage-note", bs_icon("info-circle"),
-        HTML(sprintf(" Complete annual precipitation is available at %d of %d NEON sites; annual-rain pairings are estimable only where all 12 months are present.", N_PRECIP_SITES, length(ALL_SITES)))))
+    ann_mam <- rc("precip", "mammal_cpue", 1); mon_mam <- rc("precip_monsoon", "mammal_cpue", 1)
+    show_r <- function(x) if (is.finite(x$r)) sprintf("r = %+.2f, n = %d", x$r, x$n)
+      else sprintf("n = %d, too few years for r", x$n)
+    reading <- if (is.finite(ann_mam$r) && is.finite(mon_mam$r)) {
+        better <- if (abs(mon_mam$r) > abs(ann_mam$r)) "the monsoon total fits better than the annual total"
+          else if (abs(mon_mam$r) < abs(ann_mam$r)) "the annual total fits better than the monsoon total"
+          else "the two totals fit about equally"
+        nmax <- max(ann_mam$n, mon_mam$n)
+        sprintf("At %s %s, but %d years is too few to call it.", input$site, better, nmax)
+      } else sprintf("At %s there are too few years with both values to compare the two totals.", input$site)
+    yrs_all <- c(ann_mam$years, mon_mam$years)
+    seas <- a[is.finite(a$precip_monsoon) | is.finite(a$precip_winter), , drop = FALSE]
+    ex <- if (nrow(seas)) seas[which.max(seas$year), ] else NULL
+    example <- if (is.null(ex)) sprintf("%s has no seasonal rain on record.", input$site)
+      else sprintf("In %d at %s, winter rain was %s and monsoon rain was %s.", ex$year, input$site,
+                   fmt_val(ex$precip_winter, "precip_winter"), fmt_val(ex$precip_monsoon, "precip_monsoon"))
+    card(
+      card_head("droplet-half", "Winter rain and monsoon rain"),
+      spin(plotlyOutput("seasonalPlot", height = "300px")),
+      div(class = "seasonal-cmps",
+        div(class = "seasonal-cmp",
+          div(class = "sc-title", "Rain, then small-mammal catch the next year"),
+          div(class = "sc-row", span(class = "sc-k", "Annual rain"), span(class = "sc-v", show_r(ann_mam))),
+          div(class = "sc-row", span(class = "sc-k", "Monsoon rain"), span(class = "sc-v", show_r(mon_mam))))),
+      p(class = "sc-reading", reading),
+      plain_lines(
+        shows = "Rain in two seasons, one pair of bars per year: winter (October to March) and monsoon (July to September).",
+        example = example,
+        from = sprintf("NEON and Daymet weather; NEON small mammals (DP1.10072.001)%s.",
+                       if (length(yrs_all)) sprintf(", %d to %d", min(yrs_all), max(yrs_all)) else ""),
+        cannot = "Show that rain sets the catch. A short record can favour either total by chance."))
   })
 
-  # ---- ACROSS NEON: pooled headline + cross-site sign-match scoreboard ----
+  # ---- ALL SITES: the judged pairings across NEON (card X1) ----
+  # One headline line computed from POOLED, one bar per judged pairing, the
+  # statistics in a fold. Context pairings are never pooled and are not listed here.
+  plain_sig <- function(k) switch(k, temp = "annual temperature", temp_spring = "spring temperature",
+    greenup_doy = "green-up timing", tolower(sig_label(k)))
+  cap1 <- function(x) paste0(toupper(substring(x, 1, 1)), substring(x, 2))
+  num_word <- function(n) if (n >= 1 && n <= 12) c("one","two","three","four","five","six","seven",
+    "eight","nine","ten","eleven","twelve")[n] else as.character(n)
+  lag_words <- function(lag) if (lag == 1) "next yr" else sprintf("%d yr later", lag)
   output$pooledHeadline <- renderUI({
     pl <- POOLED; if (!nrow(pl)) return(NULL)
-    # HARD floor: a binomial on 1–2 votes is not a pooled test (one vote always reads
-    # 1/1, p=0.500). Such links must NOT sit in the headline rank beside broadly
-    # supported rows—split them out and demote them to a p-less footnote row.
-    MIN_SITES <- 3L
-    is_context <- if ("expected_class" %in% names(pl)) pl$expected_class == "none" else rep(FALSE, nrow(pl))
-    context <- pl[is_context, , drop=FALSE]
-    eligible <- pl[!is_context, , drop=FALSE]
-    poolable <- if ("poolable" %in% names(eligible)) eligible$poolable %in% TRUE else eligible$sites >= MIN_SITES
-    rank <- eligible[poolable, , drop=FALSE]; under <- eligible[!poolable, , drop=FALSE]
-    if (!"p_holm" %in% names(rank)) rank$p_holm <- NA_real_
-    if (!"p_fdr" %in% names(rank)) rank$p_fdr <- NA_real_
-    rank <- rank[order(ifelse(is.finite(rank$p_holm), rank$p_holm, Inf), rank$p), , drop=FALSE]
-    n_family <- sum(is.finite(rank$p))
-    items <- lapply(seq_len(nrow(rank)), function(i){ r <- rank[i,]
-      sig <- is.finite(r$p_holm) && r$p_holm < 0.05
-      div(class=paste0("pooled-row", if (sig) " pooled-sig" else ""),
-        div(class="pl-link", HTML(sprintf("%s&nbsp;→&nbsp;%s", sig_label(r$from), sig_label(r$to))),
-            if (r$lag>0) span(class="pl-lag", sprintf(" lag %dy", r$lag))),
-        div(class="pl-bar-wrap", div(class="pl-bar", style=sprintf("width:%.0f%%", 100*r$k/r$sites))),
-        div(class="pl-stat", tags$b(sprintf("%d/%d sites", r$k, r$sites)),
-            span(class="pl-p", sprintf("raw p=%.3f", r$p)),
-            if (is.finite(r$p_holm)) span(class="pl-padj", sprintf("Holm p=%.3f", r$p_holm)),
-            span(class="pl-r", sprintf("median r=%+.2f", r$median_r)),
-            if ("sites_detrended" %in% names(r) && is.finite(r$sites_detrended) && r$sites_detrended > 0)
-              span(class="pl-sens", sprintf("detrended direction %d/%d", r$k_detrended, r$sites_detrended)),
-            if ("sites_change" %in% names(r) && is.finite(r$sites_change) && r$sites_change > 0)
-              span(class="pl-sens", sprintf("consecutive-change direction %d/%d", r$k_change, r$sites_change)),
-            if ("sites_outcome_alt" %in% names(r) && is.finite(r$sites_outcome_alt) && r$sites_outcome_alt > 0)
-              span(class="pl-sens", sprintf("additive green-up direction %d/%d", r$k_outcome_alt, r$sites_outcome_alt)),
-            if ("domains" %in% names(r) && is.finite(r$domains) && r$domains > 0)
-              span(class="pl-sens", sprintf("NEON-domain majority %d/%d%s", r$k_domain, r$domains,
-                if (is.finite(r$domain_ties) && r$domain_ties > 0) sprintf(" (+%d tied)", r$domain_ties) else ""))))
+    judged <- if ("expected_class" %in% names(pl)) pl[pl$expected_class %in% "all", , drop = FALSE] else pl
+    poolable <- if ("poolable" %in% names(judged)) judged$poolable %in% TRUE else judged$sites >= 3L
+    rank <- judged[poolable, , drop = FALSE]; under <- judged[!poolable, , drop = FALSE]
+    prior_sign <- function(r) {
+      m <- PRIORS[PRIORS$from == r$from & PRIORS$to == r$to & PRIORS$lag == r$lag, , drop = FALSE]
+      if (nrow(m)) m$sign[1] else NA_real_
+    }
+    direction_words <- function(r) {
+      s <- prior_sign(r); down <- isTRUE(s < 0)
+      drv <- if (r$from %in% c("temp", "temp_spring")) "Warmer years" else sprintf("More %s", plain_sig(r$from))
+      rsp <- if (identical(r$to, "greenup_doy")) (if (down) "earlier green-up" else "later green-up")
+             else sprintf("%s %s", if (down) "less" else "more", plain_sig(r$to))
+      paste0(drv, ", ", rsp)
+    }
+    pair_words <- function(r) paste0(cap1(plain_sig(r$from)), " → ", plain_sig(r$to),
+      if (r$lag > 0) sprintf(" (%s)", lag_words(r$lag)) else "")
+    headline <- if (nrow(rank)) {
+      bits <- vapply(seq_len(nrow(rank)), function(i) { r <- rank[i, ]
+        if (i == 1) sprintf("at %d of the %d sites with enough years using %s", r$k, r$sites, plain_sig(r$from))
+        else sprintf("at %d of %d using %s", r$k, r$sites, plain_sig(r$from)) }, character(1))
+      joined <- if (length(bits) == 1) bits else
+        paste0(paste(bits[-length(bits)], collapse = ", "), ", and ", bits[length(bits)])
+      sprintf("%s: the direction fits %s.", direction_words(rank[1, ]), joined)
+    } else "Neither judged pairing has enough sites to pool in this snapshot."
+    rows <- lapply(seq_len(nrow(rank)), function(i) { r <- rank[i, ]
+      div(class = "pooled-row",
+        div(class = "pl-link", pair_words(r)),
+        div(class = "pl-bar-wrap", `aria-hidden` = "true",
+          div(class = "pl-bar", style = sprintf("width:%.0f%%", 100 * r$k / r$sites))),
+        div(class = "pl-stat", tags$b(sprintf("fits at %d of %d sites", r$k, r$sites))))
     })
-    # under-floor links: shown demoted, no p-value, with a one-click "why?" caveat.
-    under_rows <- if (nrow(under)) lapply(seq_len(nrow(under)), function(i){ r <- under[i,]
-      div(class="pooled-row pooled-underfloor",
-        div(class="pl-link", HTML(sprintf("%s&nbsp;→&nbsp;%s", sig_label(r$from), sig_label(r$to))),
-            if (r$lag>0) span(class="pl-lag", sprintf(" lag %dy", r$lag))),
-        div(class="pl-stat", span(class="pl-notpool", sprintf("%d site%s · not poolable", r$sites, if (r$sites==1) "" else "s")),
-            if (is.finite(r$median_r)) span(class="pl-r", sprintf("median r=%+.2f", r$median_r))))
-    }) else NULL
-    context_rows <- if (nrow(context)) lapply(seq_len(nrow(context)), function(i){ r <- context[i,]
-      div(class="pooled-row pooled-underfloor",
-        div(class="pl-link", HTML(sprintf("%s&nbsp;→&nbsp;%s", sig_label(r$from), sig_label(r$to))),
-            if (r$lag>0) span(class="pl-lag", sprintf(" lag %dy", r$lag))),
-        div(class="pl-stat", span(class="pl-notpool", "context only by design · excluded from pooling")))
-    }) else NULL
-    # The eligible association is screened with annual and spring-only temperature.
-    # Report raw and multiplicity-adjusted values; never promote the minimum row
-    # from a displayed family as though it were the only hypothesis.
-    gp_ann <- pl[pl$from=="temp"        & pl$to=="greenup_doy", , drop=FALSE]
-    gp_spr <- pl[pl$from=="temp_spring" & pl$to=="greenup_doy", , drop=FALSE]
-    tension <- if (nrow(gp_ann) && nrow(gp_spr) && is.finite(gp_ann$p[1]) && is.finite(gp_spr$p[1]))
-      HTML(sprintf(" The same literature-motivated association tested with two climate proxies carries a caveat: <b>annual mean temperature</b> gives %d/%d agreeing sites (raw p=%.3f%s), while the <b>March&ndash;May temperature window</b> gives %d/%d (raw p=%.3f%s). Neither is guaranteed to precede an individual green-up event; treat the contrast as a coverage/proxy sensitivity, not a clean mechanistic test.",
-        gp_ann$k[1], gp_ann$sites[1], gp_ann$p[1],
-        if ("p_holm" %in% names(gp_ann) && is.finite(gp_ann$p_holm[1])) sprintf(", Holm p=%.3f", gp_ann$p_holm[1]) else "",
-        gp_spr$k[1], gp_spr$sites[1], gp_spr$p[1],
-        if ("p_holm" %in% names(gp_spr) && is.finite(gp_spr$p_holm[1])) sprintf(", Holm p=%.3f", gp_spr$p_holm[1]) else ""))
-      else NULL
-    any_familywise <- any(is.finite(rank$p_holm) & rank$p_holm < .05)
-    headline <- if (any_familywise)
-      sprintf("Across %d vote-eligible direct associations, Holm-adjusted direction rows below 0.05 are highlighted. Because this family evolved alongside inspection of these data, those values remain exploratory; compare the residual, consecutive-change, alternate-green-up, and NEON-domain-majority direction counts before interpretation.", n_family)
-    else sprintf("Across %d vote-eligible direct associations, no Holm-adjusted direction row is below 0.05. The family was not preregistered, and trend, outcome-construction, or spatial-clustering sensitivities can differ, so this is an exploratory association screen.", n_family)
-    div(insight_banner("clipboard-data", tone="pine",
-      HTML(headline)),
-      p(class="qc-cap-note pooled-s4t", style="margin-top:8px", bs_icon("info-circle"),
-        HTML(sprintf(" <b>Pooled across sites, not years.</b> Each vote-eligible temperature–green-up pairing is screened at every site with enough support, then raw-level direction votes are counted. The exact-binomial p is <b>one-sided against 0.5 sign symmetry</b>; Holm-adjusted values cover the %d eligible rows. Residual, consecutive-change, alternate-outcome, and NEON-domain-majority counts are descriptive sensitivities, not extra p-values. The raw calculation treats sites as independent even though sites in one domain can share climate and history; the domain count collapses the same raw votes to one majority per NEON domain, with 50/50 domains abstaining. Context-only plant/animal rows never enter the family.", n_family))),
-      if (!is.null(tension)) p(class="pooled-tension", bs_icon("exclamation-triangle"), tension),
-      div(class="pooled-list", items),
-      if (!is.null(under_rows)) div(class="pooled-under",
-        div(class="pu-head", "Below the pooling floor (<3 sites)",
-          info_pop("Not a pooled test", HTML("This app sets a conservative reporting floor of <b>3 site votes</b>; one or two votes are too fragile to rank beside multi-site patterns (and 1/1 has p=0.500). These links remain visible <b>without a p-value</b>. The floor is a presentation safeguard, not a claim that three sites suddenly provide strong evidence."))),
-        under_rows),
-      if (!is.null(context_rows)) div(class="pooled-under pooled-context",
-        div(class="pu-head", "Context-only pairings (excluded from inference)",
-          info_pop("Why these are not pooled", HTML("These rows remain inspectable at every site, but their effort denominator, temporal window, proxy, or directional basis does not satisfy the current inferential contract. More site-years alone would <b>not</b> make them poolable; the measurement must first be redesigned."))),
-        context_rows))
+    under_rows <- if (nrow(under)) div(class = "pooled-under", lapply(seq_len(nrow(under)), function(i) { r <- under[i, ]
+      div(class = "pooled-row pooled-underfloor",
+        div(class = "pl-link", pair_words(r)),
+        div(class = "pl-stat", span(class = "pl-notpool", sprintf("%d site%s, not poolable", r$sites, if (r$sites == 1) "" else "s"))))
+    })) else NULL
+    n_ctx <- sum(PRIORS$expected_class %in% "none")
+    count_of <- function(r, k, n, unit = "sites") {
+      if (!all(c(k, n) %in% names(r)) || !is.finite(r[[n]]) || r[[n]] <= 0) return("n/a")
+      sprintf("%d of %d %s", as.integer(r[[k]]), as.integer(r[[n]]), unit)
+    }
+    stat_rows <- lapply(seq_len(nrow(rank)), function(i) { r <- rank[i, ]
+      holm <- if ("p_holm" %in% names(r) && is.finite(r$p_holm)) sprintf("%.3f", r$p_holm) else "n/a"
+      dom <- count_of(r, "k_domain", "domains", "domains")
+      if (dom != "n/a" && "domain_ties" %in% names(r) && is.finite(r$domain_ties) && r$domain_ties > 0)
+        dom <- sprintf("%s (+%d tied)", dom, as.integer(r$domain_ties))
+      pair <- function(lab, val) tagList(tags$dt(lab), tags$dd(val))
+      div(class = "pooled-stats",
+        tags$h4(class = "ps-title", pair_words(r)),
+        tags$dl(class = "ps-list",
+          pair("Raw p", if (is.finite(r$p)) sprintf("%.3f", r$p) else "n/a"),
+          pair("Holm p", holm),
+          pair("Median r", if (is.finite(r$median_r)) sprintf("%+.2f", r$median_r) else "n/a"),
+          pair("Detrended", count_of(r, "k_detrended", "sites_detrended")),
+          pair("Consecutive change", count_of(r, "k_change", "sites_change")),
+          pair("Additive green-up", count_of(r, "k_outcome_alt", "sites_outcome_alt")),
+          pair("NEON-domain majority", dom)))
+    })
+    tagList(
+      p(class = "pooled-headline", tags$b(headline)),
+      div(class = "pooled-list", rows),
+      under_rows,
+      p(class = "qc-cap-note", sprintf("%s other pairings are shown for context and never counted; the About tab lists them.",
+        cap1(num_word(n_ctx)))),
+      tags$details(class = "picker-list",
+        tags$summary(class = "picker-list-summary",
+          tags$span(class = "pls-label", bs_icon("calculator"), " The statistics"),
+          tags$span(class = "pls-chevron", bs_icon("chevron-down"))),
+        div(class = "measured-body",
+          stat_rows,
+          p(class = "qc-cap-note", "The exact binomial is one-sided against a 0.5 sign split and treats sites as independent. The family was set before looking but evolved during earlier builds, so these are screens, not confirmations."))))
   })
+  # ---- ALL SITES: every site, every pairing (card X2) ----
   output$scoreboard <- renderUI({
-    sl <- SUITE_LINKS; if (!nrow(sl)) return(p(class="qc-cap-note","Scoreboard unavailable (rebuild the data bundle)."))
+    sl <- SUITE_LINKS; if (!nrow(sl)) return(p(class="qc-cap-note","The site table is unavailable; the data bundle needs a rebuild."))
     pr <- PRIORS
-    hd <- lapply(seq_len(nrow(pr)), function(j) tags$th(class="sb-col", scope="col",
-      title=sprintf("%s → %s%s", sig_label(pr$from[j]), sig_label(pr$to[j]), if(pr$lag[j]>0) sprintf(" (lag %dy)", pr$lag[j]) else ""),
-      HTML(sprintf("%s<br>→ %s", sig_abbr(pr$from[j]), sig_abbr(pr$to[j])))))
+    judged_j  <- which(pr$expected_class %in% "all")
+    context_j <- which(!pr$expected_class %in% "all")
+    show_ctx  <- isTRUE(input$showContext)
+    col_j <- if (show_ctx) c(judged_j, context_j) else judged_j
+    plain_tier <- c(consistent = "Fits the expected direction", apparent = "Fits, but the range includes zero",
+      counter = "Runs the other way", neutral = "No direction", exploratory = "Too few years to judge",
+      insufficient = "Not testable here")
+    col_head <- function(j) {
+      lab <- sprintf("%s → %s", sig_abbr(pr$from[j]), tolower(sig_abbr(pr$to[j])))
+      if (pr$lag[j] > 0) lab <- sprintf("%s (%s)", lab, lag_words(pr$lag[j]))
+      tags$th(class = paste0("sb-col", if (j %in% context_j) " sb-col-ctx" else ""), scope = "col",
+        title = sprintf("%s → %s%s", sig_label(pr$from[j]), sig_label(pr$to[j]),
+                        if (j %in% context_j) ", context" else ", judged"), lab)
+    }
+    hd_judged  <- lapply(judged_j, col_head)
+    hd_context <- if (show_ctx) lapply(context_j, col_head) else NULL
     sm <- SITE_META
     sm$em <- vapply(sm$site, function(s){ d <- sl[sl$site==s & sl$expected %in% TRUE & sl$n>=6 & !is.na(sl$sign_match),]; sum(d$sign_match) }, numeric(1))
-    # testable-link count (the denominator behind em): expected links with n>=6 and a known sign
+    # testable-link count (the denominator behind em): judged links with n>=6 and a known sign
     sm$ntest <- vapply(sm$site, function(s){ sum(sl$site==s & sl$expected %in% TRUE & sl$n>=6 & !is.na(sl$sign_match)) }, numeric(1))
-    sm$ba_sort <- if ("veg_ba_ha" %in% names(sm)) ifelse(is.finite(sm$veg_ba_ha), sm$veg_ba_ha, -Inf) else rep(-Inf, nrow(sm))
+    # pairings with enough years: every pairing at the site with n >= 6
+    sm$nenough <- vapply(sm$site, function(s){ sum(sl$site==s & sl$n>=6, na.rm = TRUE) }, numeric(1))
     sm <- switch(input$sbSort %||% "default",
-      abc      = sm[order(sm$site), , drop=FALSE],                       # A-Z lookup
-      agree    = sm[order(-sm$em, -sm$ntest, sm$site), , drop=FALSE],     # descriptive direction agreement
-      coverage = sm[order(-sm$ntest, -sm$em, sm$site), , drop=FALSE],     # richest-data sites first
-      ba       = sm[order(-sm$ba_sort, sm$site), , drop=FALSE],           # conditional sampled-plot woody BA; context only
-      sm[order(sm$biome_class, -sm$em, sm$site), , drop=FALSE])           # default: biome, then agreement
-    rowfor <- function(s, blab){
-      cells <- lapply(seq_len(nrow(pr)), function(j){
-        d <- sl[sl$site==s & sl$from==pr$from[j] & sl$to==pr$to[j] & sl$lag==pr$lag[j], , drop=FALSE]
-        if (!nrow(d)) return(tags$td(class="sb-cell sb-na"))
-        tm <- TIER_META[[d$tier[1]]]; exp <- isTRUE(d$expected[1])
-        ttl <- sprintf("%s · %s → %s: %s (n=%d%s)", s, sig_label(pr$from[j]), sig_label(pr$to[j]), d$verdict[1], d$n[1], if (is.finite(d$r[1])) sprintf(", r=%.2f", d$r[1]) else "")
-        if (!exp) ttl <- paste0(ttl, ". CONTEXT ONLY at every site by measurement/construct contract; excluded from site tallies and pooled inference regardless of direction.")
-        else ttl <- paste0(ttl, ". Vote-eligible at every site with enough support.")
-        # CVD: the verdict must not be COLOUR-ONLY (teal/coral fail red-green). Prefix the
-        # cell with a tier glyph so shape always travels with the colour (Tufte; Okabe-Ito).
-        gly <- switch(d$tier[1], consistent="✓", apparent="≈",
-                      neutral=if (is.finite(d$r[1])) "0" else "—",
-                      counter="✗", exploratory="·", "")
-        cell_txt <- if (is.finite(d$r[1])) {
-          if (nzchar(gly)) sprintf("%s %+.2f", gly, d$r[1]) else sprintf("%+.2f", d$r[1])
-        } else if (nzchar(gly)) gly else "·"
-        tags$td(class=paste0("sb-cell sb-clk sb-", d$tier[1], if (!exp) " sb-dim" else ""),
-          title=ttl,
-          role="button", tabindex="0", `aria-label`=ttl,
-          `data-shiny-input`="sbCell",
-          `data-shiny-value`=sprintf("%s|%s|%s|%d", s, pr$from[j], pr$to[j], pr$lag[j]),
-          cell_txt)
-      })
-      ba <- site_ba(s)
+      abc      = sm[order(sm$site), , drop=FALSE],                       # A to Z
+      agree    = sm[order(-sm$em, -sm$ntest, sm$site), , drop=FALSE],     # most fits
+      sm[order(sm$biome_class, -sm$em, sm$site), , drop=FALSE])           # default: group, then most fits
+    cell_for <- function(s, j){
+      d <- sl[sl$site==s & sl$from==pr$from[j] & sl$to==pr$to[j] & sl$lag==pr$lag[j], , drop=FALSE]
+      ctx <- j %in% context_j
+      if (!nrow(d)) return(tags$td(class=paste0("sb-cell sb-na", if (ctx) " sb-dim" else "")))
+      tier <- d$tier[1]
+      ttl <- sprintf("%s · %s → %s: %s, %d year%s%s. %s", s, sig_label(pr$from[j]), sig_label(pr$to[j]),
+        if (tier %in% names(plain_tier)) plain_tier[[tier]] else tier, d$n[1], if (isTRUE(d$n[1] == 1)) "" else "s",
+        if (is.finite(d$r[1])) sprintf(", r = %+.2f", d$r[1]) else "",
+        if (ctx) "Context, never counted." else "Judged.")
+      # The glyph travels with the colour so the verdict is never colour-only.
+      gly <- switch(tier, consistent="✓", apparent="≈",
+                    neutral=if (is.finite(d$r[1])) "0" else "",
+                    counter="✗", exploratory="·", "")
+      cell_txt <- if (is.finite(d$r[1])) {
+        if (nzchar(gly)) sprintf("%s %+.2f", gly, d$r[1]) else sprintf("%+.2f", d$r[1])
+      } else gly
+      tags$td(class=paste0("sb-cell sb-clk sb-", tier, if (ctx) " sb-dim" else ""),
+        title=ttl,
+        role="button", tabindex="0", `aria-label`=paste(ttl, "Open this pairing."),
+        `data-shiny-input`="sbCell",
+        `data-shiny-value`=sprintf("%s|%s|%s|%d", s, pr$from[j], pr$to[j], pr$lag[j]),
+        cell_txt)
+    }
+    rowfor <- function(i){
+      s <- sm$site[i]
       tags$tr(tags$th(class="sb-site", scope="row",
         tags$a(href="#", class="sb-sitelink", `data-shiny-input`="goSite", `data-shiny-value`=s,
           `aria-label`=sprintf("Open site %s", s), s),
-        tags$div(class="sb-biome", blab,
-          if (is.finite(ba)) tags$span(class="sb-ba", title="conditional mean live basal area among qualifying-record plots", sprintf(" · %s m²/ha", format(round(ba,1), nsmall=1))))), cells)
+        tags$div(class="sb-biome", sm$biome_label[i])),
+        lapply(judged_j, function(j) cell_for(s, j)),
+        tags$td(class="sb-cell sb-count", sprintf("%d of %d", as.integer(sm$nenough[i]), nrow(pr))),
+        if (show_ctx) lapply(context_j, function(j) cell_for(s, j)))
     }
-    rows <- lapply(seq_len(nrow(sm)), function(i) rowfor(sm$site[i], sm$biome_label[i]))
+    rows <- lapply(seq_len(nrow(sm)), rowfor)
     tagList(
       tags$table(class="sb-table",
-        tags$caption(class="visually-hidden", "Driver-to-response direction verdicts by NEON site"),
-        tags$thead(tags$tr(tags$th(class="sb-site", scope="col", "Site"), hd)),
+        tags$caption(class="visually-hidden", "Direction found for each pairing at each NEON site"),
+        tags$thead(tags$tr(tags$th(class="sb-site", scope="col", "Site"), hd_judged,
+          tags$th(class="sb-col sb-col-count", scope="col", "Pairings with enough years"), hd_context)),
         tags$tbody(rows)),
-      p(class="qc-cap-note", style="margin-top:10px", bs_icon("info-circle"),
-        HTML(" Each cell shows a <b>verdict glyph</b> and the <b>correlation r</b> for that direct pairing at that site: <span class='sb-key sb-consistent'>✓ aligned</span> <span class='sb-key sb-apparent'>≈ apparent</span> <span class='sb-key sb-neutral'>0/— no usable direction</span> <span class='sb-key sb-counter'>✗ counter</span> <span class='sb-key sb-exploratory'>· &lt;6&nbsp;yr</span> <span class='sb-key sb-insufficient'>untestable</span>. <b>r</b> runs from −1 to +1; nonlinear associations can still exist near zero. Exact-zero ties and undefined constant-series correlations cast no direction vote. Hatched, dashed cells are context-only by contract at every site and never count; the two temperature–green-up columns are vote-eligible everywhere with enough support. <b>Activate any cell</b> for detail; activate a site name to open it.")))
+      p(class="qc-cap-note sb-keyline", style="margin-top:10px",
+        HTML("<span class='sb-key sb-consistent'>✓ fits</span> <span class='sb-key sb-apparent'>≈ fits, but the range includes zero</span> <span class='sb-key sb-counter'>✗ runs the other way</span> <span class='sb-key sb-exploratory'>· too few years</span> <span class='sb-key sb-insufficient'>blank: not testable</span>")),
+      p(class="qc-cap-note", "Context columns are never counted."))
   })
 
   # ---- DOWNLOADS (the suite's signature export funnel) ----
@@ -1306,7 +1003,7 @@ server <- function(input, output, session) {
       # codebook is the source of truth, so a future builder field cannot be
       # silently omitted by a stale hand-maintained keep-vector here.
       cols <- c("year", CODEBOOK$key[CODEBOOK$key %in% names(a)])
-      hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
+      hdr <- c(sprintf("# NEON Response Atlas · %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
                "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
                "# All documented coverage counts, effort denominators, and excluded-catch audit fields are included. precip_winter = Oct-Mar sum (year it ends); precip_monsoon = Jul-Sep sum.",
                "# See the downloadable codebook in the About tab for units, NA semantics, and gates.", "")
@@ -1320,7 +1017,7 @@ server <- function(input, output, session) {
         "r_detrended","n_detrended","sign_match_detrended","r_change","n_change","sign_match_change",
         "r_outcome_alt","n_outcome_alt","sign_match_outcome_alt",
         "prior_sign","sign_match","ci_excludes_zero","tier","verdict","expected","expected_class","conf","note"), names(lk))
-      hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s direct-pair scorecard. r is within-site only:", input$site),
+      hdr <- c(sprintf("# NEON Response Atlas · %s direct-pair scorecard. r is within-site only:", input$site),
                "# expected=TRUE means vote-eligible at every supported site; expected_class=none means context-only at every site and excluded from pooling.",
                "# r_detrended, r_change, and r_outcome_alt are descriptive trend/outcome-construction sensitivities; animal indices are not comparable in magnitude across sites.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
@@ -1333,7 +1030,7 @@ server <- function(input, output, session) {
         "n_null","series_span","r_detrended","n_detrended","sign_match_detrended","r_change","n_change","sign_match_change",
         "r_outcome_alt","n_outcome_alt","sign_match_outcome_alt",
         "prior_sign","sign_match","ci_excludes_zero","tier","verdict","expected","expected_class","conf","note"), names(SUITE_LINKS))
-      hdr <- c("# NEON Cross-Product Response Atlas · cross-site scoreboard (every site × current build-locked direct pairing).",
+      hdr <- c("# NEON Response Atlas · cross-site scoreboard (every site × current build-locked direct pairing).",
                "# expected=TRUE only for vote-eligible temperature–green-up rows; expected_class=none rows are context-only everywhere.",
                "# Raw-level, detrended, consecutive-change, and alternate-green-up directions plus NEON domain membership are included; animal index magnitudes are not comparable across sites.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
@@ -1349,7 +1046,7 @@ server <- function(input, output, session) {
                           "domains", "k_domain", "domain_ties",
                           "p", "p_holm", "p_fdr", "poolable"), names(POOLED))
       hdr <- c(
-        "# NEON Cross-Product Response Atlas · one-raw-level-vote-per-site exact-binomial direction screens.",
+        "# NEON Response Atlas · one-raw-level-vote-per-site exact-binomial direction screens.",
         "# p = raw one-sided exact-binomial p; p_holm = familywise adjustment; p_fdr = Benjamini-Hochberg adjustment across poolable current associations.",
         "# Residual, consecutive-change, alternate-green-up, and NEON-domain-majority counts are descriptive sensitivities, not additional p-values; tied domains abstain.",
         "# expected_class=none rows are context-only by design and excluded from pooling; they are not merely below the site-count floor.", "")
@@ -1362,7 +1059,7 @@ server <- function(input, output, session) {
     filename = function() "neon-response-atlas-codebook.csv",
     content = function(file) {
       cb <- CODEBOOK
-      hdr <- c("# NEON Cross-Product Response Atlas · data codebook (every emitted signal, its unit, NA-semantics, and n-gate).",
+      hdr <- c("# NEON Response Atlas · data codebook (every emitted signal, its unit, NA-semantics, and n-gate).",
                "# Generated from the actual exported keep-vector, so it cannot drift from the columns the app emits.",
                "# na_meaning = the QC gate that produces an NA cell; n_gate = the per-signal coverage gate.",
                "# Source: NEON multi-product synthesis (DP1.10072.001, DP1.10003.001, DP1.10058.001, DP1.10098.001, DP1.10055.001, DP1.10043.001, DP1.10022.001, DP1.00002.001, DP1.00044.001), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); aggregated and derived by this app.", "")
@@ -1378,7 +1075,7 @@ server <- function(input, output, session) {
         tags$td(class="st-unit", s$unit), tags$td(s$higher_is)) })
     tagList(
       tags$table(class="inspect-tbl",
-        tags$caption(class="visually-hidden", "Response Atlas signal codebook"),
+        tags$caption(class="visually-hidden", "NEON Response Atlas signal codebook"),
         tags$thead(tags$tr(tags$th(scope="col", "key"), tags$th(scope="col", "signal"),
           tags$th(scope="col", "Layer color"), tags$th(scope="col", "layer"),
           tags$th(scope="col", "unit"), tags$th(scope="col", "“more” ="))),
@@ -1386,232 +1083,45 @@ server <- function(input, output, session) {
       tags$ul(class="codebook-notes",
         tags$li(HTML("<b>precip</b> = annual total mm and <b>temp</b> = annual mean &deg;C; both require all <b>12 distinct months</b>. The export preserves <code>precip_n_months</code>/<code>temp_n_months</code>; a within-site MAD filter can additionally NA an implausible temperature year.")),
         tags$li(HTML("<b>precip_winter</b> = Oct&ndash;Mar sum keyed to the year it ENDS (6 of 6 months). <b>precip_monsoon</b> = Jul&ndash;Sep sum (3 of 3). <b>temp_spring</b> = Mar&ndash;May mean (3 of 3). Reconstructed from the monthly NEON-tower overlays.")),
-        tags$li(HTML("<b>greenup_doy</b> is a legacy key for a full-precision, DOY-anchored composition-adjusted timing index—not a pooled observed date. Left-censored earliest records are excluded; retained species need &ge;3 bounded individual midpoint estimates in &ge;3 years. The connected, species-centered/equal-species annual index needs &ge;2 recurrent species and therefore at least 6 contributors. <b>greenup_doy_additive</b> fits an unweighted species+year model over the same eligible cells as an alternate construction; it is a sensitivity field, not a second timeline signal. Both are retrospective full-panel standardizations: a refresh can revise historical values when the eligible species&times;year panel changes. Censoring, exclusions, contributor/species support, reference, interval-width diagnostics, and snapshot hashes are exported.")),
-        tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID) &mdash; a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
+        tags$li(HTML("<b>greenup_doy</b> is a legacy key for a full-precision, DOY-anchored composition-adjusted timing index, not a pooled observed date. Left-censored earliest records are excluded; retained species need &ge;3 bounded individual midpoint estimates in &ge;3 years. The connected, species-centered/equal-species annual index needs &ge;2 recurrent species and therefore at least 6 contributors. <b>greenup_doy_additive</b> fits an unweighted species+year model over the same eligible cells as an alternate method; it is a sensitivity field, not a second timeline signal. Both are retrospective full-panel standardizations: a refresh can revise historical values when the eligible species&times;year panel changes. Censoring, exclusions, contributor/species support, reference, interval-width diagnostics, and snapshot hashes are exported.")),
+        tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID): a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
         tags$li(HTML("<b>plant_richness</b> = observed species count: an effort-sensitive COMPOSITION signal, not productivity; <code>plant_n_plots</code>/<code>plant_n_sampling_units</code> expose effort and richness-based links are excluded from inferential tallies unless standardized. <b>plant_intro_pct</b> counts only canonical introduced (<code>I</code>) cover; ambiguous <code>NI</code> is unknown, not introduced. <b>fruiting_pct</b> is an opportunistic maximum across observed eligible months (&ge;5 individuals), not a fixed-season annual estimate. <code>fruiting_n_eligible_months</code> and <code>fruiting_peak_n_individuals</code> expose unequal observation opportunity; it remains context-only.")),
         tags$li(HTML("<b>bird_index</b> = detected cluster size per observed point-count visit after excluding flyovers; zero-detection visits may be absent. Mosquito activity has a complete effort calendar but is annual rather than season-window matched. Beetle effort includes catch-bearing events only, so its outcome-conditioned denominator is not a valid CPUE series; all three remain descriptive here.")),
         tags$li(HTML("<b>Conditional woody structure</b> (per site, not annual) is the mean live basal area m&sup2;/ha among plots containing qualifying records. <code>veg_n_plots</code>, <code>veg_area_eligible_plots</code>, and <code>veg_record_plots</code> expose its denominator. Because the source cannot distinguish sampled-zero from unsampled plots, zero-stem and unobserved plots are not imputed; this is not a site-wide stock or productivity rate.")),
-        tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory; &ge;6 &rarr; circular-shift p + circular block-bootstrap interval + a direction verdict. Only the two temperature–green-up rows are vote-eligible, at every supported site; context-only rows never pool. Raw-level exact-binomial p-values are shown with Holm adjustment plus detrended, consecutive-change, and outcome-estimator direction sensitivities.")),
-        tags$li(HTML("<b>NA semantics:</b> a blank/NA cell is never a zero &mdash; it means the signal failed its documented coverage/composition gate that year (for example, an incomplete climate window, too few recurrent green-up species, or no trapping effort). The downloadable codebook CSV documents every rule."))),
+        tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory; &ge;6 &rarr; circular-shift p + circular block-bootstrap interval + a direction verdict. Only the two temperature–green-up rows are judged, at every supported site; context rows never pool. Raw-level exact-binomial p-values are shown with Holm adjustment plus detrended, consecutive-change, and outcome-estimator direction sensitivities.")),
+        tags$li(HTML("<b>NA semantics:</b> a blank/NA cell is never a zero; it means the signal failed its documented coverage/composition gate that year (for example, an incomplete climate window, too few recurrent green-up species, or no trapping effort). The downloadable codebook CSV documents every rule."))),
       div(class="codebook-dl",
         downloadButton("dlAnnual", tagList(bs_icon("filetype-csv"), " This site's annual data"), class="btn-outline-dark btn-sm"),
         downloadButton("dlLinks",  tagList(bs_icon("filetype-csv"), " This site's link scorecard"), class="btn-outline-dark btn-sm"),
         downloadButton("dlCodebook", tagList(bs_icon("filetype-csv"), " Codebook (every signal, unit, NA-rule)"), class="btn-outline-dark btn-sm"),
-        tags$span(class="codebook-dl-note", "(the full cross-site scoreboard CSV is on the Across NEON tab)")))
+        tags$span(class="codebook-dl-note", "(the full cross-site CSV is on the All sites tab)")))
   })
 
-  # ---- SEARCH THE ATLAS (bundled index, in-memory filter, instant) ----------
-  # A "Go to this site" link in each row raises the SAME goSite input the browse
-  # list and scoreboard use, so the jump loads from the bundle and lands on the
-  # Overview — one selection path everywhere.
-  go_link <- function(code) sprintf(
-    "<a href='#' class='srch-go' data-shiny-input='goSite' data-shiny-value='%s' aria-label='Open site %s'>Open &rarr;</a>",
-    htmltools::htmlEscape(code), htmltools::htmlEscape(code))
-  verdict_pill <- function(tier) {
-    tm <- TIER_META[[tier]]; if (is.null(tm)) return(htmltools::htmlEscape(tier))
-    sprintf("<span class='srch-pill srch-%s'>%s</span>", tier, htmltools::htmlEscape(tm$lab))
-  }
-  srch_dt_opts <- list(dom = "tp", pageLength = 12, autoWidth = FALSE, scrollX = TRUE,
-    language = list(emptyTable = "No sites match — try widening the filter."),
-    columnDefs = list(list(className = "dt-center", targets = "_all")))
-
-  # (a) FIND A LINK -----------------------------------------------------------
-  search_link_rows <- reactive({
-    if (!nrow(SRCH_LINKS) || is.null(input$searchLink)) return(SRCH_LINKS[0, , drop = FALSE])
-    d <- SRCH_LINKS[SRCH_LINKS$link_id == input$searchLink, , drop = FALSE]
-    if (isTRUE(input$searchAlignedOnly)) d <- d[d$is_aligned %in% TRUE, , drop = FALSE]
-    # Vote-eligible rows first, then clean aligned directions, effect size, and site.
-    d[order(!(d$expected %in% TRUE), !(d$is_aligned %in% TRUE),
-            -abs(ifelse(is.finite(d$r), d$r, 0)), d$site), , drop = FALSE]
-  })
-
-  output$searchLinkSummary <- renderUI({
-    if (is.null(input$searchLink) || !nrow(SRCH_CATALOG)) return(NULL)
-    cat_row <- SRCH_CATALOG[SRCH_CATALOG$link_id == input$searchLink, , drop = FALSE]
-    all_rows <- SRCH_LINKS[SRCH_LINKS$link_id == input$searchLink, , drop = FALSE]
-    total <- nrow(all_rows)
-    testable <- sum(all_rows$is_testable %in% TRUE)
-    aligned <- sum(all_rows$is_aligned %in% TRUE)
-    shown <- nrow(search_link_rows())
-    pooled_row <- if (nrow(SRCH_POOLED)) SRCH_POOLED[SRCH_POOLED$link_id == input$searchLink, , drop = FALSE] else SRCH_POOLED[0, ]
-    context_only <- nrow(cat_row) && identical(as.character(cat_row$expected_class[1]), "none")
-    pooled_txt <- if (context_only)
-      "Context only by measurement/construct contract at every site; excluded from site tallies and pooled inference. More years alone would not change that status."
-    else if (nrow(pooled_row) && isTRUE(pooled_row$poolable[1]) && is.finite(pooled_row$p_raw[1]))
-      sprintf("Vote-eligible at every supported site: %d raw-level votes, raw p = %.3f%s (median r = %+.2f); NEON-domain majority %d/%d%s. The Holm value covers the eligible family; inspect all sensitivities on Across NEON.",
-              pooled_row$sites[1], pooled_row$p_raw[1],
-              if (is.finite(pooled_row$p_holm[1])) sprintf("; Holm p = %.3f", pooled_row$p_holm[1]) else "",
-              pooled_row$median_r[1], pooled_row$k_domain[1], pooled_row$domains[1],
-              if (pooled_row$domain_ties[1] > 0) sprintf(" (+%d tied)", pooled_row$domain_ties[1]) else "")
-      else "Vote-eligible, but too few supported site votes to pool this association yet."
-    conf <- if (nrow(cat_row)) cat_row$conf[1] else NA
-    div(class = "search-summary",
-      div(class = "ss-count", bs_icon("geo-alt-fill"),
-        if (isTRUE(input$searchAlignedOnly))
-          sprintf(" %d clean aligned site%s", shown, if (shown == 1) "" else "s")
-        else sprintf(" %d of %d sites have at least 6 paired years", testable, total),
-        tags$span(class = "ss-sub", sprintf(" for %s · %d clean aligned direction%s overall",
-          if (nrow(cat_row)) cat_row$link_label[1] else input$searchLink,
-          aligned, if (aligned == 1) "" else "s"))),
-      if (!is.na(conf)) div(class = "ss-conf", sprintf("Literature basis: %s", conf)),
-      div(class = "ss-pooled", bs_icon("people-fill"), " ", pooled_txt))
-  })
-
-  output$searchLinkTable <- DT::renderDT({
-    d <- search_link_rows()
-    if (!nrow(d)) return(DT::datatable(
-       data.frame(Site = character(0), `Site name` = character(0), `Descriptive group` = character(0),
-                  n = integer(0), r = numeric(0), `Circular p (coarse)` = numeric(0), Verdict = character(0),
-                  `Paired years` = character(0), Open = character(0), check.names = FALSE),
-      escape = FALSE, rownames = FALSE, selection = "none", options = srch_dt_opts))
-    yrs <- ifelse(is.na(d$year_min) | is.na(d$year_max), "—", sprintf("%d–%d", d$year_min, d$year_max))
-    tbl <- data.frame(
-      Site = sprintf("<b>%s</b>%s", d$site, ifelse(d$expected %in% TRUE, " <span class='srch-oob' title='vote-eligible at every site with enough support'>(vote)</span>", " <span class='srch-oob' title='context only by measurement/construct contract at every site; never counted or pooled'>(context)</span>")),
-      `Site name` = vapply(d$site, srch_site_name, character(1)),
-      `Descriptive group` = d$biome,
-      n = d$n,
-      r = ifelse(is.finite(d$r), sprintf("%+.2f", d$r), "—"),
-      `Circular p (coarse)` = ifelse(is.finite(d$p), sprintf("%.3f", d$p), "—"),
-      Verdict = vapply(d$tier, verdict_pill, character(1)),
-      `Paired years` = yrs,
-      Open = vapply(d$site, go_link, character(1)),
-      check.names = FALSE, stringsAsFactors = FALSE)
-    DT::datatable(tbl, escape = FALSE, rownames = FALSE, selection = "none",
-      options = c(srch_dt_opts, list(order = list())),
-      class = "srch-dt compact stripe")
-  })
-
-  # (b) DESCRIPTIVE DIRECTION AGREEMENT --------------------------------------
-  search_strength_rows <- reactive({
-    if (!nrow(SRCH_STR)) return(SRCH_STR)
-    thr <- if (is.null(input$searchMinResolved)) 0 else input$searchMinResolved
-    d <- SRCH_STR[SRCH_STR$n_resolved >= thr, , drop = FALSE]
-    d[order(-d$n_resolved, -d$n_aligned, d$site), , drop = FALSE]
-  })
-
-  output$searchStrengthSummary <- renderUI({
-    if (!nrow(SRCH_STR)) return(NULL)
-    shown <- nrow(search_strength_rows()); total <- nrow(SRCH_STR)
-    div(class = "search-summary",
-      div(class = "ss-count", bs_icon("geo-alt-fill"),
-        sprintf(" %d of %d sites", shown, total),
-        tags$span(class = "ss-sub", " meet the agreement filter")),
-      div(class = "ss-pooled", bs_icon("info-circle"),
-        " The count is eligible links whose direction agrees, not significance. It ranks where to look, not which ecosystem is 'stronger'."))
-  })
-
-  output$searchStrengthTable <- DT::renderDT({
-    d <- search_strength_rows()
-    if (!nrow(d)) return(DT::datatable(
-      data.frame(Site = character(0), `Descriptive group` = character(0), Agree = character(0),
-                 `Aligned (CI excludes 0)` = integer(0), Counter = integer(0), `Site record` = character(0),
-                 Open = character(0), check.names = FALSE),
-      escape = FALSE, rownames = FALSE, selection = "none", options = srch_dt_opts))
-    yrs <- ifelse(is.na(d$site_year_min) | is.na(d$site_year_max), "—",
-                  sprintf("%d–%d", d$site_year_min, d$site_year_max))
-    tbl <- data.frame(
-      Site = sprintf("<b>%s</b> <span class='srch-sn'>%s</span>", d$site, vapply(d$site, srch_site_name, character(1))),
-      `Descriptive group` = d$biome,
-      `Agree (of eligible)` = sprintf("<b>%d</b> of %d", d$n_resolved, d$expected_testable),
-      `Aligned (CI excludes 0)` = d$n_aligned,
-      Counter = d$n_counter,
-      `Site record` = yrs,
-      Open = vapply(d$site, go_link, character(1)),
-      check.names = FALSE, stringsAsFactors = FALSE)
-    DT::datatable(tbl, escape = FALSE, rownames = FALSE, selection = "none",
-      options = c(srch_dt_opts, list(order = list())),
-      class = "srch-dt compact stripe")
-  })
-
+  # A site link (the browse list, the All sites table) selects that site and opens This site.
   observeEvent(input$goSite, {
     req(input$goSite)
     updateSelectInput(session, "site", selected = input$goSite)
-    updateTabsetPanel(session, "tabs", selected = "overview")
-    focus_after_update(tab = "overview")
+    updateTabsetPanel(session, "tabs", selected = "site")
+    focus_after_update(tab = "site")
   })
 
-  # ---- Across NEON: click a scoreboard cell -> full plain-English detail for that
-  # site x link (what r is, the years behind it, the block-bootstrap interval, the permutation
-  # p with its floor, the literature prior, and whether it counts toward the tally). ----
+  # ---- All sites: a table cell opens that pairing at that site on One pairing ----
   observeEvent(input$sbCell, {
     parts <- strsplit(input$sbCell %||% "", "|", fixed = TRUE)[[1]]
     if (length(parts) != 4) return()
-    s <- parts[1]; from <- parts[2]; to <- parts[3]; lag <- suppressWarnings(as.integer(parts[4]))
-    d <- SUITE_LINKS[SUITE_LINKS$site == s & SUITE_LINKS$from == from &
-                     SUITE_LINKS$to == to & SUITE_LINKS$lag == lag, , drop = FALSE]
-    if (!nrow(d)) return()
-    d <- d[1, ]; tm <- TIER_META[[d$tier]] %||%
-      list(col = "#6b7a89", text_col = "#53606d", ink = "#ffffff", icon = "slash-circle", lab = d$tier)
-    arrow <- if (isTRUE(d$prior_sign > 0)) "more driver → more response (↑)" else "more driver → earlier / less response (↓)"
-    verdict_plain <- switch(d$tier,
-      consistent  = "Aligned: points in the literature-motivated direction AND the circular block-bootstrap interval excludes zero. A clean per-site direction, not a significance claim.",
-      apparent    = "Apparent: points in the literature-motivated direction, but the circular block-bootstrap interval still crosses zero at this few years.",
-      neutral     = "No usable direction: the correlation is effectively zero (a tie) or undefined because one series has no variation, so this row casts no direction vote.",
-      counter     = "Counter: runs opposite to the literature-motivated direction.",
-      exploratory = "Exploratory: fewer than 6 overlapping years, so the data is shown but no verdict is given.",
-      "Too few overlapping years to compare at this site.")
-    direction_read <- if (is.na(d$sign_match)) "has no direction and is omitted as a tie from direction tallies"
-                      else if (isTRUE(d$sign_match)) "matches that direction" else "runs counter to it"
-    r_plain <- if (is.finite(d$r))
-      sprintf("<b>r = %+.2f</b> is the linear correlation between the driver and the response at this site. r runs from −1 (perfect opposite linear movement) through 0 (no linear correlation) to +1 (perfect same-direction linear movement); nonlinear associations can still exist near zero. The current setting expects <b>%s</b>, and this %s.",
-              d$r, arrow, direction_read)
-      else if (d$n >= 3) "A correlation is unavailable because at least one series has no variation across the overlapping years."
-      else "There aren't enough overlapping years here to compute a correlation."
-    ci_line <- if (is.finite(d$lo) && is.finite(d$hi))
-      sprintf("<b>95%% interval [%.2f, %.2f]</b> (circular block bootstrap): %s. Intervals are wide at this few years.",
-              d$lo, d$hi, if (isTRUE(d$ci_excludes_zero)) "its unrounded endpoints exclude zero, so the direction is clean" else "it includes zero, so the sign isn't yet clean") else NULL
-    p_line <- if (isTRUE(d$n >= 6) && is.finite(d$p))
-      sprintf("<b>Permutation p = %.3f</b>, shown as a coarse diagnostic, not a per-site significance test. The gap-aware null retained a %d-year calendar span; %d valid shifts give a minimum attainable p of %.3f. Across NEON reports the raw-level site-vote screen plus trend, outcome-construction, and domain sensitivities for eligible rows.",
-              d$p, d$series_span, d$n_null, d$p_floor) else NULL
-    sensitivity_bits <- character(0)
-    if ("r_detrended" %in% names(d) && is.finite(d$r_detrended))
-      sensitivity_bits <- c(sensitivity_bits, sprintf("linear-year residual r = %+.2f (n=%d)", d$r_detrended, d$n_detrended))
-    if ("r_change" %in% names(d) && is.finite(d$r_change))
-      sensitivity_bits <- c(sensitivity_bits, sprintf("consecutive-change r = %+.2f (nΔ=%d)", d$r_change, d$n_change))
-    if ("r_outcome_alt" %in% names(d) && is.finite(d$r_outcome_alt))
-      sensitivity_bits <- c(sensitivity_bits, sprintf("additive-green-up r = %+.2f (n=%d)", d$r_outcome_alt, d$n_outcome_alt))
-    sensitivity_line <- if (length(sensitivity_bits)) paste0(
-      "<b>Descriptive sensitivities:</b> ", paste(sensitivity_bits, collapse = "; "),
-      ". They do not change this raw-level verdict or add p-values.") else NULL
-    exp_line <- if (!isTRUE(d$expected))
-      "<b>Context only at every site.</b> Its response window, effort, proxy, or directional basis does not meet the inferential contract, so it never enters a site tally or pooled p-value."
-      else if (d$n < 6)
-        "<b>Vote-eligible at every site, but not yet testable here.</b> Too few overlapping years means it does not enter this site's direction tally."
-      else if (is.na(d$sign_match) && is.finite(d$r))
-        "<b>Vote-eligible, but tied.</b> Exact direction calculations omit zero-effect ties, so this row casts no tally vote."
-      else if (is.na(d$sign_match))
-        "<b>Vote-eligible, but direction is undefined.</b> With no variation in at least one series, this row casts no tally vote."
-      else
-        "<b>Vote-eligible and testable here.</b> This row casts one raw-level match-or-counter vote in the site's descriptive direction tally; pooled trend sensitivities are reported separately."
-    showModal(modalDialog(easyClose = TRUE, size = "m",
-      title = HTML(sprintf("%s &nbsp;·&nbsp; %s &rarr; %s%s", s, sig_label(from), sig_label(to),
-                           if (isTRUE(lag > 0)) sprintf(" (lag %dy)", lag) else "")),
-      div(class = "sb-detail",
-        p(tags$span(class=paste("tier-text", paste0("tier-", d$tier)), bs_icon(tm$icon %||% "circle"), " ", tm$lab),
-          tags$br(), verdict_plain),
-        p(HTML(r_plain)),
-        p(sprintf("Based on %d overlapping year%s of data.", d$n, if (isTRUE(d$n == 1)) "" else "s")),
-        if (!is.null(ci_line)) p(HTML(ci_line)),
-        if (!is.null(p_line)) p(HTML(p_line)),
-        if (!is.null(sensitivity_line)) p(HTML(sensitivity_line)),
-        tags$hr(),
-        p(HTML(sprintf("<b>Current literature-motivated setting</b> (locked for this build, but historically selected alongside these data): expect <b>%s</b>, lag <b>%s</b>, literature-basis grade <b>%s</b>.",
-          arrow, if (isTRUE(lag > 0)) sprintf("%d year%s later", lag, if (lag == 1) "" else "s") else "same year", d$conf %||% "—"))),
-        if (!is.na(d$note) && nzchar(d$note)) p(class = "qc-cap-note", style = "margin-top:6px", d$note),
-        p(HTML(exp_line))),
-      footer = modalButton("Close")))
+    s <- parts[1]
+    if (!s %in% neon_sites$site) return()
+    updateSelectInput(session, "site", selected = s)
+    updateTabsetPanel(session, "tabs", selected = "pairing")
+    updateSelectInput(session, "pairing", selected = paste(parts[2], parts[3], parts[4], sep = "|"))
+    focus_after_update(tab = "pairing")
   })
-  observeEvent(input$gotoTab, {
-    updateTabsetPanel(session, "tabs", selected = input$gotoTab)
-    focus_after_update(tab = input$gotoTab)
-  })
-
-  observeEvent(input$help, showModal(modalDialog(easyClose=TRUE, title=tagList(bs_icon("question-circle"), " How to read the response atlas"),
+  observeEvent(input$help, showModal(modalDialog(easyClose = TRUE,
+    title = tagList(bs_icon("question-circle"), " How to read this"),
     tags$ul(
-      tags$li(HTML("Pick a <b>site</b>; sites with more available measurement layers are listed first.")),
-      tags$li(HTML("<b>Layered Timeline</b>: standardized signals co-displayed by layer; inspect a year to compare direct pairings at their stated lags. The visual order is not a tested chain.")),
-      tags$li(HTML("<b>Link cards</b>: each literature-motivated direct pairing, marked vote-eligible or context-only and honest about how few years support it.")),
-      tags$li(HTML("<b>Driver Lab</b>: pick a response and inspect every current build-locked pairing; only eligible rows enter a direction tally.")),
-      tags$li(HTML("Short series: <b>read the shapes</b>, inspect direction agreement with its uncertainty and support, and never read causation."))),
-    footer=modalButton("Got it"))))
+      tags$li(tags$b("Pick a site."), " On This site, choose a NEON site from the list or browse them by name."),
+      tags$li(tags$b("Read the timeline."), " Each strip is one kind of record, year by year; up means above that record's own average year."),
+      tags$li(tags$b("Open one pairing."), " One pairing puts one weather record against one plant or animal record, one dot per year."),
+      tags$li(tags$b("See all sites."), " All sites shows how the two temperature and green-up pairings came out at every site.")),
+    footer = modalButton("Got it"))))
 }
