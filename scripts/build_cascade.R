@@ -1057,7 +1057,7 @@ signals <- tibble::tribble(
   "temp",          "Mean temperature",             "climate",    "°C",         "warmer",        TRUE,
   "precip_winter", "Winter rain (Oct–Mar)",        "climate",    "mm",         "wetter winter", FALSE,
   "precip_monsoon","Monsoon rain (Jul–Sep)",       "climate",    "mm",         "wetter monsoon",FALSE,
-  "temp_spring",   "Spring temperature",           "climate",    "°C",         "warmer spring", FALSE,
+  "temp_spring",   "March to May temperature",     "climate",    "°C",         "warmer Mar-May", FALSE,
   "greenup_doy",   "Green-up onset index",         "phenology",  "DOY-anchored index","later", TRUE,
   "fruiting_pct",  "Opportunistic observed-month fruiting peak",                "producer",   "% plants",   "more fruit",    TRUE,
   "plant_richness","Plant richness",               "producer",   "species",    "more diverse",  TRUE,
@@ -1087,7 +1087,7 @@ signals <- tibble::tribble(
 priors <- tibble::tribble(
   ~from,            ~to,              ~sign, ~lag, ~conf,      ~expected_class,       ~note,
   "temp",           "greenup_doy",     -1L, 0L, "strong",   "all",                 "Warmer conditions are literature-motivated to accompany earlier leaf-out. This row pairs complete annual mean temperature with a left-censor-screened, composition-adjusted green-up timing index. Excluding already-active-at-first-visit records is not interval-censored modeling and can select contributors by visit timing/cadence. Annual temperature is a contemporaneous broad proxy—not an antecedent spring exposure or trigger—so interpret the raw-level direction together with detrended, consecutive-year-change, estimator, and NEON-domain sensitivities.",
-  "temp_spring",    "greenup_doy",     -1L, 0L, "strong",   "all",                 "Warmer spring conditions are literature-motivated to accompany earlier leaf-out. This row uses complete March–May mean temperature, but many green-up observations occur before May, so the window can include post-outcome weather. It is a contemporaneous proxy sensitivity, not a direct trigger test; compare raw-level, detrended, and consecutive-year-change directions.",
+  "temp_spring",    "greenup_doy",     -1L, 0L, "strong",   "all",                 "Warmer spring conditions are literature-motivated to accompany earlier leaf-out. This row uses the complete March to May mean temperature, but at every vote-eligible site the median green-up index falls before May 1 (2026-10 build: 18 sites, site medians day 41 to 119, 134 of 135 site-years before May 1), so the window always includes weather after green-up. It is a contemporaneous proxy sensitivity, not a test of the trigger; compare raw-level, detrended, and consecutive-year-change directions.",
   "precip",         "plant_richness",  +1L, 0L, "weak",     "none",                "More rain can mean more plant growth, but raw observed richness is dominated by changing sampled plots/scales and is composition, not productivity. Computed and shown as context only: expected_class='none' excludes it from every site tally and pooled inference until richness is coverage-standardized. plant_n_plots and plant_n_sampling_units expose the effort behind each year.",
   "precip",         "mammal_cpue",     +1L, 1L, "moderate", "none",                "Rain–rodent dynamics can be delayed, nonlinear, and guild-specific; the annual catch-per-effort index is not a population count and no annual seed-resource mediator is available here. The +1 one-year pairing is retained as literature-motivated context only, excluded from site tallies and pooled inference.",
   "precip_winter",  "plant_richness",  +1L, 0L, "moderate", "none",                "Cool-season rain can germinate desert spring forbs, but the available raw richness changes strongly with sampled plots/scales. Computed and shown as context only: expected_class='none' excludes this effort-confounded proxy from site tallies and pooled inference until richness is coverage-standardized.",
@@ -1199,12 +1199,12 @@ assert_local_build_inputs_unchanged()
 # Columns: key,label,layer,unit,higher_is,na_meaning,n_gate. na_meaning documents WHY
 # a cell is NA (the QC gate that produced it); n_gate is the per-signal coverage gate.
 na_meaning <- c(
-  precip          = "NA unless all 12 distinct calendar months have valid precipitation; partial-year totals are never summed.",
+  precip          = "NA unless all 12 distinct calendar months have valid precipitation; partial-year totals are never summed. NA at sites with no precipitation source (not sampled).",
   temp            = "NA unless all 12 distinct calendar months have valid temperature, or when the within-site MAD outlier filter NA'd a corrupted-sensor year.",
   precip_winter   = "NA unless all 6 Oct-Mar months are present.",
   precip_monsoon  = "NA when any of the 3 Jul-Sep months is missing.",
-  temp_spring     = "NA unless all 3 Mar-May months are present, or when within-site MAD outlier QC flags an implausible spring-temperature year.",
-  greenup_doy     = paste("DOY-anchored composition-adjusted onset index; NA unless >=2 recurrent species contribute, each with >=3 left-censor-screened individuals (therefore >=6 contributors). Exclusion of left-censored records is not interval-censored modeling and can select contributors by visit timing/cadence. It is not an observed pooled-median onset date.", GREENUP_INDEX_NOTE),
+  temp_spring     = "NA unless all 3 Mar-May months are present, or when within-site MAD outlier QC flags an implausible March to May temperature year.",
+  greenup_doy     = paste("DOY-anchored composition-adjusted onset index; NA unless >=2 recurrent species contribute, each with >=3 left-censor-screened individuals (therefore >=6 contributors). Exclusion of left-censored records is not interval-censored modeling and can select contributors by visit timing/cadence. It is not an observed pooled-median onset date. NEON phenology sampling changed during the record (DP1.10055.001 change log): 2020-11-19, COVID-19 reduced sampling from 2020-03-23 to 2021-12-31; 2024-08-09, gradient sites reduced to one observation a week; 2026-01-28, phenology observations now at core sites only. Fewer visits widen onset intervals and can leave a year NA.", GREENUP_INDEX_NOTE),
   fruiting_pct    = "Opportunistic maximum among observed months with >=5 individuals, not a fixed-season annual estimate. NA when no month qualifies; opportunity varies and is exposed in fruiting_n_eligible_months.",
   plant_richness  = "NA when the plant-diversity bundle has no plot data that year.",
   plant_q1        = "Effective species (exp-Shannon Hill number); NA when fewer than 2 cover-scored species that year.",
@@ -1243,7 +1243,7 @@ support_codebook <- tibble::tribble(
   "precip_n_months", "Valid annual-precipitation months", "climate", "months", "more coverage", "NA when no climate rows exist for the site-year; otherwise counts distinct valid calendar months after range QC.", "0-12; precip requires 12",
   "precip_winter_n_months", "Valid winter-rain months", "climate", "months", "more coverage", "NA when no Oct-Mar water-year rows exist; otherwise counts valid months in the six-month window.", "0-6; precip_winter requires 6",
   "precip_monsoon_n_months", "Valid monsoon-rain months", "climate", "months", "more coverage", "NA when no Jul-Sep rows exist; otherwise counts valid months in the three-month window.", "0-3; precip_monsoon requires 3",
-  "temp_spring_n_months", "Valid spring-temperature months", "climate", "months", "more coverage", "NA when no Mar-May rows exist; otherwise counts valid months in the three-month window.", "0-3; temp_spring requires 3",
+  "temp_spring_n_months", "Valid March to May temperature months", "climate", "months", "more coverage", "NA when no Mar-May rows exist; otherwise counts valid months in the three-month window.", "0-3; temp_spring requires 3",
   "fruiting_n_eligible_months", "Eligible observed fruiting months", "producer", "months", "more opportunity", "Zero when monthly rows exist but none has finite fruiting status supported by >=5 individuals; counts observed opportunities, not fixed seasonal coverage.", "0-12 audit; fruiting remains context-only",
   "fruiting_peak_n_individuals", "Individuals behind observed-month fruiting peak", "producer", "individuals", "more support", "NA when no fruiting month qualifies; otherwise the minimum observed-individual count among months tied at the annual observed maximum.", ">=5 by construction; audit only",
   "greenup_n_onsets", "Candidate green-up individual-years", "phenology", "individuals", "more source support", "NA when no finite earliest green-up record exists that year. Includes left-censored first-visit-already-yes records before exclusions.", "audit total; must equal censored + taxon-excluded + contributors",
@@ -1267,7 +1267,7 @@ support_codebook <- tibble::tribble(
   "bird_observed_point_visits", "Observed bird point-count occasions", "consumer", "point-visits", "more observed effort", "NA when the catch-only observation table has no detections that year; zero-detection visits are unavailable.", ">0 required for bird_index",
   "bird_nonflyover_birds", "Non-flyover bird detections", "consumer", "birds", "more detections", "NA when no observation rows exist that year; cluster sizes exclude detectionMethod=flyover.", "numerator of bird_index",
   "bird_flyover_birds", "Excluded flyover detections", "consumer", "birds", "more excluded detections", "NA when no observation rows exist that year; retained for audit but excluded from index and richness.", "audit only",
-  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", cascade_mosq_effort_note(), ">0 required for mosq_activity",
+  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", cascade_mosq_effort_text(), ">0 required for mosq_activity",
   "mosq_total_catch", "Whole-trap mosquito catch", "consumer", "mosquitoes (estimated)", "more catch", "Zero when positive recorded effort has no target catch; NA when neither effort nor catch is available.", "numerator of mosq_activity",
   "beetle_catch_event_trap_nights", "Ground-beetle catch-event effort", "consumer", "trap-nights", "more recorded effort", "NA when no catch-bearing event with effort exists; source bundles omit zero-catch events.", ">0 required for beetle_activity; incomplete denominator",
   "beetle_total_catch", "Ground-beetle catch", "consumer", "individuals", "more catch", "NA when the catch-only beetle bundle has no positive catch that year.", "numerator of beetle_activity")
@@ -1315,6 +1315,20 @@ product_coverage <- rbind(product_coverage, data.frame(
   n_nonmissing = sum(is.finite(site_meta$veg_ba_ha)),
   n_sites = sum(is.finite(site_meta$veg_ba_ha)), stringsAsFactors = FALSE))
 
+# Per-product release basis (audit F16): what each sibling bundle records about
+# its NEON release, DOI and schema, and the contributed collection window. Read
+# from the immutable snapshot (APP) over the in-scope sites only. The
+# provenance columns above stay first and unchanged for the source lock.
+release_by_product <- do.call(rbind, lapply(names(APP), function(product)
+  cbind(data.frame(product = product, stringsAsFactors = FALSE),
+        cascade_product_release(
+          lapply(file.path(APP[[product]], "data", "sites", paste0(ALL_SITES, ".rds")), rd),
+          MIN_YEAR, LAST_COMPLETE_YEAR))))
+source_products_meta <- cbind(
+  source_products,
+  release_by_product[match(source_products$product, release_by_product$product),
+                     c("release", "doi", "schema", "data_through", "provisional_from")])
+
 build_toolchain <- data.frame(
   component = c("R", "dplyr", "tibble"),
   version = c(as.character(getRversion()),
@@ -1347,7 +1361,7 @@ meta <- list(
   spatial_sensitivity_version = SPATIAL_SENSITIVITY_VERSION,
   spatial_sensitivity_note = SPATIAL_SENSITIVITY_NOTE,
   source_snapshot_method = source_snapshot$method,
-  source_products = source_products,
+  source_products = source_products_meta,
   source_inputs = source_inputs,
   local_build_inputs = LOCAL_BUILD_INPUTS,
   build_toolchain = build_toolchain,
@@ -1369,7 +1383,16 @@ meta <- list(
     beetle_activity = "Beetle site bundles contain catch rows only. Trap-night denominator covers unique catch-bearing plot-dates and omits zero-catch events.",
     greenup_doy = paste("Composition-adjusted DOY-anchored onset index: earliest individual-year green-up records that are left-censored are excluded; this screen is not interval-censored modeling and can select contributors by visit timing/cadence. Resolved species need >=3 individuals in >=3 years; the largest connected species-year panel is within-species centered and equal-species weighted; annual output needs >=2 species and therefore >=6 contributors. Annual median/p90/max last-no to first-yes widths expose contributor timing uncertainty. It is not an observed pooled-median onset date.", GREENUP_INDEX_NOTE),
     greenup_doy_additive = paste("Estimator-choice sensitivity using unweighted OLS species_onset ~ scientificName + factor(year) on the same connected eligible species-year cells, standardized over the full retained species x year grid. It shares the primary index's left-censor screen and its visit-timing/cadence selection caveat. Missing species-years are additive extrapolations. Neither the additive nor median-centered standardization is uniquely true; their differences expose sensitivity to the unbalanced observation panel.", GREENUP_INDEX_NOTE),
-    plant_richness = "Raw annual richness remains sensitive to sampled plots/scales; plant_n_plots and plant_n_sampling_units are persisted for audit."))
+    plant_richness = "Raw annual richness remains sensitive to sampled plots/scales; plant_n_plots and plant_n_sampling_units are persisted for audit.",
+    mosq_activity = cascade_mosq_effort_text(),
+    release_basis = paste0(
+      "Each source_products row records the NEON release its sibling bundle states (release, ",
+      "unrecorded when an in-scope bundle states none), the DOI and schema it states (NA when none), ",
+      "the latest collection month it contributes (data_through) and the first contributed month after ",
+      CASCADE_RELEASE_LATEST, " observational coverage ends in ", CASCADE_RELEASE_OS_THROUGH,
+      " (provisional_from). Months after that cannot be in ", CASCADE_RELEASE_LATEST,
+      ", so they are provisional and may change in the next release. A period prints as YYYY when the ",
+      "bundle carries only a year. The climate overlays are not covered by these rows.")))
 assert_local_build_inputs_unchanged()
 cascade_bundle <- cascade_normalize_artifact_text(list(
   annual = annual, signals = signals, priors = priors, codebook = codebook,

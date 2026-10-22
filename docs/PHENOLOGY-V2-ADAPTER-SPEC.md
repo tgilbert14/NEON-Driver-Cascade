@@ -860,7 +860,7 @@ promotion, or canonical-byte consequence.
 The companion Fisher-z random-effects summary runs only when at least five finite
 site effects are available. It freezes the existing Driver construction:
 `z = atanh(pmax(pmin(r, 0.999), -0.999))`, `vi = 1 / (n - 3)`, and
-`metafor::rma(yi = z, vi = vi, method = "REML", test = "knha")`. Report the
+`metafor::rma(yi = z, vi = vi, method = "REML", test = "adhoc")` (truncated KH). Report the
 REML heterogeneity estimate, Knapp-Hartung 95% CI, and 95% prediction interval;
 back-transform the pooled estimate and both intervals with `tanh`. Report the
 expected-direction one-sided p-value from the fitted Knapp-Hartung t statistic

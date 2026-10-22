@@ -921,6 +921,7 @@ oracle_veg_event_bundle <- function(b, site) {
       if (is.na(st) || !st %in% states)
         stop(sprintf("%s event oracle met an unknown support state", site), call. = FALSE)
       n_rows <- sum(counts_row[rows_of[[i]]])
+      n_form_rows <- sum(trees$growthForm[rows_of[[i]]] %in% info$forms)
       absent_here <- if (ch == "tree") says_absent(plots$treesPresent[i]) else
         says_absent(plots$shrubsPresent[i]) && says_absent(plots$treesPresent[i])
       if (st == "sampled_with_records" || st == "held_metric_invalid") {
@@ -931,7 +932,7 @@ oracle_veg_event_bundle <- function(b, site) {
         if (!is.na(rs) && rs %in% c("samplingImpractical is missing", "dataCollected is missing")) {
           if (!token(plots$dataCollected[i]) %in% c("", "allgrowthforms")) o <- "excl_vintage_partial"
           else if (as.integer(plots[[info$conflict]][i]) > 0L) o <- "excl_vintage_identity_conflict"
-          else if (as.integer(plots[[info$records]][i]) > 0L && says_absent(plots[[info$own]][i]))
+          else if (as.integer(plots[[info$records]][i]) > 0L && absent_here)
             o <- "excl_vintage_presence_conflict"
           else if (n_rows > 0L) o <- "admit"
           else if (absent_here) o <- "absence"
@@ -939,7 +940,7 @@ oracle_veg_event_bundle <- function(b, site) {
         } else if (!is.na(rs) && startsWith(rs, "dataCollected=")) {
           o <- "excl_partial_hold"
         } else if (identical(rs, "no records and presence does not establish sampled absence")) {
-          o <- if (n_rows > 0L) "admit" else "excl_no_records_unknown_presence"
+          o <- if (n_form_rows > 0L) "admit" else "excl_no_records_unknown_presence"
         } else stop(sprintf("%s event oracle met an unknown hold reason", site), call. = FALSE)
       } else {
         o <- paste0("excl_", st)
@@ -1124,6 +1125,64 @@ check(isTRUE(all.equal(v2_oracle$expected_ba, v2_expected_ba, tolerance = 1e-14)
         v2_oracle$expected_later_nonlogistical_hold_plots == 1L &&
         identical(v2_oracle$expected_excluded_events, v2_audit$excluded_events),
       "test-owned vegetation event oracle reproduces the fixture's hand arithmetic")
+
+# Referee D1 and D2 (cedar, 2026-10-22). A second ABBY-shaped v2 fixture:
+#   ABBY_010: pre-2020 vintage event with shrubsPresent N but treesPresent Y and a
+#     sapling (bsd 2) plus a small tree (bsd 3). Saplings and small trees are tree
+#     juveniles, so the shrub channel is not in presence conflict (D1): admitted.
+#   ABBY_011: the same with both presence fields N: presence conflict in both channels.
+#   ABBY_012: 2016 sampled (shrub S12 bsd 5, tree T12 d 20); 2023 no-records event
+#     whose only row is status-only (growthForm NA) for S12. Status-only rows do not
+#     admit a no-records event (D2), so the shrub channel falls back to 2016.
+#   ABBY_013: no-records event with one small tree row (bsd 2): admitted in both channels.
+d12_no_records <- "no records and presence does not establish sampled absence"
+d12_plots <- rbind(
+  v2_event("ABBY_010", "vst_ABBY_2017", "2017-06-01", "held_opportunity_unknown", v2_vintage,
+           treesPresent = "Y", shrubsPresent = "N", records = 2L),
+  v2_event("ABBY_011", "vst_ABBY_2017", "2017-06-01", "held_opportunity_unknown", v2_vintage,
+           treesPresent = "N", shrubsPresent = "N", records = 1L),
+  v2_event("ABBY_012", "vst_ABBY_2016", "2016-06-01", "sampled_with_records", "sampled", records = 2L),
+  v2_event("ABBY_012", "vst_ABBY_2023", "2023-06-01", "held_opportunity_unknown", d12_no_records,
+           records = 0L),
+  v2_event("ABBY_013", "vst_ABBY_2023", "2023-06-01", "held_opportunity_unknown", d12_no_records,
+           records = 0L))
+d12_trees <- rbind(
+  v2_tree("ABBY_010", "vst_ABBY_2017", "P10", "2017-06-01", NA, growthForm = "sapling", bsd = 2),
+  v2_tree("ABBY_010", "vst_ABBY_2017", "Q10", "2017-06-01", NA, growthForm = "small tree", bsd = 3),
+  v2_tree("ABBY_011", "vst_ABBY_2017", "P11", "2017-06-01", NA, growthForm = "sapling", bsd = 2),
+  v2_tree("ABBY_012", "vst_ABBY_2016", "S12", "2016-06-01", NA, growthForm = "single shrub", bsd = 5),
+  v2_tree("ABBY_012", "vst_ABBY_2016", "T12", "2016-06-01", 20),
+  v2_tree("ABBY_012", "vst_ABBY_2023", "S12", "2023-06-01", NA, live = FALSE, growthForm = NA),
+  v2_tree("ABBY_013", "vst_ABBY_2023", "Q13", "2023-06-01", NA, growthForm = "small tree", bsd = 2))
+d12_bundle <- list(trees = d12_trees, plots = d12_plots, contract = v2_contract)
+# Hand arithmetic. Shrub component / pi: ABBY_010 (2, 3) 0.000325 + ABBY_012 2016
+# (5) 0.000625 + ABBY_013 (2) 0.0001 = 0.00105 m2 over three 400 m2 plots (0.12 ha).
+# Tree component: T12 (20) 0.01 / pi m2 over ABBY_012 (0.04 ha), so the site is forest.
+d12_expected_shrub <- pi * 0.00105 / 0.12
+d12_expected_tree <- pi * 0.01 / 0.04
+d12_site <- cascade_veg_event_site(d12_trees, d12_plots, "ABBY")
+d12_oracle <- oracle_veg_event_bundle(d12_bundle, "ABBY")
+d12_shrub_sel <- cascade_veg_event_selection(d12_plots, d12_trees, "shrub", "ABBY")
+check(identical(cascade_veg_event_disposition(d12_plots, d12_trees, "shrub", "ABBY"),
+                c("admit", "excl_vintage_presence_conflict", "admit",
+                  "excl_no_records_unknown_presence", "admit")) &&
+        identical(cascade_veg_event_disposition(d12_plots, d12_trees, "tree", "ABBY"),
+                  c("admit", "excl_vintage_presence_conflict", "admit",
+                    "excl_no_records_unknown_presence", "admit")) &&
+        identical(d12_shrub_sel$selected$eventID[d12_shrub_sel$selected$plotID == "ABBY_012"],
+                  "vst_ABBY_2016"),
+      "vegetation v2 shrub presence conflict reads both presence fields and status-only rows do not admit a no-records event")
+check(identical(d12_site$type, "forest") &&
+        isTRUE(all.equal(d12_site$structure$shrub_ba_ha, d12_expected_shrub, tolerance = 1e-14)) &&
+        isTRUE(all.equal(d12_site$structure$tree_ba_ha, d12_expected_tree, tolerance = 1e-14)) &&
+        d12_site$structure$shrub_n_plots == 3L && d12_site$structure$tree_n_plots == 1L &&
+        isTRUE(all.equal(d12_oracle$expected_shrub_class_ba_ha, d12_expected_shrub, tolerance = 1e-14)) &&
+        isTRUE(all.equal(d12_oracle$expected_tree_class_ba_ha, d12_expected_tree, tolerance = 1e-14)) &&
+        d12_oracle$expected_shrub_class_plots == 3L &&
+        identical(d12_oracle$expected_excluded_events,
+                  "excl_no_records_unknown_presence=1;excl_vintage_presence_conflict=1") &&
+        identical(d12_oracle$expected_excluded_events, d12_site$audit$excluded_events),
+      "vegetation v2 D1/D2 fixture: adapter and test-owned oracle match hand arithmetic")
 
 adapter_source <- paste(readLines("R/source_adapters.R", warn = FALSE), collapse = "\n")
 build_source <- paste(readLines("scripts/build_cascade.R", warn = FALSE), collapse = "\n")
@@ -1487,6 +1546,36 @@ vo <- cascade$meta$vote_overlap
 
 check_cols(sp, c("product", "repo", "origin", "commit", "commit_epoch",
                  "clean", "n_site_files"), "source-product provenance schema")
+# F16 release basis: test-owned synthetic bundles with hand-written expectations.
+rel_a <- list(obs = data.frame(collectDate = as.Date(c("2024-06-01", "2025-03-10"))),
+              meta = list(release = "RELEASE-2026", doi = "10.48443/abcd-1234",
+                          schema_version = "mosquito-pulse-opportunity-v1"))
+rel_b <- list(obs = data.frame(year = c(2023L, 2026L)), meta = list(site = "X"))
+rel_veg <- list(trees = data.frame(date = as.Date("2024-12-15")),
+                meta = list(source_receipt = list(neon_release = "RELEASE-2026",
+                                                  release_doi = "https://doi.org/10.48443/pypa-qf12")),
+                contract = list(id = "NEON-VST-DP1.10098.001-v2", release = "RELEASE-2026"))
+rel_year <- list(obs = data.frame(year = 2025L))
+rel_ab <- cascade_product_release(list(rel_a, rel_b, NULL), 2013L, 2025L)
+rel_v <- cascade_product_release(list(rel_veg), 2013L, 2025L)
+rel_y <- cascade_product_release(list(rel_year), 2013L, 2025L)
+check(identical(rel_ab$release, "RELEASE-2026; unrecorded") &&
+        identical(rel_ab$doi, "10.48443/abcd-1234") &&
+        identical(rel_ab$schema, "mosquito-pulse-opportunity-v1") &&
+        identical(rel_ab$data_through, "2025-03") && identical(rel_ab$provisional_from, "2025-03") &&
+        identical(rel_v$release, "RELEASE-2026") && identical(rel_v$doi, "10.48443/pypa-qf12") &&
+        identical(rel_v$schema, "NEON-VST-DP1.10098.001-v2") &&
+        identical(rel_v$data_through, "2024-12") && is.na(rel_v$provisional_from) &&
+        identical(rel_y$release, "unrecorded") && is.na(rel_y$doi) && is.na(rel_y$schema) &&
+        identical(rel_y$data_through, "2025") && identical(rel_y$provisional_from, "2025"),
+      "release basis reads only what bundles record and dates provisional months after 2024-12")
+period_ok <- function(x) is.na(x) | grepl("^[0-9]{4}(-(0[1-9]|1[0-2]))?$", x)
+check(all(c("release", "doi", "schema", "data_through", "provisional_from") %in% names(sp)) &&
+        !anyNA(sp$release) && all(nzchar(sp$release)) &&
+        all(is.na(sp$doi) | grepl("^10[.][0-9]{4,}/", sp$doi)) &&
+        all(period_ok(sp$data_through)) && all(period_ok(sp$provisional_from)) &&
+        "release_basis" %in% names(cascade$meta$data_caveats),
+      "source products carry release, DOI, schema, data-through and provisional-from fields")
 check(nrow(sp) == length(products) && !anyDuplicated(sp$product) &&
         setequal(as.character(sp$product), products),
       "exactly seven source products are fingerprinted",
@@ -1950,11 +2039,11 @@ check(identical(attr(meta_companion, "built"), cascade$meta$built_when) &&
 check(identical(attr(meta_companion, "source_bundle_md5"), bundle_md5),
       "meta/cascade source hash parity", bundle_md5)
 check(identical(attr(meta_companion, "inference_schema"),
-                "cascade-meta-reml-knha-holm-prediction-v1") &&
+                "cascade-meta-reml-knha-truncated-holm-prediction-v2") &&
         identical(attr(meta_companion, "multiplicity_method"), "holm") &&
         identical(attr(meta_companion, "multiplicity_family"),
                   c("temp|greenup_doy", "temp_spring|greenup_doy")),
-      "meta companion persists exact KH/prediction/Holm inference schema")
+      "meta companion persists exact truncated-KH/prediction/Holm inference schema")
 toolchain_versions <- stats::setNames(as.character(bt$version),
                                      as.character(bt$component))
 meta_toolchain <- attr(meta_companion, "build_toolchain")
@@ -2044,7 +2133,7 @@ check(length(rma_rows) > 0L && all(vapply(rma_rows, function(x)
           x$rma$p_one_sided_holm >= x$rma$p_one_sided &&
           x$rma$p_one_sided_holm <= 1 &&
           identical(x$rma$test_method,
-                    "REML random-effects with Knapp-Hartung inference") &&
+                    "REML random-effects with truncated Knapp-Hartung inference") &&
           length(x$rma$pi_r) == 2L && all(is.finite(x$rma$pi_r)) &&
           x$rma$pi_r[1] <= x$rma$pi_r[2] &&
           is.finite(x$rma$I2) && x$rma$I2 >= 0 && x$rma$I2 <= 100 &&
@@ -2060,7 +2149,7 @@ expected_meta <- lapply(rma_rows, function(x) {
   d_vote <- d[!is.na(d$sign_match), , drop = FALSE]
   z <- atanh(pmax(pmin(d$r, 0.999), -0.999))
   vi <- 1 / (d$n - 3)
-  fit <- metafor::rma(yi = z, vi = vi, method = "REML", test = "knha")
+  fit <- metafor::rma(yi = z, vi = vi, method = "REML", test = "adhoc")
   pred <- stats::predict(fit)
   t_test <- as.numeric(fit$b) / as.numeric(fit$se)
   df <- as.integer(fit$k - fit$p)
@@ -2392,6 +2481,77 @@ check(all(c("greenup_censor_burden", "greenup_composition_exclusions",
         all(c("greenup_censor_burden", "greenup_composition_exclusions",
               "greenup_wide_typical_intervals", "greenup_wide_intervals") %in% names(phen_qc$sets)),
       "phenology QC exposes censor, composition-exclusion, typical-width, and extreme-width audits")
+phen_jump <- phen_qc$sets$greenup_interval_width_jump
+check("greenup_interval_width_jump" %in% phen_qc_keys && nrow(phen_jump) == 1L &&
+        phen_jump$year == 2021L && phen_jump$change_days == 10 &&
+        !"greenup_interval_width_jump" %in% vapply(cascade_qc(transform(phen_qc_fixture,
+          year = c(2019L, 2021L)), data.frame(), site = "QC")$flags, `[[`, character(1), "key"),
+      "phenology QC flags a 3-day-or-more median interval-width step between consecutive years only")
+# F12: the apparent-link flag lists vote-eligible rows only, is never "high", and
+# every apparent row in the committed family has an interval that does not exclude 0.
+ap_links <- data.frame(from = "temp", to = "greenup_doy", lag = 0L, n = 8L, r = -0.4,
+                       lo = c(-0.8, -0.7), hi = c(0.1, 0.2), p = 0.2,
+                       tier = "apparent", expected = c(TRUE, FALSE), stringsAsFactors = FALSE)
+ap_qc <- cascade_qc(data.frame(year = 2015:2022), ap_links, site = "QC")
+ap_flag <- Filter(function(f) identical(f$key, "apparent_ci0"), ap_qc$flags)
+ap_family_levels <- unlist(lapply(sort(unique(cascade$annual$site)), function(s)
+  vapply(Filter(function(f) identical(f$key, "apparent_ci0"),
+                cascade_qc(cascade$annual[cascade$annual$site == s, , drop = FALSE],
+                           suite[suite$site == s, , drop = FALSE], cascade$signals, s)$flags),
+         `[[`, character(1), "level")))
+ap_rows <- suite[suite$tier %in% "apparent", , drop = FALSE]
+check(length(ap_flag) == 1L && identical(ap_flag[[1]]$level, "warn") && ap_flag[[1]]$n == 1L &&
+        length(ap_family_levels) > 0L && all(ap_family_levels == "warn") &&
+        !any(mapply(ci_excludes_zero, ap_rows$lo, ap_rows$hi)),
+      "apparent-link QC is vote-eligible only, never high, and every apparent CI includes zero",
+      sprintf("%d sites flagged, %d apparent rows", length(ap_family_levels), nrow(ap_rows)))
+# F18: a synthetic outlier year is flagged with its total, effort and link use.
+out_fixture <- data.frame(site = "QC", year = 2015:2021,
+                          temp = c(10, 11, 10.5, 9.8, 10.2, 10.9, NA),
+                          mammal_cpue = c(5, 5.5, 6, 5.2, 5.8, 60, 5.4),
+                          mammal_captures = c(50, 55, 60, 52, 58, 600, 54),
+                          mammal_trap_nights = 1000)
+out_links <- data.frame(from = "temp", to = "mammal_cpue", lag = 0L, n = 6L,
+                        tier = "counter", expected = TRUE, stringsAsFactors = FALSE)
+out_qc <- cascade_qc(out_fixture, out_links, site = "QC")
+out_set <- out_qc$sets$unusual_year
+out_level <- vapply(Filter(function(f) identical(f$key, "unusual_year"), out_qc$flags),
+                    `[[`, character(1), "level")
+check(identical(out_level, "warn") && nrow(out_set) == 1L && out_set$year == 2020L &&
+        out_set$index == "mammal_cpue" && out_set$total == 600 && out_set$effort == 1000 &&
+        isTRUE(out_set$enters_link) && out_set$robust_z > 3.5 &&
+        is.null(cascade_qc(transform(out_fixture, mammal_cpue = c(5, 5.5, 6, 5.2, 5.8, 6.1, 5.4)),
+                           out_links, site = "QC")$sets$unusual_year),
+      "unusual-year QC flags a within-site robust outlier with its total, effort and link use")
+# Climate gaps: no climate month is info (not sampled), 1 to 11 months is warn,
+# and the MAD sentence appears only when a 12-month year was nulled.
+clim_fixture <- data.frame(year = 2015:2017, temp = NA_real_, precip = NA_real_,
+                           temp_n_months = c(NA, 7, 12), precip_n_months = c(NA, 7, 12),
+                           mammal_cpue = 5)
+clim_flags <- cascade_qc(clim_fixture, data.frame(), site = "QC")
+clim_by_key <- setNames(clim_flags$flags, vapply(clim_flags$flags, `[[`, character(1), "key"))
+clim_partial <- cascade_qc(clim_fixture[1:2, ], data.frame(), site = "QC")$flags
+clim_partial_na <- Filter(function(f) identical(f$key, "climate_na"), clim_partial)
+check(identical(clim_by_key$climate_not_sampled$level, "info") &&
+        clim_by_key$climate_not_sampled$n == 1L &&
+        identical(clim_by_key$climate_na$level, "warn") && clim_by_key$climate_na$n == 2L &&
+        grepl("MAD", clim_by_key$climate_na$detail, fixed = TRUE) &&
+        all(c("temp_n_months", "precip_n_months") %in% names(clim_flags$sets$climate_na)) &&
+        length(clim_partial_na) == 1L && !grepl("MAD", clim_partial_na[[1]]$detail, fixed = TRUE),
+      "climate QC splits unsampled years (info) from partial or MAD-nulled years (warn) with month counts")
+# P3: the March to May prior row states that every vote-eligible site has its
+# median green-up index before May 1 (day 121), so the window includes weather
+# after green-up. Recheck that sentence against the family it ships with.
+spring_vote <- suite[suite$from == "temp_spring" & suite$to == "greenup_doy" &
+                       suite$expected %in% TRUE & suite$n >= 6 & is.finite(suite$r), , drop = FALSE]
+spring_years <- cascade$annual[cascade$annual$site %in% spring_vote$site &
+                                 is.finite(cascade$annual$greenup_doy) &
+                                 is.finite(cascade$annual$temp_spring), , drop = FALSE]
+spring_medians <- tapply(spring_years$greenup_doy, spring_years$site, stats::median)
+check(nrow(spring_vote) > 0L && all(spring_medians < 121),
+      "every vote-eligible March to May site has its median green-up index before May 1",
+      sprintf("%d sites, site medians day %.1f to %.1f", length(spring_medians),
+              min(spring_medians), max(spring_medians)))
 
 # When sibling sources are available, recompute corrected aggregations from their
 # committed schemas rather than merely checking arithmetic within the derived file.

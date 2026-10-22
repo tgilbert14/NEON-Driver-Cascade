@@ -802,15 +802,18 @@ cascade_veg_event_dates <- function(plots, trees, label) {
 }
 
 # Rows of each plot event attributable to a channel: a row whose growth form is
-# in the channel's forms, or a status-only row (growthForm NA) whose individual
-# appears in that channel's forms anywhere at the same plot.
-cascade_veg_channel_row_counts <- function(plots, trees, spec) {
+# in the channel's forms, or (when status_only is TRUE) a status-only row
+# (growthForm NA) whose individual appears in that channel's forms anywhere at
+# the same plot.
+cascade_veg_channel_row_counts <- function(plots, trees, spec, status_only = TRUE) {
   plot_key <- cascade_veg_event_key(plots$plotID, plots$eventID)
   if (!nrow(trees)) return(integer(length(plot_key)))
   plant <- paste(as.character(trees$plotID), as.character(trees$individualID), sep = "\r")
   in_forms <- trees$growthForm %in% spec$forms
   known <- unique(plant[in_forms])
-  attributable <- in_forms | (is.na(trees$growthForm) & plant %in% known)
+  attributable <- in_forms
+  if (isTRUE(status_only))
+    attributable <- attributable | (is.na(trees$growthForm) & plant %in% known)
   counts <- table(cascade_veg_event_key(trees$plotID, trees$eventID)[attributable])
   out <- as.integer(counts[plot_key])
   out[is.na(out)] <- 0L
@@ -838,10 +841,17 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
                  ch$conflict), call. = FALSE)
   collected <- cascade_veg_token(plots$dataCollected)
   trees_absent <- cascade_veg_token_absent(cascade_veg_token(plots$treesPresent))
+  # Saplings and small trees are tree juveniles whose presence treesPresent
+  # records, so the shrub channel reads absence only when shrubsPresent and
+  # treesPresent both say absent (referee D1); the presence-conflict gate below
+  # uses the same joint rule.
   presence_absent <- if (identical(channel, "tree")) trees_absent else
     cascade_veg_token_absent(cascade_veg_token(plots$shrubsPresent)) & trees_absent
-  own_absent <- cascade_veg_token_absent(cascade_veg_token(plots[[ch$presence]]))
   channel_rows <- cascade_veg_channel_row_counts(plots, trees, ch$spec)
+  # A no-records event is admitted only on rows of the channel's own growth
+  # forms; status-only rows (growthForm NA) alone do not show the channel was
+  # surveyed (referee D2). The vintage branch keeps the status-only attribution.
+  form_rows <- cascade_veg_channel_row_counts(plots, trees, ch$spec, status_only = FALSE)
   area <- suppressWarnings(as.numeric(plots[[ch$area]]))
 
   out <- paste0("excl_", state)
@@ -860,11 +870,11 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
          call. = FALSE)
   vintage_outcome <- ifelse(!collected %in% c("", "allgrowthforms"), "excl_vintage_partial",
     ifelse(conflict > 0L, "excl_vintage_identity_conflict",
-    ifelse(records > 0L & own_absent, "excl_vintage_presence_conflict",
+    ifelse(records > 0L & presence_absent, "excl_vintage_presence_conflict",
     ifelse(channel_rows > 0L, "admit",
     ifelse(presence_absent, "absence", "excl_vintage_no_channel_rows")))))
   out[vintage] <- vintage_outcome[vintage]
-  out[no_records] <- ifelse(channel_rows[no_records] > 0L, "admit",
+  out[no_records] <- ifelse(form_rows[no_records] > 0L, "admit",
                             "excl_no_records_unknown_presence")
   out[partial] <- "excl_partial_hold"
   selectable <- out %in% c("admit", "absence")
@@ -1008,4 +1018,115 @@ cascade_veg_event_site <- function(trees, plots, site) {
                           tree_n_plots = as.integer(tree_evidence$tree_n_plots),
                           shrub_n_plots = as.integer(shrub_evidence$shrub_n_plots))),
     base, list(audit = audit_for(chosen, contributing)))
+}
+
+# ---------------------------------------------------------------------------
+# Per-product release basis (audit F16). NEON RELEASE-2026 holds observational
+# (OS) data collected through 2024-12 and instrumented (IS) data through 2025-06
+# (https://www.neonscience.org/release-2026). Every Driver product is an OS
+# product, so a contributed month after 2024-12 cannot come from RELEASE-2026
+# and is provisional whatever the bundle records. Update these two constants
+# when NEON publishes the next release. The release, DOI and schema fields are
+# read only from what each sibling bundle itself records; nothing is inferred.
+# ---------------------------------------------------------------------------
+CASCADE_RELEASE_LATEST <- "RELEASE-2026"
+CASCADE_RELEASE_OS_THROUGH <- "2024-12"
+CASCADE_RELEASE_DATE_FIELDS <- c("collectDate", "date", "startDate", "endDate", "setDate")
+CASCADE_RELEASE_UNRECORDED <- "unrecorded"
+
+cascade_release_values <- function(x) {
+  x <- unique(trimws(as.character(unlist(x, use.names = FALSE))))
+  sort(x[!is.na(x) & nzchar(x)], method = "radix")
+}
+cascade_release_pick <- function(obj, field)
+  if (is.list(obj) && !is.data.frame(obj)) obj[[field]] else NULL
+
+# Release, DOI and schema/contract identifiers one bundle records about itself.
+cascade_bundle_release_fields <- function(b) {
+  meta <- cascade_release_pick(b, "meta")
+  contract <- cascade_release_pick(b, "contract")
+  receipt <- cascade_release_pick(meta, "source_receipt")
+  doi <- cascade_release_values(list(cascade_release_pick(meta, "doi"),
+                                     cascade_release_pick(receipt, "release_doi"),
+                                     cascade_release_pick(contract, "doi")))
+  doi <- unique(sub("^https?://(dx[.])?doi[.]org/", "", doi))
+  list(
+    release = cascade_release_values(list(cascade_release_pick(meta, "release"),
+                                          cascade_release_pick(meta, "neon_release"),
+                                          cascade_release_pick(receipt, "neon_release"),
+                                          cascade_release_pick(contract, "release"))),
+    doi = doi[grepl("^10[.][0-9]{4,}/", doi)],
+    schema = cascade_release_values(list(cascade_release_pick(contract, "id"),
+                                         cascade_release_pick(meta, "contract_id"),
+                                         cascade_release_pick(meta, "schema_version"))))
+}
+
+# Contributed collection periods of one bundle inside the build window, as
+# month indices (year * 12 + month). A table without a date field contributes
+# its year column at year precision (lo = January, hi = December of that year).
+cascade_bundle_periods <- function(b, min_year, last_year) {
+  tables <- if (is.data.frame(b)) list(b) else if (is.list(b)) Filter(is.data.frame, b) else list()
+  as_date <- function(x) tryCatch(suppressWarnings(as.Date(x)), error = function(e) as.Date(rep(NA, length(x))))
+  one <- function(t) {
+    field <- intersect(CASCADE_RELEASE_DATE_FIELDS, names(t))
+    if (length(field)) {
+      d <- as_date(t[[field[1]]])
+      d <- d[!is.na(d)]
+      y <- as.integer(format(d, "%Y"))
+      m <- y * 12L + as.integer(format(d, "%m"))
+      return(data.frame(lo = m, hi = m, precision = rep("month", length(m)))[y >= min_year & y <= last_year, , drop = FALSE])
+    }
+    if (!"year" %in% names(t)) return(NULL)
+    y <- suppressWarnings(as.integer(t[["year"]]))
+    y <- unique(y[is.finite(y) & y >= min_year & y <= last_year])
+    data.frame(lo = y * 12L + 1L, hi = y * 12L + 12L, precision = rep("year", length(y)))
+  }
+  do.call(rbind, c(list(data.frame(lo = integer(), hi = integer(), precision = character())),
+                   lapply(tables, one)))
+}
+
+# One product row: release (sorted distinct values the bundles record, plus
+# "unrecorded" when any in-scope bundle records none), doi and schema (NA when
+# no bundle records one), data_through (latest contributed period) and
+# provisional_from (first contributed period after os_through, NA when none).
+# Periods print as YYYY-MM, or YYYY when the bundle carries only a year.
+cascade_product_release <- function(bundles, min_year, last_year,
+                                    os_through = CASCADE_RELEASE_OS_THROUGH) {
+  bundles <- Filter(Negate(is.null), bundles)
+  fields <- lapply(bundles, cascade_bundle_release_fields)
+  field_values <- function(name) cascade_release_values(lapply(fields, `[[`, name))
+  unrecorded <- !length(bundles) || any(vapply(fields, function(f) !length(f$release), logical(1)))
+  release <- paste(c(field_values("release"), if (unrecorded) CASCADE_RELEASE_UNRECORDED), collapse = "; ")
+  join_or_na <- function(x) if (length(x)) paste(x, collapse = "; ") else NA_character_
+  periods <- do.call(rbind, c(list(data.frame(lo = integer(), hi = integer(), precision = character())),
+                              lapply(bundles, cascade_bundle_periods, min_year = min_year, last_year = last_year)))
+  label <- function(i) {
+    if (!length(i)) return(NA_character_)
+    year <- (periods$lo[i] - 1L) %/% 12L
+    if (periods$precision[i] == "year") return(sprintf("%04d", year))
+    sprintf("%04d-%02d", year, periods$lo[i] - year * 12L)
+  }
+  cut_parts <- as.integer(strsplit(os_through, "-", fixed = TRUE)[[1]])
+  cutoff <- cut_parts[1] * 12L + cut_parts[2]
+  # Prefer month precision on ties so a dated table outranks a year-only one.
+  by_hi <- order(-periods$hi, periods$precision != "month")
+  later <- which(periods$hi > cutoff)
+  by_lo <- later[order(periods$lo[later], periods$precision[later] != "month")]
+  data.frame(release = release, doi = join_or_na(field_values("doi")),
+             schema = join_or_na(field_values("schema")),
+             data_through = label(utils::head(by_hi, 1L)),
+             provisional_from = label(utils::head(by_lo, 1L)),
+             stringsAsFactors = FALSE)
+}
+
+# Mosquito effort wording that is true under both source effort bases the
+# effort_days field has carried: mosquito-pulse-opportunity-v1 (deployments the
+# source marks usable) and, from mosquito-pulse-opportunity-v2 on, only sampled
+# intervals whose catch is resolved. The trap_nights basis keeps the legacy note.
+cascade_mosq_effort_text <- function() {
+  if (!identical(cascade_mosq_effort_basis(), "effort_days")) return(cascade_mosq_effort_note())
+  paste("NA when effort_week is unavailable that year; zero-catch deployments count as effort.",
+        "Effort counts only the deployment time the source bundle marks usable; from source schema",
+        "mosquito-pulse-opportunity-v2 on, only sampled intervals whose catch is resolved count.",
+        "This denominator can be smaller than an earlier published one.")
 }
