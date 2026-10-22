@@ -1019,3 +1019,114 @@ cascade_veg_event_site <- function(trees, plots, site) {
                           shrub_n_plots = as.integer(shrub_evidence$shrub_n_plots))),
     base, list(audit = audit_for(chosen, contributing)))
 }
+
+# ---------------------------------------------------------------------------
+# Per-product release basis (audit F16). NEON RELEASE-2026 holds observational
+# (OS) data collected through 2024-12 and instrumented (IS) data through 2025-06
+# (https://www.neonscience.org/release-2026). Every Driver product is an OS
+# product, so a contributed month after 2024-12 cannot come from RELEASE-2026
+# and is provisional whatever the bundle records. Update these two constants
+# when NEON publishes the next release. The release, DOI and schema fields are
+# read only from what each sibling bundle itself records; nothing is inferred.
+# ---------------------------------------------------------------------------
+CASCADE_RELEASE_LATEST <- "RELEASE-2026"
+CASCADE_RELEASE_OS_THROUGH <- "2024-12"
+CASCADE_RELEASE_DATE_FIELDS <- c("collectDate", "date", "startDate", "endDate", "setDate")
+CASCADE_RELEASE_UNRECORDED <- "unrecorded"
+
+cascade_release_values <- function(x) {
+  x <- unique(trimws(as.character(unlist(x, use.names = FALSE))))
+  sort(x[!is.na(x) & nzchar(x)], method = "radix")
+}
+cascade_release_pick <- function(obj, field)
+  if (is.list(obj) && !is.data.frame(obj)) obj[[field]] else NULL
+
+# Release, DOI and schema/contract identifiers one bundle records about itself.
+cascade_bundle_release_fields <- function(b) {
+  meta <- cascade_release_pick(b, "meta")
+  contract <- cascade_release_pick(b, "contract")
+  receipt <- cascade_release_pick(meta, "source_receipt")
+  doi <- cascade_release_values(list(cascade_release_pick(meta, "doi"),
+                                     cascade_release_pick(receipt, "release_doi"),
+                                     cascade_release_pick(contract, "doi")))
+  doi <- unique(sub("^https?://(dx[.])?doi[.]org/", "", doi))
+  list(
+    release = cascade_release_values(list(cascade_release_pick(meta, "release"),
+                                          cascade_release_pick(meta, "neon_release"),
+                                          cascade_release_pick(receipt, "neon_release"),
+                                          cascade_release_pick(contract, "release"))),
+    doi = doi[grepl("^10[.][0-9]{4,}/", doi)],
+    schema = cascade_release_values(list(cascade_release_pick(contract, "id"),
+                                         cascade_release_pick(meta, "contract_id"),
+                                         cascade_release_pick(meta, "schema_version"))))
+}
+
+# Contributed collection periods of one bundle inside the build window, as
+# month indices (year * 12 + month). A table without a date field contributes
+# its year column at year precision (lo = January, hi = December of that year).
+cascade_bundle_periods <- function(b, min_year, last_year) {
+  tables <- if (is.data.frame(b)) list(b) else if (is.list(b)) Filter(is.data.frame, b) else list()
+  as_date <- function(x) tryCatch(suppressWarnings(as.Date(x)), error = function(e) as.Date(rep(NA, length(x))))
+  one <- function(t) {
+    field <- intersect(CASCADE_RELEASE_DATE_FIELDS, names(t))
+    if (length(field)) {
+      d <- as_date(t[[field[1]]])
+      d <- d[!is.na(d)]
+      y <- as.integer(format(d, "%Y"))
+      m <- y * 12L + as.integer(format(d, "%m"))
+      return(data.frame(lo = m, hi = m, precision = rep("month", length(m)))[y >= min_year & y <= last_year, , drop = FALSE])
+    }
+    if (!"year" %in% names(t)) return(NULL)
+    y <- suppressWarnings(as.integer(t[["year"]]))
+    y <- unique(y[is.finite(y) & y >= min_year & y <= last_year])
+    data.frame(lo = y * 12L + 1L, hi = y * 12L + 12L, precision = rep("year", length(y)))
+  }
+  do.call(rbind, c(list(data.frame(lo = integer(), hi = integer(), precision = character())),
+                   lapply(tables, one)))
+}
+
+# One product row: release (sorted distinct values the bundles record, plus
+# "unrecorded" when any in-scope bundle records none), doi and schema (NA when
+# no bundle records one), data_through (latest contributed period) and
+# provisional_from (first contributed period after os_through, NA when none).
+# Periods print as YYYY-MM, or YYYY when the bundle carries only a year.
+cascade_product_release <- function(bundles, min_year, last_year,
+                                    os_through = CASCADE_RELEASE_OS_THROUGH) {
+  bundles <- Filter(Negate(is.null), bundles)
+  fields <- lapply(bundles, cascade_bundle_release_fields)
+  field_values <- function(name) cascade_release_values(lapply(fields, `[[`, name))
+  unrecorded <- !length(bundles) || any(vapply(fields, function(f) !length(f$release), logical(1)))
+  release <- paste(c(field_values("release"), if (unrecorded) CASCADE_RELEASE_UNRECORDED), collapse = "; ")
+  join_or_na <- function(x) if (length(x)) paste(x, collapse = "; ") else NA_character_
+  periods <- do.call(rbind, c(list(data.frame(lo = integer(), hi = integer(), precision = character())),
+                              lapply(bundles, cascade_bundle_periods, min_year = min_year, last_year = last_year)))
+  label <- function(i) {
+    if (!length(i)) return(NA_character_)
+    year <- (periods$lo[i] - 1L) %/% 12L
+    if (periods$precision[i] == "year") return(sprintf("%04d", year))
+    sprintf("%04d-%02d", year, periods$lo[i] - year * 12L)
+  }
+  cut_parts <- as.integer(strsplit(os_through, "-", fixed = TRUE)[[1]])
+  cutoff <- cut_parts[1] * 12L + cut_parts[2]
+  # Prefer month precision on ties so a dated table outranks a year-only one.
+  by_hi <- order(-periods$hi, periods$precision != "month")
+  later <- which(periods$hi > cutoff)
+  by_lo <- later[order(periods$lo[later], periods$precision[later] != "month")]
+  data.frame(release = release, doi = join_or_na(field_values("doi")),
+             schema = join_or_na(field_values("schema")),
+             data_through = label(utils::head(by_hi, 1L)),
+             provisional_from = label(utils::head(by_lo, 1L)),
+             stringsAsFactors = FALSE)
+}
+
+# Mosquito effort wording that is true under both source effort bases the
+# effort_days field has carried: mosquito-pulse-opportunity-v1 (deployments the
+# source marks usable) and, from mosquito-pulse-opportunity-v2 on, only sampled
+# intervals whose catch is resolved. The trap_nights basis keeps the legacy note.
+cascade_mosq_effort_text <- function() {
+  if (!identical(cascade_mosq_effort_basis(), "effort_days")) return(cascade_mosq_effort_note())
+  paste("NA when effort_week is unavailable that year; zero-catch deployments count as effort.",
+        "Effort counts only the deployment time the source bundle marks usable; from source schema",
+        "mosquito-pulse-opportunity-v2 on, only sampled intervals whose catch is resolved count.",
+        "This denominator can be smaller than an earlier published one.")
+}

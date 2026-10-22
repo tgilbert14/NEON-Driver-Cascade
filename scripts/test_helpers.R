@@ -1546,6 +1546,36 @@ vo <- cascade$meta$vote_overlap
 
 check_cols(sp, c("product", "repo", "origin", "commit", "commit_epoch",
                  "clean", "n_site_files"), "source-product provenance schema")
+# F16 release basis: test-owned synthetic bundles with hand-written expectations.
+rel_a <- list(obs = data.frame(collectDate = as.Date(c("2024-06-01", "2025-03-10"))),
+              meta = list(release = "RELEASE-2026", doi = "10.48443/abcd-1234",
+                          schema_version = "mosquito-pulse-opportunity-v1"))
+rel_b <- list(obs = data.frame(year = c(2023L, 2026L)), meta = list(site = "X"))
+rel_veg <- list(trees = data.frame(date = as.Date("2024-12-15")),
+                meta = list(source_receipt = list(neon_release = "RELEASE-2026",
+                                                  release_doi = "https://doi.org/10.48443/pypa-qf12")),
+                contract = list(id = "NEON-VST-DP1.10098.001-v2", release = "RELEASE-2026"))
+rel_year <- list(obs = data.frame(year = 2025L))
+rel_ab <- cascade_product_release(list(rel_a, rel_b, NULL), 2013L, 2025L)
+rel_v <- cascade_product_release(list(rel_veg), 2013L, 2025L)
+rel_y <- cascade_product_release(list(rel_year), 2013L, 2025L)
+check(identical(rel_ab$release, "RELEASE-2026; unrecorded") &&
+        identical(rel_ab$doi, "10.48443/abcd-1234") &&
+        identical(rel_ab$schema, "mosquito-pulse-opportunity-v1") &&
+        identical(rel_ab$data_through, "2025-03") && identical(rel_ab$provisional_from, "2025-03") &&
+        identical(rel_v$release, "RELEASE-2026") && identical(rel_v$doi, "10.48443/pypa-qf12") &&
+        identical(rel_v$schema, "NEON-VST-DP1.10098.001-v2") &&
+        identical(rel_v$data_through, "2024-12") && is.na(rel_v$provisional_from) &&
+        identical(rel_y$release, "unrecorded") && is.na(rel_y$doi) && is.na(rel_y$schema) &&
+        identical(rel_y$data_through, "2025") && identical(rel_y$provisional_from, "2025"),
+      "release basis reads only what bundles record and dates provisional months after 2024-12")
+period_ok <- function(x) is.na(x) | grepl("^[0-9]{4}(-(0[1-9]|1[0-2]))?$", x)
+check(all(c("release", "doi", "schema", "data_through", "provisional_from") %in% names(sp)) &&
+        !anyNA(sp$release) && all(nzchar(sp$release)) &&
+        all(is.na(sp$doi) | grepl("^10[.][0-9]{4,}/", sp$doi)) &&
+        all(period_ok(sp$data_through)) && all(period_ok(sp$provisional_from)) &&
+        "release_basis" %in% names(cascade$meta$data_caveats),
+      "source products carry release, DOI, schema, data-through and provisional-from fields")
 check(nrow(sp) == length(products) && !anyDuplicated(sp$product) &&
         setequal(as.character(sp$product), products),
       "exactly seven source products are fingerprinted",

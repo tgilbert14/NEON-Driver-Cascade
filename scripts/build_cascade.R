@@ -1267,7 +1267,7 @@ support_codebook <- tibble::tribble(
   "bird_observed_point_visits", "Observed bird point-count occasions", "consumer", "point-visits", "more observed effort", "NA when the catch-only observation table has no detections that year; zero-detection visits are unavailable.", ">0 required for bird_index",
   "bird_nonflyover_birds", "Non-flyover bird detections", "consumer", "birds", "more detections", "NA when no observation rows exist that year; cluster sizes exclude detectionMethod=flyover.", "numerator of bird_index",
   "bird_flyover_birds", "Excluded flyover detections", "consumer", "birds", "more excluded detections", "NA when no observation rows exist that year; retained for audit but excluded from index and richness.", "audit only",
-  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", cascade_mosq_effort_note(), ">0 required for mosq_activity",
+  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", cascade_mosq_effort_text(), ">0 required for mosq_activity",
   "mosq_total_catch", "Whole-trap mosquito catch", "consumer", "mosquitoes (estimated)", "more catch", "Zero when positive recorded effort has no target catch; NA when neither effort nor catch is available.", "numerator of mosq_activity",
   "beetle_catch_event_trap_nights", "Ground-beetle catch-event effort", "consumer", "trap-nights", "more recorded effort", "NA when no catch-bearing event with effort exists; source bundles omit zero-catch events.", ">0 required for beetle_activity; incomplete denominator",
   "beetle_total_catch", "Ground-beetle catch", "consumer", "individuals", "more catch", "NA when the catch-only beetle bundle has no positive catch that year.", "numerator of beetle_activity")
@@ -1315,6 +1315,20 @@ product_coverage <- rbind(product_coverage, data.frame(
   n_nonmissing = sum(is.finite(site_meta$veg_ba_ha)),
   n_sites = sum(is.finite(site_meta$veg_ba_ha)), stringsAsFactors = FALSE))
 
+# Per-product release basis (audit F16): what each sibling bundle records about
+# its NEON release, DOI and schema, and the contributed collection window. Read
+# from the immutable snapshot (APP) over the in-scope sites only. The
+# provenance columns above stay first and unchanged for the source lock.
+release_by_product <- do.call(rbind, lapply(names(APP), function(product)
+  cbind(data.frame(product = product, stringsAsFactors = FALSE),
+        cascade_product_release(
+          lapply(file.path(APP[[product]], "data", "sites", paste0(ALL_SITES, ".rds")), rd),
+          MIN_YEAR, LAST_COMPLETE_YEAR))))
+source_products_meta <- cbind(
+  source_products,
+  release_by_product[match(source_products$product, release_by_product$product),
+                     c("release", "doi", "schema", "data_through", "provisional_from")])
+
 build_toolchain <- data.frame(
   component = c("R", "dplyr", "tibble"),
   version = c(as.character(getRversion()),
@@ -1347,7 +1361,7 @@ meta <- list(
   spatial_sensitivity_version = SPATIAL_SENSITIVITY_VERSION,
   spatial_sensitivity_note = SPATIAL_SENSITIVITY_NOTE,
   source_snapshot_method = source_snapshot$method,
-  source_products = source_products,
+  source_products = source_products_meta,
   source_inputs = source_inputs,
   local_build_inputs = LOCAL_BUILD_INPUTS,
   build_toolchain = build_toolchain,
@@ -1369,7 +1383,16 @@ meta <- list(
     beetle_activity = "Beetle site bundles contain catch rows only. Trap-night denominator covers unique catch-bearing plot-dates and omits zero-catch events.",
     greenup_doy = paste("Composition-adjusted DOY-anchored onset index: earliest individual-year green-up records that are left-censored are excluded; this screen is not interval-censored modeling and can select contributors by visit timing/cadence. Resolved species need >=3 individuals in >=3 years; the largest connected species-year panel is within-species centered and equal-species weighted; annual output needs >=2 species and therefore >=6 contributors. Annual median/p90/max last-no to first-yes widths expose contributor timing uncertainty. It is not an observed pooled-median onset date.", GREENUP_INDEX_NOTE),
     greenup_doy_additive = paste("Estimator-choice sensitivity using unweighted OLS species_onset ~ scientificName + factor(year) on the same connected eligible species-year cells, standardized over the full retained species x year grid. It shares the primary index's left-censor screen and its visit-timing/cadence selection caveat. Missing species-years are additive extrapolations. Neither the additive nor median-centered standardization is uniquely true; their differences expose sensitivity to the unbalanced observation panel.", GREENUP_INDEX_NOTE),
-    plant_richness = "Raw annual richness remains sensitive to sampled plots/scales; plant_n_plots and plant_n_sampling_units are persisted for audit."))
+    plant_richness = "Raw annual richness remains sensitive to sampled plots/scales; plant_n_plots and plant_n_sampling_units are persisted for audit.",
+    mosq_activity = cascade_mosq_effort_text(),
+    release_basis = paste0(
+      "Each source_products row records the NEON release its sibling bundle states (release, ",
+      "unrecorded when an in-scope bundle states none), the DOI and schema it states (NA when none), ",
+      "the latest collection month it contributes (data_through) and the first contributed month after ",
+      CASCADE_RELEASE_LATEST, " observational coverage ends in ", CASCADE_RELEASE_OS_THROUGH,
+      " (provisional_from). Months after that cannot be in ", CASCADE_RELEASE_LATEST,
+      ", so they are provisional and may change in the next release. A period prints as YYYY when the ",
+      "bundle carries only a year. The climate overlays are not covered by these rows.")))
 assert_local_build_inputs_unchanged()
 cascade_bundle <- cascade_normalize_artifact_text(list(
   annual = annual, signals = signals, priors = priors, codebook = codebook,
