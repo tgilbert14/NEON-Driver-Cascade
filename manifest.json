@@ -2538,16 +2538,16 @@
   },
   "files": {
     "data/cascade_meta.rds": {
-      "checksum": "c7f71c0eedfd9095b94c3354d32be221"
+      "checksum": "d3574b3d142741156efef602c1e5bb35"
     },
     "data/cascade.rds": {
-      "checksum": "a1b53bcd1cea38603b8badc837f6a6e6"
+      "checksum": "945b3f72ccbd7666072478779c57c04a"
     },
     "data/neon-cascade-codebook.csv": {
       "checksum": "9f970cd051b1743cc3b45b4bf61e5eb8"
     },
     "data/search_index.rds": {
-      "checksum": "8cb174d2664322ec49972c26889102c8"
+      "checksum": "e0348e5b0f0fb220edd01a96254accc6"
     },
     "global.R": {
       "checksum": "3a34de7e268204821828aaac23521bbb"
