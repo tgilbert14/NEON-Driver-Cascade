@@ -10,6 +10,8 @@ The check is semantic, not an HTTP 200: it opens the About tab, opens the
 requires its text to carry the exact source-state timestamp
 (readRDS("data/cascade.rds")$meta$built_when) of the commit just pushed to
 master. A stale bundle that still serves the previous family therefore fails.
+It also requires document.title to contain the app name (--title) and the
+<html> element to declare lang="en".
 """
 
 from __future__ import annotations
@@ -30,11 +32,13 @@ from urllib.request import ProxyHandler, Request, build_opener
 
 
 DRIVER_OPENER = build_opener(ProxyHandler({}))
-# arguments[0] is the expected built_when string. server.R renders it as
+# arguments[0] is the expected built_when string; arguments[1] is the app name
+# document.title must contain. server.R renders it as
 # "Its deterministic source-state timestamp is <code>BUILT_WHEN</code>." inside
 # the about_fold("fingerprint", "Snapshot and provenance", ...) details element.
 READINESS_SCRIPT = r"""
 const expected = arguments[0];
+const expectedTitle = arguments[1];
 const squash = (value) => (value || "").replace(/\s+/g, " ").trim();
 const bodyText = squash(document.body?.innerText);
 const tab = document.querySelector('#tabs a[data-value="about"], a[data-bs-toggle="tab"][data-value="about"]');
@@ -65,6 +69,8 @@ return {
   connected: !document.getElementById("shiny-disconnected-overlay"),
   hostError: /startup error|application failed to start|application error|service unavailable/i.test(bodyText),
   title: document.title,
+  titleOk: Boolean(expectedTitle) && (document.title || "").includes(expectedTitle),
+  lang: document.documentElement?.getAttribute("lang") || "",
 };
 """
 
@@ -189,6 +195,8 @@ def successful(state: dict[str, Any]) -> bool:
             not state.get("outputErrors"),
             state.get("connected") is True,
             state.get("hostError") is False,
+            state.get("titleOk") is True,
+            state.get("lang") == "en",
         )
     )
 
@@ -216,7 +224,7 @@ def fatal_webdriver_error(message: str) -> bool:
     )
 
 
-def run(url: str, built_when: str, timeout: int, driver: str) -> int:
+def run(url: str, built_when: str, title: str, timeout: int, driver: str) -> int:
     deadline = time.monotonic() + timeout
     port = available_port()
     base_url = f"http://127.0.0.1:{port}"
@@ -246,7 +254,7 @@ def run(url: str, built_when: str, timeout: int, driver: str) -> int:
                         base_url,
                         session_id,
                         READINESS_SCRIPT,
-                        [built_when],
+                        [built_when, title],
                         timeout=min(10, max(1, deadline - time.monotonic())),
                     )
                     last_state = state
@@ -257,7 +265,8 @@ def run(url: str, built_when: str, timeout: int, driver: str) -> int:
                         if good_samples >= 2:
                             print(
                                 "ok [Connect Cloud app] ChromeDriver confirmed two consecutive "
-                                f"About-tab samples showing built_when {built_when}: "
+                                f"About-tab samples showing built_when {built_when} "
+                                f"under title {title!r} and lang en: "
                                 f"{json.dumps(state, sort_keys=True)}",
                                 flush=True,
                             )
@@ -306,6 +315,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--url", required=True, help="deployed app URL")
     parser.add_argument("--built-when", required=True,
                         help="expected cascade.rds meta$built_when string")
+    parser.add_argument("--title", default="NEON Cross-Product Response Atlas",
+                        help="text document.title must contain")
     parser.add_argument("--timeout", type=int, default=150, help="wall-clock readiness budget")
     parser.add_argument("--driver", help="ChromeDriver executable (defaults to PATH)")
     args = parser.parse_args()
@@ -316,9 +327,11 @@ def parse_args() -> argparse.Namespace:
         parser.error("--timeout must be at least 10 seconds")
     if not args.built_when.strip():
         parser.error("--built-when must not be empty")
+    if not args.title.strip():
+        parser.error("--title must not be empty")
     return args
 
 
 if __name__ == "__main__":
     arguments = parse_args()
-    raise SystemExit(run(arguments.url, arguments.built_when, arguments.timeout, arguments.driver))
+    raise SystemExit(run(arguments.url, arguments.built_when, arguments.title, arguments.timeout, arguments.driver))

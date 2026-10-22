@@ -147,6 +147,7 @@ the manifest to reproduce; nothing in `data/` moves.
 
 1. **The name.** This plan uses **NEON Response Atlas** on every surface. The repo stays
    `NEON-Driver-Cascade`.
+   (Update: on 2026-10-21 the name became **NEON Cross-Product Response Atlas**.)
 2. **SRER first, with no judged pairing.** SRER has no green-up record, so the first view says in its
    headline line that neither judged pairing can be tested there, and leads with the timeline and the
    monsoon-rain contrast, the app's clearest teaching case. The alternative is a site where the headline

@@ -249,6 +249,7 @@ def exercise_manifest_policy() -> None:
             lambda: guard.update_manifest(root / "not-manifest.json", root),
             "a manifest update outside the fixed checkout-root path",
         )
+        exercise_checksum_only_refresh(root, manifest_path, stored, package)
 
         drift = copy.deepcopy(manifest)
         first = next(iter(drift["files"]))
@@ -271,6 +272,66 @@ def exercise_manifest_policy() -> None:
                 lambda: guard.validate_manifest(manifest, root, check_checksums=False),
                 "a symbolic-link deploy entry",
             )
+
+
+def exercise_checksum_only_refresh(
+    root: Path, manifest_path: Path, stored: dict, package: str
+) -> None:
+    """update_manifest must re-read what it wrote and refuse any non-checksum change."""
+    original_text = json.dumps(stored, ensure_ascii=False, indent=2) + "\n"
+    genuine_render = guard.render_manifest
+
+    def mutated_package(manifest: dict) -> str:
+        manifest = copy.deepcopy(manifest)
+        manifest["packages"][package]["description"]["Version"] = "999.0.0"
+        return genuine_render(manifest)
+
+    def reordered_packages(manifest: dict) -> str:
+        manifest = copy.deepcopy(manifest)
+        manifest["packages"] = dict(reversed(list(manifest["packages"].items())))
+        return genuine_render(manifest)
+
+    def dropped_package(manifest: dict) -> str:
+        manifest = copy.deepcopy(manifest)
+        manifest["packages"].pop(package)
+        return genuine_render(manifest)
+
+    def outside_text(manifest: dict) -> str:
+        # Same parsed packages, but the bytes outside "files" differ.
+        return genuine_render(manifest).replace('"version": 1', '"version":  1', 1)
+
+    def files_entry(manifest: dict) -> str:
+        manifest = copy.deepcopy(manifest)
+        first = next(iter(manifest["files"]))
+        manifest["files"][first]["extra"] = "unexpected"
+        return genuine_render(manifest)
+
+    assert '"version": 1' in original_text
+    cases = {
+        "a mutated package version": mutated_package,
+        "a reordered package graph": reordered_packages,
+        "a dropped package": dropped_package,
+        "changed text outside the files map": outside_text,
+        "a files entry changed beyond its checksum": files_entry,
+    }
+    try:
+        for label, render in cases.items():
+            manifest_path.write_text(original_text, encoding="utf-8", newline="\n")
+            guard.render_manifest = render
+            expect_rejection(lambda: guard.update_manifest(manifest_path, root), label)
+            assert manifest_path.read_text(encoding="utf-8") == original_text, (
+                f"{label} reached the manifest on disk"
+            )
+            assert not list(root.glob(".manifest-*.tmp")), f"{label} left a temporary file"
+    finally:
+        guard.render_manifest = genuine_render
+
+    # The genuine render changes only the checksum values.
+    manifest_path.write_text(original_text, encoding="utf-8", newline="\n")
+    guard.update_manifest(manifest_path, root)
+    refreshed = manifest_path.read_text(encoding="utf-8")
+    assert guard.text_outside_files(refreshed) == guard.text_outside_files(original_text)
+    assert refreshed != original_text
 
 
 def exercise_receipt_policy() -> None:

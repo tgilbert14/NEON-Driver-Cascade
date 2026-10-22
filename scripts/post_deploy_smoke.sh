@@ -7,9 +7,18 @@
 # driven in headless Chromium until the About tab's "Snapshot and provenance"
 # fold shows the exact built_when of the pushed bundle (SMOKE_BUILT_WHEN).
 #
+# Every page must also carry the app name in its <title> (SMOKE_TITLE), and the
+# app must declare <html lang="en">. built_when proves the data; the code
+# revision is proved by fetching the static assets the app serves (the paths in
+# its own HTML, from ui.R asset_url()) and requiring each md5 to equal the
+# checked-out file under SMOKE_ASSET_ROOT (default www). The ?v= query is a file
+# mtime, not a revision, so only the bytes count. Every check shares the same
+# retry and deadline budget.
+#
 # usage: post_deploy_smoke.sh '<label>=<url>' ...
-#   A label ending in "app" gets the app marker and, with SMOKE_BROWSER=1, the
-#   browser check; any other label is a cover page and needs SMOKE_COVER_MARKER.
+#   A label ending in "app" gets the app marker, title, lang and asset checks
+#   and, with SMOKE_BROWSER=1, the browser check; any other label is a cover
+#   page and needs SMOKE_COVER_MARKER and the title.
 
 set -uo pipefail
 
@@ -19,7 +28,11 @@ CONNECT_TIMEOUT="${SMOKE_CONNECT_TIMEOUT:-15}"
 MAX_TIME="${SMOKE_MAX_TIME:-45}"
 TOTAL_DEADLINE="${SMOKE_TOTAL_DEADLINE:-900}"
 APP_MARKER="${SMOKE_APP_MARKER:-data-value=\"about\"}"
-COVER_MARKER="${SMOKE_COVER_MARKER:-NEON Response Atlas}"
+APP_NAME="${SMOKE_TITLE:-NEON Cross-Product Response Atlas}"
+COVER_MARKER="${SMOKE_COVER_MARKER:-$APP_NAME}"
+ASSET_ROOT="${SMOKE_ASSET_ROOT:-www}"
+# Space-separated www/ file names whose live bytes must match the checkout.
+ASSETS="${SMOKE_ASSETS:-cascade.js cascade.css styles.css}"
 USER_AGENT='ddl-response-atlas-semantic-smoke/1.0'
 failed=0
 deadline_at=$((SECONDS + TOTAL_DEADLINE))
@@ -54,12 +67,82 @@ check_browser_ready() {
   python3 scripts/chromedriver_semantic_smoke.py \
     --url "$url" \
     --built-when "$SMOKE_BUILT_WHEN" \
+    --title "$APP_NAME" \
     --timeout "$browser_timeout" \
     --driver "$driver"
 }
 
+file_md5() {
+  if command -v md5sum >/dev/null 2>&1; then
+    md5sum "$1" | awk '{print $1}'
+  else
+    md5 -q "$1"
+  fi
+}
+
+# Prints a reason and returns 1 when the page <title> lacks APP_NAME, or (for
+# the app) when <html lang="en"> is missing.
+check_title_lang() {
+  local label="$1" body="$2" title
+  title=$(tr '\n' ' ' < "$body" | grep -oiE '<title[^>]*>[^<]*</title>' | head -n 1)
+  if [[ "$title" != *"$APP_NAME"* ]]; then
+    echo "page <title> is '${title:-absent}', expected it to contain '$APP_NAME'"
+    return 1
+  fi
+  if [[ "$label" == *"app" ]] && ! grep -Eqi '<html[^>]*[[:space:]]lang="en"' "$body"; then
+    echo "<html lang=\"en\"> is absent"
+    return 1
+  fi
+  return 0
+}
+
+# Prints a reason and returns 1 unless every served asset's md5 equals the
+# checked-out copy. The served path comes from the app's own HTML.
+check_assets() {
+  local url="$1" body="$2" name ref asset_url fetched want got request_max
+  fetched=$(mktemp)
+  for name in $ASSETS; do
+    if [[ ! -f "$ASSET_ROOT/$name" ]]; then
+      echo "checked-out asset $ASSET_ROOT/$name is missing"
+      rm -f "$fetched"
+      return 1
+    fi
+    ref=$(grep -oE "(href|src)=\"[^\"]*${name//./[.]}([?][^\"]*)?\"" "$body" | head -n 1 |
+      sed -E 's/^(href|src)="//; s/"$//')
+    if [[ -z "$ref" ]]; then
+      echo "the app HTML does not reference $name"
+      rm -f "$fetched"
+      return 1
+    fi
+    case "$ref" in
+      http://* | https://*) asset_url="$ref" ;;
+      /*) asset_url="$(printf '%s' "$url" | grep -oE '^https?://[^/]+')$ref" ;;
+      *) asset_url="${url%/}/$ref" ;;
+    esac
+    request_max=$MAX_TIME
+    ((request_max > deadline_at - SECONDS)) && request_max=$((deadline_at - SECONDS))
+    ((request_max < 1)) && request_max=1
+    if ! curl -fsS -o "$fetched" -L --connect-timeout "$CONNECT_TIMEOUT" \
+      --max-time "$request_max" -A "$USER_AGENT" "$asset_url" 2>/dev/null; then
+      echo "could not fetch $asset_url"
+      rm -f "$fetched"
+      return 1
+    fi
+    want=$(file_md5 "$ASSET_ROOT/$name")
+    got=$(file_md5 "$fetched")
+    if [[ "$want" != "$got" ]]; then
+      echo "live $name md5 $got differs from checked-out $want (an older code revision is still served)"
+      rm -f "$fetched"
+      return 1
+    fi
+    echo "ok asset $name md5 $got matches the checkout" >&2
+  done
+  rm -f "$fetched"
+  return 0
+}
+
 check_one() {
-  local label="$1" url="$2" body attempt code nap marker remaining request_max
+  local label="$1" url="$2" body attempt code nap marker remaining request_max reason
   body=$(mktemp)
   marker="$COVER_MARKER"
   [[ "$label" == *"app" ]] && marker="$APP_MARKER"
@@ -80,8 +163,12 @@ check_one() {
         echo "wait [$label] HTTP $code but host error page detected ($attempt/$MAX_ATTEMPTS)"
       elif ! grep -Fq "$marker" "$body"; then
         echo "wait [$label] HTTP $code but semantic marker is absent ($attempt/$MAX_ATTEMPTS)"
+      elif ! reason=$(check_title_lang "$label" "$body"); then
+        echo "wait [$label] HTTP $code but $reason ($attempt/$MAX_ATTEMPTS)"
+      elif [[ "$label" == *"app" ]] && ! reason=$(check_assets "$url" "$body"); then
+        echo "wait [$label] HTTP $code but $reason ($attempt/$MAX_ATTEMPTS)"
       else
-        echo "ok [$label] HTTP $code + semantic marker (attempt $attempt)"
+        echo "ok [$label] HTTP $code + semantic marker + title (attempt $attempt)"
         if [[ "$label" == *"app" && "${SMOKE_BROWSER:-0}" == "1" ]]; then
           if check_browser_ready "$label" "$url"; then
             rm -f "$body"
@@ -125,7 +212,7 @@ for spec in "$@"; do
 done
 
 if [[ "$failed" -ne 0 ]]; then
-  echo "::error title=Production smoke failed::the Cross-Product Response Atlas did not reach semantic health (expected built_when ${SMOKE_BUILT_WHEN:-unset})"
+  echo "::error title=Production smoke failed::the Cross-Product Response Atlas did not reach semantic health (expected built_when ${SMOKE_BUILT_WHEN:-unset}, title '$APP_NAME', and the checked-out asset md5s)"
   echo "post-deploy semantic smoke FAILED" >&2
   exit 1
 fi
