@@ -25,11 +25,15 @@ ui <- bslib::page_fillable(
     div(
       class = "top-bar-actions",
       actionButton("help", tagList(bs_icon("question-circle"), tags$span(class = "tb-action-label", "How to read this")),
-        `aria-label` = "How to read the NEON Cross-Product Response Atlas",
+        `aria-label` = "How to read this: a guide to the NEON Cross-Product Response Atlas",
         class = "btn-outline-dark btn-sm tb-help"
       ),
       downloadButton("dlReport", tagList(bs_icon("file-earmark-arrow-down"), tags$span(class = "tb-action-label", "Site report (.csv)")),
-        `aria-label` = "Download the selected site's report as CSV",
+        icon = NULL, `aria-label` = "Site report (.csv) for the selected site",
+        class = "btn-outline-dark btn-sm tb-report"
+      ),
+      downloadButton("dlReportPdf", tagList(bs_icon("file-earmark-pdf"), tags$span(class = "tb-action-label", "Site report (.pdf)")),
+        icon = NULL, `aria-label` = "Site report (.pdf) for the selected site",
         class = "btn-outline-dark btn-sm tb-report"
       ),
       div(
@@ -55,6 +59,7 @@ ui <- bslib::page_fillable(
         # ================================================================
         nav_panel(
           title = tagList(bs_icon("pin-map-fill"), " This site"), value = "site",
+          scope_chip("scopeSite"),
           div(
             id = "sitePanel", class = "select-panel",
             div(
@@ -68,6 +73,7 @@ ui <- bslib::page_fillable(
               )
             ),
             uiOutput("siteBio"),
+            uiOutput("dataThrough"),
             local({
               ord <- neon_sites[order(neon_sites$name), ]
               lay <- SITE_LAYERS[ord$site]
@@ -133,6 +139,7 @@ ui <- bslib::page_fillable(
         # ================================================================
         nav_panel(
           title = tagList(bs_icon("bullseye"), " One pairing"), value = "pairing",
+          scope_chip("scopePairing"),
           div(class = "select-panel", uiOutput("pairingPicker")),
           card(
             full_screen = TRUE,
@@ -159,16 +166,18 @@ ui <- bslib::page_fillable(
         # ================================================================
         nav_panel(
           title = tagList(bs_icon("grid-3x3-gap-fill"), " All sites"), value = "sites",
+          div(class = "scope-row", tags$span(class = "scope-chip scope-all", bs_icon("globe-americas"),
+            sprintf(" All %d sites", length(ALL_SITES)))),
           card(
             card_head("clipboard-data", "The judged pairings across NEON",
-              downloadButton("dlPooled", tagList(bs_icon("filetype-csv"), " Pooled CSV"),
+              downloadButton("dlPooled", tagList(bs_icon("filetype-csv"), " Pooled CSV"), icon = NULL,
                 class = "btn-outline-dark btn-sm ms-auto")),
             uiOutput("pooledHeadline")
           ),
           card(
             full_screen = TRUE,
             card_head("grid-3x3-gap", "Every site, every pairing",
-              downloadButton("dlSuite", tagList(bs_icon("filetype-csv"), " CSV"), class = "btn-outline-dark btn-sm ms-auto")),
+              downloadButton("dlSuite", tagList(bs_icon("filetype-csv"), " CSV"), icon = NULL, class = "btn-outline-dark btn-sm ms-auto")),
             div(
               class = "sb-sortbar",
               tags$label(class = "sb-sort-lab", `for` = "sbSort", bs_icon("sort-down"), " Sort sites by"),
@@ -193,6 +202,7 @@ ui <- bslib::page_fillable(
           tags$h2(class = "visually-hidden", "About the NEON Cross-Product Response Atlas"),
           card(
             card_head("clipboard-check", "Data checks for this site"),
+            scope_chip("scopeQc"),
             uiOutput("qcFlags")
           ),
           uiOutput("aboutPanel")
@@ -210,6 +220,7 @@ ui <- bslib::page_fillable(
       style = "margin-top:12px", HTML("Built by <strong>Desert Data Labs</strong> · Tucson, AZ · "),
       tags$a(href = "mailto:desertdatalabs@gmail.com?subject=NEON%20Response%20Atlas", "desertdatalabs@gmail.com")
     ),
-    p(style = "font-size:12px;opacity:.85", "Built from NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology), DP1.10043.001 (mosquitoes), DP1.10022.001 (ground beetles), and NEON/Daymet climate. Not affiliated with NEON, Battelle, or the NSF. An educational data-exploration tool.")
+    suite_footer_row(),
+    p(class = "ddl-foot-src", "Built from NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology), DP1.10043.001 (mosquitoes), DP1.10022.001 (ground beetles), and NEON tower climate (DP1.00002.001, DP1.00044.001). Not affiliated with NEON, Battelle, or the NSF.")
   )
 )
