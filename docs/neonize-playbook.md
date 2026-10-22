@@ -66,8 +66,8 @@ and UI string literals. A gate that requires an em dash is a bug.
 
 - **The review-branch refresh contract** (settled 2026-10-06): read-only producer and validator jobs, one
   restricted publisher that pushes the app's one fixed review branch, and a person's PR merge into the
-  watched branch is the deploy. No workflow pushes a watched branch (the Atlas is the one exception until it
-  migrates, §6). Never migrate a review-branch workflow back to direct push, and never ask for branch
+  watched branch is the deploy. No workflow pushes a watched branch (the Atlas, the last direct pusher, moved
+  to its review branch on 2026-10-22). Never migrate a review-branch workflow back to direct push, and never ask for branch
   protection to come off.
 - **A `skip_download` run may publish** its derived-only rebuild to the review branch (2026-10-21).
 - **`terra` is pinned at 1.8-50** wherever the leaflet chain is present (§6).
@@ -649,7 +649,7 @@ a row when its fix merges; until then copy the contract text, not the code.
 | Vegetation | `is_species` reads a reassigned `scientificName` in `scripts/bundle_veg_data.R`; no size-plausibility screen; `keepInView = TRUE` in `R/map_picker.R` |
 | Water Chemistry | a zero-argument custom-message handler (`kickMaps`) kills the app's JavaScript; the Fe/Mn 2012 to 2016 unit error passes a plausibility gate whose ceiling the bad rows set |
 | Breeding Birds | a blank `clusterSize` read as zero (it is one bird left unrecorded at source) |
-| Atlas | a layer test in `scripts/build_cascade.R` that is always TRUE; a direct push to `master` with no coverage-regression gate (both in open PRs) |
+| Atlas | a layer test in `scripts/build_cascade.R` that is always TRUE; no coverage-regression gate before staging yet (both in open PRs; the direct push to `master` ended on 2026-10-22) |
 
 ---
 
@@ -842,9 +842,9 @@ shallow-clone heads or copy unverified sibling directories. Allowlist canonical 
 exact sibling commits, build in a no-write producer job, pass only the allowlisted artifact family plus a
 SHA-256 receipt to a fresh validator, fail closed when site-year coverage drops against the committed
 baseline, and let the restricted publisher push the Atlas's review branch for a person to merge. Inputs:
-every product the suite registry marks as an Atlas input (today including Mosquito). Until its migration
-lands, the Atlas is the one workflow that still pushes `master` directly; TG-Data-Apps `neonize.md` "The
-refresh contract" tracks it. Its rebuild runs in the second week, after the products settle.
+every product the suite registry marks as an Atlas input (today including Mosquito). Since 2026-10-22 its
+publisher pushes the fixed review branch `automation/atlas-data-refresh`, and `publish` defaults to false (a
+rebuild that still runs every gate). Its rebuild runs in the second week, after the products settle.
 
 ---
 
