@@ -921,6 +921,7 @@ oracle_veg_event_bundle <- function(b, site) {
       if (is.na(st) || !st %in% states)
         stop(sprintf("%s event oracle met an unknown support state", site), call. = FALSE)
       n_rows <- sum(counts_row[rows_of[[i]]])
+      n_form_rows <- sum(trees$growthForm[rows_of[[i]]] %in% info$forms)
       absent_here <- if (ch == "tree") says_absent(plots$treesPresent[i]) else
         says_absent(plots$shrubsPresent[i]) && says_absent(plots$treesPresent[i])
       if (st == "sampled_with_records" || st == "held_metric_invalid") {
@@ -931,7 +932,7 @@ oracle_veg_event_bundle <- function(b, site) {
         if (!is.na(rs) && rs %in% c("samplingImpractical is missing", "dataCollected is missing")) {
           if (!token(plots$dataCollected[i]) %in% c("", "allgrowthforms")) o <- "excl_vintage_partial"
           else if (as.integer(plots[[info$conflict]][i]) > 0L) o <- "excl_vintage_identity_conflict"
-          else if (as.integer(plots[[info$records]][i]) > 0L && says_absent(plots[[info$own]][i]))
+          else if (as.integer(plots[[info$records]][i]) > 0L && absent_here)
             o <- "excl_vintage_presence_conflict"
           else if (n_rows > 0L) o <- "admit"
           else if (absent_here) o <- "absence"
@@ -939,7 +940,7 @@ oracle_veg_event_bundle <- function(b, site) {
         } else if (!is.na(rs) && startsWith(rs, "dataCollected=")) {
           o <- "excl_partial_hold"
         } else if (identical(rs, "no records and presence does not establish sampled absence")) {
-          o <- if (n_rows > 0L) "admit" else "excl_no_records_unknown_presence"
+          o <- if (n_form_rows > 0L) "admit" else "excl_no_records_unknown_presence"
         } else stop(sprintf("%s event oracle met an unknown hold reason", site), call. = FALSE)
       } else {
         o <- paste0("excl_", st)
@@ -1124,6 +1125,64 @@ check(isTRUE(all.equal(v2_oracle$expected_ba, v2_expected_ba, tolerance = 1e-14)
         v2_oracle$expected_later_nonlogistical_hold_plots == 1L &&
         identical(v2_oracle$expected_excluded_events, v2_audit$excluded_events),
       "test-owned vegetation event oracle reproduces the fixture's hand arithmetic")
+
+# Referee D1 and D2 (cedar, 2026-10-22). A second ABBY-shaped v2 fixture:
+#   ABBY_010: pre-2020 vintage event with shrubsPresent N but treesPresent Y and a
+#     sapling (bsd 2) plus a small tree (bsd 3). Saplings and small trees are tree
+#     juveniles, so the shrub channel is not in presence conflict (D1): admitted.
+#   ABBY_011: the same with both presence fields N: presence conflict in both channels.
+#   ABBY_012: 2016 sampled (shrub S12 bsd 5, tree T12 d 20); 2023 no-records event
+#     whose only row is status-only (growthForm NA) for S12. Status-only rows do not
+#     admit a no-records event (D2), so the shrub channel falls back to 2016.
+#   ABBY_013: no-records event with one small tree row (bsd 2): admitted in both channels.
+d12_no_records <- "no records and presence does not establish sampled absence"
+d12_plots <- rbind(
+  v2_event("ABBY_010", "vst_ABBY_2017", "2017-06-01", "held_opportunity_unknown", v2_vintage,
+           treesPresent = "Y", shrubsPresent = "N", records = 2L),
+  v2_event("ABBY_011", "vst_ABBY_2017", "2017-06-01", "held_opportunity_unknown", v2_vintage,
+           treesPresent = "N", shrubsPresent = "N", records = 1L),
+  v2_event("ABBY_012", "vst_ABBY_2016", "2016-06-01", "sampled_with_records", "sampled", records = 2L),
+  v2_event("ABBY_012", "vst_ABBY_2023", "2023-06-01", "held_opportunity_unknown", d12_no_records,
+           records = 0L),
+  v2_event("ABBY_013", "vst_ABBY_2023", "2023-06-01", "held_opportunity_unknown", d12_no_records,
+           records = 0L))
+d12_trees <- rbind(
+  v2_tree("ABBY_010", "vst_ABBY_2017", "P10", "2017-06-01", NA, growthForm = "sapling", bsd = 2),
+  v2_tree("ABBY_010", "vst_ABBY_2017", "Q10", "2017-06-01", NA, growthForm = "small tree", bsd = 3),
+  v2_tree("ABBY_011", "vst_ABBY_2017", "P11", "2017-06-01", NA, growthForm = "sapling", bsd = 2),
+  v2_tree("ABBY_012", "vst_ABBY_2016", "S12", "2016-06-01", NA, growthForm = "single shrub", bsd = 5),
+  v2_tree("ABBY_012", "vst_ABBY_2016", "T12", "2016-06-01", 20),
+  v2_tree("ABBY_012", "vst_ABBY_2023", "S12", "2023-06-01", NA, live = FALSE, growthForm = NA),
+  v2_tree("ABBY_013", "vst_ABBY_2023", "Q13", "2023-06-01", NA, growthForm = "small tree", bsd = 2))
+d12_bundle <- list(trees = d12_trees, plots = d12_plots, contract = v2_contract)
+# Hand arithmetic. Shrub component / pi: ABBY_010 (2, 3) 0.000325 + ABBY_012 2016
+# (5) 0.000625 + ABBY_013 (2) 0.0001 = 0.00105 m2 over three 400 m2 plots (0.12 ha).
+# Tree component: T12 (20) 0.01 / pi m2 over ABBY_012 (0.04 ha), so the site is forest.
+d12_expected_shrub <- pi * 0.00105 / 0.12
+d12_expected_tree <- pi * 0.01 / 0.04
+d12_site <- cascade_veg_event_site(d12_trees, d12_plots, "ABBY")
+d12_oracle <- oracle_veg_event_bundle(d12_bundle, "ABBY")
+d12_shrub_sel <- cascade_veg_event_selection(d12_plots, d12_trees, "shrub", "ABBY")
+check(identical(cascade_veg_event_disposition(d12_plots, d12_trees, "shrub", "ABBY"),
+                c("admit", "excl_vintage_presence_conflict", "admit",
+                  "excl_no_records_unknown_presence", "admit")) &&
+        identical(cascade_veg_event_disposition(d12_plots, d12_trees, "tree", "ABBY"),
+                  c("admit", "excl_vintage_presence_conflict", "admit",
+                    "excl_no_records_unknown_presence", "admit")) &&
+        identical(d12_shrub_sel$selected$eventID[d12_shrub_sel$selected$plotID == "ABBY_012"],
+                  "vst_ABBY_2016"),
+      "vegetation v2 shrub presence conflict reads both presence fields and status-only rows do not admit a no-records event")
+check(identical(d12_site$type, "forest") &&
+        isTRUE(all.equal(d12_site$structure$shrub_ba_ha, d12_expected_shrub, tolerance = 1e-14)) &&
+        isTRUE(all.equal(d12_site$structure$tree_ba_ha, d12_expected_tree, tolerance = 1e-14)) &&
+        d12_site$structure$shrub_n_plots == 3L && d12_site$structure$tree_n_plots == 1L &&
+        isTRUE(all.equal(d12_oracle$expected_shrub_class_ba_ha, d12_expected_shrub, tolerance = 1e-14)) &&
+        isTRUE(all.equal(d12_oracle$expected_tree_class_ba_ha, d12_expected_tree, tolerance = 1e-14)) &&
+        d12_oracle$expected_shrub_class_plots == 3L &&
+        identical(d12_oracle$expected_excluded_events,
+                  "excl_no_records_unknown_presence=1;excl_vintage_presence_conflict=1") &&
+        identical(d12_oracle$expected_excluded_events, d12_site$audit$excluded_events),
+      "vegetation v2 D1/D2 fixture: adapter and test-owned oracle match hand arithmetic")
 
 adapter_source <- paste(readLines("R/source_adapters.R", warn = FALSE), collapse = "\n")
 build_source <- paste(readLines("scripts/build_cascade.R", warn = FALSE), collapse = "\n")

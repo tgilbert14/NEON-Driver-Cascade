@@ -802,15 +802,18 @@ cascade_veg_event_dates <- function(plots, trees, label) {
 }
 
 # Rows of each plot event attributable to a channel: a row whose growth form is
-# in the channel's forms, or a status-only row (growthForm NA) whose individual
-# appears in that channel's forms anywhere at the same plot.
-cascade_veg_channel_row_counts <- function(plots, trees, spec) {
+# in the channel's forms, or (when status_only is TRUE) a status-only row
+# (growthForm NA) whose individual appears in that channel's forms anywhere at
+# the same plot.
+cascade_veg_channel_row_counts <- function(plots, trees, spec, status_only = TRUE) {
   plot_key <- cascade_veg_event_key(plots$plotID, plots$eventID)
   if (!nrow(trees)) return(integer(length(plot_key)))
   plant <- paste(as.character(trees$plotID), as.character(trees$individualID), sep = "\r")
   in_forms <- trees$growthForm %in% spec$forms
   known <- unique(plant[in_forms])
-  attributable <- in_forms | (is.na(trees$growthForm) & plant %in% known)
+  attributable <- in_forms
+  if (isTRUE(status_only))
+    attributable <- attributable | (is.na(trees$growthForm) & plant %in% known)
   counts <- table(cascade_veg_event_key(trees$plotID, trees$eventID)[attributable])
   out <- as.integer(counts[plot_key])
   out[is.na(out)] <- 0L
@@ -838,10 +841,17 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
                  ch$conflict), call. = FALSE)
   collected <- cascade_veg_token(plots$dataCollected)
   trees_absent <- cascade_veg_token_absent(cascade_veg_token(plots$treesPresent))
+  # Saplings and small trees are tree juveniles whose presence treesPresent
+  # records, so the shrub channel reads absence only when shrubsPresent and
+  # treesPresent both say absent (referee D1); the presence-conflict gate below
+  # uses the same joint rule.
   presence_absent <- if (identical(channel, "tree")) trees_absent else
     cascade_veg_token_absent(cascade_veg_token(plots$shrubsPresent)) & trees_absent
-  own_absent <- cascade_veg_token_absent(cascade_veg_token(plots[[ch$presence]]))
   channel_rows <- cascade_veg_channel_row_counts(plots, trees, ch$spec)
+  # A no-records event is admitted only on rows of the channel's own growth
+  # forms; status-only rows (growthForm NA) alone do not show the channel was
+  # surveyed (referee D2). The vintage branch keeps the status-only attribution.
+  form_rows <- cascade_veg_channel_row_counts(plots, trees, ch$spec, status_only = FALSE)
   area <- suppressWarnings(as.numeric(plots[[ch$area]]))
 
   out <- paste0("excl_", state)
@@ -860,11 +870,11 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
          call. = FALSE)
   vintage_outcome <- ifelse(!collected %in% c("", "allgrowthforms"), "excl_vintage_partial",
     ifelse(conflict > 0L, "excl_vintage_identity_conflict",
-    ifelse(records > 0L & own_absent, "excl_vintage_presence_conflict",
+    ifelse(records > 0L & presence_absent, "excl_vintage_presence_conflict",
     ifelse(channel_rows > 0L, "admit",
     ifelse(presence_absent, "absence", "excl_vintage_no_channel_rows")))))
   out[vintage] <- vintage_outcome[vintage]
-  out[no_records] <- ifelse(channel_rows[no_records] > 0L, "admit",
+  out[no_records] <- ifelse(form_rows[no_records] > 0L, "admit",
                             "excl_no_records_unknown_presence")
   out[partial] <- "excl_partial_hold"
   selectable <- out %in% c("admit", "absence")
