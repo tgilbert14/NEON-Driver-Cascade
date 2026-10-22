@@ -836,13 +836,105 @@ ann_beetle <- function(site) {                    # consumer: pitfall ACTIVITY-D
     select(site, year, beetle_activity, beetle_richness,
            beetle_catch_event_trap_nights, beetle_total_catch)
 }
-ann_veg <- function(site) {                       # producer standing stock -- a slow ~5-year state,
+# Event audit columns persisted for both vegetation bundle shapes (rulings R6, M1).
+# The legacy shape has no plot events, so its counts are NA and its contract is
+# named explicitly; the v2 shape fills every column from the event selection.
+veg_legacy_audit <- function() data.frame(
+  veg_source_contract = CASCADE_VEG_LEGACY_CONTRACT,
+  veg_event_basis = "none: the legacy source has one row per plot and no plot events",
+  veg_admitted_states = NA_character_, veg_plot_events = NA_integer_,
+  veg_admitted_events = NA_integer_, veg_absence_events = NA_integer_,
+  veg_excluded_events = NA_character_, veg_selected_absence_plots = NA_integer_,
+  veg_selected_vintage_plots = NA_integer_, veg_later_held_plots = NA_integer_,
+  veg_no_admissible_event_plots = NA_integer_, veg_event_year_min = NA_real_,
+  veg_event_year_median = NA_real_, veg_event_year_max = NA_real_,
+  veg_later_nonlogistical_hold_plots = NA_integer_, stringsAsFactors = FALSE)
+veg_event_audit <- function(a) data.frame(
+  veg_source_contract = CASCADE_VEG_V2_CONTRACT_ID,
+  veg_event_basis = CASCADE_VEG_EVENT_RULE,
+  veg_admitted_states = CASCADE_VEG_EVENT_ADMITTED_STATES,
+  veg_plot_events = as.integer(a$plot_events),
+  veg_admitted_events = as.integer(a$admitted_events),
+  veg_absence_events = as.integer(a$absence_events),
+  veg_excluded_events = as.character(a$excluded_events),
+  veg_selected_absence_plots = as.integer(a$selected_absence_plots),
+  veg_selected_vintage_plots = as.integer(a$selected_vintage_plots),
+  veg_later_held_plots = as.integer(a$later_held_plots),
+  veg_no_admissible_event_plots = as.integer(a$no_admissible_event_plots),
+  veg_event_year_min = as.numeric(a$event_year_min),
+  veg_event_year_median = as.numeric(a$event_year_median),
+  veg_event_year_max = as.numeric(a$event_year_max),
+  veg_later_nonlogistical_hold_plots = as.integer(a$later_nonlogistical_hold_plots),
+  stringsAsFactors = FALSE)
+VEG_AUDIT_NUMERIC_COLS <- c(
+  "veg_plot_events", "veg_admitted_events", "veg_absence_events",
+  "veg_selected_absence_plots", "veg_selected_vintage_plots",
+  "veg_later_held_plots", "veg_no_admissible_event_plots",
+  "veg_event_year_min", "veg_event_year_median", "veg_event_year_max",
+  "veg_later_nonlogistical_hold_plots")
+VEG_AUDIT_CHARACTER_COLS <- c(
+  "veg_source_contract", "veg_event_basis", "veg_admitted_states",
+  "veg_excluded_events")
+# Plot-event (contract v2) path: one selected event per plot and channel, each
+# stem over its own event's channel area (rulings R1 to R4, R6).
+ann_veg_events <- function(site, b) {
+  trees <- cascade_bundle_table(b, "trees", "vegetation", site)
+  plots <- cascade_bundle_table(b, "plots", "vegetation", site)
+  cascade_require_columns(trees, CASCADE_VEG_V2_TREES_REQUIRED,
+                          sprintf("%s vegetation tree table", site))
+  cascade_require_columns(plots, CASCADE_VEG_V2_PLOTS_REQUIRED,
+                          sprintf("%s vegetation plot table", site))
+  if (!nrow(trees)) return(NULL)
+  r <- cascade_veg_event_site(trees, plots, site)
+  if (!isTRUE(r$supported)) {
+    # Ruling R3: a record-bearing plot whose every event lacks its opportunity
+    # source leaves the site unsupported, exactly as the legacy unmatched rule.
+    return(cbind(data.frame(
+      site = site, veg_ba_ha = NA_real_, veg_ba_se = NA_real_,
+      veg_type = NA_character_, veg_n_plots = 0L,
+      veg_record_plots = as.integer(r$record_plots),
+      veg_matched_record_plots = as.integer(r$matched_record_plots),
+      veg_area_eligible_plots = 0L,
+      veg_unmatched_record_plots = as.integer(r$unmatched_record_plots),
+      veg_unmatched_record_rows = as.integer(r$unmatched_record_rows),
+      veg_class_tree_ba_ha = NA_real_, veg_class_shrub_ba_ha = NA_real_,
+      veg_class_tree_plots = NA_integer_, veg_class_shrub_plots = NA_integer_,
+      veg_stand_basis = CASCADE_VEG_EVENT_STAND_BASIS,
+      veg_class_basis = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
+      veg_design_status = "unsupported-unmatched-plots",
+      veg_design_basis = CASCADE_VEG_EVENT_DESIGN_BASIS,
+      stringsAsFactors = FALSE), veg_event_audit(r$audit)))
+  }
+  ss <- r$stand
+  if (is.null(ss)) return(NULL)
+  cbind(data.frame(
+    site = site, veg_ba_ha = ss$ba_ha, veg_ba_se = ss$ba_se,
+    veg_type = r$type, veg_n_plots = ss$n_plots,
+    veg_record_plots = as.integer(r$record_plots),
+    veg_matched_record_plots = as.integer(r$matched_record_plots),
+    veg_area_eligible_plots = as.integer(r$audit$area_eligible_plots),
+    veg_unmatched_record_plots = as.integer(r$unmatched_record_plots),
+    veg_unmatched_record_rows = as.integer(r$unmatched_record_rows),
+    veg_class_tree_ba_ha = r$structure$tree_ba_ha,
+    veg_class_shrub_ba_ha = r$structure$shrub_ba_ha,
+    veg_class_tree_plots = r$structure$tree_n_plots,
+    veg_class_shrub_plots = r$structure$shrub_n_plots,
+    veg_stand_basis = CASCADE_VEG_EVENT_STAND_BASIS,
+    veg_class_basis = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
+    veg_design_status = "supported",
+    veg_design_basis = CASCADE_VEG_EVENT_DESIGN_BASIS,
+    stringsAsFactors = FALSE), veg_event_audit(r$audit))
+}
+ann_veg <- function(site, b, shape) {             # producer standing stock -- a slow ~5-year state,
   # NOT an annual link (its remeasurement cadence would manufacture pseudo-resolution). Live basal
   # area m2/ha from the Veg-Structure sibling: directly measured, allometry-free, and computable at
   # arid systems via basal stem diameter. It is useful structural context, not a substitute for
   # productivity: a stock, not a flux, so it enters as per-site context, not a ladder line.
-  b <- rd(file.path(APP$veg, "data/sites", paste0(site, ".rds")))
   if (is.null(b)) return(NULL)
+  if (identical(shape, "v2")) return(ann_veg_events(site, b))
+  if (!identical(shape, "legacy"))
+    stop(sprintf("%s vegetation bundle has unresolved shape '%s'", site, format(shape)),
+         call. = FALSE)
   trees <- cascade_bundle_table(b, "trees", "vegetation", site)
   plots <- cascade_bundle_table(b, "plots", "vegetation", site)
   cascade_require_columns(trees, CASCADE_VEG_TREES_REQUIRED,
@@ -858,7 +950,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
     # rows. That is an unavailable per-hectare estimand, not zero vegetation and
     # not permission to borrow area from other plots. Keep the site-level NA and
     # the complete support audit so the reason remains machine-readable.
-    return(data.frame(
+    return(cbind(data.frame(
       site = site, veg_ba_ha = NA_real_, veg_ba_se = NA_real_,
       veg_type = NA_character_, veg_n_plots = 0L,
       veg_record_plots = support$n_record_plots,
@@ -872,7 +964,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
       veg_class_basis = CASCADE_VEG_CLASSIFICATION_BASIS,
       veg_design_status = "unsupported-unmatched-plots",
       veg_design_basis = support$basis,
-      stringsAsFactors = FALSE))
+      stringsAsFactors = FALSE), veg_legacy_audit()))
   }
   snap <- support$snapshot
   plots <- support$plots
@@ -883,7 +975,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
   if (!identical(as.integer(ss$n_record_plots), support$n_record_plots))
     stop(sprintf("%s vegetation support audit disagrees with stand records", site),
          call. = FALSE)
-  data.frame(
+  cbind(data.frame(
     site = site, veg_ba_ha = ss$ba_ha, veg_ba_se = ss$ba_se,
     veg_type = spec$type, veg_n_plots = ss$n_plots,
     veg_record_plots = ss$n_record_plots,
@@ -897,7 +989,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
     veg_class_shrub_plots = structure$shrub_n_plots,
     veg_stand_basis = ss$basis, veg_class_basis = structure$basis,
     veg_design_status = "supported", veg_design_basis = support$basis,
-    stringsAsFactors = FALSE)
+    stringsAsFactors = FALSE), veg_legacy_audit())
 }
 # ---- Driver site scope: the reviewed 46-site universe, fixed by decision ----
 # Siblings may add sites upstream (Mosquito added PUUM, Hawaii, in 2026-08). A new
@@ -965,7 +1057,7 @@ signals <- tibble::tribble(
   "temp",          "Mean temperature",             "climate",    "°C",         "warmer",        TRUE,
   "precip_winter", "Winter rain (Oct–Mar)",        "climate",    "mm",         "wetter winter", FALSE,
   "precip_monsoon","Monsoon rain (Jul–Sep)",       "climate",    "mm",         "wetter monsoon",FALSE,
-  "temp_spring",   "Spring temperature",           "climate",    "°C",         "warmer spring", FALSE,
+  "temp_spring",   "March to May temperature",     "climate",    "°C",         "warmer Mar-May", FALSE,
   "greenup_doy",   "Green-up onset index",         "phenology",  "DOY-anchored index","later", TRUE,
   "fruiting_pct",  "Opportunistic observed-month fruiting peak",                "producer",   "% plants",   "more fruit",    TRUE,
   "plant_richness","Plant richness",               "producer",   "species",    "more diverse",  TRUE,
@@ -995,7 +1087,7 @@ signals <- tibble::tribble(
 priors <- tibble::tribble(
   ~from,            ~to,              ~sign, ~lag, ~conf,      ~expected_class,       ~note,
   "temp",           "greenup_doy",     -1L, 0L, "strong",   "all",                 "Warmer conditions are literature-motivated to accompany earlier leaf-out. This row pairs complete annual mean temperature with a left-censor-screened, composition-adjusted green-up timing index. Excluding already-active-at-first-visit records is not interval-censored modeling and can select contributors by visit timing/cadence. Annual temperature is a contemporaneous broad proxy—not an antecedent spring exposure or trigger—so interpret the raw-level direction together with detrended, consecutive-year-change, estimator, and NEON-domain sensitivities.",
-  "temp_spring",    "greenup_doy",     -1L, 0L, "strong",   "all",                 "Warmer spring conditions are literature-motivated to accompany earlier leaf-out. This row uses complete March–May mean temperature, but many green-up observations occur before May, so the window can include post-outcome weather. It is a contemporaneous proxy sensitivity, not a direct trigger test; compare raw-level, detrended, and consecutive-year-change directions.",
+  "temp_spring",    "greenup_doy",     -1L, 0L, "strong",   "all",                 "Warmer spring conditions are literature-motivated to accompany earlier leaf-out. This row uses the complete March to May mean temperature, but at every vote-eligible site the median green-up index falls before May 1 (2026-10 build: 18 sites, site medians day 41 to 119, 134 of 135 site-years before May 1), so the window always includes weather after green-up. It is a contemporaneous proxy sensitivity, not a test of the trigger; compare raw-level, detrended, and consecutive-year-change directions.",
   "precip",         "plant_richness",  +1L, 0L, "weak",     "none",                "More rain can mean more plant growth, but raw observed richness is dominated by changing sampled plots/scales and is composition, not productivity. Computed and shown as context only: expected_class='none' excludes it from every site tally and pooled inference until richness is coverage-standardized. plant_n_plots and plant_n_sampling_units expose the effort behind each year.",
   "precip",         "mammal_cpue",     +1L, 1L, "moderate", "none",                "Rain–rodent dynamics can be delayed, nonlinear, and guild-specific; the annual catch-per-effort index is not a population count and no annual seed-resource mediator is available here. The +1 one-year pairing is retained as literature-motivated context only, excluded from site tallies and pooled inference.",
   "precip_winter",  "plant_richness",  +1L, 0L, "moderate", "none",                "Cool-season rain can germinate desert spring forbs, but the available raw richness changes strongly with sampled plots/scales. Computed and shown as context only: expected_class='none' excludes this effort-confounded proxy from site tallies and pooled inference until richness is coverage-standardized.",
@@ -1042,16 +1134,27 @@ site_meta <- data.frame(
   biome_class_method = BIOME_CLASS_METHOD,
   stringsAsFactors = FALSE)
 # producer standing stock (live basal area m2/ha) — per-site context, not an annual signal
-veg <- do.call(rbind, lapply(ALL_SITES, ann_veg))
+# One bundle set resolves to one shape (legacy one-row-per-plot or contract v2);
+# an unknown shape or a mixed set stops before any value is computed.
+veg_bundles <- setNames(lapply(ALL_SITES, function(site)
+  rd(file.path(APP$veg, "data/sites", paste0(site, ".rds")))), ALL_SITES)
+VEG_SHAPE <- cascade_veg_resolve_shape(setNames(lapply(ALL_SITES, function(site)
+  if (is.null(veg_bundles[[site]])) NULL else
+    cascade_veg_bundle_shape(veg_bundles[[site]], site)), ALL_SITES))
+cat("\nvegetation bundle shape:", VEG_SHAPE, "\n")
+veg <- do.call(rbind, lapply(ALL_SITES, function(site)
+  ann_veg(site, veg_bundles[[site]], VEG_SHAPE)))
+rm(veg_bundles)
 if (!is.null(veg) && nrow(veg)) site_meta <- dplyr::left_join(site_meta, veg, by = "site")
 for (col in c("veg_ba_ha", "veg_ba_se", "veg_n_plots", "veg_record_plots",
               "veg_matched_record_plots", "veg_area_eligible_plots",
               "veg_unmatched_record_plots", "veg_unmatched_record_rows",
               "veg_class_tree_ba_ha", "veg_class_shrub_ba_ha",
-              "veg_class_tree_plots", "veg_class_shrub_plots"))
+              "veg_class_tree_plots", "veg_class_shrub_plots",
+              VEG_AUDIT_NUMERIC_COLS))
   if (!col %in% names(site_meta)) site_meta[[col]] <- NA_real_
 for (col in c("veg_type", "veg_stand_basis", "veg_class_basis",
-              "veg_design_status", "veg_design_basis"))
+              "veg_design_status", "veg_design_basis", VEG_AUDIT_CHARACTER_COLS))
   if (!col %in% names(site_meta)) site_meta[[col]] <- NA_character_
 cat("\nveg standing stock computed for", sum(is.finite(site_meta$veg_ba_ha)), "of", nrow(site_meta), "sites\n")
 
@@ -1096,12 +1199,12 @@ assert_local_build_inputs_unchanged()
 # Columns: key,label,layer,unit,higher_is,na_meaning,n_gate. na_meaning documents WHY
 # a cell is NA (the QC gate that produced it); n_gate is the per-signal coverage gate.
 na_meaning <- c(
-  precip          = "NA unless all 12 distinct calendar months have valid precipitation; partial-year totals are never summed.",
+  precip          = "NA unless all 12 distinct calendar months have valid precipitation; partial-year totals are never summed. NA at sites with no precipitation source (not sampled).",
   temp            = "NA unless all 12 distinct calendar months have valid temperature, or when the within-site MAD outlier filter NA'd a corrupted-sensor year.",
   precip_winter   = "NA unless all 6 Oct-Mar months are present.",
   precip_monsoon  = "NA when any of the 3 Jul-Sep months is missing.",
-  temp_spring     = "NA unless all 3 Mar-May months are present, or when within-site MAD outlier QC flags an implausible spring-temperature year.",
-  greenup_doy     = paste("DOY-anchored composition-adjusted onset index; NA unless >=2 recurrent species contribute, each with >=3 left-censor-screened individuals (therefore >=6 contributors). Exclusion of left-censored records is not interval-censored modeling and can select contributors by visit timing/cadence. It is not an observed pooled-median onset date.", GREENUP_INDEX_NOTE),
+  temp_spring     = "NA unless all 3 Mar-May months are present, or when within-site MAD outlier QC flags an implausible March to May temperature year.",
+  greenup_doy     = paste("DOY-anchored composition-adjusted onset index; NA unless >=2 recurrent species contribute, each with >=3 left-censor-screened individuals (therefore >=6 contributors). Exclusion of left-censored records is not interval-censored modeling and can select contributors by visit timing/cadence. It is not an observed pooled-median onset date. NEON phenology sampling changed during the record (DP1.10055.001 change log): 2020-11-19, COVID-19 reduced sampling from 2020-03-23 to 2021-12-31; 2024-08-09, gradient sites reduced to one observation a week; 2026-01-28, phenology observations now at core sites only. Fewer visits widen onset intervals and can leave a year NA.", GREENUP_INDEX_NOTE),
   fruiting_pct    = "Opportunistic maximum among observed months with >=5 individuals, not a fixed-season annual estimate. NA when no month qualifies; opportunity varies and is exposed in fruiting_n_eligible_months.",
   plant_richness  = "NA when the plant-diversity bundle has no plot data that year.",
   plant_q1        = "Effective species (exp-Shannon Hill number); NA when fewer than 2 cover-scored species that year.",
@@ -1140,7 +1243,7 @@ support_codebook <- tibble::tribble(
   "precip_n_months", "Valid annual-precipitation months", "climate", "months", "more coverage", "NA when no climate rows exist for the site-year; otherwise counts distinct valid calendar months after range QC.", "0-12; precip requires 12",
   "precip_winter_n_months", "Valid winter-rain months", "climate", "months", "more coverage", "NA when no Oct-Mar water-year rows exist; otherwise counts valid months in the six-month window.", "0-6; precip_winter requires 6",
   "precip_monsoon_n_months", "Valid monsoon-rain months", "climate", "months", "more coverage", "NA when no Jul-Sep rows exist; otherwise counts valid months in the three-month window.", "0-3; precip_monsoon requires 3",
-  "temp_spring_n_months", "Valid spring-temperature months", "climate", "months", "more coverage", "NA when no Mar-May rows exist; otherwise counts valid months in the three-month window.", "0-3; temp_spring requires 3",
+  "temp_spring_n_months", "Valid March to May temperature months", "climate", "months", "more coverage", "NA when no Mar-May rows exist; otherwise counts valid months in the three-month window.", "0-3; temp_spring requires 3",
   "fruiting_n_eligible_months", "Eligible observed fruiting months", "producer", "months", "more opportunity", "Zero when monthly rows exist but none has finite fruiting status supported by >=5 individuals; counts observed opportunities, not fixed seasonal coverage.", "0-12 audit; fruiting remains context-only",
   "fruiting_peak_n_individuals", "Individuals behind observed-month fruiting peak", "producer", "individuals", "more support", "NA when no fruiting month qualifies; otherwise the minimum observed-individual count among months tied at the annual observed maximum.", ">=5 by construction; audit only",
   "greenup_n_onsets", "Candidate green-up individual-years", "phenology", "individuals", "more source support", "NA when no finite earliest green-up record exists that year. Includes left-censored first-visit-already-yes records before exclusions.", "audit total; must equal censored + taxon-excluded + contributors",
@@ -1164,7 +1267,7 @@ support_codebook <- tibble::tribble(
   "bird_observed_point_visits", "Observed bird point-count occasions", "consumer", "point-visits", "more observed effort", "NA when the catch-only observation table has no detections that year; zero-detection visits are unavailable.", ">0 required for bird_index",
   "bird_nonflyover_birds", "Non-flyover bird detections", "consumer", "birds", "more detections", "NA when no observation rows exist that year; cluster sizes exclude detectionMethod=flyover.", "numerator of bird_index",
   "bird_flyover_birds", "Excluded flyover detections", "consumer", "birds", "more excluded detections", "NA when no observation rows exist that year; retained for audit but excluded from index and richness.", "audit only",
-  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", cascade_mosq_effort_note(), ">0 required for mosq_activity",
+  "mosq_trap_nights", "Mosquito CO2-trap effort", "consumer", "trap-nights", "more effort", cascade_mosq_effort_text(), ">0 required for mosq_activity",
   "mosq_total_catch", "Whole-trap mosquito catch", "consumer", "mosquitoes (estimated)", "more catch", "Zero when positive recorded effort has no target catch; NA when neither effort nor catch is available.", "numerator of mosq_activity",
   "beetle_catch_event_trap_nights", "Ground-beetle catch-event effort", "consumer", "trap-nights", "more recorded effort", "NA when no catch-bearing event with effort exists; source bundles omit zero-catch events.", ">0 required for beetle_activity; incomplete denominator",
   "beetle_total_catch", "Ground-beetle catch", "consumer", "individuals", "more catch", "NA when the catch-only beetle bundle has no positive catch that year.", "numerator of beetle_activity")
@@ -1212,6 +1315,20 @@ product_coverage <- rbind(product_coverage, data.frame(
   n_nonmissing = sum(is.finite(site_meta$veg_ba_ha)),
   n_sites = sum(is.finite(site_meta$veg_ba_ha)), stringsAsFactors = FALSE))
 
+# Per-product release basis (audit F16): what each sibling bundle records about
+# its NEON release, DOI and schema, and the contributed collection window. Read
+# from the immutable snapshot (APP) over the in-scope sites only. The
+# provenance columns above stay first and unchanged for the source lock.
+release_by_product <- do.call(rbind, lapply(names(APP), function(product)
+  cbind(data.frame(product = product, stringsAsFactors = FALSE),
+        cascade_product_release(
+          lapply(file.path(APP[[product]], "data", "sites", paste0(ALL_SITES, ".rds")), rd),
+          MIN_YEAR, LAST_COMPLETE_YEAR))))
+source_products_meta <- cbind(
+  source_products,
+  release_by_product[match(source_products$product, release_by_product$product),
+                     c("release", "doi", "schema", "data_through", "provisional_from")])
+
 build_toolchain <- data.frame(
   component = c("R", "dplyr", "tibble"),
   version = c(as.character(getRversion()),
@@ -1244,7 +1361,7 @@ meta <- list(
   spatial_sensitivity_version = SPATIAL_SENSITIVITY_VERSION,
   spatial_sensitivity_note = SPATIAL_SENSITIVITY_NOTE,
   source_snapshot_method = source_snapshot$method,
-  source_products = source_products,
+  source_products = source_products_meta,
   source_inputs = source_inputs,
   local_build_inputs = LOCAL_BUILD_INPUTS,
   build_toolchain = build_toolchain,
@@ -1254,15 +1371,28 @@ meta <- list(
     biome_class = BIOME_CLASS_METHOD,
     spatial_sensitivity = SPATIAL_SENSITIVITY_NOTE,
     fruiting_pct = "Opportunistic maximum across observed months with >=5 individuals, not a fixed-season annual estimate. fruiting_n_eligible_months and fruiting_peak_n_individuals expose unequal opportunity/support; context-only and excluded from pooled inference.",
-    veg_ba_ha = CASCADE_VEG_STAND_BASIS,
-    veg_type = CASCADE_VEG_CLASSIFICATION_BASIS,
-    veg_design_support = CASCADE_VEG_DESIGN_BASIS,
+    veg_ba_ha = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_STAND_BASIS else
+      CASCADE_VEG_STAND_BASIS,
+    veg_type = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_CLASSIFICATION_BASIS else
+      CASCADE_VEG_CLASSIFICATION_BASIS,
+    veg_design_support = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_DESIGN_BASIS else
+      CASCADE_VEG_DESIGN_BASIS,
+    veg_later_nonlogistical_hold_plots = CASCADE_VEG_NONLOGISTICAL_HOLD_BASIS,
     mammal_cpue = "Mammal effort resolves only exact A-J x 1-10 coordinates as physical trap events. Canonical status-4/5 multi-animal groups count one trap-night; two exact source-reviewed remark patterns document double traps and sum their two row weights. AX-JX, X1-X10, and XX are non-unique placeholders retained as row-level effort, which can overstate effort. Every other duplicated canonical event or coordinate token fails closed. Each nonblank tag row remains a capture, including repeated tags at distinct trap events.",
     bird_index = "Annual bird bundles lack a year-specific all-visits effort table. Denominator is observed pointkey x eventID occasions, so zero-detection visits are absent; flyovers are excluded.",
     beetle_activity = "Beetle site bundles contain catch rows only. Trap-night denominator covers unique catch-bearing plot-dates and omits zero-catch events.",
     greenup_doy = paste("Composition-adjusted DOY-anchored onset index: earliest individual-year green-up records that are left-censored are excluded; this screen is not interval-censored modeling and can select contributors by visit timing/cadence. Resolved species need >=3 individuals in >=3 years; the largest connected species-year panel is within-species centered and equal-species weighted; annual output needs >=2 species and therefore >=6 contributors. Annual median/p90/max last-no to first-yes widths expose contributor timing uncertainty. It is not an observed pooled-median onset date.", GREENUP_INDEX_NOTE),
     greenup_doy_additive = paste("Estimator-choice sensitivity using unweighted OLS species_onset ~ scientificName + factor(year) on the same connected eligible species-year cells, standardized over the full retained species x year grid. It shares the primary index's left-censor screen and its visit-timing/cadence selection caveat. Missing species-years are additive extrapolations. Neither the additive nor median-centered standardization is uniquely true; their differences expose sensitivity to the unbalanced observation panel.", GREENUP_INDEX_NOTE),
-    plant_richness = "Raw annual richness remains sensitive to sampled plots/scales; plant_n_plots and plant_n_sampling_units are persisted for audit."))
+    plant_richness = "Raw annual richness remains sensitive to sampled plots/scales; plant_n_plots and plant_n_sampling_units are persisted for audit.",
+    mosq_activity = cascade_mosq_effort_text(),
+    release_basis = paste0(
+      "Each source_products row records the NEON release its sibling bundle states (release, ",
+      "unrecorded when an in-scope bundle states none), the DOI and schema it states (NA when none), ",
+      "the latest collection month it contributes (data_through) and the first contributed month after ",
+      CASCADE_RELEASE_LATEST, " observational coverage ends in ", CASCADE_RELEASE_OS_THROUGH,
+      " (provisional_from). Months after that cannot be in ", CASCADE_RELEASE_LATEST,
+      ", so they are provisional and may change in the next release. A period prints as YYYY when the ",
+      "bundle carries only a year. The climate overlays are not covered by these rows.")))
 assert_local_build_inputs_unchanged()
 cascade_bundle <- cascade_normalize_artifact_text(list(
   annual = annual, signals = signals, priors = priors, codebook = codebook,
@@ -1274,7 +1404,7 @@ saveRDS(cascade_bundle, "data/cascade.rds")
 cat("\nannual rows:", nrow(annual), "| sites:", length(unique(annual$site)), "\n")
 covg <- annual %>% group_by(site) %>% summarise(
   yrs = dplyr::n(), greenup = sum(!is.na(greenup_doy)), plant = sum(!is.na(plant_richness)),
-  mammal = sum(!is.na(mammal_cpue)), bird = sum(!is.na(bird_index)), precip = sum(!is.na(precip)),
+  mammal = sum(!is.na(mammal_cpue)), bird = sum(!is.na(bird_index)), precip_n = sum(!is.na(precip)),
   layers = (any(!is.na(precip)|!is.na(temp))) + (any(!is.na(greenup_doy))) +
            (any(!is.na(plant_richness)|!is.na(fruiting_pct))) + (any(!is.na(mammal_cpue)|!is.na(bird_index))),
   .groups="drop") %>% arrange(desc(layers), desc(greenup+plant))

@@ -1,5 +1,5 @@
 # ===========================================================================
-# NEON Cross-Product Response Atlas — global.R
+# NEON Cross-Product Response Atlas, global.R
 # The capstone of the NEONize family: a cross-product response atlas of
 # direct weather-response associations, co-displayed by measurement layer.
 # assembled from seven sibling apps' bundles (mammals, birds, plants, veg,
@@ -135,7 +135,7 @@ if (length(missing_bundle_parts)) {
                paste(missing_bundle_parts, collapse = ", ")), call. = FALSE)
 }
 if (!identical(CASCADE$meta$schema_version %||% "<unstamped>", CASCADE_BUNDLE_SCHEMA_VERSION)) {
-  stop(sprintf("cascade.rds schema '%s' != code '%s' — run scripts/rebuild_all.R.",
+  stop(sprintf("cascade.rds schema '%s' != code '%s'; run scripts/rebuild_all.R.",
                CASCADE$meta$schema_version %||% "<unstamped>", CASCADE_BUNDLE_SCHEMA_VERSION), call. = FALSE)
 }
 if (!identical(CASCADE$meta$prior_family_version %||% "<unstamped>", PRIOR_FAMILY_VERSION) ||
@@ -277,7 +277,7 @@ if (!identical(CASCADE$meta$spatial_sensitivity_version %||% "<unstamped>", SPAT
 if (!is.null(CASCADE) && exists("TIER_RULE_VERSION")) {
   .bundle_rule <- CASCADE$meta$tier_rule %||% "<unstamped>"
   if (!identical(.bundle_rule, TIER_RULE_VERSION))
-    stop(sprintf("cascade.rds tier rule '%s' != code '%s' — run scripts/rebuild_all.R",
+    stop(sprintf("cascade.rds tier rule '%s' != code '%s'; run scripts/rebuild_all.R.",
                  .bundle_rule, TIER_RULE_VERSION), call. = FALSE)
 }
 ANNUAL <- CASCADE$annual
@@ -458,7 +458,7 @@ if (!file.exists(CASCADE_META_PATH)) {
 CASCADE_META <- tryCatch(readRDS(CASCADE_META_PATH), error = function(e) {
   stop(sprintf("Cannot read data/cascade_meta.rds: %s", conditionMessage(e)), call. = FALSE)
 })
-.expected_meta_inference_schema <- "cascade-meta-reml-knha-holm-prediction-v1"
+.expected_meta_inference_schema <- "cascade-meta-reml-knha-truncated-holm-prediction-v2"
 .expected_meta_family <- c("temp|greenup_doy", "temp_spring|greenup_doy")
 .meta_toolchain <- attr(CASCADE_META, "build_toolchain")
 .meta_local_inputs <- attr(CASCADE_META, "local_meta_inputs")
@@ -538,7 +538,7 @@ CASCADE_META <- tryCatch(readRDS(CASCADE_META_PATH), error = function(e) {
     length(r$p_one_sided_holm) == 1L && is.finite(r$p_one_sided_holm) &&
     r$p_one_sided_holm >= r$p_one_sided && r$p_one_sided_holm <= 1 &&
     identical(r$test_method,
-              "REML random-effects with Knapp-Hartung inference") &&
+              "REML random-effects with truncated Knapp-Hartung inference") &&
     length(r$inference_role) == 1L && nzchar(r$inference_role) &&
     length(r$I2) == 1L && is.finite(r$I2) && r$I2 >= 0 && r$I2 <= 100 &&
     length(r$tau2) == 1L && is.finite(r$tau2) && r$tau2 >= 0 &&
@@ -634,6 +634,14 @@ site_ba_se <- function(site) {
   r <- SITE_META[SITE_META$site == site, , drop = FALSE]
   if (nrow(r) && "veg_ba_se" %in% names(r) && is.finite(r$veg_ba_se[1])) r$veg_ba_se[1] else NA_real_
 }
+# The Vegetation sibling's plot-event contract. A bundle built from it carries
+# per-survey audit columns; a legacy bundle keeps the original wording.
+VEG_EVENT_CONTRACT_ID <- "NEON-VST-DP1.10098.001-v2"
+veg_rows_event_contract <- function(rows) {
+  is.data.frame(rows) && nrow(rows) > 0L && "veg_source_contract" %in% names(rows) &&
+    any(as.character(rows$veg_source_contract) %in% VEG_EVENT_CONTRACT_ID)
+}
+VEG_EVENT_SHAPED <- veg_rows_event_contract(SITE_META)
 # read the precomputed direct-pair rows for a site (no live recompute / permutations)
 site_links_cached <- function(site) {
   if (nrow(SUITE_LINKS) && "site" %in% names(SUITE_LINKS)) {
@@ -656,18 +664,26 @@ SITE_LAYERS <- vapply(ALL_SITES, site_layer_count, integer(1))
 RICH_SITES <- ALL_SITES[SITE_LAYERS >= 3]
 .has_phen <- function(s) unname(layers_present(site_annual(s), SIGNALS)["phenology"])
 DEFAULT_SITE <- {
-  # SRER opens the app whenever it is in the bundle: the seasonal-rain contrast is
-  # the clearest teaching case. The choice is thematic, not picked for a statistic.
-  # The fallback below applies only when SRER is absent.
+  # SRER (Santa Rita Experimental Range, AZ) is the owner's settled default site for
+  # the whole NEON suite. The choice is thematic, not picked for a statistic. The
+  # phenology card renders its honest empty state at SRER by design.
+  # Fallback, only when SRER is absent from the bundle: the first of JORN, ONAQ,
+  # SJER, MOAB that is in the candidate set, else the candidate with the most
+  # finite annual values. Any fallback is announced with message(), never silent.
   full <- ALL_SITES[vapply(ALL_SITES, .has_phen, logical(1)) & SITE_LAYERS >= 4]
   cand <- if (length(full)) full else if (length(RICH_SITES)) RICH_SITES else ALL_SITES
   if ("SRER" %in% ALL_SITES) {
     "SRER"
-  } else if ("SCBI" %in% cand) {
-    "SCBI"
   } else {
-    sc <- vapply(cand, function(s) sum(vapply(SIGNALS$key, function(k) sum(is.finite(site_annual(s)[[k]])), integer(1))), integer(1))
-    cand[which.max(sc)]
+    alt <- intersect(c("JORN", "ONAQ", "SJER", "MOAB"), cand)
+    sel <- if (length(alt)) {
+      alt[[1]]
+    } else {
+      sc <- vapply(cand, function(s) sum(vapply(SIGNALS$key, function(k) sum(is.finite(site_annual(s)[[k]])), integer(1))), integer(1))
+      cand[which.max(sc)]
+    }
+    message(sprintf("DEFAULT_SITE: SRER unavailable; falling back to %s", sel))
+    sel
   }
 }
 
@@ -709,6 +725,223 @@ info_pop <- function(title, ..., placement = "auto") {
   )
 }
 
+# ---- NEON Explorer Suite registry: the ten apps ---------------------------------
+# Display names follow the Small Mammal Tracker's in-app suite card (its default
+# branch) so the suite reads the same everywhere; this app's own entry uses the
+# suite name "Response Atlas". Each URL is the app's GitHub Pages cover.
+SUITE_APPS <- data.frame(
+  key = c("mammal", "plant", "phe", "veg", "beetle", "water", "mosq", "inverts", "bird", "atlas"),
+  name = c("Small Mammals", "Plant Diversity", "Plant Phenology", "Vegetation Structure",
+           "Ground Beetles", "Water Chemistry", "Mosquito Pulse", "My Little Inverts",
+           "Breeding Birds", "Response Atlas"),
+  slug = c("NEON-Small-Mammal-Tracker-App", "NEON-Plant-Diversity", "NEON-Plant-Phenology-Explorer",
+           "NEON-Vegetation-Structure-Explorer", "NEON-Ground-Beetle-Tracker",
+           "NEON-WaterChemistry-Analyte-Viewer-App", "NEON-Mosquito-Pulse", "NEON-My-Little-Inverts",
+           "NEON-Breeding-Birds", "NEON-Driver-Cascade"),
+  stringsAsFactors = FALSE)
+SUITE_APPS$url <- sprintf("https://tgilbert14.github.io/%s/", SUITE_APPS$slug)
+SUITE_APPS$self <- SUITE_APPS$key == "atlas"
+
+# The seven NEON products this atlas reads, keyed like meta$source_products$product,
+# plus the climate overlays (NEON tower air temperature and precipitation, carried
+# in the Small Mammal bundle's data/env overlays; see scripts/build_cascade.R).
+SOURCE_PRODUCTS <- data.frame(
+  product = c("mammal", "plant", "veg", "bird", "phe", "mosq", "beetle"),
+  label = c("Small mammals", "Plant diversity", "Vegetation structure", "Breeding birds",
+            "Plant phenology", "Mosquitoes", "Ground beetles"),
+  dpid = c("DP1.10072.001", "DP1.10058.001", "DP1.10098.001", "DP1.10003.001",
+           "DP1.10055.001", "DP1.10043.001", "DP1.10022.001"),
+  stringsAsFactors = FALSE)
+CLIMATE_PRODUCTS <- data.frame(
+  label = c("Air temperature", "Precipitation"),
+  dpid = c("DP1.00002.001", "DP1.00044.001"),
+  stringsAsFactors = FALSE)
+neon_product_url <- function(dpid) sprintf("https://data.neonscience.org/data-products/%s", dpid)
+suite_link <- function(key, text = NULL, class = NULL) {
+  r <- SUITE_APPS[SUITE_APPS$key == key, , drop = FALSE]
+  if (!nrow(r)) return(text)
+  tags$a(class = class, href = r$url[1], target = "_blank", rel = "noopener", text %||% r$name[1])
+}
+product_link <- function(dpid, text = dpid) {
+  tags$a(href = neon_product_url(dpid), target = "_blank", rel = "noopener", text)
+}
+# About card: the full ten-app registry.
+suite_registry_card <- function() {
+  div(class = "about-card about-suite-card",
+    h3(bsicons::bs_icon("grid-3x3-gap"), " NEON Explorer Suite"),
+    p("Each explorer covers one NEON data product. This atlas reads seven of them; water chemistry and aquatic invertebrates are not part of it."),
+    div(class = "suite-app-grid", role = "list", lapply(seq_len(nrow(SUITE_APPS)), function(i)
+      tags$a(class = paste("suite-app-link", if (SUITE_APPS$self[i]) "suite-app-self" else ""),
+             role = "listitem", href = SUITE_APPS$url[i], target = "_blank", rel = "noopener",
+             SUITE_APPS$name[i], if (SUITE_APPS$self[i]) tags$span(class = "suite-app-note", " (this app)")))))
+}
+# Footer: one compact link row.
+suite_footer_row <- function() {
+  tags$nav(class = "suite-foot-row", `aria-label` = "NEON Explorer Suite",
+    tags$span(class = "sfr-lab", "NEON Explorer Suite:"),
+    lapply(seq_len(nrow(SUITE_APPS)), function(i)
+      tags$a(class = "sfr-link", href = SUITE_APPS$url[i], target = "_blank", rel = "noopener",
+             SUITE_APPS$name[i])))
+}
+
+# Scope chip on a site-scoped tab head: names the site the tab is showing.
+scope_chip <- function(id) {
+  div(class = "scope-row", tags$span(class = "scope-chip", bsicons::bs_icon("geo-alt"), " ",
+    tags$span(class = "visually-hidden", "Showing site: "), textOutput(id, inline = TRUE)))
+}
+
+# ---- per-product release disclosure (shown only when the bundle carries it) ----
+# A bundle built with release-aware sources stamps meta$source_products with
+# `release`, `data_through` and (optionally) `provisional_from`. Older bundles
+# lack these columns, so every display below returns NULL rather than guessing.
+release_month <- function(x) {
+  if (inherits(x, c("Date", "POSIXt"))) return(format(x, "%Y-%m"))
+  x <- as.character(x)
+  ifelse(!is.na(x) & grepl("^\\d{4}-\\d{2}", x), substr(x, 1L, 7L), x)
+}
+source_release_info <- function(sp = CASCADE$meta$source_products) {
+  if (!is.data.frame(sp) || !nrow(sp) || !all(c("product", "release", "data_through") %in% names(sp)))
+    return(NULL)
+  m <- match(as.character(sp$product), SOURCE_PRODUCTS$product)
+  out <- data.frame(
+    product = as.character(sp$product),
+    label = ifelse(is.na(m), as.character(sp$product), SOURCE_PRODUCTS$label[m]),
+    dpid = ifelse(is.na(m), NA_character_, SOURCE_PRODUCTS$dpid[m]),
+    release = as.character(sp$release),
+    data_through = release_month(sp$data_through),
+    provisional_from = if ("provisional_from" %in% names(sp)) release_month(sp$provisional_from) else NA_character_,
+    doi = if ("doi" %in% names(sp)) sub("^(https?://(dx\\.)?doi\\.org/|doi:)", "", trimws(as.character(sp$doi)), ignore.case = TRUE) else NA_character_,
+    stringsAsFactors = FALSE)
+  out <- out[!is.na(out$release) & nzchar(out$release) & !is.na(out$data_through) & nzchar(out$data_through), , drop = FALSE]
+  if (!nrow(out)) return(NULL)
+  out[order(match(out$product, SOURCE_PRODUCTS$product)), , drop = FALSE]
+}
+# The release DOI (when the bundle records one) as a doi.org link.
+release_doi_link <- function(r) {
+  d <- r$doi %||% NA_character_
+  if (is.na(d) || !nzchar(d)) return(NULL)
+  tags$a(href = paste0("https://doi.org/", d), target = "_blank", rel = "noopener", paste0("doi:", d))
+}
+# A bundle that records no release reads "unrecorded"; say so in plain words.
+release_label <- function(x) ifelse(is.na(x) | !nzchar(x) | x == "unrecorded", "release not recorded", x)
+release_text <- function(r) {
+  paste0(sprintf("data through %s, %s", r$data_through, release_label(r$release)),
+         if (!is.na(r$doi) && nzchar(r$doi)) sprintf(", doi:%s", r$doi) else "",
+         if (!is.na(r$provisional_from) && nzchar(r$provisional_from))
+           sprintf("; provisional from %s", r$provisional_from) else "")
+}
+
+# ---- site report PDF: base graphics only, no LaTeX, no extra package ------------
+# cairo_pdf keeps UTF-8 glyphs; when cairo is unavailable pdf() is used and the
+# text is folded to Latin-1 first so the device never drops a line.
+report_pdf_text <- function(x, cairo) {
+  x <- as.character(x); x[is.na(x)] <- ""
+  if (cairo) return(x)
+  # Keys are code points (arrows, dashes, ellipsis, comparison signs, curly quotes, check marks).
+  rep <- stats::setNames(c("->", "<-", "up", "down", "~", "-", "-", "-", "...", "<=", ">=",
+                           "\"", "\"", "'", "'", "fits", "x"),
+    intToUtf8(c(0x2192, 0x2190, 0x2191, 0x2193, 0x2248, 0x2013, 0x2014, 0x2212, 0x2026, 0x2264, 0x2265,
+                0x201c, 0x201d, 0x2018, 0x2019, 0x2713, 0x2717), multiple = TRUE))
+  for (k in names(rep)) x <- gsub(k, rep[[k]], x, fixed = TRUE)
+  iconv(x, "UTF-8", "latin1", sub = "?")
+}
+atlas_report_pdf <- function(file, blocks, footer) {
+  cairo <- isTRUE(capabilities("cairo"))
+  opened <- if (cairo) tryCatch({
+    grDevices::cairo_pdf(file, width = 8.5, height = 11, family = "sans", onefile = TRUE); TRUE
+  }, error = function(e) FALSE) else FALSE
+  if (!opened) {
+    cairo <- FALSE
+    grDevices::pdf(file, width = 8.5, height = 11, family = "Helvetica", encoding = "ISOLatin1", onefile = TRUE)
+  }
+  on.exit(grDevices::dev.off(), add = TRUE)
+  tx <- function(x) report_pdf_text(x, cairo)
+  W <- 8.5; H <- 11; mx <- 0.7; top <- 0.7; bottom <- 0.9
+  page <- 0L; y <- 0
+  new_page <- function() {
+    graphics::plot.new()
+    graphics::par(mar = c(0, 0, 0, 0), xpd = NA)
+    graphics::plot.window(xlim = c(0, W), ylim = c(0, H), xaxs = "i", yaxs = "i")
+    page <<- page + 1L
+    graphics::text(mx, bottom - 0.45, tx(footer), adj = c(0, 0.5), cex = 0.62, col = "#53606d")
+    graphics::text(W - mx, bottom - 0.45, sprintf("Page %d", page), adj = c(1, 0.5), cex = 0.62, col = "#53606d")
+    y <<- H - top
+  }
+  line_h <- function(cex) 0.19 * cex
+  wrap <- function(s, width_in, cex, font = 1) {
+    words <- strsplit(tx(s), " ", fixed = TRUE)[[1]]
+    if (!length(words)) return("")
+    out <- character(); cur <- ""
+    for (w in words) {
+      cand <- if (nzchar(cur)) paste(cur, w) else w
+      if (graphics::strwidth(cand, units = "inches", cex = cex, font = font) <= width_in || !nzchar(cur)) cur <- cand
+      else { out <- c(out, cur); cur <- w }
+    }
+    c(out, cur)
+  }
+  ensure <- function(h) if (y - h < bottom) new_page()
+  new_page()
+  for (b in blocks) {
+    if (identical(b$type, "title")) {
+      ensure(0.5)
+      for (ln in wrap(b$text, W - 2 * mx, 1.45, 2)) {
+        graphics::text(mx, y, ln, adj = c(0, 1), cex = 1.45, font = 2, col = "#0b4f49"); y <- y - line_h(1.45) - 0.04 }
+      y <- y - 0.06
+    } else if (identical(b$type, "h2")) {
+      ensure(0.55)
+      y <- y - 0.12
+      graphics::text(mx, y, tx(b$text), adj = c(0, 1), cex = 1.1, font = 2, col = "#0b4f49")
+      y <- y - line_h(1.1) - 0.05
+      graphics::segments(mx, y, W - mx, y, col = "#c9d3dd", lwd = 0.8)
+      y <- y - 0.08
+    } else if (identical(b$type, "p") || identical(b$type, "note")) {
+      cex <- if (identical(b$type, "note")) 0.78 else 0.9
+      lines <- wrap(b$text, W - 2 * mx - (if (identical(b$type, "note")) 0.24 else 0), cex, b$font %||% 1)
+      h <- length(lines) * line_h(cex) + 0.08
+      ensure(h + 0.1)
+      if (identical(b$type, "note")) {
+        graphics::rect(mx, y - h - 0.04, W - mx, y + 0.04, col = "#fff8e6", border = "#e0b43a", lwd = 0.8)
+        for (ln in lines) { graphics::text(mx + 0.12, y - 0.02, ln, adj = c(0, 1), cex = cex, col = "#2e2406"); y <- y - line_h(cex) }
+        y <- y - 0.18
+      } else {
+        for (ln in lines) { graphics::text(mx, y, ln, adj = c(0, 1), cex = cex, font = b$font %||% 1, col = "#16243a"); y <- y - line_h(cex) }
+        y <- y - 0.08
+      }
+    } else if (identical(b$type, "table")) {
+      df <- b$df; if (!is.data.frame(df) || !nrow(df)) {
+        ensure(0.3); graphics::text(mx, y, tx(b$empty %||% "No rows."), adj = c(0, 1), cex = 0.85, col = "#53606d")
+        y <- y - 0.3; next }
+      cex <- 0.74; lh <- line_h(cex); pad <- 0.05
+      tw <- W - 2 * mx; wf <- b$widths %||% rep(1 / ncol(df), ncol(df)); wf <- wf / sum(wf)
+      cw <- tw * wf; cx <- mx + c(0, cumsum(cw))[seq_len(ncol(df))]
+      draw_row <- function(vals, font, fill) {
+        cells <- lapply(seq_along(vals), function(j) wrap(vals[j], cw[j] - 2 * pad, cex, font))
+        h <- max(vapply(cells, length, integer(1))) * lh + 2 * pad
+        if (y - h < bottom) { new_page(); if (!identical(font, 2)) draw_header() }
+        if (!is.null(fill)) graphics::rect(mx, y - h, W - mx, y, col = fill, border = NA)
+        for (j in seq_along(cells)) for (k in seq_along(cells[[j]]))
+          graphics::text(cx[j] + pad, y - pad - (k - 1) * lh, cells[[j]][k], adj = c(0, 1), cex = cex,
+                         font = font, col = if (identical(font, 2)) "#ffffff" else "#16243a")
+        y <<- y - h
+        graphics::segments(mx, y, W - mx, y, col = "#d8e0ea", lwd = 0.5)
+      }
+      draw_header <- function() draw_row(names(df), 2, "#0f6a5b")
+      ensure(0.6)
+      draw_header()
+      for (i in seq_len(nrow(df))) draw_row(vapply(df[i, , drop = FALSE], function(v) as.character(v[[1]]), character(1)),
+                                            1, if (i %% 2 == 0) "#f3f6fa" else NULL)
+      y <- y - 0.12
+    }
+  }
+  invisible(file)
+}
+# Plotly export: the modebar shows on hover with a single PNG button.
+plotly_export_config <- function(p, filename) {
+  plotly::config(p, displayModeBar = "hover", displaylogo = FALSE, responsive = TRUE,
+                 modeBarButtons = list(list("toImage")),
+                 toImageButtonOptions = list(format = "png", filename = filename, scale = 2))
+}
+
 # ---- Sources panel: the literature behind every prior + method (About tab) ----
 # Folded by default so it informs without overwhelming. Grouped to the priors/methods.
 cascade_sources <- function() {
@@ -746,7 +979,7 @@ cascade_sources <- function() {
           ref("Huxman et al. (2004). Convergence across biomes to a common rain-use efficiency. <i>Nature</i>.")
         ),
         grp(
-          "Temperature / spring warmth to green-up onset (phenology priors)",
+          "Temperature and March to May warmth to green-up onset (phenology priors)",
           ref("Richardson et al. (2013). Climate change, phenology, and phenological control of vegetation feedbacks. <i>Agric. For. Meteorol.</i>"),
           ref("Cleland, Chuine, Menzel, Mooney &amp; Schwartz (2007). Shifting plant phenology in response to global change. <i>TREE</i>."),
           ref("Piao et al. (2019). Plant phenology and global climate change. <i>Glob. Change Biol.</i>")
@@ -806,6 +1039,7 @@ CONCEPT <- list(
   expected  = list(t = "“Vote-eligible”", b = "A direct association allowed to enter the exploratory site-vote summary. Most displayed plant and animal pairings are context-only because their effort, response window, proxy, or directional basis is not strong enough for inferential voting."),
   pulse     = list(t = "The year trace", b = "Choose a year to inspect direct pairings available then. A response layer marks whether it moved in the stated direction. This one-year view is an anecdote, not a recursively inferred food-web path or evidence by itself."),
   standing  = list(t = "Conditional woody structure", b = "Live basal area (m²/ha) is averaged only among plots containing qualifying stem records. The source cannot distinguish sampled-zero from unsampled plots, so zero-stem and unobserved plots are not imputed; plot-support denominators remain visible. This intermittent structural context is neither site-wide standing stock, annual productivity, nor a causal rung."),
+  standing_events = list(t = "Conditional woody structure", b = "Live basal area (m²/ha) is averaged over plots whose selected survey has at least one qualifying live stem. Each plot contributes one survey, its latest usable NEON survey, and its stems are divided by that survey's own sampled area. The Atlas keeps the conditional estimand: plots whose selected survey has no qualifying live stem, including NEON-recorded absences, are left out rather than counted as zero. Plot-support counts remain visible. This intermittent structural context is neither site-wide standing stock, annual productivity, nor a causal rung."),
   permp     = list(t = "The permutation p", b = "A gap-aware circular-shift null: the response is rotated over the full calendar grid, with missing years retained, to preserve order, annual spacing, and its gap pattern while breaking the original alignment. Its exact floor is 1/(valid null shifts + 1), reported per link. It is a coarse diagnostic, not a per-site significance claim and does not set the verdict. Across-site exact-binomial p-values are reported raw and Holm-adjusted."),
   bootci    = list(t = "The bootstrap interval", b = "Circular moving-block bootstrap interval (wide at this n; indicative, not a precision claim). It resamples contiguous wrapped blocks on the full calendar grid, retaining missing years, to preserve annual spacing and short-range temporal structure while showing how unstable the relationship is.")
 )
@@ -851,7 +1085,7 @@ sig_unit <- function(k) {
 sig_abbr <- function(k) {
   m <- c(
     temp = "Temp", precip = "Rain", precip_winter = "Winter rain",
-    precip_monsoon = "Monsoon", temp_spring = "Spring temp", greenup_doy = "Green-up", fruiting_pct = "Fruiting",
+    precip_monsoon = "Monsoon", temp_spring = "Mar-May temp", greenup_doy = "Green-up", fruiting_pct = "Fruiting",
     plant_richness = "Richness", plant_intro_pct = "Invasion", mammal_cpue = "Rodents", mammal_mnka = "Rodents",
     bird_index = "Birds", bird_richness = "Bird rich.",
     mosq_activity = "Mosquitoes", beetle_activity = "Beetles"
@@ -928,7 +1162,7 @@ pulse_paths <- function(ann_site, t0, biome = NULL) {
   do.call(rbind, Filter(Negate(is.null), rows))
 }
 
-# site dropdown choices, most measurement layers first ("SRER — Santa Rita … (4 layers)")
+# site dropdown choices, most measurement layers first ("SRER · Santa Rita … · 4 layers")
 cascade_site_choices <- function() {
   ord <- order(-SITE_LAYERS, ALL_SITES)
   s <- ALL_SITES[ord]

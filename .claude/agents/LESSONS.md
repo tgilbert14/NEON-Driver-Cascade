@@ -4,8 +4,8 @@
 > own name, `· <agent> ·`) and append a one-line lesson after a run that taught something durable.
 >
 > The **canonical, cross-cutting** log lives in `TG-Data-Apps/.claude/agents/LESSONS.md`; the deep NEON
-> methodology lives in `docs/neonize-playbook.md` (the flagship `NEON-Small-Mammal-Tracker-App` copy is the
-> reference for §6–9). `curator` promotes recurring lessons up. Format + protocol:
+> methodology lives in this repo's `docs/neonize-playbook.md`, the suite's one canonical playbook (PR #82).
+> `curator` promotes recurring lessons up. Format + protocol:
 > `TG-Data-Apps/.claude/agents/_CONVENTIONS.md`.
 
 ## How to write an entry
@@ -35,6 +35,8 @@
   apps are `main`. Do not rename without FIRST repointing the external Connect watched-branch setting and
   updating `ci.yml:6` + `refresh-data.yml` (lines ~30/234/243/250-251/301-303, incl. `git push origin
   HEAD:master`) + `DEPLOY.md`. Documented per-repo instead, per owner decision.
+  Superseded in part 2026-10-22: the refresh no longer pushes `HEAD:master`; it pushes the review branch
+  `automation/atlas-data-refresh` and a person's merge is the deploy (PR #75). The rename warning stands.
 - [2026-07-21] cass · confirmed · Botanical model quality (site-explorer `plot.src.html`): two reusable
   patterns proved out on saguaro + Christmas cholla. (1) SWEEP-ONE-TUBE — a single Frenet-framed
   BufferGeometry (`saguaroFlesh`) that ribs+tapers+per-vertex-colours a tube along any curve serves BOTH a
@@ -206,3 +208,26 @@
   the Discharge F1 contract/acquirer/verifier ban subprocess (AST-tested, token-bearing process), so
   they hash a read-only copy the workflow materializes with git cat-file; sparse checkouts are blob:none,
   so read the frozen blobs before `git remote remove origin` or the later cat-file has no promisor.
+- [2026-10-21] maze · gap · a rebuilt candidate can lose coverage silently (mosq 413->200, bird 2025 dropped) while every contract passes; gate each product on finite site-years, sites and max year against the committed baseline before staging (scripts/check_coverage_regression.R), with overrides keyed to the exact candidate sibling commit so they cannot carry over. Locally, rebuild_all.R stage 4 fails on this Mac (metafor/tie check), so export the stage-1 bundle from a scratch copy to exercise the gate.
+- [2026-10-21] neonize · gap · Header comments in R/cascade_helpers.R, scripts/build_cascade.R and scripts/cascade_meta.R are NOT free to edit: their md5 is locked into the cascade.rds / cascade_meta.rds lineage (global.R .expected_local_build_paths and .expected_local_meta_paths), so a rename sweep must skip them or ship with a data rebuild; and a longer app name in a nowrap top-bar h1 overlapped the action buttons at 320-414 px, so measure the top bar after any title change.
+- [2026-10-21] neonize · confirmed · A per-event source (Vegetation v2) adapts cleanly by building one-row-per-plot design tables from the selected events and feeding the UNCHANGED legacy classifier and stand helpers per channel (41/41 sites match the science owner within 3e-15). Two traps: "plots with an admissible event" includes recorded-absence plots that carry no rows (CPER 42 vs 13 record plots), so count area-eligible among record-bearing plots or n_plots <= eligible <= record breaks; and a manual stage-1 build_cascade.R needs CASCADE_GENERATION_ROOT/TOKEN plus a staged dir with no leftover .cascade-source-snapshot*.
+- [2026-10-21] cass · confirmed · A sibling's held state judges the sibling's estimand, not ours: NEON VST
+  held_opportunity_unknown mixes four reasons and a first-check short-circuit hides later gates, so admit by
+  reason, re-apply the skipped gates, and treat status-only rows (Removed) and explicit absences as census
+  evidence, or removed trees come back from an older survey (KONZ_059).
+- [2026-10-21] cass · gap · Exact parity on sum()-based values is platform-bound: arm64 R has no long double
+  while the CI ubuntu-24.04 runner does (6.4e-14 drift), so prove byte parity in CI only and compare locally
+  with a 1e-10 relative tolerance.
+- [2026-10-21] hk · gap · Carrying stems forward across surveys resurrects trees a later census never
+  re-recorded: at SOAP_059 25 of 26 trees alive in 2015 have no row in the 2023 post-fire survey, so the suite's
+  "death is never an absent row" claim is false there. Admit a pre-2020 held survey only when it has rows for
+  the channel, or an empty survey erases a full census (JERC 29 -> 19 plots).
+- [2026-10-21] lead · confirmed · Anchor artifact-hash seals to a frozen commit, not to working-tree bytes:
+  after every registry read SEAL_FAMILY_SHA through git cat-file, a manifest-changing PR passed all seven CI
+  checks with no re-registration. A test that mutates a copy of a read-only frozen family must copy content
+  only (shutil.copyfile, not copy2), or the write fails on mode 0444 in CI and passes on a laptop.
+- [2026-10-21] cedar · gap · VST presence is per growth form: saplings and small trees ride on treesPresent,
+  so a shrub/sapling-channel presence test needs the joint rule; targetTaxaPresent=N is overloaded (no stems,
+  or below the 10% cover sampling threshold), so never read it as absence; status-only rows prove a zero state
+  only when they account for every previously live individual. Name an audit count for what it counts: a
+  "disturbance" hold count built from samplingImpractical codes mostly counted snow and close-out holds.

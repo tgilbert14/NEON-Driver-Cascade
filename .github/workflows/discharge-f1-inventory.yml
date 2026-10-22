@@ -208,7 +208,9 @@ jobs:
               raise SystemExit("credential_or_capability_exposed")
           token = os.environ.pop("NEON_TOKEN", "")
           if not token:
-              raise SystemExit("credential_or_capability_exposed")
+              # An absent secret is a setup gap, not an exposure: name it.
+              print("::error::NEON_TOKEN environment secret (discharge-f1) is missing", flush=True)
+              raise SystemExit("neon_token_missing")
           raw_root = os.environ["RAW_ROOT"]
           sanitized_root = os.environ["SANITIZED_ROOT"]
           source_sha = os.environ["SOURCE_SHA"]

@@ -1,3 +1,4 @@
+# SUPERSEDED: measures the PR #78 published-support rule, replaced by PR #80's event-aware adapter.
 # ===========================================================================
 # DRY RUN ONLY. Not a build step, not an artifact writer, not on the deploy
 # surface (scripts/manifest_files.R DEPLOY_APP_FILES), and not one of the six

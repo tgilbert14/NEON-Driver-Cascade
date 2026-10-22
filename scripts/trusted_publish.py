@@ -322,24 +322,83 @@ def validate_manifest(manifest: dict, root: Path, check_checksums: bool) -> None
                 fail(f"manifest checksum mismatch: {relative}")
 
 
+def top_level_value_span(text: str, key: str) -> tuple[int, int]:
+    """Character span of one top-level JSON member's value in the raw text."""
+    decoder = json.JSONDecoder()
+    space = re.compile(r"[ \t\n\r]*")
+    index = space.match(text, 0).end()
+    if text[index:index + 1] != "{":
+        fail("manifest root must be a JSON object")
+    index = space.match(text, index + 1).end()
+    while text[index:index + 1] == '"':
+        name, index = json.decoder.scanstring(text, index + 1)
+        index = space.match(text, index).end()
+        if text[index:index + 1] != ":":
+            fail("manifest JSON member is malformed")
+        start = space.match(text, index + 1).end()
+        try:
+            _, end = decoder.raw_decode(text, start)
+        except json.JSONDecodeError as error:
+            fail(f"manifest JSON member {name} is malformed: {error}")
+        if name == key:
+            return start, end
+        index = space.match(text, end).end()
+        if text[index:index + 1] == ",":
+            index = space.match(text, index + 1).end()
+    fail(f"manifest has no top-level {key} member")
+
+
+def text_outside_files(text: str) -> str:
+    start, end = top_level_value_span(text, "files")
+    return text[:start] + text[end:]
+
+
+def render_manifest(manifest: dict) -> str:
+    return json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
+
+
+def assert_checksum_only_change(original_text: str, written: Path) -> None:
+    """Compare the bytes on disk with the original: only files[*].checksum may move."""
+    original = json.loads(original_text, object_pairs_hook=reject_duplicate_json_keys)
+    current = read_json(written)
+    written_text = written.read_text(encoding="utf-8")
+    # Serialized without sort_keys, so a reordered package graph also counts.
+    if json.dumps(current.get("packages"), ensure_ascii=False) != json.dumps(
+            original["packages"], ensure_ascii=False):
+        fail("manifest package graph changed during checksum refresh")
+    if text_outside_files(written_text) != text_outside_files(original_text):
+        fail("manifest text outside the files map changed during checksum refresh")
+    before_files = original["files"]
+    after_files = current.get("files")
+    if not isinstance(after_files, dict) or list(after_files) != list(before_files):
+        fail("manifest file list changed during checksum refresh")
+    for relative, entry in before_files.items():
+        after = after_files[relative]
+        if not isinstance(after, dict) or list(after) != list(entry) or any(
+                after[field] != value for field, value in entry.items() if field != "checksum"):
+            fail(f"manifest file entry changed beyond its checksum: {relative}")
+
+
 def update_manifest(path: Path, root: Path) -> None:
     path = resolve_manifest_path(path, root)
     manifest = read_json(path)
+    original_text = path.read_text(encoding="utf-8")
     validate_manifest(manifest, root, check_checksums=False)
-    package_fingerprint = json.dumps(manifest["packages"], ensure_ascii=False, sort_keys=True)
     for relative in DEPLOY_FILES:
         manifest["files"][relative]["checksum"] = file_digest(root / relative, "md5")
-    if package_fingerprint != json.dumps(manifest["packages"], ensure_ascii=False, sort_keys=True):
-        fail("manifest package graph changed during checksum refresh")
-    rendered = json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
+    rendered = render_manifest(manifest)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", dir=path.parent,
                                      prefix=".manifest-", suffix=".tmp", delete=False) as handle:
         handle.write(rendered)
         temporary = Path(handle.name)
     try:
+        # Re-read the written bytes from disk before they replace the manifest,
+        # so a bad render never lands; the final path is checked once more below.
+        assert_checksum_only_change(original_text, temporary)
         os.replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
+    assert_checksum_only_change(original_text, path)
     validate_manifest(read_json(path), root, check_checksums=True)
 
 
