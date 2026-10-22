@@ -162,6 +162,26 @@ for (token in c('class="standing-stock-status"', 'role="status"',
   if (!grepl(token, rendered$html, fixed = TRUE))
     stop(sprintf("standing-stock live region omitted %s", token), call. = FALSE)
 
+# Page title and lang (suite lint L1): the page call carries both, and the
+# serialized head has the title.
+if (!identical(attr(ui, "lang"), "en"))
+  stop("the page is not lang=\"en\"", call. = FALSE)
+if (!grepl("<title>NEON Cross-Product Response Atlas</title>", rendered$head %||% "", fixed = TRUE) &&
+    !grepl("<title>NEON Cross-Product Response Atlas</title>", rendered$html, fixed = TRUE))
+  stop("the page title is missing", call. = FALSE)
+cat("[PASS] page title and lang=\"en\"\n")
+
+# Suite registry: ten explorers, each a GitHub Pages cover, in the footer row.
+if (nrow(SUITE_APPS) != 10L || anyDuplicated(SUITE_APPS$slug) ||
+    !all(grepl("^https://tgilbert14\\.github\\.io/NEON-[A-Za-z-]+/$", SUITE_APPS$url)))
+  stop("SUITE_APPS is not the ten-app registry", call. = FALSE)
+footer_links <- regmatches(rendered$html, gregexpr('class="sfr-link"', rendered$html, fixed = TRUE))[[1]]
+if (length(footer_links) != 10L ||
+    !all(vapply(SUITE_APPS$url, grepl, logical(1), x = rendered$html, fixed = TRUE)))
+  stop(sprintf("the footer suite row renders %d links, not the ten registry covers", length(footer_links)),
+       call. = FALSE)
+cat("[PASS] footer suite row renders ten registry links\n")
+
 wood_meta <- SITE_META[SITE_META[["site"]] == "WOOD", , drop = FALSE]
 if (nrow(wood_meta) != 1L ||
     !identical(as.character(wood_meta[["veg_design_status"]][1]),
@@ -215,6 +235,33 @@ shiny::testServer(server, {
     note_annotations[[1L]]$font$family else NULL
   if (!identical(note_family, APP_FONT_STACK))
     stop("Plotly empty-state annotation does not use APP_FONT_STACK", call. = FALSE)
+
+  # About renders the ten-app registry card.
+  about_html <- paste(materialized$aboutPanel$html, collapse = "\n")
+  n_suite <- lengths(regmatches(about_html, gregexpr('class="suite-app-link', about_html, fixed = TRUE)))
+  if (n_suite != 10L)
+    stop(sprintf("About suite card renders %d links, not ten", n_suite), call. = FALSE)
+  cat("[PASS] About suite card renders ten links\n")
+
+  # Report PDF: the handler exists and writes a non-empty PDF.
+  pdf_path <- output[["dlReportPdf"]]
+  if (!is.character(pdf_path) || !file.exists(pdf_path) || file.info(pdf_path)$size < 1000 ||
+      !identical(readBin(pdf_path, "raw", 4L), charToRaw("%PDF")))
+    stop("dlReportPdf did not write a PDF", call. = FALSE)
+  cat(sprintf("[PASS] dlReportPdf wrote a %d-byte PDF\n", as.integer(file.info(pdf_path)$size)))
+
+  # Per-flag CSV: every row behind the open flag, not the 200-row view.
+  qset <- cascade_qc(site_annual(DEFAULT_SITE), site_links_cached(DEFAULT_SITE), SIGNALS, DEFAULT_SITE)$sets
+  qkeys <- names(qset)[vapply(qset, function(x) is.data.frame(x) && nrow(x) > 0, logical(1))]
+  if (!length(qkeys)) stop("no QC flag with rows at the default site to exercise dlQcFlag", call. = FALSE)
+  session$setInputs(qcInspect = qkeys[1])
+  session$flushReact()
+  flag_path <- output[["dlQcFlag"]]
+  flag_rows <- utils::read.csv(flag_path, comment.char = "#", check.names = FALSE)
+  if (nrow(flag_rows) != nrow(qset[[qkeys[1]]]))
+    stop(sprintf("dlQcFlag wrote %d rows; the flag has %d", nrow(flag_rows), nrow(qset[[qkeys[1]]])),
+         call. = FALSE)
+  cat(sprintf("[PASS] dlQcFlag wrote all %d row(s) of flag %s\n", nrow(flag_rows), qkeys[1]))
 
   session$setInputs(site = "WOOD")
   session$flushReact()

@@ -1,3 +1,4 @@
+/* copied from NEON-Small-Mammal-Tracker-App@62457f6; diverged locally */
 /* =========================================================================
    NEON Cross-Product Response Atlas: shared foundation styles.
    Light "desert field" theme, Desert Data Labs house style.
@@ -650,9 +651,9 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
   border-left: 1px solid var(--line); padding-left: 10px; cursor: pointer; }
 .hero-report:hover { color: var(--pine); text-decoration: underline; }
 
-/* The site report card is now a server-side PDF (downloadHandler output$reportPdf,
-   built in R/report_pdf.R), so the old hidden-HTML .report-card / .rc-* styles and
-   the @media print machinery have been removed. */
+/* The site report is a server download in two forms: output$dlReport (CSV) and
+   output$dlReportPdf (PDF, drawn with base graphics by atlas_report_pdf() in
+   global.R). There is no hidden-HTML report card and no @media print styling. */
 
 .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
 .empty-icon { font-size: 46px; }
@@ -799,6 +800,9 @@ table.dataTable td, table.dataTable th { border-color: #eef1ec !important; color
 .reset-demo:hover { color: var(--pine) !important; }
 .btn-outline-dark { border-color: var(--line); color: var(--ink); }
 .btn-outline-dark:hover { background: var(--pine); color: #fff; border-color: var(--pine); }
+/* Export buttons on the pine card header: white label, light outline (contrast). */
+.card-header .btn-outline-dark { color: #fff; border-color: rgba(255,255,255,.6); }
+.card-header .btn-outline-dark:hover, .card-header .btn-outline-dark:focus-visible { background: #fff; color: var(--pine); border-color: #fff; }
 
 /* ---- sidebar site bio ------------------------------------------------- */
 .site-bio { display: flex; gap: 8px; align-items: flex-start; background: #f3f6fb; border: 1px solid var(--line);

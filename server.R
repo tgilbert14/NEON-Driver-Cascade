@@ -26,17 +26,19 @@ server <- function(input, output, session) {
       sprintf("# Source commits: %s", source_short))
   }
   is_dark <- function() identical(input$colorMode, "dark")
-  theme_plotly <- function(p) { dark <- is_dark(); ink <- if (dark) "#e8eef2" else "#1f2a30"
+  # export = TRUE shows the hover modebar with one PNG button named for the site.
+  theme_plotly <- function(p, export = TRUE) { dark <- is_dark(); ink <- if (dark) "#e8eef2" else "#1f2a30"
     grid <- if (dark) "rgba(220,230,240,0.10)" else "rgba(31,42,48,0.08)"
-    p %>% plotly::layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    p <- p %>% plotly::layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
       font=list(color=ink, family = APP_FONT_STACK),
-      hoverlabel=list(bgcolor="rgba(11,23,51,0.96)", bordercolor="#2dd4bf", font=list(color="#eaf2ff", family = APP_FONT_STACK, size=12))) %>%
-      plotly::config(displayModeBar=FALSE, responsive=TRUE) }
+      hoverlabel=list(bgcolor="rgba(11,23,51,0.96)", bordercolor="#2dd4bf", font=list(color="#eaf2ff", family = APP_FONT_STACK, size=12)))
+    if (export) plotly_export_config(p, sprintf("response-atlas-%s", isolate(input$site) %||% "site"))
+    else plotly::config(p, displayModeBar=FALSE, responsive=TRUE) }
   note_plot <- function(msg) plotly::plot_ly(type="scatter", mode="markers") %>%
     plotly::layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis=list(visible=FALSE), yaxis=list(visible=FALSE),
       annotations=list(list(text=msg, showarrow=FALSE,
         font=list(color=if(is_dark())"#9fb0c4" else "#53606d", family=APP_FONT_STACK, size=14)))) %>%
-    theme_plotly()
+    theme_plotly(export = FALSE)
 
   ann    <- reactive({ req(input$site); site_annual(input$site) })
   links  <- reactive({ req(input$site); site_links_cached(input$site) })   # precomputed; eligibility is registry-defined
@@ -73,7 +75,7 @@ server <- function(input, output, session) {
             if (identical(u, "°C")) "" else " ", u)
   }
   sig_product <- function(k) {
-    if (grepl("^(temp|precip)", k)) return("NEON and Daymet weather")
+    if (grepl("^(temp|precip)", k)) return("NEON tower weather")
     if (k %in% c("greenup_doy", "fruiting_pct")) return("NEON plant phenology (DP1.10055.001)")
     if (grepl("^plant_", k)) return("NEON plant diversity (DP1.10058.001)")
     if (grepl("^mammal_", k)) return("NEON small mammals (DP1.10072.001)")
@@ -93,6 +95,41 @@ server <- function(input, output, session) {
     row <- function(lab, txt) div(class = "plain-row", tags$b(class = "plain-lab", lab), span(class = "plain-txt", txt))
     div(class = "plain-lines", row("Shows", shows), row("Example", example),
         row("From", from), row("Cannot", cannot))
+  }
+
+  # ---- pin cards: one site-year per card (www/cascade.js draws and anchors them) ----
+  # The support behind one signal in one year: the effort or coverage field that
+  # gates it, as plain text, or NULL when the bundle carries none.
+  support_text <- function(k, row) {
+    g <- function(col) if (col %in% names(row) && nrow(row) && is.finite(row[[col]][1])) row[[col]][1] else NA_real_
+    v <- NA_real_
+    if (k %in% c("temp", "precip", "precip_winter", "precip_monsoon", "temp_spring")) {
+      v <- g(paste0(k, "_n_months")); if (is.finite(v)) return(sprintf("%d complete months", as.integer(v)))
+    } else if (k %in% c("greenup_doy", "greenup_doy_additive")) {
+      v <- g("greenup_n_individuals"); sp <- g("greenup_n_species")
+      if (is.finite(v)) return(sprintf("%d plants%s", as.integer(v),
+        if (is.finite(sp)) sprintf(", %d species", as.integer(sp)) else ""))
+    } else if (k == "fruiting_pct") {
+      v <- g("fruiting_n_eligible_months"); if (is.finite(v)) return(sprintf("%d eligible months", as.integer(v)))
+    } else if (grepl("^plant_", k)) {
+      v <- g("plant_n_plots"); if (is.finite(v)) return(sprintf("%d plots", as.integer(v)))
+    } else if (grepl("^mammal_", k)) {
+      v <- g("mammal_trap_nights"); if (is.finite(v)) return(sprintf("%s trap-nights", fmt_int(v)))
+    } else if (grepl("^bird_", k)) {
+      v <- g("bird_observed_point_visits"); if (is.finite(v)) return(sprintf("%s point-count visits", fmt_int(v)))
+    } else if (grepl("^mosq_", k)) {
+      v <- g("mosq_trap_nights"); if (is.finite(v)) return(sprintf("%s trap-nights", fmt_int(v)))
+    } else if (grepl("^beetle_", k)) {
+      v <- g("beetle_catch_event_trap_nights")
+      if (is.finite(v)) return(sprintf("%s trap-nights, catch-bearing events only", fmt_int(v)))
+    }
+    NULL
+  }
+  pin_card_html <- function(title, rows, foot = NULL) {
+    paste0("<div class='pin-title'>", htmlEscape(title), "</div><dl class='pin-dl'>",
+      paste0(vapply(rows, function(r) sprintf("<dt>%s</dt><dd>%s</dd>", htmlEscape(r[1]), htmlEscape(r[2])),
+                    character(1)), collapse = ""),
+      "</dl>", if (!is.null(foot)) paste0("<p class='pin-foot'>", htmlEscape(foot), "</p>") else "")
   }
 
   # ---- clickable scatter dots: the year being inspected on One pairing ----
@@ -164,11 +201,49 @@ server <- function(input, output, session) {
         # scrolls the picker into view.
         tags$a(class="hero-change", href="#sitePanel", `data-cascade-action`="change-site",
           bs_icon("pin-map"), " change site")),
-      div(class="hero-verdict hero-line", counts_line(f, input$site), " ", judged_sentence(f)),
+      # On phones the sentence is clamped to four lines; the toggle shows the rest.
+      div(class="hero-verdict hero-line",
+        tags$span(class="hv-text", id="heroVerdictText", counts_line(f, input$site), " ", judged_sentence(f)),
+        if (!compact) tags$button(type="button", class="hero-more", `aria-expanded`="false",
+          `aria-controls`="heroVerdictText", "more")),
+      p(class="prereg-caveat hero-prereg", "Exploratory, not preregistered: the pairings were chosen while exploring these data."),
       div(class="hero-grid hero-grid-3",
         hero(f$years, "years on record", icon="calendar3", tone="terra"),
         hero(sprintf("%d of %d", f$layers, f$n_layers), "measurement layers", icon="layers", tone="navy"),
         hero(f$climate_years, "years with complete weather", icon="cloud-sun", tone="gold")))
+  })
+
+  # Scope chips: every site-scoped tab head names the site it is showing.
+  scope_text <- reactive({ req(input$site); f <- site_facts(); sprintf("%s · %s", input$site, f$name) })
+  output$scopeSite <- renderText(scope_text())
+  output$scopePairing <- renderText(scope_text())
+  output$scopeQc <- renderText(scope_text())
+
+  # URL state: ?site= is read once on load; later site changes replace the query
+  # string (no new history entry), so a reload or a shared link keeps the site.
+  observeEvent(session$clientData$url_search, {
+    q <- shiny::parseQueryString(session$clientData$url_search %||% "")
+    want <- toupper(trimws(q$site %||% ""))
+    if (nzchar(want) && want %in% ALL_SITES && !identical(want, input$site))
+      updateSelectInput(session, "site", selected = want)
+  }, once = TRUE)
+  observeEvent(input$site, {
+    req(input$site %in% ALL_SITES)
+    updateQueryString(paste0("?site=", input$site), mode = "replace")
+  }, ignoreInit = TRUE)
+
+  # "Data through" line for This site: one line, shown only when the bundle
+  # carries per-product release columns.
+  output$dataThrough <- renderUI({
+    ri <- source_release_info(); if (is.null(ri)) return(NULL)
+    rel <- unique(ri$release)
+    months <- sort(unique(ri$data_through))
+    span_txt <- if (length(months) == 1L) months else sprintf("%s to %s", months[1], months[length(months)])
+    prov <- ri[!is.na(ri$provisional_from) & nzchar(ri$provisional_from), , drop = FALSE]
+    p(class = "data-through", bs_icon("calendar-check"),
+      sprintf(" Data through %s across the seven products (%s)%s.",
+              span_txt, paste(rel, collapse = ", "),
+              if (nrow(prov)) sprintf("; %s has provisional data", paste(tolower(prov$label), collapse = ", ")) else ""))
   })
 
   output$siteStatus <- renderText({
@@ -294,7 +369,8 @@ server <- function(input, output, session) {
       for (k in unique(dd$key)) { sub <- dd[dd$key==k,]; sub <- sub[order(sub$year),]; j <- j + 1L
         col <- dark_hex(ramp[(j-1) %% length(ramp) + 1])
         nfin <- sum(is.finite(sub$raw))   # surface coverage: a 3-yr line must not look as solid as a 12-yr one
-        p <- p %>% plotly::add_trace(data=sub, x=~year, y=~z, type="scatter", mode="lines+markers",
+        sub$pin <- paste(k, sub$year, sep = "|")
+        p <- p %>% plotly::add_trace(data=sub, x=~year, y=~z, customdata=~pin, type="scatter", mode="lines+markers",
           name=sprintf("%s (n=%d)", sub$label[1], nfin), legendgroup=L, line=list(width=2.6, color=col),
           marker=list(size=6, color=col),
           hovertemplate=paste0("<b>",sub$label[1],"</b> (n=",nfin,")<br>%{x}: %{y:.2f}, where 0 is its average year (",lm$title,")<extra></extra>")) }
@@ -314,12 +390,34 @@ server <- function(input, output, session) {
            yref = paste0(if (i == 1) "y" else paste0("y", i), " domain"), y = 1, yanchor = "bottom",
            showarrow = FALSE)
     })
-    plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=FALSE, margin=c(0, 0, 0.055, 0.02)) %>%
+    # One pin card per plotted point: the year, the value and its support, and
+    # how many of this site's pairings that use the signal include the year.
+    zs <- do.call(rbind, dl[present])
+    has_val <- function(key, yr) key %in% names(a) && any(a$year == yr) && is.finite(a[[key]][a$year == yr][1])
+    cards <- stats::setNames(lapply(seq_len(nrow(zs)), function(i) {
+      k <- zs$key[i]; yr <- zs$year[i]; row <- a[a$year == yr, , drop = FALSE]
+      uses <- PRIORS[PRIORS$from == k | PRIORS$to == k, , drop = FALSE]
+      used <- sum(vapply(seq_len(nrow(uses)), function(j) {
+        u <- uses[j, ]
+        if (u$from == k) has_val(u$to, yr + u$lag) else has_val(u$from, yr - u$lag)
+      }, logical(1)))
+      in_pairs <- if (!nrow(uses)) "No pairing uses this signal"
+        else sprintf("%d of the %d pairings that use this signal", used, nrow(uses))
+      list(x = yr, y = zs$z[i], html = pin_card_html(sprintf("%d · %s", yr, input$site), list(
+        c("Signal", zs$label[i]),
+        c("Value", fmt_val(zs$raw[i], k)),
+        c("Against its average year", if (is.finite(zs$z[i])) sprintf("%+.2f standard deviations", zs$z[i]) else "no value"),
+        c("Effort", support_text(k, row) %||% "not recorded"),
+        c("Year enters", in_pairs))))
+    }), paste(zs$key, zs$year, sep = "|"))
+    lp <- plotly::subplot(plist, nrows=length(present), shareX=TRUE, titleY=FALSE, margin=c(0, 0, 0.055, 0.02)) %>%
       theme_plotly() %>%
       plotly::layout(showlegend = TRUE, legend=list(orientation="h", y=if (narrow) -0.14 else -0.1, yanchor="top", font=list(size=if (narrow) 9 else 10)),
         xaxis=list(title="", dtick=1, gridcolor=if(is_dark())"rgba(220,230,240,0.07)" else "rgba(31,42,48,0.06)"),
         annotations = strip_notes,
         margin = list(l = 44, r = 20, t = 30, b = if (narrow) 190 else 80))
+    htmlwidgets::onRender(lp, "function(el, x, data){ if (window.cascadePinBind) window.cascadePinBind(el, data, 'ladder'); }",
+      data = list(cards = cards, sig = paste(input$site, paste(present, collapse = ","), sep = "|")))
   })
 
   # ---- the four plain lines under the timeline ----
@@ -455,7 +553,8 @@ server <- function(input, output, session) {
         sprintf("r = %+.2f   n = %d\n%d to %d", r$r, r$n, yr_rng[1], yr_rng[2])
       else sprintf("n = %d   %d to %d", r$n, yr_rng[1], yr_rng[2])
     tier_plot_col <- if (is_dark()) tm$col else tm$text_col
-    anns <- list(list(x=0.02, y=0.98, xref="paper", yref="paper", xanchor="left", yanchor="top",
+    # The box sits in the top margin, above the plotted points.
+    anns <- list(list(x=0, y=1.02, xref="paper", yref="paper", xanchor="left", yanchor="bottom",
       text=gsub("\n","<br>", stat_txt), showarrow=FALSE, align="left",
       font=list(size=12, color=tier_plot_col, family = APP_FONT_STACK),
       bgcolor=if(is_dark())"rgba(20,30,45,0.72)" else "rgba(255,255,255,0.88)", bordercolor=tier_plot_col, borderwidth=1, borderpad=4))
@@ -465,10 +564,29 @@ server <- function(input, output, session) {
         font=list(size=10, color=if(is_dark())"#9fb0c4" else "#53606d"))))
     sp <- p %>% theme_plotly() %>% plotly::layout(showlegend=FALSE, annotations=anns,
       xaxis = list(title = list(text = sprintf("Driver: %s", sig_label(r$from)), standoff = 12), automargin = TRUE),
-      yaxis = list(title = list(text = sprintf("Response: %s", sig_label(r$to)), standoff = 14), automargin = TRUE), margin = list(l = 80, r = 20, t = 30, b = 50))
-    htmlwidgets::onRender(sp, "function(el, x){ el.on('plotly_click', function(d){
+      yaxis = list(title = list(text = sprintf("Response: %s", sig_label(r$to)), standoff = 14), automargin = TRUE), margin = list(l = 80, r = 20, t = 64, b = 50))
+    # One pin card per plotted year: both values, the effort behind each, and
+    # whether the year is one of the years behind this pairing's r.
+    a <- ann(); judged <- pair_id(r$from, r$to, r$lag) %in% JUDGED_IDS
+    enters <- if (nrow(m) != r$n) sprintf("Plotted; the stored pairing counts %d years", r$n)
+      else if (is.finite(r$r) && r$n >= 6) sprintf("Yes, one of the %d years behind r = %+.2f", r$n, r$r)
+      else sprintf("Yes, but %d years is too few to judge a direction", r$n)
+    cards <- stats::setNames(lapply(seq_len(nrow(m)), function(i) {
+      yr <- m$year[i]
+      drow <- a[a$year == yr, , drop = FALSE]; rrow <- a[a$year == yr + r$lag, , drop = FALSE]
+      list(x = m$x[i], y = m$y[i], html = pin_card_html(sprintf("%d · %s", yr, input$site), list(
+        c("Driver", sprintf("%s, %d: %s", sig_label(r$from), yr, fmt_val(m$x[i], r$from))),
+        c("Response", sprintf("%s, %d: %s", sig_label(r$to), yr + r$lag, fmt_val(m$y[i], r$to))),
+        c("Driver effort", support_text(r$from, drow) %||% "not recorded"),
+        c("Response effort", support_text(r$to, rrow) %||% "not recorded"),
+        c("In this pairing", enters),
+        c("Pairing", if (judged) "Judged" else "Context, never counted"))))
+    }), as.character(m$year))
+    htmlwidgets::onRender(sp, "function(el, x, data){ el.on('plotly_click', function(d){
       if (d && d.points && d.points.length){ var yr = d.points[0].customdata;
-        if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('scatterYear', {year: yr, n: Math.random()}); } }); }")
+        if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('scatterYear', {year: yr, n: Math.random()}); } });
+      if (window.cascadePinBind) window.cascadePinBind(el, data, 'scatter'); }",
+      data = list(cards = cards, sig = paste(input$site, r$from, r$to, r$lag, sep = "|")))
   })
   # ---- the four plain lines under the scatter ----
   output$scatterLines <- renderUI({
@@ -572,14 +690,14 @@ server <- function(input, output, session) {
       p(class="qc-cap-note qc-intro", "Each flag marks a value worth a second look, not an error. ",
         info_pop("Why these are flags, not bugs",
           p("The atlas uses explicit QC choices: bounded non-left-censored green-up intervals with recurrent-species/composition gates, complete-month climate gates, the within-site MAD temperature filter, and the CI-spans-zero guard on “apparent” rows."),
-          p("This panel surfaces ", tags$b("where those rules bit"), " for the selected site, ranked worst-first, so a reader verifies a thin or missing value before reading too much into it. Activate any flag to list the exact rows behind it."))),
+          p("This panel surfaces ", tags$b("where those rules bit"), " for the selected site, ranked worst-first, so a reader verifies a thin or missing value before reading too much into it."))),
       div(class="qc-flags", lapply(qf, function(f){
         clickable <- !identical(f$level, "clean") && f$n > 0
         div(class = paste0("qc-flag qc-flag-", f$level, if (clickable) " qc-flag-click" else ""),
           role = if (clickable) "button" else NULL, tabindex = if (clickable) "0" else NULL,
           `data-shiny-input` = if (clickable) "qcInspect" else NULL,
           `data-shiny-value` = if (clickable) f$key else NULL,
-          `aria-label` = if (clickable) sprintf("Inspect %s: %d flagged row%s", f$title, f$n, if (f$n == 1) "" else "s") else NULL,
+          `aria-label` = if (clickable) sprintf("%s, %d flagged row%s: inspect", f$title, f$n, if (f$n == 1) "" else "s") else NULL,
           `aria-controls` = if (clickable) "qcInspectRegion" else NULL,
           `aria-expanded` = if (clickable) if (identical(selected_key, f$key)) "true" else "false" else NULL,
           bs_icon(qc_icon(f$level)),
@@ -591,7 +709,7 @@ server <- function(input, output, session) {
         " activate a flag to list the exact rows behind it"),
       uiOutput("qcInspectPanel"),
       div(class="qc-toolbar",
-        downloadButton("dlQcReport", tagList(bs_icon("filetype-csv"), " Download QC report (CSV)"),
+        downloadButton("dlQcReport", tagList(bs_icon("filetype-csv"), " Download QC report (CSV)"), icon = NULL,
           class="btn-outline-dark btn-sm")))
   })
 
@@ -609,7 +727,9 @@ server <- function(input, output, session) {
       tabindex = "-1", `aria-live` = "polite", `aria-atomic` = "true",
       `aria-label` = sprintf("Rows behind the %s quality-control flag", f$title),
       div(class="qci-head", bs_icon(qc_icon(f$level)),
-        tags$b(sprintf(" %s · %d row%s", f$title, f$n, if (f$n==1) "" else "s"))),
+        tags$b(sprintf(" %s · %d row%s", f$title, f$n, if (f$n==1) "" else "s")),
+        downloadButton("dlQcFlag", tagList(bs_icon("filetype-csv"), sprintf(" All %d row%s (CSV)", nrow(st), if (nrow(st) == 1) "" else "s")),
+          icon = NULL, class = "btn-outline-dark btn-sm qci-dl")),
       div(class="qc-cap-scroll", tags$table(class="inspect-tbl",
         tags$caption(class="visually-hidden", sprintf("Exact rows behind the %s quality-control flag", f$title)),
         tags$thead(tags$tr(lapply(cols, function(col) tags$th(scope="col", col)))),
@@ -617,10 +737,29 @@ server <- function(input, output, session) {
           tags$tr(lapply(cols, function(cc) tags$td(fmt(sv[[cc]][i])))))))),
       if (nrow(st) > head_n) p(class="qc-cap-note", sprintf("Showing first %d of %d.", head_n, nrow(st))))
   })
+  # Per-flag CSV: every row behind the open flag (the inspector shows at most 200).
+  output$dlQcFlag <- downloadHandler(
+    filename = function() sprintf("%s-response-atlas-qc-%s.csv", input$site,
+                                  gsub("[^A-Za-z0-9_-]", "-", input$qcInspect %||% "flag")),
+    content = function(file) {
+      key <- input$qcInspect; q <- qc()
+      req(!is.null(key), key %in% names(q$sets))
+      st <- q$sets[[key]]
+      f <- Filter(function(x) identical(x$key, key), q$flags)
+      title <- if (length(f)) f[[1]]$title else key
+      level <- if (length(f)) f[[1]]$level else "unknown"
+      hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s data-quality flag: %s (level %s, %d row%s; verify, not wrong).",
+                       input$site, title, level, nrow(st), if (nrow(st) == 1) "" else "s"),
+               "# Every row behind this flag. Each is a value worth a second look, not automatically an error.", "")
+      writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
+      suppressWarnings(utils::write.table(st, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double"))
+    })
   output$dlQcReport <- downloadHandler(
     filename = function() sprintf("%s-response-atlas-qc.csv", input$site),
     content = function(file){ rep <- cascade_qc_report(ann(), links(), SIGNALS, input$site)
       if (is.null(rep)) rep <- data.frame(note="No data-quality flags at this site.")
+      # Same wording cleanup the screen gets (current tab names, no em dashes).
+      for (col in intersect(c("flag", "detail"), names(rep))) rep[[col]] <- qc_plain(as.character(rep[[col]]))
       hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s data-quality review (verify, not wrong).", input$site),
                "# Each flag is a value worth a second look, not automatically an error; review the documented QC rule and source record.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
@@ -643,7 +782,7 @@ server <- function(input, output, session) {
       con <- file(file, open = "w", encoding = "UTF-8")
       on.exit(close(con))
       writeLines(c(
-        sprintf("# NEON Cross-Product Response Atlas - site report card: %s (%s%s)", s, nm,
+        sprintf("# NEON Cross-Product Response Atlas: site report card for %s (%s%s)", s, nm,
                 if (nzchar(st)) paste0(", ", st) else ""),
         sprintf("# Heuristic site group: %s", site_blabel(s)),
         sprintf("# NEON domain: %s", if (nrow(row)) row$domain[1] else "unknown"),
@@ -674,11 +813,75 @@ server <- function(input, output, session) {
       }
       # section 4: QC review (flags are prompts for review, not automatic errors)
       qcrep <- tryCatch(cascade_qc_report(a, lk, SIGNALS, s), error = function(e) NULL)
+      if (!is.null(qcrep)) for (col in intersect(c("flag", "detail"), names(qcrep))) qcrep[[col]] <- qc_plain(as.character(qcrep[[col]]))
       writeLines("## Data-quality review (each flag is a prompt to inspect the source/support, not automatically an error)", con)
       if (is.null(qcrep) || !nrow(qcrep))
-        writeLines("All clear - no flags at this site.", con)
+        writeLines("All clear: no flags at this site.", con)
       else
         suppressWarnings(utils::write.table(qcrep, con, sep = ",", row.names = FALSE, qmethod = "double"))
+    })
+
+  # ---- top-bar Report (.pdf): the same site story on paper ----
+  # Base graphics via atlas_report_pdf() in global.R: the hero tally, the signal
+  # table, the pairings at this site, the exploratory caveat and the build stamp.
+  report_pdf_blocks <- function(s) {
+    row <- neon_sites[neon_sites$site == s, ]
+    nm <- if (nrow(row)) row$name[1] else s
+    st <- if (nrow(row)) row$state[1] else ""
+    a <- ann(); lk <- links(); f <- site_facts()
+    sig_rows <- do.call(rbind, lapply(c("climate", "phenology", "producer", "consumer"), function(L) {
+      ks <- SIGNALS$key[SIGNALS$layer == L & SIGNALS$key %in% LADDER_KEYS]
+      do.call(rbind, lapply(ks, function(k) {
+        v <- a[[k]]; nf <- sum(is.finite(v)); if (nf < 1) return(NULL)
+        yrs <- range(a$year[is.finite(v)])
+        data.frame(Layer = LAYER_META[[L]]$title, Signal = sig_label(k), Unit = sig_unit(k),
+                   Years = as.character(nf), Span = sprintf("%s to %s", yrs[1], yrs[2]),
+                   stringsAsFactors = FALSE)
+      }))
+    }))
+    ids <- pair_id(lk$from, lk$to, lk$lag); judged <- ids %in% JUDGED_IDS
+    ord <- c(which(judged), which(!judged)[order(-lk$n[!judged])])
+    assoc <- data.frame(
+      Driver = vapply(ord, function(i) sig_label(lk$from[i]), character(1)),
+      Response = vapply(ord, function(i) sprintf("%s%s", sig_label(lk$to[i]), if (lk$lag[i] > 0) " (next year)" else ""), character(1)),
+      `Years (n)` = as.character(lk$n[ord]),
+      `Direction found` = ifelse(is.finite(lk$r[ord]), sprintf("r = %+.2f", lk$r[ord]), "-"),
+      `Reads as` = tier_words(lk$tier[ord]),
+      Counted = ifelse(judged[ord], "Judged", "Context"),
+      check.names = FALSE, stringsAsFactors = FALSE)
+    m <- CASCADE$meta
+    list(
+      list(type = "title", text = "NEON Cross-Product Response Atlas: site report"),
+      list(type = "p", font = 2, text = sprintf("%s · %s%s", s, nm, if (nzchar(st)) paste0(", ", st) else "")),
+      list(type = "p", text = paste(counts_line(f, s), judged_sentence(f))),
+      list(type = "note", text = paste(
+        "Exploratory, not preregistered: the pairings were chosen while exploring these data. Each row is a within-site association over a few years. It cannot show that weather drives plants",
+        "or that plants drive animals, and no row is a tested chain. Below six overlapping years no direction is judged.",
+        "Judged pairings count toward the cross-site summary; context pairings are shown and never counted.",
+        "Animal indices are relative within one site, not headcounts, and are not comparable across sites.")),
+      list(type = "h2", text = "What is measured here"),
+      list(type = "table", df = sig_rows, widths = c(1.3, 2.4, 1.3, 0.7, 1.1), empty = "No signals with a value at this site."),
+      list(type = "h2", text = "Pairings at this site"),
+      list(type = "table", df = assoc, widths = c(1.6, 2.0, 0.8, 1.1, 1.8, 0.9), empty = "No pairings at this site."),
+      list(type = "h2", text = "Build and sources"),
+      list(type = "p", text = sprintf("Bundle built from source state %s; snapshot ends %s (%s); schema %s; prior family %s (%s).",
+                                      m$built_when, m$last_complete_year, m$last_complete_year_basis,
+                                      m$schema_version, m$prior_family_version, m$prior_family_status)),
+      if (!is.null(ri <- source_release_info())) list(type = "p", text = paste0("Releases: ",
+        paste(vapply(seq_len(nrow(ri)), function(i) sprintf("%s %s", tolower(ri$label[i]), release_text(ri[i, ])), character(1)),
+              collapse = "; "), ".")),
+      list(type = "p", text = paste0("Data: NEON ",
+        paste(sprintf("%s (%s)", tolower(SOURCE_PRODUCTS$label), SOURCE_PRODUCTS$dpid), collapse = ", "),
+        "; climate from NEON ", paste(sprintf("%s (%s)", tolower(CLIMATE_PRODUCTS$label), CLIMATE_PRODUCTS$dpid), collapse = " and "),
+        ". NEON data are provided under CC BY 4.0. This is an independent tool, not endorsed by NEON, Battelle or the NSF.")))
+  }
+  output$dlReportPdf <- downloadHandler(
+    filename = function() sprintf("response-atlas-%s-report-card.pdf", input$site),
+    content = function(file) {
+      s <- input$site
+      atlas_report_pdf(file, report_pdf_blocks(s),
+        footer = sprintf("NEON Cross-Product Response Atlas · %s · built %s · exploratory, not causal",
+                         s, CASCADE$meta$built_when))
     })
 
   # ---- About ----
@@ -706,13 +909,17 @@ server <- function(input, output, session) {
     gloss <- function(term, def) div(class="gloss-item", tags$b(term), tags$span(HTML(def)))
     div(class="about-wrap",
       div(class="about-card", h3("\U0001F517 What this is"),
-        p("The NEON Cross-Product Response Atlas puts annual weather, plant timing and animal counts from seven NEON products on one calendar, site by site. Each sibling app explores one of those products in depth; this one lines them up.")),
+        p(HTML(paste0("The NEON Cross-Product Response Atlas puts annual weather, plant timing and animal counts from seven NEON products on one calendar, site by site. Each product has its own explorer in the suite: ",
+          paste(vapply(list(c("mammal", "small mammals"), c("plant", "plant diversity"), c("veg", "vegetation structure"),
+                            c("phe", "plant phenology"), c("bird", "breeding birds"), c("mosq", "mosquitoes")),
+                       function(k) as.character(suite_link(k[1], k[2])), character(1)), collapse = ", "),
+          " and ", as.character(suite_link("beetle", "ground beetles")), ". This one lines them up.")))),
 
       div(class="about-card about-plain", h3(bs_icon("exclamation-triangle"), " What this can and cannot say"),
         tags$ul(
           tags$li("It lines up annual weather, plant timing and animal counts from seven NEON products on one calendar."),
           tags$li("It judges two pairings across sites, both temperature and green-up, and shows ten others for context."),
-          tags$li("The lags and seasons were set before the data were looked at and adjusted during earlier builds; they are fixed now, and the app does not let a reader slide them."),
+          tags$li("The pairings, lags and seasons were chosen and revised while these data were explored; they are fixed for this build, and the app does not let a reader slide them."),
           tags$li("It cannot show that weather drives plants or that plants drive animals, and no page is a tested chain."))),
 
       local({
@@ -743,7 +950,7 @@ server <- function(input, output, session) {
       div(class="about-card about-plain", h3(bs_icon("calculator"), " The statistics"),
         gloss("“Could this be luck?” (the circular-shift test)", "For each link we rotate the response over its full calendar grid, retaining missing years. That preserves order, annual spacing, and the gap pattern while breaking the original alignment. The exact finite floor is <b>1/(valid null shifts + 1)</b> and is reported for each link. This coarse p is transparency, not a per-site significance claim."),
         gloss("The uncertainty band (95% CI)", "An indicative range from a circular moving-block bootstrap, which resamples contiguous wrapped year blocks to retain short-range temporal structure. With only ~6 years it is often <b>very wide</b>; it diagnoses instability rather than promising precision."),
-        gloss("“Too few years to judge”", "Below <b>6 overlapping years</b> we show the lined-up data but give <b>no verdict</b>; there simply isn't enough to tell signal from noise."),
+        gloss("“Too few years to judge”", "Below <b>6 overlapping years</b> we show the lined-up data but give <b>no verdict</b>; there isn't enough to tell signal from noise."),
         gloss("The direction verdicts", "<b>Aligned</b> = points in the stated direction <em>and</em> the block-bootstrap interval excludes zero (a clean per-site direction, not significance). <b>Apparent</b> = same direction but the interval crosses zero. <b>No usable direction</b> = an effectively zero or undefined correlation; neither casts a vote. <b>Counter</b> = opposite direction. Across-site exact-binomial p-values are one-sided against 0.5 sign symmetry and shown raw plus Holm-adjusted for vote-eligible rows."),
         gloss("Sign-match score", "Of the vote-eligible links with at least 6 years, how many point in the stated literature-motivated direction. Within one site this is a <b>descriptive tally only</b>, because links share years and variables. The cross-site sign screen gives one site vote to one current literature-motivated link at a time; its p-values remain exploratory because the family was not preregistered."),
         p(class="qc-cap-note", bs_icon("info-circle"), " We never say a driver “causes” anything; a handful of yearly points cannot prove cause. These are exploratory direct-association screens, not proof of a mechanism or a trophic chain.")),
@@ -796,13 +1003,44 @@ server <- function(input, output, session) {
 
       cascade_sources(),
 
+      local({
+        ri <- source_release_info()
+        rel_for <- function(prod) {
+          if (is.null(ri)) return(NULL)
+          r <- ri[ri$product == prod, , drop = FALSE]
+          if (!nrow(r)) return(NULL)
+          r <- r[1, ]; dl <- release_doi_link(r)
+          tags$span(class = "src-release", HTML(paste0(
+            htmlEscape(sprintf(" · data through %s, %s", r$data_through, r$release)),
+            if (!is.null(dl)) paste0(", ", as.character(dl)) else "",
+            if (!is.na(r$provisional_from) && nzchar(r$provisional_from))
+              htmlEscape(sprintf("; provisional from %s", r$provisional_from)) else "")))
+        }
+        div(class="about-card", h3(bs_icon("database-check"), " Source data products"),
+          tags$ul(class = "src-products",
+            lapply(seq_len(nrow(SOURCE_PRODUCTS)), function(i) tags$li(
+              tags$b(SOURCE_PRODUCTS$label[i]), " ",
+              product_link(SOURCE_PRODUCTS$dpid[i]),
+              rel_for(SOURCE_PRODUCTS$product[i]))),
+            tags$li(tags$b("Climate overlays"), " NEON tower ",
+              tolower(CLIMATE_PRODUCTS$label[1]), " ", product_link(CLIMATE_PRODUCTS$dpid[1]), " and ",
+              tolower(CLIMATE_PRODUCTS$label[2]), " ", product_link(CLIMATE_PRODUCTS$dpid[2]),
+              "(monthly summaries carried in the Small Mammals bundle)")),
+          p(class = "qc-cap-note", if (is.null(ri))
+            "Each product page lists its releases and their DOIs. This snapshot does not record which release each product came from."
+            else "Each product page lists its releases and their DOIs."))
+      }),
+
       div(class="about-card", h3(bs_icon("award"), " Data attribution & license"),
         p(class="qc-cap-note",
           "Built with data from the National Ecological Observatory Network (NEON), a U.S. National Science Foundation program operated by Battelle. NEON data are provided under a Creative Commons Attribution 4.0 International (CC BY 4.0) license (",
           tags$a(href="https://creativecommons.org/licenses/by/4.0/", target="_blank", rel="noopener", "creativecommons.org/licenses/by/4.0"),
           "). This app aggregates and derives summary metrics from the raw NEON data products; the underlying measurements are unaltered. It is an independent, unofficial tool and is not endorsed by NEON, Battelle, or the NSF."),
         p(class="qc-cap-note", style="margin-top:6px",
-          "A multi-product synthesis joining: small mammals (DP1.10072.001), breeding birds (DP1.10003.001), plant diversity (DP1.10058.001), vegetation structure (DP1.10098.001), plant phenology (DP1.10055.001), mosquitoes (DP1.10043.001), ground beetles (DP1.10022.001), and NEON climate overlays (air temperature DP1.00002.001, precipitation DP1.00044.001), each provided under CC BY 4.0.")))
+          "To cite a product: NEON (National Ecological Observatory Network). <Product name> (<DPID>), <release>. https://data.neonscience.org/data-products/<DPID>. Add the date you accessed it and, if you used this app, the bundle stamp ",
+          tags$code(CASCADE$meta$built_when), ".")),
+
+      suite_registry_card())
   })
   # ---- SEASONAL CLIMATE reveal (the desert insight made visible) ----
   output$seasonalPlot <- renderPlotly({
@@ -859,7 +1097,7 @@ server <- function(input, output, session) {
       plain_lines(
         shows = "Rain in two seasons, one pair of bars per year: winter (October to March) and monsoon (July to September).",
         example = example,
-        from = sprintf("NEON and Daymet weather; NEON small mammals (DP1.10072.001)%s.",
+        from = sprintf("NEON tower weather; NEON small mammals (DP1.10072.001)%s.",
                        if (length(yrs_all)) sprintf(", %d to %d", min(yrs_all), max(yrs_all)) else ""),
         cannot = "Show that rain sets the catch. A short record can favour either total by chance."))
   })
@@ -935,6 +1173,7 @@ server <- function(input, output, session) {
     })
     tagList(
       p(class = "pooled-headline", tags$b(headline)),
+      p(class = "prereg-caveat", "Exploratory, not preregistered: the pairings were chosen while exploring these data."),
       div(class = "pooled-list", rows),
       under_rows,
       p(class = "qc-cap-note", sprintf("%s other pairings are shown for context and never counted; the About tab lists them.",
@@ -945,7 +1184,7 @@ server <- function(input, output, session) {
           tags$span(class = "pls-chevron", bs_icon("chevron-down"))),
         div(class = "measured-body",
           stat_rows,
-          p(class = "qc-cap-note", "The exact binomial is one-sided against a 0.5 sign split and treats sites as independent. The family was set before looking but evolved during earlier builds, so these are screens, not confirmations."))))
+          p(class = "qc-cap-note", "The exact binomial is one-sided against a 0.5 sign split and treats sites as independent. The family was chosen and revised while these data were explored, so these are exploratory screens, not preregistered tests."))))
   })
   # ---- ALL SITES: every site, every pairing (card X2) ----
   output$scoreboard <- renderUI({
@@ -1122,9 +1361,9 @@ server <- function(input, output, session) {
         tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory; &ge;6 &rarr; circular-shift p + circular block-bootstrap interval + a direction verdict. Only the two temperature–green-up rows are judged, at every supported site; context rows never pool. Raw-level exact-binomial p-values are shown with Holm adjustment plus detrended, consecutive-change, and outcome-estimator direction sensitivities.")),
         tags$li(HTML("<b>NA semantics:</b> a blank/NA cell is never a zero; it means the signal failed its documented coverage/composition gate that year (for example, an incomplete climate window, too few recurrent green-up species, or no trapping effort). The downloadable codebook CSV documents every rule."))),
       div(class="codebook-dl",
-        downloadButton("dlAnnual", tagList(bs_icon("filetype-csv"), " This site's annual data"), class="btn-outline-dark btn-sm"),
-        downloadButton("dlLinks",  tagList(bs_icon("filetype-csv"), " This site's link scorecard"), class="btn-outline-dark btn-sm"),
-        downloadButton("dlCodebook", tagList(bs_icon("filetype-csv"), " Codebook (every signal, unit, NA-rule)"), class="btn-outline-dark btn-sm"),
+        downloadButton("dlAnnual", tagList(bs_icon("filetype-csv"), " This site's annual data"), icon = NULL, class="btn-outline-dark btn-sm"),
+        downloadButton("dlLinks",  tagList(bs_icon("filetype-csv"), " This site's link scorecard"), icon = NULL, class="btn-outline-dark btn-sm"),
+        downloadButton("dlCodebook", tagList(bs_icon("filetype-csv"), " Codebook (every signal, unit, NA-rule)"), icon = NULL, class="btn-outline-dark btn-sm"),
         tags$span(class="codebook-dl-note", "(the full cross-site CSV is on the All sites tab)")))
   })
 
