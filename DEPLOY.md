@@ -42,10 +42,21 @@ commit that row to `data/coverage-overrides.tsv` by PR with a reason, approver a
 the refresh with `publish` set to `true`. A row names the exact baseline and candidate values and the
 candidate's sibling commit, so it approves one transition only and goes stale on any later change.
 
+A scheduled refresh that fails anywhere opens one issue titled "Atlas refresh failed" (the
+`notify-failure` job; later failures comment on it) carrying the failed job, step and first error; the
+next scheduled run that rebuilds and passes every job closes it. The gate job's step summary also lists
+the open `automation/*` review branches in the seven sibling repos ("waiting on N sibling review
+branches: ..."), since a sibling's unmerged refresh is not yet in its `master`. A weekly dry run was
+considered and decided against: it would change the calendar block every suite repo shares, and
+failures already surface through this issue and the suite watch in TG-Data-Apps #142.
+
 After every push to `master`, `.github/workflows/post-deploy.yml` waits for the GitHub Pages cover and
 the live Connect Cloud app, drives the app in headless Chromium, and requires the About tab's
-"Snapshot and provenance" fold to show the `built_when` of the pushed `data/cascade.rds`. A failure
-opens or updates the issue "Production health: Cross-Product Response Atlas smoke failed"; the next
+"Snapshot and provenance" fold to show the `built_when` of the pushed `data/cascade.rds`. That proves
+the data; to prove the code revision it also fetches the `cascade.js`, `cascade.css` and `styles.css`
+the app serves and requires each md5 to equal the pushed `www/` file, and it requires the app's and the
+cover's `<title>` to contain "NEON Cross-Product Response Atlas" and the app to declare `lang="en"`. All
+of these share one retry budget. A failure opens or updates the issue "Production health: Cross-Product Response Atlas smoke failed"; the next
 healthy run closes it.
 
 The generated-artifact seals in CI (Seal-2 parity, the Phenology static lock, and the Discharge F1

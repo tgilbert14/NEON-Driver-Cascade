@@ -70,7 +70,10 @@ common annual calendar.
 
 ## Why it's careful (and what it refuses to do)
 
-Each NEON site currently has only 8–13 annual rows, while link-specific usable overlap can fall to 3–11 years. At that length a lag-aware correlation scan
+Each NEON site currently has only 8–13 annual rows, and a pairing's usable overlap is usually much shorter.
+In the committed bundle (source state 2026-07-03) the 552 site × pairing rows have 0 to 11 overlapping years,
+median 3; 227 have none, and only 195 reach the 6 years a verdict needs (36 of the 92 vote-eligible rows,
+whose overlap tops out at 9). A refresh changes these counts. At that length a lag-aware correlation scan
 finds spurious signals everywhere. So the design is deliberately conservative — grounded in a
 literature review of bottom-up driver ecology and short-time-series statistics:
 
@@ -80,8 +83,8 @@ literature review of bottom-up driver ecology and short-time-series statistics:
   it was not preregistered. The estimates and p-values are therefore exploratory association screens,
   not confirmatory tests. The app shows literature-motivated pairings only where their measurement limits
   can be stated honestly; for example, it posts no green-up→bird-abundance direction because trophic-mismatch
-  studies do not supply one for this detection index. The Lag Explorer's max-statistic adjustment limits
-  the additional lag/season search in the current interface, but cannot undo that historical selection.
+  studies do not supply one for this detection index. The current interface fixes every lag and season, so a
+  reader cannot add a further search, but that cannot undo the historical selection.
 - **n-gated.** Below **6 overlapping years** no verdict is given — just the aligned series.
   At n≥6 a **circular moving-block bootstrap CI** sets the per-site direction verdict; an exact
   calendar-gap-aware circular-shift p is reported for transparency but does not set the tier. Its
@@ -120,16 +123,19 @@ still only a proxy: unless a response is calculated over the same dates, the app
 same-season or mechanistically direct test.
 
 ## Tabs
-- **Overview** — what is measured, which direct associations are actually vote-eligible, and the construct warning.
-- **Layered Timeline** — standardised (z-scored) annual signals co-displayed by measurement layer; direct-link
-  cards keep visual patterns separate from tested pairings. At dryland-keyword sites, a **Seasonal Climate**
-  panel compares annual, winter, and monsoon associations that an annual total can blur.
-- **Driver Lab** — pick a response; every current build-locked literature-motivated pairing is screened, with the
-  aligned-pairs scatter (now carrying its **r / n / p / 95% CI on the figure**) and a tier-honest fit line.
-- **Across NEON** — the scoreboard: each vote-eligible link **pooled across sites** (one vote per
-  testable site) + a site × link grid encoded by glyph and colour, with context-only and under-supported
-  rows shown rather than hidden.
-- **About** — the full current pairing table + the honesty manifesto + selected references.
+- **This site:** pick one of the 46 sites. A layered timeline puts its weather and living records on one
+  year-by-year calendar, each strip scaled to its own average year. Below it, a table of the twelve pairings at
+  that site; at dryland-keyword sites, a winter-rain versus monsoon-rain comparison; and a fold listing what is
+  measured there, including the woody-structure line.
+- **One pairing:** pick one driver and response. A scatter shows one dot per aligned year with its r, n, p and
+  95% CI; picking a year shows that year's values, and a "More numbers" fold holds the sensitivity checks.
+- **All sites:** the two judged temperature and green-up pairings pooled across sites (one vote per testable
+  site), with a pooled CSV; then every site against every pairing, sortable, with the ten context pairings
+  hidden until asked for, and a CSV.
+- **About:** the data checks for the selected site, what the atlas can and cannot say, the snapshot and
+  provenance (the deterministic build timestamp and the seven source commits), the site-group rule, plain
+  definitions, the statistics, the companion meta-analysis, the twelve pairings with their sources, and the
+  data limits.
 
 ### What it surfaces
 Exact counts and p-values are generated from the committed bundle and shown in the app rather than copied

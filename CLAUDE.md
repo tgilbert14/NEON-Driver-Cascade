@@ -25,7 +25,7 @@ DDL **NEON explorer suite**, and the suite's **ambassador** (every companion cov
   ⚠️ Branch defaults are SPLIT across the suite: **this repo is `master`**; Small Mammal + Vegetation are
   **`main`**. Never assume — target this repo's `master`. Documented, **not renamed**, per owner decision:
   a rename would first require repointing the external Connect Cloud watched-branch setting and updating
-  `ci.yml` + `refresh-data.yml` (which does `git push origin HEAD:master`).
+  `ci.yml` + `refresh-data.yml` (which pushes the review branch `automation/atlas-data-refresh`; a person's merge to `master` is the deploy).
 - **Derived build.** CI `git clone --depth 1`s the sibling repos by real slug, copies their `data/`, runs
   `scripts/build_cascade.R`, and commits the derived `.rds` + `manifest.json`. A push to `master` deploys.
 - **The terra/GDAL landmine.** Same as the suite: pin **terra 1.8-50** + the geospatial closure; the
