@@ -52,6 +52,16 @@ work accepted on Opus 5.5 at max, as Tim approved. Every coding worker ran on Op
   each stem over its own survey's area, partial surveys held. The legacy path is
   unchanged. The CI-regenerated pinned family is committed (run 39693565580), with
   every value identical to the frozen family plus 15 audit columns, schema v7.
+  - Independent referee cedar (Opus 5.5 at max) gave ACCEPT WITH NOTES. Every
+    headline value rests on the survey a VST specialist would pick, checked by hand
+    on SOAP_059, KONZ_059, ABBY_007, BONA_088, JERC_001 and others.
+  - Fixed from the referee: the later-hold count is now
+    `veg_later_nonlogistical_hold_plots`, with a caveat saying it is a screen, not a
+    disturbance count (2 of its 10 plots are established fires).
+  - Follow-ups from the referee: D1 (the shrub-channel presence-conflict test
+    should use joint shrub and tree presence) and D2 (the no-records branch should
+    count spec-form rows only). Both move only `veg_class_shrub_ba_ha` (HARV -6.3%,
+    GRSM -4.5%), with no headline value and no type flip.
 - **First refresh with current Vegetation data.** The gate will refuse SOAP's basal
   area (23.41 to 19.01, the 2023 post-fire survey), JERC's plot count (29 to 20,
   partial surveys held) and the bird max year (2025 to 2024). Each passes only with

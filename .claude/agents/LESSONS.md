@@ -224,3 +224,8 @@
   after every registry read SEAL_FAMILY_SHA through git cat-file, a manifest-changing PR passed all seven CI
   checks with no re-registration. A test that mutates a copy of a read-only frozen family must copy content
   only (shutil.copyfile, not copy2), or the write fails on mode 0444 in CI and passes on a laptop.
+- [2026-10-21] cedar · gap · VST presence is per growth form: saplings and small trees ride on treesPresent,
+  so a shrub/sapling-channel presence test needs the joint rule; targetTaxaPresent=N is overloaded (no stems,
+  or below the 10% cover sampling threshold), so never read it as absence; status-only rows prove a zero state
+  only when they account for every previously live individual. Name an audit count for what it counts: a
+  "disturbance" hold count built from samplingImpractical codes mostly counted snow and close-out holds.
