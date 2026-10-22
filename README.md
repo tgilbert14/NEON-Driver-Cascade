@@ -2,7 +2,7 @@
 
 > **Explore:** [Launch the hosted atlas](https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/) · [Project home](https://tgilbert14.github.io/NEON-Driver-Cascade/) · [Repository](https://github.com/tgilbert14/NEON-Driver-Cascade)
 
-The **capstone** of the NEONize family — an exploratory cross-product atlas of direct weather–response associations.
+An exploratory atlas of direct weather-response associations across seven NEON products.
 The suite has nine product apps. This current baseline consumes seven of them
 (small mammals, breeding birds, plant diversity, vegetation structure, plant
 phenology, mosquitoes, and ground beetles); water chemistry and aquatic
@@ -57,7 +57,7 @@ common annual calendar.
 > metadata; F2 and observation-table bytes remain unauthorized, and discharge
 > support remains `UNMEASURED`. The eventual gate can measure only
 > response-anchored discharge-site-year and QC-pass record
-> presence and may reopen review—not a build, metric, effect, prior, vote, Driver
+> presence and may reopen review, not a build, metric, effect, prior, vote, Driver
 > rebuild, or Driver byte change.
 
 > **Construct warning:** the current measurements do not supply a defensible annual production/seed-resource rung or
@@ -74,7 +74,7 @@ Each NEON site currently has only 8–13 annual rows, and a pairing's usable ove
 In the committed bundle (source state 2026-07-03) the 552 site × pairing rows have 0 to 11 overlapping years,
 median 3; 227 have none, and only 195 reach the 6 years a verdict needs (36 of the 92 vote-eligible rows,
 whose overlap tops out at 9). A refresh changes these counts. At that length a lag-aware correlation scan
-finds spurious signals everywhere. So the design is deliberately conservative — grounded in a
+finds spurious signals everywhere. So the design is deliberately conservative, grounded in a
 literature review of bottom-up driver ecology and short-time-series statistics:
 
 - **Literature-motivated, build-locked, and explicitly exploratory.** Every scorecard link has a
@@ -85,7 +85,7 @@ literature review of bottom-up driver ecology and short-time-series statistics:
   can be stated honestly; for example, it posts no green-up→bird-abundance direction because trophic-mismatch
   studies do not supply one for this detection index. The current interface fixes every lag and season, so a
   reader cannot add a further search, but that cannot undo the historical selection.
-- **n-gated.** Below **6 overlapping years** no verdict is given — just the aligned series.
+- **n-gated.** Below **6 overlapping years** no verdict is given, just the aligned series.
   At n≥6 a **circular moving-block bootstrap CI** sets the per-site direction verdict; an exact
   calendar-gap-aware circular-shift p is reported for transparency but does not set the tier. Its
   link-specific finite-randomization floor is **1 / (`n_null` + 1)**; the app exports `n_null`, `p_floor`,
@@ -161,10 +161,10 @@ fallback.
 
 The required deployable data family is:
 
-- `data/cascade.rds` — annual signals, pairwise screens, pooled direction summaries, site context, and provenance;
-- `data/search_index.rds` — a fingerprinted search derivative of that bundle;
-- `data/cascade_meta.rds` — the fingerprinted companion meta-analysis; and
-- `data/neon-cascade-codebook.csv` — the generated field contract.
+- `data/cascade.rds`: annual signals, pairwise screens, pooled direction summaries, site context, and provenance;
+- `data/search_index.rds`: a fingerprinted search derivative of that bundle;
+- `data/cascade_meta.rds`: the fingerprinted companion meta-analysis; and
+- `data/neon-cascade-codebook.csv`: the generated field contract.
 
 App boot verifies the manifest's exact 12-file checksum map before sourcing local code or deserializing
 any RDS, then cross-checks the three RDS lineage stamps; inconsistent generations refuse to start.
@@ -172,7 +172,7 @@ any RDS, then cross-checks the three RDS lineage stamps; inconsistent generation
 ## Data and measurement limits
 
 `data/cascade.rds` is `list(annual, signals, priors, codebook, suite_links, pooled, site_meta, meta)`.
-The annual per-site table—including `precip_winter`, `precip_monsoon`, and `temp_spring`—is assembled
+The annual per-site table, including `precip_winter`, `precip_monsoon`, and `temp_spring`, is assembled
 from seven sibling apps’ committed bundles plus the small-mammal app’s NEON-tower climate overlays.
 The builder does not refetch NEON data or execute sibling application code.
 

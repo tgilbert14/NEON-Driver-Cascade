@@ -26,8 +26,8 @@ DDL **NEON explorer suite**, and the suite's **ambassador** (every companion cov
   **`main`**. Never assume — target this repo's `master`. Documented, **not renamed**, per owner decision:
   a rename would first require repointing the external Connect Cloud watched-branch setting and updating
   `ci.yml` + `refresh-data.yml` (which pushes the review branch `automation/atlas-data-refresh`; a person's merge to `master` is the deploy).
-- **Derived build.** CI `git clone --depth 1`s the sibling repos by real slug, copies their `data/`, runs
-  `scripts/build_cascade.R`, and commits the derived `.rds` + `manifest.json`. A push to `master` deploys.
+- **Derived build.** The refresh builds the family from the siblings' default branches, gates it (contracts plus
+  the coverage gate), and pushes the review branch `automation/atlas-data-refresh`; a person's merge to `master` is the deploy.
 - **The terra/GDAL landmine.** Same as the suite: pin **terra 1.8-50** + the geospatial closure; the
   manifest records the actual installed versions; never hand-edit Version/RemoteSha.
 - **The manifest gate here is SEMANTIC, not byte-exact — the better pattern.** CI uses
