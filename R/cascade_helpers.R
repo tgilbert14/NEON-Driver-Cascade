@@ -21,7 +21,7 @@ TIER_RULE_VERSION <- "2026-07-calendar-gap-aware-circular-block-v5"
 # different set of priors or statistics than the rest of the app.
 CASCADE_BUNDLE_SCHEMA_VERSION <- "2026-10-veg-plot-event-audit-v7"
 SEARCH_INDEX_SCHEMA_VERSION <- "2026-07-calendar-gap-aware-search-v4"
-CASCADE_META_SCHEMA_VERSION <- "2026-07-knha-holm-prediction-v3"
+CASCADE_META_SCHEMA_VERSION <- "2026-10-knha-truncated-holm-prediction-v4"
 
 # R on Windows can start in the C locale even when UTF-8 was requested. In that
 # state, valid UTF-8 bytes produced by source literals can be serialized with an

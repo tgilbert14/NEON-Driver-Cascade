@@ -2009,11 +2009,11 @@ check(identical(attr(meta_companion, "built"), cascade$meta$built_when) &&
 check(identical(attr(meta_companion, "source_bundle_md5"), bundle_md5),
       "meta/cascade source hash parity", bundle_md5)
 check(identical(attr(meta_companion, "inference_schema"),
-                "cascade-meta-reml-knha-holm-prediction-v1") &&
+                "cascade-meta-reml-knha-truncated-holm-prediction-v2") &&
         identical(attr(meta_companion, "multiplicity_method"), "holm") &&
         identical(attr(meta_companion, "multiplicity_family"),
                   c("temp|greenup_doy", "temp_spring|greenup_doy")),
-      "meta companion persists exact KH/prediction/Holm inference schema")
+      "meta companion persists exact truncated-KH/prediction/Holm inference schema")
 toolchain_versions <- stats::setNames(as.character(bt$version),
                                      as.character(bt$component))
 meta_toolchain <- attr(meta_companion, "build_toolchain")
@@ -2103,7 +2103,7 @@ check(length(rma_rows) > 0L && all(vapply(rma_rows, function(x)
           x$rma$p_one_sided_holm >= x$rma$p_one_sided &&
           x$rma$p_one_sided_holm <= 1 &&
           identical(x$rma$test_method,
-                    "REML random-effects with Knapp-Hartung inference") &&
+                    "REML random-effects with truncated Knapp-Hartung inference") &&
           length(x$rma$pi_r) == 2L && all(is.finite(x$rma$pi_r)) &&
           x$rma$pi_r[1] <= x$rma$pi_r[2] &&
           is.finite(x$rma$I2) && x$rma$I2 >= 0 && x$rma$I2 <= 100 &&
@@ -2119,7 +2119,7 @@ expected_meta <- lapply(rma_rows, function(x) {
   d_vote <- d[!is.na(d$sign_match), , drop = FALSE]
   z <- atanh(pmax(pmin(d$r, 0.999), -0.999))
   vi <- 1 / (d$n - 3)
-  fit <- metafor::rma(yi = z, vi = vi, method = "REML", test = "knha")
+  fit <- metafor::rma(yi = z, vi = vi, method = "REML", test = "adhoc")
   pred <- stats::predict(fit)
   t_test <- as.numeric(fit$b) / as.numeric(fit$se)
   df <- as.integer(fit$k - fit$p)
