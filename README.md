@@ -1,4 +1,4 @@
-# NEON Response Atlas
+# NEON Cross-Product Response Atlas
 
 > **Explore:** [Launch the hosted atlas](https://019ee1cf-a484-44eb-a181-cd495df24b3b.share.connect.posit.cloud/) · [Project home](https://tgilbert14.github.io/NEON-Driver-Cascade/) · [Repository](https://github.com/tgilbert14/NEON-Driver-Cascade)
 
@@ -148,8 +148,10 @@ and plot/subplot/scale counts until a defensible coverage-standardized richness 
 
 ## Run it
 
-R 4.5.x: `shiny::runApp(".", port = 8194)`. The default site is **SRER** (Santa Rita, a
-Sonoran-desert case used to compare annual and seasonal driver summaries).
+R 4.5.x: `shiny::runApp(".", port = 8194)`. The default site is **SRER** (Santa Rita
+Experimental Range, the suite-wide default), and if a bundle ever lacks SRER the app falls back to the first of
+JORN, ONAQ, SJER or MOAB among its best-covered sites, else the best-covered site, and logs a message naming the
+fallback.
 
 The required deployable data family is:
 

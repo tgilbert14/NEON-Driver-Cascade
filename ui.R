@@ -1,10 +1,10 @@
 # ===========================================================================
-# NEON Response Atlas, ui.R
+# NEON Cross-Product Response Atlas, ui.R
 # Four tabs: This site, One pairing, All sites, About. The output and input
 # ids below are the contract the server builds to (docs/SIMPLIFY-PLAN-2026-10-20.md).
 # ===========================================================================
 ui <- bslib::page_fillable(
-  theme = app_theme, title = "NEON Response Atlas", lang = "en",
+  theme = app_theme, title = "NEON Cross-Product Response Atlas", lang = "en",
   tags$head(
     tags$link(rel = "icon", href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230f6a5b'/%3E%3Cpath d='M3 11 6.5 6.5 9 9l4-5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
     tags$link(rel = "stylesheet", href = asset_url("styles.css")),
@@ -20,12 +20,12 @@ ui <- bslib::page_fillable(
     div(
       class = "top-bar-brand",
       tags$span(class = "tb-mark", `aria-hidden` = "true", "\U0001F517"),
-      tags$h1(class = "tb-title", "NEON Response Atlas")
+      tags$h1(class = "tb-title", "NEON Cross-Product Response Atlas")
     ),
     div(
       class = "top-bar-actions",
       actionButton("help", tagList(bs_icon("question-circle"), tags$span(class = "tb-action-label", "How to read this")),
-        `aria-label` = "How to read the NEON Response Atlas",
+        `aria-label` = "How to read the NEON Cross-Product Response Atlas",
         class = "btn-outline-dark btn-sm tb-help"
       ),
       downloadButton("dlReport", tagList(bs_icon("file-earmark-arrow-down"), tags$span(class = "tb-action-label", "Site report (.csv)")),
@@ -190,7 +190,7 @@ ui <- bslib::page_fillable(
         # ================================================================
         nav_panel(
           title = tagList(bs_icon("info-circle"), " About"), value = "about",
-          tags$h2(class = "visually-hidden", "About the NEON Response Atlas"),
+          tags$h2(class = "visually-hidden", "About the NEON Cross-Product Response Atlas"),
           card(
             card_head("clipboard-check", "Data checks for this site"),
             uiOutput("qcFlags")

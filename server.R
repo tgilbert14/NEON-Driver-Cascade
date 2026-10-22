@@ -1,5 +1,5 @@
 # ===========================================================================
-# NEON Response Atlas, server.R
+# NEON Cross-Product Response Atlas, server.R
 # ===========================================================================
 server <- function(input, output, session) {
   focus_after_update <- function(id = NULL, tab = NULL, delay = 160L) {
@@ -593,7 +593,7 @@ server <- function(input, output, session) {
     filename = function() sprintf("%s-response-atlas-qc.csv", input$site),
     content = function(file){ rep <- cascade_qc_report(ann(), links(), SIGNALS, input$site)
       if (is.null(rep)) rep <- data.frame(note="No data-quality flags at this site.")
-      hdr <- c(sprintf("# NEON Response Atlas · %s data-quality review (verify, not wrong).", input$site),
+      hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s data-quality review (verify, not wrong).", input$site),
                "# Each flag is a value worth a second look, not automatically an error; review the documented QC rule and source record.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
       suppressWarnings(utils::write.table(rep, file, sep=",", row.names=FALSE, append=TRUE, qmethod="double")) })
@@ -615,7 +615,7 @@ server <- function(input, output, session) {
       con <- file(file, open = "w", encoding = "UTF-8")
       on.exit(close(con))
       writeLines(c(
-        sprintf("# NEON Response Atlas - site report card: %s (%s%s)", s, nm,
+        sprintf("# NEON Cross-Product Response Atlas - site report card: %s (%s%s)", s, nm,
                 if (nzchar(st)) paste0(", ", st) else ""),
         sprintf("# Heuristic site group: %s", site_blabel(s)),
         sprintf("# NEON domain: %s", if (nrow(row)) row$domain[1] else "unknown"),
@@ -678,7 +678,7 @@ server <- function(input, output, session) {
     gloss <- function(term, def) div(class="gloss-item", tags$b(term), tags$span(HTML(def)))
     div(class="about-wrap",
       div(class="about-card", h3("\U0001F517 What this is"),
-        p("The NEON Response Atlas puts annual weather, plant timing and animal counts from seven NEON products on one calendar, site by site. Each sibling app explores one of those products in depth; this one lines them up.")),
+        p("The NEON Cross-Product Response Atlas puts annual weather, plant timing and animal counts from seven NEON products on one calendar, site by site. Each sibling app explores one of those products in depth; this one lines them up.")),
 
       div(class="about-card about-plain", h3(bs_icon("exclamation-triangle"), " What this can and cannot say"),
         tags$ul(
@@ -1003,7 +1003,7 @@ server <- function(input, output, session) {
       # codebook is the source of truth, so a future builder field cannot be
       # silently omitted by a stale hand-maintained keep-vector here.
       cols <- c("year", CODEBOOK$key[CODEBOOK$key %in% names(a)])
-      hdr <- c(sprintf("# NEON Response Atlas · %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
+      hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
                "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
                "# All documented coverage counts, effort denominators, and excluded-catch audit fields are included. precip_winter = Oct-Mar sum (year it ends); precip_monsoon = Jul-Sep sum.",
                "# See the downloadable codebook in the About tab for units, NA semantics, and gates.", "")
@@ -1017,7 +1017,7 @@ server <- function(input, output, session) {
         "r_detrended","n_detrended","sign_match_detrended","r_change","n_change","sign_match_change",
         "r_outcome_alt","n_outcome_alt","sign_match_outcome_alt",
         "prior_sign","sign_match","ci_excludes_zero","tier","verdict","expected","expected_class","conf","note"), names(lk))
-      hdr <- c(sprintf("# NEON Response Atlas · %s direct-pair scorecard. r is within-site only:", input$site),
+      hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s direct-pair scorecard. r is within-site only:", input$site),
                "# expected=TRUE means vote-eligible at every supported site; expected_class=none means context-only at every site and excluded from pooling.",
                "# r_detrended, r_change, and r_outcome_alt are descriptive trend/outcome-construction sensitivities; animal indices are not comparable in magnitude across sites.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
@@ -1030,7 +1030,7 @@ server <- function(input, output, session) {
         "n_null","series_span","r_detrended","n_detrended","sign_match_detrended","r_change","n_change","sign_match_change",
         "r_outcome_alt","n_outcome_alt","sign_match_outcome_alt",
         "prior_sign","sign_match","ci_excludes_zero","tier","verdict","expected","expected_class","conf","note"), names(SUITE_LINKS))
-      hdr <- c("# NEON Response Atlas · cross-site scoreboard (every site × current build-locked direct pairing).",
+      hdr <- c("# NEON Cross-Product Response Atlas · cross-site scoreboard (every site × current build-locked direct pairing).",
                "# expected=TRUE only for vote-eligible temperature–green-up rows; expected_class=none rows are context-only everywhere.",
                "# Raw-level, detrended, consecutive-change, and alternate-green-up directions plus NEON domain membership are included; animal index magnitudes are not comparable across sites.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
@@ -1046,7 +1046,7 @@ server <- function(input, output, session) {
                           "domains", "k_domain", "domain_ties",
                           "p", "p_holm", "p_fdr", "poolable"), names(POOLED))
       hdr <- c(
-        "# NEON Response Atlas · one-raw-level-vote-per-site exact-binomial direction screens.",
+        "# NEON Cross-Product Response Atlas · one-raw-level-vote-per-site exact-binomial direction screens.",
         "# p = raw one-sided exact-binomial p; p_holm = familywise adjustment; p_fdr = Benjamini-Hochberg adjustment across poolable current associations.",
         "# Residual, consecutive-change, alternate-green-up, and NEON-domain-majority counts are descriptive sensitivities, not additional p-values; tied domains abstain.",
         "# expected_class=none rows are context-only by design and excluded from pooling; they are not merely below the site-count floor.", "")
@@ -1059,7 +1059,7 @@ server <- function(input, output, session) {
     filename = function() "neon-response-atlas-codebook.csv",
     content = function(file) {
       cb <- CODEBOOK
-      hdr <- c("# NEON Response Atlas · data codebook (every emitted signal, its unit, NA-semantics, and n-gate).",
+      hdr <- c("# NEON Cross-Product Response Atlas · data codebook (every emitted signal, its unit, NA-semantics, and n-gate).",
                "# Generated from the actual exported keep-vector, so it cannot drift from the columns the app emits.",
                "# na_meaning = the QC gate that produces an NA cell; n_gate = the per-signal coverage gate.",
                "# Source: NEON multi-product synthesis (DP1.10072.001, DP1.10003.001, DP1.10058.001, DP1.10098.001, DP1.10055.001, DP1.10043.001, DP1.10022.001, DP1.00002.001, DP1.00044.001), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); aggregated and derived by this app.", "")
@@ -1075,7 +1075,7 @@ server <- function(input, output, session) {
         tags$td(class="st-unit", s$unit), tags$td(s$higher_is)) })
     tagList(
       tags$table(class="inspect-tbl",
-        tags$caption(class="visually-hidden", "NEON Response Atlas signal codebook"),
+        tags$caption(class="visually-hidden", "NEON Cross-Product Response Atlas signal codebook"),
         tags$thead(tags$tr(tags$th(scope="col", "key"), tags$th(scope="col", "signal"),
           tags$th(scope="col", "Layer color"), tags$th(scope="col", "layer"),
           tags$th(scope="col", "unit"), tags$th(scope="col", "“more” ="))),

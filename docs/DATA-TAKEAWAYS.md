@@ -1,4 +1,4 @@
-# NEON Driver Cascade — Data Takeaways & Critical Review
+# NEON Cross-Product Response Atlas: Data Takeaways & Critical Review
 
 > **SUPERSEDED — July 2026 scientific audit.** The counts and conclusions below describe an older
 > bundle and must not be quoted as current results. That bundle treated left-censored phenology onsets
