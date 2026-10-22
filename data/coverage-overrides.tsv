@@ -1,0 +1,4 @@
+product	rule	scope	baseline_value	candidate_value	source_commit	reason	approved_by	approved_on
+bird	max_year	*	2025	2024	67b3b3989a004c9a4b59444657bd8e261d6d8093	Breeding Birds withdrew its provisional 2025 year; the Atlas adopts the released record, which ends in 2024	tgilbert14 (merging this PR is the approval)	2026-10-22
+veg	veg_n_plots	JERC	29	20	ac3a2b13cd855b96cf302a5124374e209977c557	event-aware Vegetation adapter holds dataCollected=partial surveys until the sibling records per-channel completeness (ruling R7); basal area -1.6%	tgilbert14 (merging this PR is the approval)	2026-10-22
+veg	veg_ba_ha	SOAP	23.4148341	19.00878875	ac3a2b13cd855b96cf302a5124374e209977c557	event-aware Vegetation adapter uses the 2023 post-Creek-Fire survey instead of carrying pre-fire trees forward (cass, hk, cedar)	tgilbert14 (merging this PR is the approval)	2026-10-22
