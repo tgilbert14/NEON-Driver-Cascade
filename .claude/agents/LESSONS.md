@@ -35,6 +35,8 @@
   apps are `main`. Do not rename without FIRST repointing the external Connect watched-branch setting and
   updating `ci.yml:6` + `refresh-data.yml` (lines ~30/234/243/250-251/301-303, incl. `git push origin
   HEAD:master`) + `DEPLOY.md`. Documented per-repo instead, per owner decision.
+  Superseded in part 2026-10-22: the refresh no longer pushes `HEAD:master`; it pushes the review branch
+  `automation/atlas-data-refresh` and a person's merge is the deploy (PR #75). The rename warning stands.
 - [2026-07-21] cass · confirmed · Botanical model quality (site-explorer `plot.src.html`): two reusable
   patterns proved out on saguaro + Christmas cholla. (1) SWEEP-ONE-TUBE — a single Frenet-framed
   BufferGeometry (`saguaroFlesh`) that ribs+tapers+per-vertex-colours a tube along any curve serves BOTH a
