@@ -11,7 +11,7 @@
 > your tool (`[Claude]` / `[Codex]`) and a one-line next action, so the other agent can pick up cold.
 >
 > **Before you code: plan, question, and challenge the work** — and always name at least one improvement
-> you spot. The how-we-work principles are the flagship `NEON-Small-Mammal-Tracker-App` playbook §9.
+> you spot. The how-we-work principles are `docs/neonize-playbook.md` §9, the canonical suite playbook.
 
 ## What this is
 
