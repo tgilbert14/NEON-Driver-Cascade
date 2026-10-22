@@ -4,8 +4,8 @@
 > own name, `· <agent> ·`) and append a one-line lesson after a run that taught something durable.
 >
 > The **canonical, cross-cutting** log lives in `TG-Data-Apps/.claude/agents/LESSONS.md`; the deep NEON
-> methodology lives in `docs/neonize-playbook.md` (the flagship `NEON-Small-Mammal-Tracker-App` copy is the
-> reference for §6–9). `curator` promotes recurring lessons up. Format + protocol:
+> methodology lives in this repo's `docs/neonize-playbook.md`, the suite's one canonical playbook (PR #82).
+> `curator` promotes recurring lessons up. Format + protocol:
 > `TG-Data-Apps/.claude/agents/_CONVENTIONS.md`.
 
 ## How to write an entry

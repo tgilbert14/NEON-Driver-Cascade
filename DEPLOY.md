@@ -1,7 +1,8 @@
 # Deploying the NEON Cross-Product Response Atlas
 
 This app follows the NEON-suite standard: **Posit Connect Cloud, git-backed deploy**
-(a push to `master` auto-republishes). See `docs/neonize-playbook.md` §6.
+(Connect Cloud republishes whenever `master` changes, so a reviewed merge to `master` is the deploy;
+automation never pushes `master`). See `docs/neonize-playbook.md` §6.
 
 It is a **derived** app — its deployable artifact family is assembled from **seven** sibling
 apps' committed `.rds` bundles (no direct NEON pull). The only supported rebuild entry point is
