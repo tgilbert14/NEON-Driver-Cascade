@@ -23,8 +23,9 @@ snapshot; the Wave 2 stack waits in PR #80.
 - **PR #80** (`claude/atlas-veg-event-adapter`, open): lands the Wave 2 stack on `master` (#76, #77,
   #79): the name "NEON Cross-Product Response Atlas", the four-tab app (This site, One pairing, All sites,
   About), and the event-aware Vegetation adapter that supersedes the PR #78 spec. Its rulings are in
-  `docs/BUILD-TEST-HANDOFF.md`, entry 2026-10-21. Finish lanes (ops, copy, and others) are being
-  integrated onto this branch by the lead. Merging it is a deploy.
+  `docs/BUILD-TEST-HANDOFF.md`, entry 2026-10-21. The 2026-10-22 finish work is on the same branch: the
+  suite registry, PDF report, pin cards, QC flags, truncated Knapp-Hartung, per-product release labels,
+  the refresh failure issue, and the revision-proving post-deploy check. Merging it is a deploy.
 - **PR #81** (`claude/atlas-coverage-overrides-first-refresh` -> `master`, open): approves the three
   coverage-gate refusals for the first Atlas refresh, as rows in `data/coverage-overrides.tsv`.
 
@@ -57,19 +58,41 @@ snapshot; the Wave 2 stack waits in PR #80.
 
 ## Deliberately deferred (DO NOT re-flag: decided, with the reason)
 
-The lead will finish the reasons and owners for each item.
+Each item names its owner and the condition that reopens it.
 
-- **`dataCollected = partial` surveys:** held until the Vegetation app records per-channel completeness.
-- **Protocol stem locator (`tempStemID`):** not used.
-- **"small tree" appearing in both size specs:** deferred.
-- **The classifier's occupied-plot denominators:** deferred.
-- **An upper diameter screen:** deferred.
-- **The zero-fill basal-area estimator:** deferred.
-- **Deriving `last_complete_year` from release coverage:** deferred.
-- **The temperature sentinel screen:** deferred.
-- **The Small Mammal month-adjusted index:** deferred.
-- **Vegetation contract v3 support (Vegetation PR #19):** deferred.
-- **The first data refresh:** held until the sibling PRs land.
+- **`dataCollected = partial` Vegetation surveys:** held (ruling R7). NEON records the woody scope of a
+  partial survey only in free text; 50 of 57 are woody-complete, 7 are not. Cost: JERC 29 to 20 plots
+  (basal area -1.6%), OSBS 41 to 39. Reopens when the Vegetation app ships a per-channel completeness
+  field (cedar), or Tim approves a reviewed allowlist of the 50 JERC and OSBS events.
+- **Protocol stem locator (`tempStemID`):** not used. It is blank on 4.3% of rows and moves only BONA
+  (0.45%) and DCFS (0.2%); adopting it without cross-day de-duplication would double count BONA_079 and
+  GUAN_011 (cedar). Reopens with Vegetation contract v3's multi-bole rules.
+- **"small tree" in both size specs:** kept for this adoption so one thing changes at a time; dropping it
+  moves NIWO +4.1% and shrub classification evidence by up to 4.3% (hk, cedar). Owner: cass.
+- **The classifier's occupied-plot denominators** (MOAB forest from 3 of 42 plots, ONAQ from 6 of 47):
+  owner decision with the zero-fill estimator below.
+- **An upper diameter screen:** none in either path; BONA includes a 172 cm aspen (about +6% of its
+  value). Adopt the Vegetation app's size-plausibility screen when its v3 bundles carry it (cedar).
+- **The zero-fill basal-area estimator (appendix F14 step 2):** owner decision for cedar, cass and hk.
+  Zero-filling over area-eligible plots would move MOAB 11.50 to 0.82 and ONAQ 12.92 to 1.65 (flipping it
+  to shrubland). Cedar must first show sampled-zero plots can be told from unsampled ones.
+- **Deriving `last_complete_year` from release coverage (appendix F16):** decided 2026-10-22 to keep 2025
+  and label it `provisional_from`. Deriving it would set 2024 and drop 46 display-only rows (2025
+  climate, bird_index, fruiting); cass measured no link, tier, vote or pooled change. Revisit when
+  RELEASE-2027 publishes and update the release-coverage constants in `R/source_adapters.R`.
+- **The temperature sentinel screen (`temp_min <= -80` or `temp_max >= 55`):** owner decision for cass.
+  It flags 383 months in 101 site-years, turns 11 annual temp and 5 March to May values NA, changes 15
+  link counts and 3 tiers, and moves the March to May vote from 8/18 to 9/18; the temperature to
+  green-up headline stays 15/18. cass recommends adopting it in a later family revision.
+- **The Small Mammal month-adjusted index:** owner decision for mara and hk. The producer app still
+  pools catch over whichever months were trapped (`server.R:247-255`); the Atlas follows once it changes.
+- **Vegetation contract v3 support:** the adapter accepts only v2 and fails closed on v3. Add v3 when the
+  Vegetation app promotes a v3 candidate family (its PR #19), tested on real v3 bundles.
+- **The first data refresh:** held until the sibling PRs land, then a dry run, PR #81 re-keyed if any
+  sibling commit moved, and a published refresh.
+- **SRER's all-NA green-up:** recorded as the honest left-censor outcome; cass and iris to confirm.
+- **The hero-card PNG export:** needs an html-to-image library this app does not ship.
+- **A keyboard path to timeline pin cards:** timeline points have no picker yet (scatter cards do).
 - **A weekly refresh dry run (audit appendix F4):** decided against on 2026-10-22. It would change the
   calendar block every suite repo shares; failures already reach a person through the "Atlas refresh
   failed" issue and the suite watch in TG-Data-Apps #142.
