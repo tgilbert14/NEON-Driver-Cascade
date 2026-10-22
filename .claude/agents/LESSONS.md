@@ -231,3 +231,26 @@
   or below the 10% cover sampling threshold), so never read it as absence; status-only rows prove a zero state
   only when they account for every previously live individual. Name an audit count for what it counts: a
   "disturbance" hold count built from samplingImpractical codes mostly counted snow and close-out holds.
+- [2026-10-22] twinblade · gap · A rename PR must grep the post-deploy smoke markers too: #77 renamed the cover
+  while scripts/post_deploy_smoke.sh still defaulted to "NEON Response Atlas", so the first healthy deploy after
+  #80 would have opened an outage issue; pass the markers explicitly in post-deploy.yml.
+- [2026-10-22] twinblade · confirmed · built_when proves the data, not the code: prove a deploy's revision by the
+  md5 of the served www/ assets against the merged files (asset_url's ?v= is a file mtime, not a revision).
+- [2026-10-22] twinblade · gap · A "graph unchanged" guard that compares an in-memory object with itself can
+  never fire; re-read the written bytes from disk before os.replace, and prove it with a fixture that injects a
+  bad render. In a workflow, fetch Actions job logs with curl: gh 2.98 refuses logs with escape sequences.
+- [2026-10-22] grinch · confirmed · Replacing a slogan h2 with a plain label can make it repeat its kicker word
+  for word; after a heading change, read the kicker and the h2 together on the rendered page.
+- [2026-10-22] neonize · gap · htmltools puts whitespace between inline children, so p("a ", tags$a(..), ", b")
+  renders "link , b"; build linked running text as one HTML string and check the rendered page, not the source.
+- [2026-10-22] neonize · confirmed · Pin cards port into a Plotly-only app with no new www file: pass the card
+  HTML through htmlwidgets::onRender(data=), bind in that callback (it re-runs after every purge), key cards on
+  customdata, and give keyboard users an existing picker as the open path.
+- [2026-10-22] neonize · wrong · The Atlas copy said "NEON and Daymet weather", but the build reads only the
+  Small Mammal app's NEON tower overlays (DP1.00002.001, DP1.00044.001); check a data-source claim against the
+  build code before repeating it.
+- [2026-10-22] cass · gap · Pinned sibling bundles record no release, DOI or schema, so a provisional label
+  cannot come from them: date it from NEON's release coverage (RELEASE-2026 observational data through 2024-12)
+  and update that constant when RELEASE-2027 publishes.
+- [2026-10-22] cass · confirmed · Dropping the provisional 2025 year would change no link, vote or pooled result
+  (2025 carries only climate, bird_index with no prior, and fruiting), so the Atlas keeps it and labels it.
