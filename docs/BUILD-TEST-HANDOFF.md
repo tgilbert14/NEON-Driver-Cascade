@@ -1,10 +1,71 @@
 # Build, test, and handoff record
 
-Last updated: 2026-10-20
+Last updated: 2026-10-21
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
 can continue safely without relying on chat history.
+
+## 2026-10-21 16:05 MST [Claude] — Vegetation plot × event adapter specified; dry run sized the Driver value change; owner disposition pending (PR to `master`)
+
+- Changed: added `docs/VEGETATION-V2-ADAPTER-SPEC.md` (the `cass` specification
+  with the `hk` sign-off; recommended disposition ADOPT, two HOLD items),
+  `docs/receipts/vegetation-v2-adapter-dryrun-2026-10-21.csv` (46-row per-site
+  receipt with n on every number), `scripts/dryrun_vegetation_v2_adapter.R` (the
+  dry-run prototype; not a build step, not in `DEPLOY_APP_FILES`, not in
+  `LOCAL_BUILD_INPUT_PATHS`, writes nothing under `data/`), and one
+  Driver-implication-backlog row in `docs/NEON-SUITE-LEARNING-LOOP.md`. Nothing
+  under `data/`, `R/`, `manifest.json`, `scripts/build_cascade.R` or any workflow
+  changed; the five canonical hashes are unchanged (cascade `dababae4…`, search
+  `a7aa0d5e…`, meta `6ed4fd96…`, codebook `a79cc754…`, manifest `98bad5c4…`).
+  `.claude/agents/LESSONS.md` is deliberately untouched because PRs #75, #76 and
+  #77 all append to it; the lesson is recorded in this entry.
+- Learned: (1) under a per-event adapter the value movement is a SUPPORT story,
+  not an area story. Every 2014–2019 plot-event is `held_opportunity_unknown`
+  because NEON published no `samplingImpractical` / `dataCollected` before 2020,
+  so a plot's latest supported census is always 2020–2024 and 641 of 1,438
+  record plots have none; the per-event area itself differs from the legacy plot
+  table at only 11 stand plots across 8 sites. (2) Vegetation `main` moved again
+  on 2026-10-20 (`dc7684c`, its PR #17) while the handoff still named `53667a1`;
+  the `data/sites` tree is identical at both (`8d6e2377…`), but between the
+  pinned `5e73e0d` and that tree the `trees` rows also changed at CPER, DSNY,
+  HARV, MOAB and OSBS, so "same rows" held only for 36 sites. (3) The
+  2026-09-24 "areas differ at 45 of 46 sites" figure is corrected to 35 of 41
+  in-scope sites (42 bundles exist; PUUM is out of scope). (4) A dry-run harness
+  that routes the legacy schema through the unchanged production helpers proves
+  itself first: it reproduced all 17 committed `veg_*` fields at 46 sites within
+  1e-12 before any v2 number was trusted.
+- Test process: cwd = this worktree at `543fee4`; Windows 11, R 4.6.1, dplyr
+  1.2.1 (NOT the canonical Ubuntu R 4.5.2 runtime); three sibling checkouts
+  fetched detached at depth 1 by full SHA into the session scratchpad
+  (`5e73e0dde5cc…`, `53667a17a50f…`, `dc7684c138e1…`); command
+  `Rscript --vanilla scripts/dryrun_vegetation_v2_adapter.R <out> legacy=pinned_5e73e0d=<path> v2=mid_53667a1=<path> v2=main_dc7684c=<path>`.
+  Expected legacy-path parity PASS: actual PASS (17/17 fields, 46 sites).
+  Expected 0 `UNEXPLAINED` reason-ledger rows: actual 0. Result on the current
+  source: 36 of 36 both-finite sites move (median |Δ| 7.9 %, p90 36.8 %, max
+  54.4 % at STEI), 0 forest/shrubland flips, 4 sites to
+  `unsupported-no-supported-event` (CPER, DCFS, NOGP, LAJA), WOOD stays `NA`,
+  stand plots 1,169 → 624; primary v2 identical on `53667a1` and `dc7684c`.
+  Sensitivities: A (relax `held_metric_invalid`) moves 28 sites, B (disjoint
+  growth forms) 0, C (sampled-absence zeros in the mean) 12. No artifact
+  generated. `git diff --check` clean on the committed files.
+- Evidence invalidated: none (documentation, receipt and dry-run script only).
+- Artifacts: unchanged.
+- Failure/cleanup: none; no lock, no pending stage; the scratchpad clones are
+  outside the repository.
+- Residual risk: the dry run is not the canonical runtime; the production
+  adapter, its independent oracle and fixtures, and the regenerated family are
+  unbuilt; the Vegetation default branch keeps moving, so any implementation must
+  name an exact commit, never `main`; `server.R` renders nothing for the new
+  status tokens until it learns them, and its About sentence about sampled zeros
+  becomes false under v2 — both wait for PR #77.
+- Lesson for `.claude/agents/LESSONS.md` (append after #75–#77 merge):
+  `[2026-10-21] cass · confirmed · When a sibling moves from plot grain to plot × event grain, SIZE the change before choosing a rule: the per-event AREA denominators moved 11 stand plots at 8 sites, but the published SUPPORT states (every pre-2020 event unknown) moved all 36 sites and held 4. A dry-run harness that first reproduces the committed values through the unchanged production helpers is what makes the v2 numbers trustworthy; without that gate the "impact" is an unvalidated reimplementation.`
+- Next action: the owner fills §10 of `docs/VEGETATION-V2-ADAPTER-SPEC.md`
+  (recommended ADOPT; H1 and H2 HOLD); then, after #75–#77 merge, the
+  implementation PR (v2 route + oracle + fixtures + schema bump + `server.R`
+  tokens), `regenerate-artifacts.yml` with `siblings=current`, and
+  re-registration of the eight registries and the spec chain.
 
 ## 2026-10-20 [Claude]: the app simplified to four tabs (PR to `master`)
 
