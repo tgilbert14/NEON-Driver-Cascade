@@ -134,6 +134,11 @@ CANONICAL_DRIVER_PATHS = {
     "codebook": "data/neon-cascade-codebook.csv",
     "manifest": "manifest.json",
 }
+# Tamper check on the frozen family SEAL_FAMILY_SHA, never the working tree. A
+# trusted git step materializes its five blobs into the directory named by
+# SEAL_FAMILY_ROOT_ENV; this verifier keeps no subprocess capability.
+SEAL_FAMILY_SHA = "543fee44e3bbb8ba47ece1cde1a199fdae9b4d50"
+SEAL_FAMILY_ROOT_ENV = "CASCADE_SEAL_FAMILY_ROOT"
 CANONICAL_DRIVER_HASHES = {
     "cascade": "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478",
     "search": "a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af",
@@ -1185,8 +1190,14 @@ def verify_repo_authorities_if_present() -> None:
         fail("spec_authority_mismatch")
     ledger = _regular_file_bytes(root / LEDGER_PATH, max_bytes=1024 * 1024)
     _verify_ledger(ledger)
+    family_raw = os.environ.get(SEAL_FAMILY_ROOT_ENV, "")
+    if not family_raw:
+        fail("driver_artifact_changed")
+    family_root = Path(family_raw)
+    if family_root.is_symlink() or not family_root.is_dir():
+        fail("driver_artifact_changed")
     for label, relative in CANONICAL_DRIVER_PATHS.items():
-        if _sha256_file(root / relative) != CANONICAL_DRIVER_HASHES[label]:
+        if _sha256_file(family_root / relative) != CANONICAL_DRIVER_HASHES[label]:
             fail("driver_artifact_changed")
 
 

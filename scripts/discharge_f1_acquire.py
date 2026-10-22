@@ -416,7 +416,7 @@ def acquire(
         fail("cleanup_incomplete")
 
     ledger = contract.verify_ledger(repo_root / "docs/receipts/discharge-inverts-response-site-years.tsv")
-    driver_hashes = contract.verify_driver_hashes(repo_root)
+    driver_hashes = contract.verify_driver_hashes(contract.seal_family_root())
     sanitized = _acquire_sanitized_phase(
         token_box=token_box,
         transport=transport,

@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import re
 from typing import Iterable, Mapping, NoReturn, Sequence
@@ -122,6 +123,13 @@ QC_FIELD_KEYS = frozenset({
     ("csd_continuousDischarge", "dischargeFinalQFSciRvw"),
 })
 
+# The Driver hashes are a tamper check on one frozen artifact family, not on the
+# working tree: a validated data refresh changes the working-tree artifacts and
+# must not break this lane. A trusted git step materializes the five blobs of
+# SEAL_FAMILY_SHA into the directory named by SEAL_FAMILY_ROOT_ENV; this module
+# keeps no subprocess capability and only hashes that directory.
+SEAL_FAMILY_SHA = "543fee44e3bbb8ba47ece1cde1a199fdae9b4d50"
+SEAL_FAMILY_ROOT_ENV = "CASCADE_SEAL_FAMILY_ROOT"
 CANONICAL_DRIVER_HASHES = {
     "cascade": "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478",
     "search": "a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af",
@@ -927,6 +935,17 @@ def verify_ledger(path: Path) -> dict[str, object]:
         "site_count": LEDGER_SITES,
         "sites_with_at_least_six_years": LEDGER_SITES_GE_6,
     }
+
+
+def seal_family_root() -> Path:
+    """Return the materialized frozen-family directory, failing closed."""
+    raw = os.environ.get(SEAL_FAMILY_ROOT_ENV, "")
+    if not raw:
+        fail("driver_artifact_changed")
+    root = Path(raw)
+    if root.is_symlink() or not root.is_dir():
+        fail("driver_artifact_changed")
+    return root
 
 
 def verify_driver_hashes(root: Path) -> dict[str, str]:

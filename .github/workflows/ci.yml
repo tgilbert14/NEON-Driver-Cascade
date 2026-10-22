@@ -19,6 +19,10 @@ env:
   # the immutable commit that triggered the workflow.
   SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
   PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+  # The generated-artifact seals are tamper checks on one frozen family, never on
+  # the working tree, so a reviewed data refresh does not turn them red. Every
+  # seal hashes the blobs of these five paths at this commit with git cat-file.
+  SEAL_FAMILY_SHA: 543fee44e3bbb8ba47ece1cde1a199fdae9b4d50
   RSPM: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
   RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/noble/2026-07-15
   # Hosted x64 runners can select different OpenBLAS kernels from their physical
@@ -346,6 +350,22 @@ jobs:
           test -z "$(find . -path './.git' -prune -o -type l -print -quit)"
           rm -f -- "$expected" "$actual"
           test -z "$(git config --local --get-regexp '^http[.].*[.]extraheader$' || true)"
+          # The Driver hash seal is anchored to the frozen family SEAL_FAMILY_SHA.
+          # Materialize its five blobs outside the worktree while the remote can
+          # still serve them; the networkless contract hashes only that copy.
+          [[ "$SEAL_FAMILY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          if ! git cat-file -e "$SEAL_FAMILY_SHA^{commit}" 2>/dev/null; then
+            git fetch --quiet --no-tags --depth=1 origin "$SEAL_FAMILY_SHA"
+          fi
+          test "$(git rev-parse "$SEAL_FAMILY_SHA^{commit}")" = "$SEAL_FAMILY_SHA"
+          seal_root="$RUNNER_TEMP/discharge-f1-seal-family"
+          test ! -e "$seal_root"
+          install -d -m 0700 "$seal_root" "$seal_root/data"
+          for path in data/cascade.rds data/search_index.rds data/cascade_meta.rds \
+                      data/neon-cascade-codebook.csv manifest.json; do
+            git cat-file blob "$SEAL_FAMILY_SHA:$path" > "$seal_root/$path"
+          done
+          chmod -R a-w "$seal_root"
           git remote remove origin
           test -z "$(git remote)"
 
@@ -395,6 +415,7 @@ jobs:
             TMPDIR="$child_tmp" \
             PYTHONDONTWRITEBYTECODE=1 \
             HOST_NET="$host_net" \
+            CASCADE_SEAL_FAMILY_ROOT="$RUNNER_TEMP/discharge-f1-seal-family" \
             bash --noprofile --norc -c '
               set -euo pipefail
               child_net="$(readlink /proc/self/ns/net)"
@@ -872,6 +893,25 @@ jobs:
           test -z "$(find . -path './.git' -prune -o -type l -print -quit)"
           rm -f -- "$expected" "$actual"
           test -z "$(git config --local --get-regexp '^http[.].*[.]extraheader$' || true)"
+          # Fetch the frozen seal family and read each sealed blob once while the
+          # remote still exists; the later seal check then runs offline.
+          [[ "$SEAL_FAMILY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git fetch --quiet --no-tags --depth=1 origin "$SEAL_FAMILY_SHA"
+          test "$(git rev-parse "$SEAL_FAMILY_SHA^{commit}")" = "$SEAL_FAMILY_SHA"
+          for path in data/cascade.rds data/search_index.rds data/cascade_meta.rds \
+                      data/neon-cascade-codebook.csv manifest.json; do
+            git cat-file blob "$SEAL_FAMILY_SHA:$path" > /dev/null
+          done
+          # The legacy parity baseline is the frozen family's cascade.rds, never the
+          # working tree, so a refreshed family cannot be compared with the legacy tree.
+          frozen="$RUNNER_TEMP/phenology-v2-seal2-frozen"
+          test ! -e "$frozen"
+          install -d -m 0755 "$frozen"
+          git cat-file blob "$SEAL_FAMILY_SHA:data/cascade.rds" > "$frozen/cascade.rds"
+          test "$(sha256sum "$frozen/cascade.rds" | awk '{print $1}')" = \
+            "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478"
+          chmod 0444 "$frozen/cascade.rds"
+          chmod 0555 "$frozen"
           git remote remove origin
           test -z "$(git remote)"
           for path in \
@@ -1135,8 +1175,10 @@ jobs:
           PHENOLOGY_V2_LEGACY_ROOT: ${{ runner.temp }}/phenology-v2-seal2-incoming/sites
           PHENOLOGY_V2_LEGACY_COMMIT: 81e339e9ed6f34d3d04ca45a7030fea51c4147a5
           PHENOLOGY_V2_LEGACY_TREE: 30abe869b0f78931929c21e544ffc85ec2238e35
+          PHENOLOGY_V2_SEAL2_BASELINE: ${{ runner.temp }}/phenology-v2-seal2-frozen/cascade.rds
         run: |
           set -euo pipefail
+          test -f "$PHENOLOGY_V2_SEAL2_BASELINE"
           for name in \
             CASCADE_ROOT \
             PHENOLOGY_ORIGIN \
@@ -1180,6 +1222,7 @@ jobs:
             PHENOLOGY_V2_LEGACY_ROOT="$PHENOLOGY_V2_LEGACY_ROOT" \
             PHENOLOGY_V2_LEGACY_COMMIT="$PHENOLOGY_V2_LEGACY_COMMIT" \
             PHENOLOGY_V2_LEGACY_TREE="$PHENOLOGY_V2_LEGACY_TREE" \
+            PHENOLOGY_V2_SEAL2_BASELINE="$PHENOLOGY_V2_SEAL2_BASELINE" \
             Rscript --vanilla scripts/test_phenology_adapter_v2_legacy.R \
             > "$raw_stdout" 2> "$raw_stderr"
           child_status=$?
@@ -1331,15 +1374,17 @@ jobs:
           git diff --quiet -- .
           git diff --cached --quiet -- .
           test -z "$(git ls-files --others --exclude-standard)"
-          test "$(sha256sum data/cascade.rds | awk '{print $1}')" = \
+          # Seal on the frozen family SEAL_FAMILY_SHA, not the working tree.
+          test "$(git rev-parse "$SEAL_FAMILY_SHA^{commit}")" = "$SEAL_FAMILY_SHA"
+          test "$(git cat-file blob "$SEAL_FAMILY_SHA:data/cascade.rds" | sha256sum | awk '{print $1}')" = \
             "dababae42a80724ebb91db856965d3546b53e83324ec539dd1868ffe85fdf478"
-          test "$(sha256sum data/search_index.rds | awk '{print $1}')" = \
+          test "$(git cat-file blob "$SEAL_FAMILY_SHA:data/search_index.rds" | sha256sum | awk '{print $1}')" = \
             "a7aa0d5e08eee79fa6c8f58ab88be6e40090c640fb03f61257c1640b73aca8af"
-          test "$(sha256sum data/cascade_meta.rds | awk '{print $1}')" = \
+          test "$(git cat-file blob "$SEAL_FAMILY_SHA:data/cascade_meta.rds" | sha256sum | awk '{print $1}')" = \
             "6ed4fd964dd626f57fa17f1fde3098e7073bd9fc94ebc0cecc4f95f8316cf2ec"
-          test "$(sha256sum data/neon-cascade-codebook.csv | awk '{print $1}')" = \
+          test "$(git cat-file blob "$SEAL_FAMILY_SHA:data/neon-cascade-codebook.csv" | sha256sum | awk '{print $1}')" = \
             "a79cc754a0d984e8593fdbf84ccde518a6a6416a7bfbbc86d87e9de49a4138c3"
-          test "$(sha256sum manifest.json | awk '{print $1}')" = \
+          test "$(git cat-file blob "$SEAL_FAMILY_SHA:manifest.json" | sha256sum | awk '{print $1}')" = \
             "98bad5c426dc1ac687ec3ccb36e68cfbf51939ff400c2db4b6bf7ae2f31489dd"
           git diff --check
 
@@ -1359,6 +1404,10 @@ jobs:
           set -euo pipefail
           test "${#SOURCE_SHA}" -eq 40
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          # The static-lock seal reads the frozen family SEAL_FAMILY_SHA with git.
+          [[ "$SEAL_FAMILY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git fetch --quiet --no-tags --depth=1 origin "$SEAL_FAMILY_SHA"
+          test "$(git rev-parse "$SEAL_FAMILY_SHA^{commit}")" = "$SEAL_FAMILY_SHA"
 
       - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
         with:
