@@ -2451,6 +2451,77 @@ check(all(c("greenup_censor_burden", "greenup_composition_exclusions",
         all(c("greenup_censor_burden", "greenup_composition_exclusions",
               "greenup_wide_typical_intervals", "greenup_wide_intervals") %in% names(phen_qc$sets)),
       "phenology QC exposes censor, composition-exclusion, typical-width, and extreme-width audits")
+phen_jump <- phen_qc$sets$greenup_interval_width_jump
+check("greenup_interval_width_jump" %in% phen_qc_keys && nrow(phen_jump) == 1L &&
+        phen_jump$year == 2021L && phen_jump$change_days == 10 &&
+        !"greenup_interval_width_jump" %in% vapply(cascade_qc(transform(phen_qc_fixture,
+          year = c(2019L, 2021L)), data.frame(), site = "QC")$flags, `[[`, character(1), "key"),
+      "phenology QC flags a 3-day-or-more median interval-width step between consecutive years only")
+# F12: the apparent-link flag lists vote-eligible rows only, is never "high", and
+# every apparent row in the committed family has an interval that does not exclude 0.
+ap_links <- data.frame(from = "temp", to = "greenup_doy", lag = 0L, n = 8L, r = -0.4,
+                       lo = c(-0.8, -0.7), hi = c(0.1, 0.2), p = 0.2,
+                       tier = "apparent", expected = c(TRUE, FALSE), stringsAsFactors = FALSE)
+ap_qc <- cascade_qc(data.frame(year = 2015:2022), ap_links, site = "QC")
+ap_flag <- Filter(function(f) identical(f$key, "apparent_ci0"), ap_qc$flags)
+ap_family_levels <- unlist(lapply(sort(unique(cascade$annual$site)), function(s)
+  vapply(Filter(function(f) identical(f$key, "apparent_ci0"),
+                cascade_qc(cascade$annual[cascade$annual$site == s, , drop = FALSE],
+                           suite[suite$site == s, , drop = FALSE], cascade$signals, s)$flags),
+         `[[`, character(1), "level")))
+ap_rows <- suite[suite$tier %in% "apparent", , drop = FALSE]
+check(length(ap_flag) == 1L && identical(ap_flag[[1]]$level, "warn") && ap_flag[[1]]$n == 1L &&
+        length(ap_family_levels) > 0L && all(ap_family_levels == "warn") &&
+        !any(mapply(ci_excludes_zero, ap_rows$lo, ap_rows$hi)),
+      "apparent-link QC is vote-eligible only, never high, and every apparent CI includes zero",
+      sprintf("%d sites flagged, %d apparent rows", length(ap_family_levels), nrow(ap_rows)))
+# F18: a synthetic outlier year is flagged with its total, effort and link use.
+out_fixture <- data.frame(site = "QC", year = 2015:2021,
+                          temp = c(10, 11, 10.5, 9.8, 10.2, 10.9, NA),
+                          mammal_cpue = c(5, 5.5, 6, 5.2, 5.8, 60, 5.4),
+                          mammal_captures = c(50, 55, 60, 52, 58, 600, 54),
+                          mammal_trap_nights = 1000)
+out_links <- data.frame(from = "temp", to = "mammal_cpue", lag = 0L, n = 6L,
+                        tier = "counter", expected = TRUE, stringsAsFactors = FALSE)
+out_qc <- cascade_qc(out_fixture, out_links, site = "QC")
+out_set <- out_qc$sets$unusual_year
+out_level <- vapply(Filter(function(f) identical(f$key, "unusual_year"), out_qc$flags),
+                    `[[`, character(1), "level")
+check(identical(out_level, "warn") && nrow(out_set) == 1L && out_set$year == 2020L &&
+        out_set$index == "mammal_cpue" && out_set$total == 600 && out_set$effort == 1000 &&
+        isTRUE(out_set$enters_link) && out_set$robust_z > 3.5 &&
+        is.null(cascade_qc(transform(out_fixture, mammal_cpue = c(5, 5.5, 6, 5.2, 5.8, 6.1, 5.4)),
+                           out_links, site = "QC")$sets$unusual_year),
+      "unusual-year QC flags a within-site robust outlier with its total, effort and link use")
+# Climate gaps: no climate month is info (not sampled), 1 to 11 months is warn,
+# and the MAD sentence appears only when a 12-month year was nulled.
+clim_fixture <- data.frame(year = 2015:2017, temp = NA_real_, precip = NA_real_,
+                           temp_n_months = c(NA, 7, 12), precip_n_months = c(NA, 7, 12),
+                           mammal_cpue = 5)
+clim_flags <- cascade_qc(clim_fixture, data.frame(), site = "QC")
+clim_by_key <- setNames(clim_flags$flags, vapply(clim_flags$flags, `[[`, character(1), "key"))
+clim_partial <- cascade_qc(clim_fixture[1:2, ], data.frame(), site = "QC")$flags
+clim_partial_na <- Filter(function(f) identical(f$key, "climate_na"), clim_partial)
+check(identical(clim_by_key$climate_not_sampled$level, "info") &&
+        clim_by_key$climate_not_sampled$n == 1L &&
+        identical(clim_by_key$climate_na$level, "warn") && clim_by_key$climate_na$n == 2L &&
+        grepl("MAD", clim_by_key$climate_na$detail, fixed = TRUE) &&
+        all(c("temp_n_months", "precip_n_months") %in% names(clim_flags$sets$climate_na)) &&
+        length(clim_partial_na) == 1L && !grepl("MAD", clim_partial_na[[1]]$detail, fixed = TRUE),
+      "climate QC splits unsampled years (info) from partial or MAD-nulled years (warn) with month counts")
+# P3: the March to May prior row states that every vote-eligible site has its
+# median green-up index before May 1 (day 121), so the window includes weather
+# after green-up. Recheck that sentence against the family it ships with.
+spring_vote <- suite[suite$from == "temp_spring" & suite$to == "greenup_doy" &
+                       suite$expected %in% TRUE & suite$n >= 6 & is.finite(suite$r), , drop = FALSE]
+spring_years <- cascade$annual[cascade$annual$site %in% spring_vote$site &
+                                 is.finite(cascade$annual$greenup_doy) &
+                                 is.finite(cascade$annual$temp_spring), , drop = FALSE]
+spring_medians <- tapply(spring_years$greenup_doy, spring_years$site, stats::median)
+check(nrow(spring_vote) > 0L && all(spring_medians < 121),
+      "every vote-eligible March to May site has its median green-up index before May 1",
+      sprintf("%d sites, site medians day %.1f to %.1f", length(spring_medians),
+              min(spring_medians), max(spring_medians)))
 
 # When sibling sources are available, recompute corrected aggregations from their
 # committed schemas rather than merely checking arithmetic within the derived file.

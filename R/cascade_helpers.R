@@ -717,22 +717,42 @@ cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
   a <- if (is.null(ann_site)) data.frame() else ann_site
   lk <- if (is.null(links_site)) data.frame() else links_site
 
-  # (1) WARN — climate years MAD-flagged / NA'd. The within-site MAD outlier filter
-  # NAs an implausible annual temp (corrupted-sensor years); we can't see WHICH years
-  # it caught from the bundle, but we CAN flag the years where the cascade has biology
-  # present but its climate driver is missing — the gaps that thin every link's n.
+  # (1) Climate missing where biology is present: the gaps that thin every link
+  # n. An annual temperature needs all 12 calendar months (build ann_env()). A
+  # year with no climate month at all is a sampling gap (info, climate_not_sampled).
+  # A year with 1 to 11 valid months, or with 12 months whose annual value the
+  # within-site MAD screen removed, is a warn (climate_na). temp_n_months splits them.
   if (nrow(a) && "temp" %in% names(a)) {
     bio_keys <- intersect(c("greenup_doy", "plant_richness", "mammal_cpue", "bird_index",
                             "mosq_activity", "beetle_activity"), names(a))
     has_bio  <- if (length(bio_keys)) rowSums(!is.na(a[, bio_keys, drop = FALSE])) > 0 else rep(FALSE, nrow(a))
     gap <- a[has_bio & is.na(a$temp), , drop = FALSE]
     if (nrow(gap)) {
-      show <- intersect(c("year","temp","precip","greenup_doy","plant_richness","mammal_cpue","bird_index"), names(gap))
-      add("climate_na", "warn", "Climate missing where biology is present",
-          paste0("Annual temperature is NA in ", nrow(gap), " year",
-                 if (nrow(gap) == 1) "" else "s",
-                 " that DO have a biological signal, either too few valid months, or a year the within-site MAD outlier filter dropped as a corrupted-sensor read. The biology is real; the driver for those years isn't, so they can't enter a link. Verify the tower record before reading the gap as 'no climate effect'."),
-          gap[, show, drop = FALSE])
+      show <- intersect(c("year", "temp_n_months", "precip_n_months", "temp", "precip",
+                          "greenup_doy", "plant_richness", "mammal_cpue", "bird_index"),
+                        names(gap))
+      months <- if ("temp_n_months" %in% names(gap))
+        suppressWarnings(as.numeric(gap$temp_n_months)) else rep(NA_real_, nrow(gap))
+      unsampled <- !is.finite(months) | months == 0
+      nulled <- is.finite(months) & months >= 12
+      partial <- !unsampled
+      s <- function(n) if (n == 1) "" else "s"
+      if (any(partial)) {
+        np <- sum(partial & !nulled)
+        nn <- sum(nulled)
+        add("climate_na", "warn", "Climate missing where biology is present",
+            paste0("Annual temperature is NA in ", sum(partial), " year", s(sum(partial)),
+                   " that have a biological signal and some climate months. ",
+                   if (np) paste0(np, " year", s(np), " had 1 to 11 valid months, and an annual value needs all 12. ") else "",
+                   if (nn) paste0(nn, " year", s(nn), " had all 12 months, but the within-site MAD screen removed the annual value as an implausible sensor read. ") else "",
+                   "Those years cannot enter a link. Check the month counts before reading the gap as no climate effect."),
+            gap[partial, show, drop = FALSE])
+      }
+      if (any(unsampled))
+        add("climate_not_sampled", "info", "No climate months where biology is present",
+            paste0(sum(unsampled), " year", s(sum(unsampled)),
+                   " with a biological signal have no climate month at all (not sampled), so they cannot enter a link. This is missing coverage, not a weak climate effect."),
+            gap[unsampled, show, drop = FALSE])
     }
   }
 
@@ -828,6 +848,29 @@ cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
                    " at least one final contributor whose last-no to first-yes interval exceeds 30 days. The index uses interval midpoints; these annual median/p90/max widths expose cadence uncertainty and are not confidence intervals for the annual index."),
             wide[, show, drop = FALSE])
       }
+      # NEON changed phenology sampling during the record (DP1.10055.001 change
+      # log: COVID-reduced sampling 2020-03-23 to 2021-12-31, gradient sites cut
+      # to one observation a week from 2024-08-09, observations at core sites
+      # only from 2026-01-28). A step of 3 days or more in the median onset-interval
+      # width between consecutive calendar years marks a likely cadence change.
+      wy <- suppressWarnings(as.integer(a$year))
+      ww <- suppressWarnings(as.numeric(a$greenup_onset_interval_median_days))
+      wo <- which(is.finite(wy) & is.finite(ww))
+      wo <- wo[order(wy[wo])]
+      wy <- wy[wo]
+      ww <- ww[wo]
+      step <- if (length(wy) >= 2L) which(diff(wy) == 1L & abs(diff(ww)) >= 3) else integer()
+      if (length(step)) {
+        jump <- data.frame(year = wy[step + 1L], previous_year = wy[step],
+                           median_width_days = ww[step + 1L],
+                           previous_median_width_days = ww[step],
+                           change_days = ww[step + 1L] - ww[step])
+        add("greenup_interval_width_jump", "warn",
+            "Typical onset-interval width jumps between years",
+            paste0(length(step), " year", if (length(step) == 1L) " differs" else "s differ",
+                   " from the year before by 3 days or more in the median last-no to first-yes interval width. NEON changed phenology sampling during the record (fewer visits in 2020 and 2021, one observation a week at gradient sites from August 2024, core sites only from 2026), so a step like this usually marks a change in visit cadence, which can move the timing index by itself."),
+            jump)
+      }
     }
   }
 
@@ -840,22 +883,74 @@ cascade_qc <- function(ann_site, links_site, signals = NULL, site = NULL) {
           "No link at this site currently has both enough overlapping years and a finite block-bootstrap interval. Direction evidence is absent here; it did not pass every check.")
   }
 
-  # (3) HIGH — "apparent" links whose bootstrap CI spans zero. These point the way the
-  # prior predicts but the 95% interval crosses 0, so the sign isn't yet distinguishable
-  # from noise — the most over-readable cell in the app. Surface them so a reader doesn't
-  # promote an "apparent" to a result.
-  if (nrow(lk) && all(c("tier","lo","hi") %in% names(lk))) {
-    ap <- lk[lk$tier %in% "apparent" & is.finite(lk$lo) & is.finite(lk$hi) & lk$lo <= 0 & lk$hi >= 0, , drop = FALSE]
+  # (3) WARN: vote-eligible "apparent" links. link_stat() assigns "apparent" only
+  # when the sign matches the stated direction and the 95% block-bootstrap interval
+  # does not exclude zero, so no second interval test is applied here. Only rows
+  # that enter the cross-site vote (expected = TRUE) are listed: out-of-prior rows
+  # never count toward a tally. Surface them so a reader does not promote an
+  # "apparent" to a result.
+  if (nrow(lk) && "tier" %in% names(lk)) {
+    vote_eligible <- if ("expected" %in% names(lk)) lk$expected %in% TRUE else rep(TRUE, nrow(lk))
+    ap <- lk[lk$tier %in% "apparent" & vote_eligible, , drop = FALSE]
     if (nrow(ap)) {
       lab <- function(k) if (!is.null(signals) && k %in% signals$key) signals$label[signals$key == k][1] else k
       ap$link <- vapply(seq_len(nrow(ap)), function(i) sprintf("%s -> %s", lab(ap$from[i]), lab(ap$to[i])), character(1))
       show <- intersect(c("link","lag","n","r","lo","hi","p"), names(ap))
-      add("apparent_ci0", "high", "“Apparent” links whose CI spans zero",
-          paste0(nrow(ap), " link", if (nrow(ap) == 1) "" else "s",
-                 " point in the stated direction but the 95% circular block-bootstrap interval still crosses 0; the sign is not yet clean at this site's n. For vote-eligible rows, compare the raw, adjusted, trend, and outcome-estimator cross-site summaries on Across NEON. Tap to inspect each pairing."),
+      add("apparent_ci0", "warn", "“Apparent” links whose CI spans zero",
+          paste0(nrow(ap), " vote-eligible link", if (nrow(ap) == 1) "" else "s",
+                 " point in the stated direction but the 95% circular block-bootstrap interval does not exclude 0; the sign is not yet clean at this site's n. Compare the raw, adjusted, trend, and outcome-estimator cross-site summaries on Across NEON. Tap to inspect each pairing."),
           ap[, show, drop = FALSE])
     }
   }
+
+  # (4) WARN: an unusually high or low year for this site. Within-site robust z
+  # on log1p(index) for the activity indices (green-up DOY on its own scale):
+  # z = (x - median) / s with s = max(MAD, IQR/1.349, resolution/2), where the
+  # resolution is the smallest gap between distinct site values, so ties and
+  # coarse values cannot shrink s to zero. |z| > 3.5 flags the year for a check
+  # against its total and effort. A site needs >=5 finite years for the screen.
+  outlier_specs <- list(
+    mosq_activity = list(total = "mosq_total_catch", effort = "mosq_trap_nights", log = TRUE),
+    beetle_activity = list(total = "beetle_total_catch", effort = "beetle_catch_event_trap_nights", log = TRUE),
+    mammal_cpue = list(total = "mammal_captures", effort = "mammal_trap_nights", log = TRUE),
+    greenup_doy = list(total = "greenup_n_individuals", effort = "greenup_n_onsets", log = FALSE))
+  enters_link <- function(key, yr) {
+    if (!nrow(lk) || !all(c("from", "to", "lag", "n") %in% names(lk))) return(FALSE)
+    rows <- lk[which((lk$from == key | lk$to == key) & lk$n >= 3), , drop = FALSE]
+    any(vapply(seq_len(nrow(rows)), function(i) {
+      as_response <- identical(rows$to[i], key)
+      other <- if (as_response) rows$from[i] else rows$to[i]
+      lag <- as.integer(rows$lag[i])
+      other_year <- if (as_response) yr - lag else yr + lag
+      other %in% names(a) && any(is.finite(suppressWarnings(as.numeric(a[[other]][a$year %in% other_year]))))
+    }, logical(1)))
+  }
+  outlier_rows <- do.call(rbind, lapply(names(outlier_specs), function(key) {
+    spec <- outlier_specs[[key]]
+    if (!key %in% names(a)) return(NULL)
+    x <- suppressWarnings(as.numeric(a[[key]]))
+    v <- if (isTRUE(spec$log)) log1p(x) else x
+    fin <- is.finite(v)
+    if (sum(fin) < 5L) return(NULL)
+    gaps <- diff(sort(unique(v[fin])))
+    resolution <- if (length(gaps)) min(gaps) else 0
+    spread <- max(stats::mad(v[fin]), stats::IQR(v[fin]) / 1.349, resolution / 2)
+    if (!is.finite(spread) || spread <= 0) return(NULL)
+    z <- (v - stats::median(v[fin])) / spread
+    hit <- which(fin & abs(z) > 3.5)
+    if (!length(hit)) return(NULL)
+    num <- function(col) if (col %in% names(a)) suppressWarnings(as.numeric(a[[col]][hit])) else rep(NA_real_, length(hit))
+    site_id <- if ("site" %in% names(a)) as.character(a$site[hit]) else rep(site %||% NA_character_, length(hit))
+    data.frame(site = site_id, year = a$year[hit], index = key, value = x[hit],
+               robust_z = z[hit], total = num(spec$total), effort = num(spec$effort),
+               enters_link = vapply(a$year[hit], function(y) enters_link(key, y), logical(1)),
+               stringsAsFactors = FALSE)
+  }))
+  if (!is.null(outlier_rows) && nrow(outlier_rows))
+    add("unusual_year", "warn", "Unusually high or low year for this site",
+        paste0(nrow(outlier_rows), " site-year value", if (nrow(outlier_rows) == 1L) " sits" else "s sit",
+               " more than 3.5 robust spreads from this site's typical value (activity indices on a log scale). A real boom or bust and a sampling or entry problem look the same here, so check the total and effort columns. The enters_link column shows whether the year is used in any link."),
+        outlier_rows)
 
   # rank high > warn > info (the gold-standard order); clean path = a green reassurance
   if (!length(flags)) {
