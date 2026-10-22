@@ -694,7 +694,7 @@ TIER_META <- list(
   neutral     = list(lab = "No usable direction",        col = "#7b8798", text_col = "#4f5d70", ink = "#ffffff", icon = "dash-circle"),
   counter     = list(lab = "Counter to prior",          col = "#fb8a7e", text_col = "#a6332b", ink = "#3a0e08", icon = "x-circle-fill"),
   exploratory = list(lab = "Exploratory (n<6)",         col = "#4a5d78", text_col = "#4a5d78", ink = "#ffffff", icon = "hourglass-split"),
-  insufficient= list(lab = "Too few years",             col = "#6b7a89", text_col = "#53606d", ink = "#ffffff", icon = "slash-circle"))
+  insufficient= list(lab = "Too few years",             col = "#5d6b79", text_col = "#53606d", ink = "#ffffff", icon = "slash-circle"))
 
 # ===========================================================================
 # QC-flag panel (the suite gold standard, §7) — ranked "VERIFY, not wrong"
