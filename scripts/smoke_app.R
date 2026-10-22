@@ -224,9 +224,12 @@ shiny::testServer(server, {
   if (!grepl("standing-stock-unsupported", wood_html, fixed = TRUE))
     stop("WOOD standingStock did not render the unsupported state", call. = FALSE)
   wood_text <- tolower(gsub("\\s+", " ", gsub("<[^>]+>", " ", wood_html)))
+  # Both source shapes disclose the same counts: the legacy text says "14 plot
+  # IDs with no design-table match", the plot-event (v2) text "14 plots whose
+  # surveys all lack a matching NEON sampling record".
   wood_required <- c(
     "estimate withheld",
-    "452 vegetation records across 14 plot ids",
+    "452 vegetation records across 14 plot",
     "no partial subset or area imputation was used",
     "estimate and classification remain unavailable")
   wood_missing <- wood_required[!vapply(wood_required, function(text)

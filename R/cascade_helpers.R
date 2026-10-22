@@ -19,7 +19,7 @@ TIER_RULE_VERSION <- "2026-07-calendar-gap-aware-circular-block-v5"
 # Search is a derived view of cascade.rds.  Its schema version and source-bundle
 # checksum are checked at app boot so an old index can never silently report a
 # different set of priors or statistics than the rest of the app.
-CASCADE_BUNDLE_SCHEMA_VERSION <- "2026-07-source-contract-support-v6"
+CASCADE_BUNDLE_SCHEMA_VERSION <- "2026-10-veg-plot-event-audit-v7"
 SEARCH_INDEX_SCHEMA_VERSION <- "2026-07-calendar-gap-aware-search-v4"
 CASCADE_META_SCHEMA_VERSION <- "2026-07-knha-holm-prediction-v3"
 

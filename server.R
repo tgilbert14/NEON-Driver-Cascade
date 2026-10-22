@@ -177,10 +177,14 @@ server <- function(input, output, session) {
             input$site, f$years, f$layers, f$n_layers, f$climate_years, judged_sentence(f))
   })
 
-  # Conditional woody-structure context. The source lacks visit effort needed to
-  # distinguish sampled-zero from unsampled plots, so this is not a site-wide stock.
+  # Conditional woody-structure context. A legacy source lacks visit effort needed
+  # to distinguish sampled-zero from unsampled plots; the plot-event source records
+  # absences, but the Atlas keeps the same conditional estimand. Either way this
+  # is not a site-wide stock.
   output$standingStock <- renderUI({
     sm <- SITE_META[SITE_META$site == input$site, , drop = FALSE]
+    events <- veg_rows_event_contract(sm)
+    pop <- cpop(if (events) "standing_events" else "standing")
     status <- if (nrow(sm) && "veg_design_status" %in% names(sm))
       as.character(sm$veg_design_status[1]) else NA_character_
     if (identical(status, "unsupported-unmatched-plots")) {
@@ -188,14 +192,18 @@ server <- function(input, output, session) {
         sm$veg_unmatched_record_plots[1] else NA_integer_
       records <- if ("veg_unmatched_record_rows" %in% names(sm))
         sm$veg_unmatched_record_rows[1] else NA_integer_
-      audit <- if (all(is.finite(c(unmatched, records))))
-        sprintf("The reviewed source has %d vegetation records across %d plot IDs with no design-table match.",
-                records, unmatched)
-      else "The reviewed vegetation records have no matching plot-design support."
+      audit <- if (all(is.finite(c(unmatched, records)))) {
+        if (events)
+          sprintf("The reviewed source has %d vegetation records across %d plots whose surveys all lack a matching NEON sampling record.",
+                  records, unmatched)
+        else
+          sprintf("The reviewed source has %d vegetation records across %d plot IDs with no design-table match.",
+                  records, unmatched)
+      } else "The reviewed vegetation records have no matching plot-design support."
       return(div(class = "standing-stock standing-stock-unsupported",
         bs_icon("exclamation-triangle-fill"),
         HTML(" Conditional woody structure: <b>estimate withheld</b>"),
-        cpop("standing"),
+        pop,
         tags$span(class = "ss-note", paste(
           audit,
           "No partial subset or area imputation was used; the estimate and classification remain unavailable."))))
@@ -205,6 +213,26 @@ server <- function(input, output, session) {
     used <- if (nrow(sm) && "veg_n_plots" %in% names(sm)) sm$veg_n_plots[1] else NA_integer_
     eligible <- if (nrow(sm) && "veg_area_eligible_plots" %in% names(sm)) sm$veg_area_eligible_plots[1] else NA_integer_
     recorded <- if (nrow(sm) && "veg_record_plots" %in% names(sm)) sm$veg_record_plots[1] else NA_integer_
+    if (events) {
+      year_min <- if ("veg_event_year_min" %in% names(sm)) sm$veg_event_year_min[1] else NA_real_
+      year_max <- if ("veg_event_year_max" %in% names(sm)) sm$veg_event_year_max[1] else NA_real_
+      surveys <- if (all(is.finite(c(year_min, year_max)))) {
+        if (year_min == year_max) sprintf(", surveys %d", as.integer(year_min))
+        else sprintf(", surveys %d to %d", as.integer(year_min), as.integer(year_max))
+      } else ""
+      se_text <- if (is.finite(se)) sprintf(", &plusmn;%s plot-to-plot SE (%s plots%s)",
+        format(round(se, 1), nsmall = 1),
+        if (is.finite(used)) as.character(used) else "?", surveys) else ""
+      coverage <- if (all(is.finite(c(used, eligible, recorded))))
+        sprintf("%d plots with a qualifying live stem used; %d plots with a usable survey among %d plots with vegetation records.",
+                used, eligible, recorded) else "Plot-support counts are unavailable."
+      return(div(class="standing-stock", bs_icon("tree-fill"),
+        HTML(sprintf(" Conditional woody structure: <b>%s m&sup2;/ha</b> mean live basal area%s",
+          format(round(ba, 1), nsmall = 1), se_text)),
+        pop,
+        tags$span(class = "ss-note", paste0(coverage,
+          " Plots whose selected survey has no qualifying live stem, including NEON-recorded absences, are left out rather than counted as zero; this is structural context, not productivity."))))
+    }
     coverage <- if (all(is.finite(c(used, eligible, recorded))))
       sprintf("%d qualifying-stem plots used; %d area-eligible plots among %d plots with vegetation records.",
               used, eligible, recorded) else "Plot-support denominators are unavailable."
@@ -212,7 +240,7 @@ server <- function(input, output, session) {
       HTML(sprintf(" Conditional woody structure: <b>%s m&sup2;/ha</b>%s mean live basal area",
         format(round(ba, 1), nsmall = 1),
         if (is.finite(se)) sprintf(" &plusmn;%s", format(round(se, 1), nsmall = 1)) else "")),
-      cpop("standing"),
+      pop,
       tags$span(class = "ss-note", paste0(coverage,
         " Zero-stem and unobserved plots were not imputed; this is structural context, not productivity.")))
   })
@@ -1087,7 +1115,10 @@ server <- function(input, output, session) {
         tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID): a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
         tags$li(HTML("<b>plant_richness</b> = observed species count: an effort-sensitive COMPOSITION signal, not productivity; <code>plant_n_plots</code>/<code>plant_n_sampling_units</code> expose effort and richness-based links are excluded from inferential tallies unless standardized. <b>plant_intro_pct</b> counts only canonical introduced (<code>I</code>) cover; ambiguous <code>NI</code> is unknown, not introduced. <b>fruiting_pct</b> is an opportunistic maximum across observed eligible months (&ge;5 individuals), not a fixed-season annual estimate. <code>fruiting_n_eligible_months</code> and <code>fruiting_peak_n_individuals</code> expose unequal observation opportunity; it remains context-only.")),
         tags$li(HTML("<b>bird_index</b> = detected cluster size per observed point-count visit after excluding flyovers; zero-detection visits may be absent. Mosquito activity has a complete effort calendar but is annual rather than season-window matched. Beetle effort includes catch-bearing events only, so its outcome-conditioned denominator is not a valid CPUE series; all three remain descriptive here.")),
-        tags$li(HTML("<b>Conditional woody structure</b> (per site, not annual) is the mean live basal area m&sup2;/ha among plots containing qualifying records. <code>veg_n_plots</code>, <code>veg_area_eligible_plots</code>, and <code>veg_record_plots</code> expose its denominator. Because the source cannot distinguish sampled-zero from unsampled plots, zero-stem and unobserved plots are not imputed; this is not a site-wide stock or productivity rate.")),
+        if (VEG_EVENT_SHAPED)
+          tags$li(HTML("<b>Conditional woody structure</b> (per site, not annual) is the mean live basal area m&sup2;/ha over plots whose selected survey has a qualifying live stem. Each plot contributes its latest usable NEON survey, and its stems are divided by that survey's own sampled area. <code>veg_n_plots</code>, <code>veg_area_eligible_plots</code>, and <code>veg_record_plots</code> expose its denominator, and <code>veg_event_year_min</code> to <code>veg_event_year_max</code> give the survey years. The Atlas keeps the conditional estimand: plots whose selected survey has no qualifying live stem, including NEON-recorded absences, are left out rather than counted as zero; this is not a site-wide stock or productivity rate."))
+        else
+          tags$li(HTML("<b>Conditional woody structure</b> (per site, not annual) is the mean live basal area m&sup2;/ha among plots containing qualifying records. <code>veg_n_plots</code>, <code>veg_area_eligible_plots</code>, and <code>veg_record_plots</code> expose its denominator. Because the source cannot distinguish sampled-zero from unsampled plots, zero-stem and unobserved plots are not imputed; this is not a site-wide stock or productivity rate.")),
         tags$li(HTML("<b>n-gates:</b> &lt;3 yrs &rarr; no comparison; 3&ndash;5 &rarr; exploratory; &ge;6 &rarr; circular-shift p + circular block-bootstrap interval + a direction verdict. Only the two temperature–green-up rows are judged, at every supported site; context rows never pool. Raw-level exact-binomial p-values are shown with Holm adjustment plus detrended, consecutive-change, and outcome-estimator direction sensitivities.")),
         tags$li(HTML("<b>NA semantics:</b> a blank/NA cell is never a zero; it means the signal failed its documented coverage/composition gate that year (for example, an incomplete climate window, too few recurrent green-up species, or no trapping effort). The downloadable codebook CSV documents every rule."))),
       div(class="codebook-dl",

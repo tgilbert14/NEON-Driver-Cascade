@@ -188,6 +188,10 @@ The vegetation context is a mean live basal area per hectare **conditional on pl
 records**. `veg_n_plots`, `veg_area_eligible_plots`, and `veg_record_plots` expose the denominator. The
 source cannot distinguish sampled-zero from unsampled plots, so zero-stem and unobserved plots are not
 imputed and this value must not be read as universal site-wide standing stock or productivity.
+When the Vegetation sibling publishes its plot-event contract (`NEON-VST-DP1.10098.001-v2`), the Atlas
+uses one survey per plot, the latest usable one, and divides its stems by that survey's own sampled area;
+the number then describes each plot's most recent usable survey, and plots whose selected survey has no
+qualifying live stem, including NEON-recorded absences, are still left out rather than counted as zero.
 
 For the two five-site-eligible temperature–green-up rows, the companion uses REML random effects with
 Knapp–Hartung inference, reports a 95% prediction interval and heterogeneity before directional p-values,

@@ -836,13 +836,105 @@ ann_beetle <- function(site) {                    # consumer: pitfall ACTIVITY-D
     select(site, year, beetle_activity, beetle_richness,
            beetle_catch_event_trap_nights, beetle_total_catch)
 }
-ann_veg <- function(site) {                       # producer standing stock -- a slow ~5-year state,
+# Event audit columns persisted for both vegetation bundle shapes (rulings R6, M1).
+# The legacy shape has no plot events, so its counts are NA and its contract is
+# named explicitly; the v2 shape fills every column from the event selection.
+veg_legacy_audit <- function() data.frame(
+  veg_source_contract = CASCADE_VEG_LEGACY_CONTRACT,
+  veg_event_basis = "none: the legacy source has one row per plot and no plot events",
+  veg_admitted_states = NA_character_, veg_plot_events = NA_integer_,
+  veg_admitted_events = NA_integer_, veg_absence_events = NA_integer_,
+  veg_excluded_events = NA_character_, veg_selected_absence_plots = NA_integer_,
+  veg_selected_vintage_plots = NA_integer_, veg_later_held_plots = NA_integer_,
+  veg_no_admissible_event_plots = NA_integer_, veg_event_year_min = NA_real_,
+  veg_event_year_median = NA_real_, veg_event_year_max = NA_real_,
+  veg_later_nonlogistical_hold_plots = NA_integer_, stringsAsFactors = FALSE)
+veg_event_audit <- function(a) data.frame(
+  veg_source_contract = CASCADE_VEG_V2_CONTRACT_ID,
+  veg_event_basis = CASCADE_VEG_EVENT_RULE,
+  veg_admitted_states = CASCADE_VEG_EVENT_ADMITTED_STATES,
+  veg_plot_events = as.integer(a$plot_events),
+  veg_admitted_events = as.integer(a$admitted_events),
+  veg_absence_events = as.integer(a$absence_events),
+  veg_excluded_events = as.character(a$excluded_events),
+  veg_selected_absence_plots = as.integer(a$selected_absence_plots),
+  veg_selected_vintage_plots = as.integer(a$selected_vintage_plots),
+  veg_later_held_plots = as.integer(a$later_held_plots),
+  veg_no_admissible_event_plots = as.integer(a$no_admissible_event_plots),
+  veg_event_year_min = as.numeric(a$event_year_min),
+  veg_event_year_median = as.numeric(a$event_year_median),
+  veg_event_year_max = as.numeric(a$event_year_max),
+  veg_later_nonlogistical_hold_plots = as.integer(a$later_nonlogistical_hold_plots),
+  stringsAsFactors = FALSE)
+VEG_AUDIT_NUMERIC_COLS <- c(
+  "veg_plot_events", "veg_admitted_events", "veg_absence_events",
+  "veg_selected_absence_plots", "veg_selected_vintage_plots",
+  "veg_later_held_plots", "veg_no_admissible_event_plots",
+  "veg_event_year_min", "veg_event_year_median", "veg_event_year_max",
+  "veg_later_nonlogistical_hold_plots")
+VEG_AUDIT_CHARACTER_COLS <- c(
+  "veg_source_contract", "veg_event_basis", "veg_admitted_states",
+  "veg_excluded_events")
+# Plot-event (contract v2) path: one selected event per plot and channel, each
+# stem over its own event's channel area (rulings R1 to R4, R6).
+ann_veg_events <- function(site, b) {
+  trees <- cascade_bundle_table(b, "trees", "vegetation", site)
+  plots <- cascade_bundle_table(b, "plots", "vegetation", site)
+  cascade_require_columns(trees, CASCADE_VEG_V2_TREES_REQUIRED,
+                          sprintf("%s vegetation tree table", site))
+  cascade_require_columns(plots, CASCADE_VEG_V2_PLOTS_REQUIRED,
+                          sprintf("%s vegetation plot table", site))
+  if (!nrow(trees)) return(NULL)
+  r <- cascade_veg_event_site(trees, plots, site)
+  if (!isTRUE(r$supported)) {
+    # Ruling R3: a record-bearing plot whose every event lacks its opportunity
+    # source leaves the site unsupported, exactly as the legacy unmatched rule.
+    return(cbind(data.frame(
+      site = site, veg_ba_ha = NA_real_, veg_ba_se = NA_real_,
+      veg_type = NA_character_, veg_n_plots = 0L,
+      veg_record_plots = as.integer(r$record_plots),
+      veg_matched_record_plots = as.integer(r$matched_record_plots),
+      veg_area_eligible_plots = 0L,
+      veg_unmatched_record_plots = as.integer(r$unmatched_record_plots),
+      veg_unmatched_record_rows = as.integer(r$unmatched_record_rows),
+      veg_class_tree_ba_ha = NA_real_, veg_class_shrub_ba_ha = NA_real_,
+      veg_class_tree_plots = NA_integer_, veg_class_shrub_plots = NA_integer_,
+      veg_stand_basis = CASCADE_VEG_EVENT_STAND_BASIS,
+      veg_class_basis = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
+      veg_design_status = "unsupported-unmatched-plots",
+      veg_design_basis = CASCADE_VEG_EVENT_DESIGN_BASIS,
+      stringsAsFactors = FALSE), veg_event_audit(r$audit)))
+  }
+  ss <- r$stand
+  if (is.null(ss)) return(NULL)
+  cbind(data.frame(
+    site = site, veg_ba_ha = ss$ba_ha, veg_ba_se = ss$ba_se,
+    veg_type = r$type, veg_n_plots = ss$n_plots,
+    veg_record_plots = as.integer(r$record_plots),
+    veg_matched_record_plots = as.integer(r$matched_record_plots),
+    veg_area_eligible_plots = as.integer(r$audit$area_eligible_plots),
+    veg_unmatched_record_plots = as.integer(r$unmatched_record_plots),
+    veg_unmatched_record_rows = as.integer(r$unmatched_record_rows),
+    veg_class_tree_ba_ha = r$structure$tree_ba_ha,
+    veg_class_shrub_ba_ha = r$structure$shrub_ba_ha,
+    veg_class_tree_plots = r$structure$tree_n_plots,
+    veg_class_shrub_plots = r$structure$shrub_n_plots,
+    veg_stand_basis = CASCADE_VEG_EVENT_STAND_BASIS,
+    veg_class_basis = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
+    veg_design_status = "supported",
+    veg_design_basis = CASCADE_VEG_EVENT_DESIGN_BASIS,
+    stringsAsFactors = FALSE), veg_event_audit(r$audit))
+}
+ann_veg <- function(site, b, shape) {             # producer standing stock -- a slow ~5-year state,
   # NOT an annual link (its remeasurement cadence would manufacture pseudo-resolution). Live basal
   # area m2/ha from the Veg-Structure sibling: directly measured, allometry-free, and computable at
   # arid systems via basal stem diameter. It is useful structural context, not a substitute for
   # productivity: a stock, not a flux, so it enters as per-site context, not a ladder line.
-  b <- rd(file.path(APP$veg, "data/sites", paste0(site, ".rds")))
   if (is.null(b)) return(NULL)
+  if (identical(shape, "v2")) return(ann_veg_events(site, b))
+  if (!identical(shape, "legacy"))
+    stop(sprintf("%s vegetation bundle has unresolved shape '%s'", site, format(shape)),
+         call. = FALSE)
   trees <- cascade_bundle_table(b, "trees", "vegetation", site)
   plots <- cascade_bundle_table(b, "plots", "vegetation", site)
   cascade_require_columns(trees, CASCADE_VEG_TREES_REQUIRED,
@@ -858,7 +950,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
     # rows. That is an unavailable per-hectare estimand, not zero vegetation and
     # not permission to borrow area from other plots. Keep the site-level NA and
     # the complete support audit so the reason remains machine-readable.
-    return(data.frame(
+    return(cbind(data.frame(
       site = site, veg_ba_ha = NA_real_, veg_ba_se = NA_real_,
       veg_type = NA_character_, veg_n_plots = 0L,
       veg_record_plots = support$n_record_plots,
@@ -872,7 +964,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
       veg_class_basis = CASCADE_VEG_CLASSIFICATION_BASIS,
       veg_design_status = "unsupported-unmatched-plots",
       veg_design_basis = support$basis,
-      stringsAsFactors = FALSE))
+      stringsAsFactors = FALSE), veg_legacy_audit()))
   }
   snap <- support$snapshot
   plots <- support$plots
@@ -883,7 +975,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
   if (!identical(as.integer(ss$n_record_plots), support$n_record_plots))
     stop(sprintf("%s vegetation support audit disagrees with stand records", site),
          call. = FALSE)
-  data.frame(
+  cbind(data.frame(
     site = site, veg_ba_ha = ss$ba_ha, veg_ba_se = ss$ba_se,
     veg_type = spec$type, veg_n_plots = ss$n_plots,
     veg_record_plots = ss$n_record_plots,
@@ -897,7 +989,7 @@ ann_veg <- function(site) {                       # producer standing stock -- a
     veg_class_shrub_plots = structure$shrub_n_plots,
     veg_stand_basis = ss$basis, veg_class_basis = structure$basis,
     veg_design_status = "supported", veg_design_basis = support$basis,
-    stringsAsFactors = FALSE)
+    stringsAsFactors = FALSE), veg_legacy_audit())
 }
 # ---- Driver site scope: the reviewed 46-site universe, fixed by decision ----
 # Siblings may add sites upstream (Mosquito added PUUM, Hawaii, in 2026-08). A new
@@ -1042,16 +1134,27 @@ site_meta <- data.frame(
   biome_class_method = BIOME_CLASS_METHOD,
   stringsAsFactors = FALSE)
 # producer standing stock (live basal area m2/ha) — per-site context, not an annual signal
-veg <- do.call(rbind, lapply(ALL_SITES, ann_veg))
+# One bundle set resolves to one shape (legacy one-row-per-plot or contract v2);
+# an unknown shape or a mixed set stops before any value is computed.
+veg_bundles <- setNames(lapply(ALL_SITES, function(site)
+  rd(file.path(APP$veg, "data/sites", paste0(site, ".rds")))), ALL_SITES)
+VEG_SHAPE <- cascade_veg_resolve_shape(setNames(lapply(ALL_SITES, function(site)
+  if (is.null(veg_bundles[[site]])) NULL else
+    cascade_veg_bundle_shape(veg_bundles[[site]], site)), ALL_SITES))
+cat("\nvegetation bundle shape:", VEG_SHAPE, "\n")
+veg <- do.call(rbind, lapply(ALL_SITES, function(site)
+  ann_veg(site, veg_bundles[[site]], VEG_SHAPE)))
+rm(veg_bundles)
 if (!is.null(veg) && nrow(veg)) site_meta <- dplyr::left_join(site_meta, veg, by = "site")
 for (col in c("veg_ba_ha", "veg_ba_se", "veg_n_plots", "veg_record_plots",
               "veg_matched_record_plots", "veg_area_eligible_plots",
               "veg_unmatched_record_plots", "veg_unmatched_record_rows",
               "veg_class_tree_ba_ha", "veg_class_shrub_ba_ha",
-              "veg_class_tree_plots", "veg_class_shrub_plots"))
+              "veg_class_tree_plots", "veg_class_shrub_plots",
+              VEG_AUDIT_NUMERIC_COLS))
   if (!col %in% names(site_meta)) site_meta[[col]] <- NA_real_
 for (col in c("veg_type", "veg_stand_basis", "veg_class_basis",
-              "veg_design_status", "veg_design_basis"))
+              "veg_design_status", "veg_design_basis", VEG_AUDIT_CHARACTER_COLS))
   if (!col %in% names(site_meta)) site_meta[[col]] <- NA_character_
 cat("\nveg standing stock computed for", sum(is.finite(site_meta$veg_ba_ha)), "of", nrow(site_meta), "sites\n")
 
@@ -1254,9 +1357,13 @@ meta <- list(
     biome_class = BIOME_CLASS_METHOD,
     spatial_sensitivity = SPATIAL_SENSITIVITY_NOTE,
     fruiting_pct = "Opportunistic maximum across observed months with >=5 individuals, not a fixed-season annual estimate. fruiting_n_eligible_months and fruiting_peak_n_individuals expose unequal opportunity/support; context-only and excluded from pooled inference.",
-    veg_ba_ha = CASCADE_VEG_STAND_BASIS,
-    veg_type = CASCADE_VEG_CLASSIFICATION_BASIS,
-    veg_design_support = CASCADE_VEG_DESIGN_BASIS,
+    veg_ba_ha = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_STAND_BASIS else
+      CASCADE_VEG_STAND_BASIS,
+    veg_type = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_CLASSIFICATION_BASIS else
+      CASCADE_VEG_CLASSIFICATION_BASIS,
+    veg_design_support = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_DESIGN_BASIS else
+      CASCADE_VEG_DESIGN_BASIS,
+    veg_later_nonlogistical_hold_plots = CASCADE_VEG_NONLOGISTICAL_HOLD_BASIS,
     mammal_cpue = "Mammal effort resolves only exact A-J x 1-10 coordinates as physical trap events. Canonical status-4/5 multi-animal groups count one trap-night; two exact source-reviewed remark patterns document double traps and sum their two row weights. AX-JX, X1-X10, and XX are non-unique placeholders retained as row-level effort, which can overstate effort. Every other duplicated canonical event or coordinate token fails closed. Each nonblank tag row remains a capture, including repeated tags at distinct trap events.",
     bird_index = "Annual bird bundles lack a year-specific all-visits effort table. Denominator is observed pointkey x eventID occasions, so zero-detection visits are absent; flyovers are excluded.",
     beetle_activity = "Beetle site bundles contain catch rows only. Trap-night denominator covers unique catch-bearing plot-dates and omits zero-catch events.",
@@ -1274,7 +1381,7 @@ saveRDS(cascade_bundle, "data/cascade.rds")
 cat("\nannual rows:", nrow(annual), "| sites:", length(unique(annual$site)), "\n")
 covg <- annual %>% group_by(site) %>% summarise(
   yrs = dplyr::n(), greenup = sum(!is.na(greenup_doy)), plant = sum(!is.na(plant_richness)),
-  mammal = sum(!is.na(mammal_cpue)), bird = sum(!is.na(bird_index)), precip = sum(!is.na(precip)),
+  mammal = sum(!is.na(mammal_cpue)), bird = sum(!is.na(bird_index)), precip_n = sum(!is.na(precip)),
   layers = (any(!is.na(precip)|!is.na(temp))) + (any(!is.na(greenup_doy))) +
            (any(!is.na(plant_richness)|!is.na(fruiting_pct))) + (any(!is.na(mammal_cpue)|!is.na(bird_index))),
   .groups="drop") %>% arrange(desc(layers), desc(greenup+plant))
