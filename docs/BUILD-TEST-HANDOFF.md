@@ -1,10 +1,103 @@
 # Build, test, and handoff record
 
-Last updated: 2026-10-20
+Last updated: 2026-10-21
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
 can continue safely without relying on chat history.
+
+## 2026-10-21 [Claude]: audit item 9 (review-branch refresh, coverage gate, one name, Vegetation plot-event adapter)
+
+Four stacked PRs, none merged; Tim merges them in this order: #75, #76, #77, #79.
+Model note: Fable hit its usage limit mid-session, so the plan was reviewed and the
+work accepted on Opus 5.5 at max, as Tim approved. Every coding worker ran on Opus
+5.5 at medium.
+
+- **#75 `claude/atlas-refresh-review-branch`.**
+  - `refresh-data.yml` now pushes the validated family to the fixed review branch
+    `automation/atlas-data-refresh`, never `HEAD:master`. It force-pushes with a lease,
+    preserves human review edits, requires a direct child of `BUILD_SHA`, and
+    comments on an existing PR.
+  - The `publish` input defaults to false.
+  - Every artifact-hash seal now reads `SEAL_FAMILY_SHA` (`543fee44`) through
+    `git cat-file`, so a refresh or a deploy-file edit no longer needs
+    re-registration. The registries are `ci.yml` Seal-2,
+    `test_phenology_adapter_v2.R` static-lock, the Discharge F1 scripts and
+    `discharge-f1-inventory.yml`.
+  - The Seal-2 legacy parity baseline is the frozen `cascade.rds` blob, checked
+    against its registered digest. The CI F1 job materializes the frozen family
+    read-only, and its mutation fixture now copies content only.
+  - New `post-deploy.yml` requires the live About tab to show the committed
+    `meta$built_when`.
+- **#76 `claude/atlas-coverage-gate`.**
+  - `scripts/check_coverage_regression.R` runs before staging in the refresh and
+    regenerate workflows.
+  - It refuses per-product drops of more than 10% in finite site-years or sites, a
+    backward max year, and a lost product. Per vegetation site it refuses a basal
+    area move over 15%, fewer than 80% of plots, a type flip, or finite to NA.
+  - The only bypass is a row in `data/coverage-overrides.tsv` that names the exact
+    baseline and candidate values and the candidate's sibling commit. Rows are
+    single-use.
+  - Measured on local current-sibling candidates: the bird max year (2025 to 2024)
+    refuses, and Mosquito at the pre-fix `550f0bc` refuses (413 to 200 site-years).
+    Current Mosquito holds at 413 site-years in the Atlas.
+- **#77 `claude/atlas-naming-default-site`.** "NEON Cross-Product Response Atlas"
+  everywhere it is displayed. The three lineage-locked headers keep the old name
+  until a sanctioned rebuild. DEFAULT_SITE is SRER, with an announced
+  JORN/ONAQ/SJER/MOAB fallback tested in `smoke_app.R`. The cover footer reads
+  "seven of the nine explorer apps".
+- **#79 `claude/atlas-veg-event-adapter`.** The event-aware Vegetation adapter
+  (contract `NEON-VST-DP1.10098.001-v2`). Rules are in the PR body: per-channel
+  admission by support state and reason, one latest admissible survey per plot,
+  each stem over its own survey's area, partial surveys held. The legacy path is
+  unchanged. The CI-regenerated pinned family is committed (run 39693565580), with
+  every value identical to the frozen family plus 15 audit columns, schema v7.
+- **First refresh with current Vegetation data.** The gate will refuse SOAP's basal
+  area (23.41 to 19.01, the 2023 post-fire survey), JERC's plot count (29 to 20,
+  partial surveys held) and the bird max year (2025 to 2024). Each passes only with
+  reviewed override rows.
+  - Exercised in CI: `regenerate-artifacts.yml` run 39695521433 (current siblings, head
+    7edcf38) passed every contract and the app smoke on the v2 family, then printed
+    `COVERAGE GATE: REFUSE (3 rule(s))` with paste-ready override rows.
+  - Two earlier runs found and fixed a fourth drift: Breeding Birds now ships PUUM,
+    and the test-owned parity read every sibling file without the reviewed 46-site
+    scope. They also found a WOOD smoke assertion pinned to the legacy wording.
+- **Conflict, for Tim: #78** (`claude/unruffled-rosalind-b13de9`, docs only, opened by
+  another session) specifies a published-support gate.
+  - Its receipt's v2 values are the supported-only outcome the audit forbids: STEI
+    8.18 from 5 plots, and CPER, DCFS, NOGP and LAJA go to NA.
+  - #79 keeps STEI at 18.01 from 37 and those four sites at their published values.
+  - Recommendation: adopt #79's rule and keep #78's record corrections, for example
+    areas differ at 35 of 41 in-scope sites, not 45 of 46.
+- **Tim, dashboard and decisions:**
+  - Merge the four PRs in order.
+  - After #75 merges, apply a master ruleset: require a PR and the seven ci.yml
+    checks, and block force-push and deletion.
+  - Enable Issues for the post-deploy outage issue.
+  - Approve or decline the override rows (bird, SOAP, JERC) when the first refresh
+    proposes them.
+  - Approve workflow runs on each automation PR update, because bot pushes do not
+    start CI.
+- **Held, for later:**
+  - partial surveys (needs a per-channel completeness field from the Vegetation app);
+  - stem matching by `tempStemID`;
+  - "small tree" in both size specs;
+  - the classifier's occupied-plot denominators;
+  - an upper diameter screen (BONA has a 172 cm aspen).
+  - Sibling-side items for cedar: the samplingImpractical-first short-circuit,
+    `tree_records` ignoring status-only rows, and the snapshot keeping every row of
+    an event.
+
+Next action:
+1. Tim merges #75, #76, #77 and #79 in order.
+2. The next refresh (second Saturday, or a dispatch) stops at the coverage gate.
+   Nothing is published, and its step summary prints the refusals and paste-ready
+   override rows.
+3. A person reviews those rows and commits them to `data/coverage-overrides.tsv`
+   by PR.
+4. Dispatch `refresh-data.yml` with `publish=true`. The gate passes, the
+   `automation/atlas-data-refresh` review branch is proposed, and its merge is the
+   deploy.
 
 ## 2026-10-20 [Claude]: the app simplified to four tabs (PR to `master`)
 
