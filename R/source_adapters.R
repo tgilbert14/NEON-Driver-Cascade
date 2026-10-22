@@ -641,7 +641,13 @@ CASCADE_VEG_VINTAGE_REASONS <- c("samplingImpractical is missing",
 CASCADE_VEG_NO_RECORDS_REASON <-
   "no records and presence does not establish sampled absence"
 CASCADE_VEG_PARTIAL_REASON_PATTERN <- "^dataCollected="
-CASCADE_VEG_DISTURBANCE_CODES <- c("extreme weather", "location flooded", "other")
+CASCADE_VEG_NONLOGISTICAL_HOLD_CODES <- c("extreme weather", "location flooded", "other")
+CASCADE_VEG_NONLOGISTICAL_HOLD_BASIS <- paste(
+  "count of plots entering veg_ba_ha whose selected survey is older than a later",
+  "survey of the same channel that NEON held as sampling impractical for a",
+  "non-logistical code (extreme weather, location flooded or other); a screen for",
+  "surveys a disturbance may have overtaken, not a count of disturbances: access",
+  "holds such as deep snow count too, and NEON codes some fires as other")
 CASCADE_VEG_EVENT_MIN_AREA_M2 <- 50
 CASCADE_VEG_V2_TREES_REQUIRED <- c(CASCADE_VEG_TREES_REQUIRED, "eventID")
 CASCADE_VEG_V2_PLOTS_REQUIRED <- c(
@@ -688,7 +694,7 @@ CASCADE_VEG_EVENT_DESIGN_BASIS <- paste(
   "per channel a plot event is admissible only under the contract v2 support",
   "rules (sampled with records, metric-invalid rows dropped, recorded absence",
   "as zero stems, gated pre-2020 events with channel rows) and only with its",
-  "own channel area above 50 m2; partial, disturbed and conflicting events are",
+  "own channel area above 50 m2; partial, sampling-impractical and conflicting events are",
   "held; a plot with no admissible event is a counted exclusion, never imputed",
   "or borrowed, and if every event of a record-bearing plot lacks its",
   "opportunity source the whole site is unsupported")
@@ -938,10 +944,10 @@ cascade_veg_event_site <- function(trees, plots, site) {
     at <- s$event_date[match(contributing, s$plotID)]
     years <- as.integer(format(at, "%Y"))
     stand_support <- as.character(plots[[CASCADE_VEG_EVENT_CHANNELS[[sel$channel]]$support]])
-    disturbed <- stand_support == "held_sampling_impractical" &
-      impractical %in% CASCADE_VEG_DISTURBANCE_CODES & !is.na(event_date)
-    later_disturbance <- vapply(seq_along(contributing), function(i)
-      any(plot_id == contributing[i] & disturbed &
+    nonlogistical_hold <- stand_support == "held_sampling_impractical" &
+      impractical %in% CASCADE_VEG_NONLOGISTICAL_HOLD_CODES & !is.na(event_date)
+    later_nonlogistical <- vapply(seq_along(contributing), function(i)
+      any(plot_id == contributing[i] & nonlogistical_hold &
             as.numeric(event_date) > as.numeric(at[i])), logical(1))
     list(
       plot_events = length(sel$disposition),
@@ -958,7 +964,7 @@ cascade_veg_event_site <- function(trees, plots, site) {
       event_year_min = if (length(years)) as.numeric(min(years)) else NA_real_,
       event_year_median = if (length(years)) as.numeric(stats::median(years)) else NA_real_,
       event_year_max = if (length(years)) as.numeric(max(years)) else NA_real_,
-      later_disturbance_hold_plots = sum(later_disturbance))
+      later_nonlogistical_hold_plots = sum(later_nonlogistical))
   }
   base <- list(record_plots = length(record_ids),
                matched_record_plots = length(record_ids) - length(unmatched_ids),

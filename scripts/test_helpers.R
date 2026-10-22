@@ -541,7 +541,7 @@ check(pi * (20 / 200)^2 > pi * (10 / 200)^2 &&
 #   ABBY_001: three events; vst_ABBY_2016 is dated 2017-03-29 (pre-2020 vintage,
 #     admitted, area_shrub 80); 2019 sampled (area_shrub 400, T1 measured twice
 #     in the event); 2024 held_sampling_impractical for extreme weather (excluded,
-#     later disturbance hold). Selected: 2019. T3 (2016 only) is not carried.
+#     later non-logistical hold). Selected: 2019. T3 (2016 only) is not carried.
 #   ABBY_002: one vintage event admitted only because it has tree rows.
 #   ABBY_003: 2019 vintage with no rows and no recorded absence is excluded, so
 #     the plot falls back to its 2016 event.
@@ -679,7 +679,7 @@ check(v2_site$record_plots == 9L && v2_site$matched_record_plots == 9L &&
         v2_audit$selected_vintage_plots == 3L && v2_audit$later_held_plots == 4L &&
         v2_audit$no_admissible_event_plots == 1L && v2_audit$area_eligible_plots == 8L &&
         v2_audit$event_year_min == 2016 && v2_audit$event_year_median == 2016 &&
-        v2_audit$event_year_max == 2019 && v2_audit$later_disturbance_hold_plots == 1L,
+        v2_audit$event_year_max == 2019 && v2_audit$later_nonlogistical_hold_plots == 1L,
       "vegetation v2 audit counts match the fixture's hand counts")
 
 # Ruling R3: a record-bearing plot whose every event lacks its opportunity source
@@ -1000,11 +1000,11 @@ oracle_veg_event_bundle <- function(b, site) {
       edate[i] < max(edate[plots$plotID == plots$plotID[i]], na.rm = TRUE), logical(1))
     at <- edate[picked][match(contributing, plots$plotID[picked])]
     years <- as.integer(format(as.Date(at, origin = "1970-01-01"), "%Y"))
-    held_disturbed <- sup == "held_sampling_impractical" &
+    held_nonlogistical <- sup == "held_sampling_impractical" &
       tolower(trimws(as.character(plots$samplingImpractical))) %in%
         c("extreme weather", "location flooded", "other")
     dist <- sum(vapply(seq_along(contributing), function(k)
-      any(plots$plotID == contributing[k] & held_disturbed & !is.na(edate) & edate > at[k]),
+      any(plots$plotID == contributing[k] & held_nonlogistical & !is.na(edate) & edate > at[k]),
       logical(1)))
     data.frame(
       expected_source_contract = "NEON-VST-DP1.10098.001-v2",
@@ -1021,7 +1021,7 @@ oracle_veg_event_bundle <- function(b, site) {
       expected_event_year_min = if (length(years)) min(years) else NA_real_,
       expected_event_year_median = if (length(years)) stats::median(years) else NA_real_,
       expected_event_year_max = if (length(years)) max(years) else NA_real_,
-      expected_later_disturbance_hold_plots = dist,
+      expected_later_nonlogistical_hold_plots = dist,
       stringsAsFactors = FALSE)
   }
   if (length(unmatched_ids)) {
@@ -1111,7 +1111,7 @@ oracle_veg_bundle <- function(b, site) {
     expected_selected_vintage_plots = NA_integer_, expected_later_held_plots = NA_integer_,
     expected_no_admissible_event_plots = NA_integer_, expected_event_year_min = NA_real_,
     expected_event_year_median = NA_real_, expected_event_year_max = NA_real_,
-    expected_later_disturbance_hold_plots = NA_integer_, stringsAsFactors = FALSE))
+    expected_later_nonlogistical_hold_plots = NA_integer_, stringsAsFactors = FALSE))
 }
 # Hand-check the event oracle against the synthetic fixture's hand arithmetic.
 v2_oracle <- oracle_veg_event_bundle(v2_bundle, "ABBY")
@@ -1121,7 +1121,7 @@ check(isTRUE(all.equal(v2_oracle$expected_ba, v2_expected_ba, tolerance = 1e-14)
         isTRUE(all.equal(v2_oracle$expected_shrub_class_ba_ha, v2_expected_shrub_class, tolerance = 1e-14)) &&
         v2_oracle$expected_n_plots == 6L && v2_oracle$expected_area_eligible_plots == 8L &&
         v2_oracle$expected_later_held_plots == 4L && v2_oracle$expected_selected_vintage_plots == 3L &&
-        v2_oracle$expected_later_disturbance_hold_plots == 1L &&
+        v2_oracle$expected_later_nonlogistical_hold_plots == 1L &&
         identical(v2_oracle$expected_excluded_events, v2_audit$excluded_events),
       "test-owned vegetation event oracle reproduces the fixture's hand arithmetic")
 
@@ -1272,7 +1272,7 @@ check_cols(site_meta,
     "veg_selected_vintage_plots", "veg_later_held_plots",
     "veg_no_admissible_event_plots", "veg_event_year_min",
     "veg_event_year_median", "veg_event_year_max",
-    "veg_later_disturbance_hold_plots"),
+    "veg_later_nonlogistical_hold_plots"),
   "vegetation conditional-estimand audit schema")
 veg_present <- is.finite(site_meta$veg_ba_ha)
 veg_supported <- site_meta$veg_design_status %in% "supported"
@@ -1300,10 +1300,10 @@ check(all(!veg_rows | (
             site_meta$veg_admitted_states == CASCADE_VEG_EVENT_ADMITTED_STATES &
             (!veg_present | (site_meta$veg_event_year_min <= site_meta$veg_event_year_median &
                                site_meta$veg_event_year_median <= site_meta$veg_event_year_max &
-                               site_meta$veg_later_disturbance_hold_plots <= site_meta$veg_n_plots))
+                               site_meta$veg_later_nonlogistical_hold_plots <= site_meta$veg_n_plots))
         else
           is.na(site_meta$veg_plot_events) & is.na(site_meta$veg_event_year_min) &
-            is.na(site_meta$veg_later_disturbance_hold_plots))),
+            is.na(site_meta$veg_later_nonlogistical_hold_plots))),
       "vegetation event audit columns match the family's source shape")
 check(all(!veg_present |
         (veg_supported & site_meta$veg_n_plots >= 1L &
@@ -1329,7 +1329,9 @@ check(all(!veg_present |
         identical(unname(cascade$meta$data_caveats[["veg_type"]]),
                   expected_class_basis) &&
         identical(unname(cascade$meta$data_caveats[["veg_design_support"]]),
-                  expected_design_basis),
+                  expected_design_basis) &&
+        identical(unname(cascade$meta$data_caveats[["veg_later_nonlogistical_hold_plots"]]),
+                  CASCADE_VEG_NONLOGISTICAL_HOLD_BASIS),
       "vegetation context fails closed with used/eligible/record/design audits")
 signal_cols <- as.character(signals$key)
 support_cols <- c(
@@ -3160,7 +3162,7 @@ if (nzchar(source_root)) {
                              "veg_selected_vintage_plots", "veg_later_held_plots",
                              "veg_no_admissible_event_plots", "veg_event_year_min",
                              "veg_event_year_median", "veg_event_year_max",
-                             "veg_later_disturbance_hold_plots"),
+                             "veg_later_nonlogistical_hold_plots"),
                            drop = FALSE]
   check(!anyDuplicated(veg_expected$site) && !anyDuplicated(veg_derived$site) &&
           setequal(veg_expected$site, veg_derived$site),
@@ -3204,7 +3206,7 @@ if (nzchar(source_root)) {
                  "veg_selected_absence_plots", "veg_selected_vintage_plots",
                  "veg_later_held_plots", "veg_no_admissible_event_plots",
                  "veg_event_year_min", "veg_event_year_median", "veg_event_year_max",
-                 "veg_later_disturbance_hold_plots")
+                 "veg_later_nonlogistical_hold_plots")
   event_chr <- c("veg_source_contract", "veg_event_basis", "veg_admitted_states",
                  "veg_excluded_events")
   check(all(vapply(event_num, function(k)

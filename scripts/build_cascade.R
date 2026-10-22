@@ -848,7 +848,7 @@ veg_legacy_audit <- function() data.frame(
   veg_selected_vintage_plots = NA_integer_, veg_later_held_plots = NA_integer_,
   veg_no_admissible_event_plots = NA_integer_, veg_event_year_min = NA_real_,
   veg_event_year_median = NA_real_, veg_event_year_max = NA_real_,
-  veg_later_disturbance_hold_plots = NA_integer_, stringsAsFactors = FALSE)
+  veg_later_nonlogistical_hold_plots = NA_integer_, stringsAsFactors = FALSE)
 veg_event_audit <- function(a) data.frame(
   veg_source_contract = CASCADE_VEG_V2_CONTRACT_ID,
   veg_event_basis = CASCADE_VEG_EVENT_RULE,
@@ -864,14 +864,14 @@ veg_event_audit <- function(a) data.frame(
   veg_event_year_min = as.numeric(a$event_year_min),
   veg_event_year_median = as.numeric(a$event_year_median),
   veg_event_year_max = as.numeric(a$event_year_max),
-  veg_later_disturbance_hold_plots = as.integer(a$later_disturbance_hold_plots),
+  veg_later_nonlogistical_hold_plots = as.integer(a$later_nonlogistical_hold_plots),
   stringsAsFactors = FALSE)
 VEG_AUDIT_NUMERIC_COLS <- c(
   "veg_plot_events", "veg_admitted_events", "veg_absence_events",
   "veg_selected_absence_plots", "veg_selected_vintage_plots",
   "veg_later_held_plots", "veg_no_admissible_event_plots",
   "veg_event_year_min", "veg_event_year_median", "veg_event_year_max",
-  "veg_later_disturbance_hold_plots")
+  "veg_later_nonlogistical_hold_plots")
 VEG_AUDIT_CHARACTER_COLS <- c(
   "veg_source_contract", "veg_event_basis", "veg_admitted_states",
   "veg_excluded_events")
@@ -1363,6 +1363,7 @@ meta <- list(
       CASCADE_VEG_CLASSIFICATION_BASIS,
     veg_design_support = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_DESIGN_BASIS else
       CASCADE_VEG_DESIGN_BASIS,
+    veg_later_nonlogistical_hold_plots = CASCADE_VEG_NONLOGISTICAL_HOLD_BASIS,
     mammal_cpue = "Mammal effort resolves only exact A-J x 1-10 coordinates as physical trap events. Canonical status-4/5 multi-animal groups count one trap-night; two exact source-reviewed remark patterns document double traps and sum their two row weights. AX-JX, X1-X10, and XX are non-unique placeholders retained as row-level effort, which can overstate effort. Every other duplicated canonical event or coordinate token fails closed. Each nonblank tag row remains a capture, including repeated tags at distinct trap events.",
     bird_index = "Annual bird bundles lack a year-specific all-visits effort table. Denominator is observed pointkey x eventID occasions, so zero-detection visits are absent; flyovers are excluded.",
     beetle_activity = "Beetle site bundles contain catch rows only. Trap-night denominator covers unique catch-bearing plot-dates and omits zero-catch events.",
