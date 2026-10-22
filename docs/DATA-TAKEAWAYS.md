@@ -8,7 +8,7 @@
 > context, adds trend sensitivities, and explicitly presents a cross-product response atlas rather than a
 > tested trophic chain. Current values are generated from `data/cascade.rds` and its exports.
 
-_Suite audit — June 2026. Synthesis of NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology) + NEON-tower/Daymet climate._
+_Suite audit — June 2026. Synthesis of NEON DP1.10072.001 (small mammals), DP1.10003.001 (birds), DP1.10058.001 (plants), DP1.10098.001 (veg structure), DP1.10055.001 (phenology) + NEON tower climate (corrected 2026-10-22: the build reads only the Small Mammal app's DP1.00002.001 and DP1.00044.001 overlays; there is no Daymet input)._
 
 This is the integrator app: it joins the five sibling-product signals into a per-site **annual panel** (`cascade.rds$annual`, 509 site-years × 15 columns, 46 sites, 2013–2025) and tests a bottom-up cascade — climate → green-up → producers → consumers — link by link, biome-aware, n-gated, with a cross-site pooled headline.
 

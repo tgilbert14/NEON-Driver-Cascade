@@ -491,9 +491,16 @@ server <- function(input, output, session) {
   })
   default_pairing <- reactive({
     lk <- links(); ids <- pair_id(lk$from, lk$to, lk$lag)
-    pref <- "temp|greenup_doy|0"
-    hit <- match(pref, ids)
-    if (!is.na(hit) && isTRUE(lk$n[hit] >= 6)) return(pref)
+    # The judged temperature-to-green-up pairing opens when the site can test it.
+    # At SRER, otherwise, the monsoon-rain-to-next-year small-mammal pairing opens
+    # when it has six or more years (the SRER teaching case; audit 2026-10-18
+    # ruling); failing both, the pairing with the most overlapping years.
+    prefs <- c("temp|greenup_doy|0",
+               if (identical(input$site, "SRER")) "precip_monsoon|mammal_cpue|1")
+    for (pref in prefs) {
+      hit <- match(pref, ids)
+      if (!is.na(hit) && isTRUE(lk$n[hit] >= 6)) return(pref)
+    }
     ids[which.max(lk$n)]
   })
   output$pairingPicker <- renderUI({
