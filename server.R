@@ -62,7 +62,7 @@ server <- function(input, output, session) {
   # Short lower-case names for sentences; the table keeps the bundle's labels.
   plain_name <- function(k) switch(k,
     precip = "annual rain", temp = "mean temperature", precip_winter = "winter rain",
-    precip_monsoon = "monsoon rain", temp_spring = "spring temperature",
+    precip_monsoon = "monsoon rain", temp_spring = "March to May temperature",
     greenup_doy = "green-up timing", mammal_cpue = "small-mammal catch",
     fruiting_pct = "fruiting peak",
     tolower(sub(" \\(.*\\)$", "", sig_label(k))))
@@ -236,7 +236,7 @@ server <- function(input, output, session) {
   # carries per-product release columns.
   output$dataThrough <- renderUI({
     ri <- source_release_info(); if (is.null(ri)) return(NULL)
-    rel <- unique(ri$release)
+    rel <- unique(release_label(ri$release))
     months <- sort(unique(ri$data_through))
     span_txt <- if (length(months) == 1L) months else sprintf("%s to %s", months[1], months[length(months)])
     prov <- ri[!is.na(ri$provisional_from) & nzchar(ri$provisional_from), , drop = FALSE]
@@ -948,7 +948,7 @@ server <- function(input, output, session) {
         p("The dryland group is a keyword rule on the site's one-line description (desert, sagebrush or semi-desert), not a measured climate class. It can misgroup dry forests, semiarid grasslands and mixed sites.")),
 
       div(class="about-card about-plain", h3(bs_icon("chat-square-text"), " Plain words for the terms on screen"),
-        gloss("Green-up timing index", "A yearly index of when plants leafed out at a site, built from NEON phenology visits. Each species is centred on its own usual timing before species are averaged, so a smaller value means earlier than usual, not a calendar date. A data refresh can revise past values."),
+        gloss("Green-up timing index", "A yearly index of when plants leafed out at a site, built from NEON phenology visits. Each species is centred on its own usual timing before species are averaged, so a smaller value means earlier than usual, not a calendar date. A data refresh can revise past values. NEON changed how often plants were observed during the record (fewer visits from March 2020 through 2021 because of COVID-19, one visit a week at gradient sites from August 2024, and core sites only from January 2026), so a change in visit frequency can move the index on its own."),
         gloss("Lag", "A calendar offset. A <b>one-year lag</b> pairs this year's weather with <em>next</em> year's response. The lag states a proposed pathway; the data cannot prove it."),
         gloss("Catch rate (per 100 trap-nights)", "Small mammals caught for every 100 trap-nights of effort, so years with more trapping compare fairly. It is a <b>relative index within one site</b>, not a headcount."),
         gloss("The timeline", "Each strip is one measurement layer, scaled to that signal's own average year: up is above average, down is below. Compare timing, not heights; stacking the strips does not test a chain.")),
@@ -977,7 +977,7 @@ server <- function(input, output, session) {
             tags$li(HTML(sprintf("<b>%s &rarr; %s</b>: raw-level direction %s%s%s",
               sig_label(r$from), sig_label(r$to), r$sign_match, sensitivity,
               if (!is.null(rma)) sprintf(paste0(
-                "; REML + Knapp&ndash;Hartung pooled r = %+.2f (95%% CI [%.2f, %.2f])",
+                "; REML + truncated Knapp&ndash;Hartung pooled r = %+.2f (95%% CI [%.2f, %.2f])",
                 "; 95%% prediction interval [%.2f, %.2f]; I&sup2; = %.0f%%",
                 "; raw one-sided p = %.3g; Holm p = %.3g (k = %d sites, df = %d)"),
                 rma$pooled_r, rma$ci_r[1], rma$ci_r[2], rma$pi_r[1], rma$pi_r[2],
@@ -985,7 +985,8 @@ server <- function(input, output, session) {
               else " (the validated companion contains no effect-size estimate for this row)"))) }))
           else p(class = "qc-cap-note", bs_icon("info-circle"),
             "No association met the companion meta-analysis eligibility contract in this snapshot."),
-          p(class = "qc-cap-note", "The prediction interval and heterogeneity lead interpretation; the directional p-values are secondary. Knapp-Hartung inference reflects the small site sample, and Holm adjustment covers both eligible temperature-green-up rows. The Fisher-z sampling variance still assumes effectively independent paired years and does not model within-site serial dependence. The entire companion remains exploratory, is not a posterior probability, and does not upgrade any per-site verdict."))
+          p(class = "qc-cap-note", "The prediction interval and heterogeneity lead interpretation; the directional p-values are secondary. The random-effects summary uses Knapp-Hartung inference with the ad hoc truncation, so its interval is never narrower than the standard random-effects interval, and Holm adjustment covers both eligible temperature-green-up rows. The Fisher-z sampling variance still assumes effectively independent paired years and does not model within-site serial dependence. The entire companion remains exploratory, is not a posterior probability, and does not upgrade any per-site verdict."),
+          p(class = "qc-cap-note", "March to May temperature is a same-season comparison, not a test of what triggers green-up: at every vote-eligible site the median green-up falls before May 1 (site medians from day 41 to day 119), so part of the window is weather after green-up."))
       })),
 
       div(class="about-card", h3(bs_icon("diagram-3"), " The twelve pairings"),
@@ -1112,7 +1113,7 @@ server <- function(input, output, session) {
   # ---- ALL SITES: the judged pairings across NEON (card X1) ----
   # One headline line computed from POOLED, one bar per judged pairing, the
   # statistics in a fold. Context pairings are never pooled and are not listed here.
-  plain_sig <- function(k) switch(k, temp = "annual temperature", temp_spring = "spring temperature",
+  plain_sig <- function(k) switch(k, temp = "annual temperature", temp_spring = "March to May temperature",
     greenup_doy = "green-up timing", tolower(sig_label(k)))
   cap1 <- function(x) paste0(toupper(substring(x, 1, 1)), substring(x, 2))
   num_word <- function(n) if (n >= 1 && n <= 12) c("one","two","three","four","five","six","seven",

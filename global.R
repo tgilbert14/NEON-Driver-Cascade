@@ -458,7 +458,7 @@ if (!file.exists(CASCADE_META_PATH)) {
 CASCADE_META <- tryCatch(readRDS(CASCADE_META_PATH), error = function(e) {
   stop(sprintf("Cannot read data/cascade_meta.rds: %s", conditionMessage(e)), call. = FALSE)
 })
-.expected_meta_inference_schema <- "cascade-meta-reml-knha-holm-prediction-v1"
+.expected_meta_inference_schema <- "cascade-meta-reml-knha-truncated-holm-prediction-v2"
 .expected_meta_family <- c("temp|greenup_doy", "temp_spring|greenup_doy")
 .meta_toolchain <- attr(CASCADE_META, "build_toolchain")
 .meta_local_inputs <- attr(CASCADE_META, "local_meta_inputs")
@@ -538,7 +538,7 @@ CASCADE_META <- tryCatch(readRDS(CASCADE_META_PATH), error = function(e) {
     length(r$p_one_sided_holm) == 1L && is.finite(r$p_one_sided_holm) &&
     r$p_one_sided_holm >= r$p_one_sided && r$p_one_sided_holm <= 1 &&
     identical(r$test_method,
-              "REML random-effects with Knapp-Hartung inference") &&
+              "REML random-effects with truncated Knapp-Hartung inference") &&
     length(r$inference_role) == 1L && nzchar(r$inference_role) &&
     length(r$I2) == 1L && is.finite(r$I2) && r$I2 >= 0 && r$I2 <= 100 &&
     length(r$tau2) == 1L && is.finite(r$tau2) && r$tau2 >= 0 &&
@@ -822,8 +822,10 @@ release_doi_link <- function(r) {
   if (is.na(d) || !nzchar(d)) return(NULL)
   tags$a(href = paste0("https://doi.org/", d), target = "_blank", rel = "noopener", paste0("doi:", d))
 }
+# A bundle that records no release reads "unrecorded"; say so in plain words.
+release_label <- function(x) ifelse(is.na(x) | !nzchar(x) | x == "unrecorded", "release not recorded", x)
 release_text <- function(r) {
-  paste0(sprintf("data through %s, %s", r$data_through, r$release),
+  paste0(sprintf("data through %s, %s", r$data_through, release_label(r$release)),
          if (!is.na(r$doi) && nzchar(r$doi)) sprintf(", doi:%s", r$doi) else "",
          if (!is.na(r$provisional_from) && nzchar(r$provisional_from))
            sprintf("; provisional from %s", r$provisional_from) else "")
@@ -977,7 +979,7 @@ cascade_sources <- function() {
           ref("Huxman et al. (2004). Convergence across biomes to a common rain-use efficiency. <i>Nature</i>.")
         ),
         grp(
-          "Temperature / spring warmth to green-up onset (phenology priors)",
+          "Temperature and March to May warmth to green-up onset (phenology priors)",
           ref("Richardson et al. (2013). Climate change, phenology, and phenological control of vegetation feedbacks. <i>Agric. For. Meteorol.</i>"),
           ref("Cleland, Chuine, Menzel, Mooney &amp; Schwartz (2007). Shifting plant phenology in response to global change. <i>TREE</i>."),
           ref("Piao et al. (2019). Plant phenology and global climate change. <i>Glob. Change Biol.</i>")
@@ -1083,7 +1085,7 @@ sig_unit <- function(k) {
 sig_abbr <- function(k) {
   m <- c(
     temp = "Temp", precip = "Rain", precip_winter = "Winter rain",
-    precip_monsoon = "Monsoon", temp_spring = "Spring temp", greenup_doy = "Green-up", fruiting_pct = "Fruiting",
+    precip_monsoon = "Monsoon", temp_spring = "Mar-May temp", greenup_doy = "Green-up", fruiting_pct = "Fruiting",
     plant_richness = "Richness", plant_intro_pct = "Invasion", mammal_cpue = "Rodents", mammal_mnka = "Rodents",
     bird_index = "Birds", bird_richness = "Bird rich.",
     mosq_activity = "Mosquitoes", beetle_activity = "Beetles"
