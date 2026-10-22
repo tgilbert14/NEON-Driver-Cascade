@@ -649,7 +649,7 @@ a row when its fix merges; until then copy the contract text, not the code.
 | Vegetation | `is_species` reads a reassigned `scientificName` in `scripts/bundle_veg_data.R`; no size-plausibility screen; `keepInView = TRUE` in `R/map_picker.R` |
 | Water Chemistry | a zero-argument custom-message handler (`kickMaps`) kills the app's JavaScript; the Fe/Mn 2012 to 2016 unit error passes a plausibility gate whose ceiling the bad rows set |
 | Breeding Birds | a blank `clusterSize` read as zero (it is one bird left unrecorded at source) |
-| Atlas | a layer test in `scripts/build_cascade.R` that is always TRUE; no coverage-regression gate before staging yet (both in open PRs; the direct push to `master` ended on 2026-10-22) |
+| Atlas | a layer test in `scripts/build_cascade.R` that is always TRUE, and no coverage-regression gate before staging: both fixed in open PR #80, so prune this row when it merges (the direct push to `master` already ended on 2026-10-22) |
 
 ---
 
