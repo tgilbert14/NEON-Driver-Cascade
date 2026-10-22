@@ -206,3 +206,4 @@
   the Discharge F1 contract/acquirer/verifier ban subprocess (AST-tested, token-bearing process), so
   they hash a read-only copy the workflow materializes with git cat-file; sparse checkouts are blob:none,
   so read the frozen blobs before `git remote remove origin` or the later cat-file has no promisor.
+- [2026-10-21] maze · gap · a rebuilt candidate can lose coverage silently (mosq 413->200, bird 2025 dropped) while every contract passes; gate each product on finite site-years, sites and max year against the committed baseline before staging (scripts/check_coverage_regression.R), with overrides keyed to the exact candidate sibling commit so they cannot carry over. Locally, rebuild_all.R stage 4 fails on this Mac (metafor/tie check), so export the stage-1 bundle from a scratch copy to exercise the gate.
