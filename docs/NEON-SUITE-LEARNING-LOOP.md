@@ -324,6 +324,15 @@ app's runtime and data/science authority and supersedes its science/data,
 lifecycle-runtime, and default/deployed identities in the 2026-08-06 cover-cleanup
 register below; its cover art is unchanged and no Driver byte changed.
 
+2026-10-26 suite audit wave 2: Plant Diversity PR #26 (head `bd2a391`, open) drops exact
+duplicate rows (5,678 occurrence rows at 44 sites, 921 ground rows at 35) and records
+`neon_release` RELEASE-2026 in each bundle (classes app-local, scientific-contract,
+suite-platform). Measured with the Atlas's `ann_plant()`: plant_richness and its plot and
+sampling-unit counts change in 0 of 439 site-years; plant_q1 and plant_q2 move in 96 (at most
+about 2 effective species) and plant_intro_pct in 72 (at most 0.86 points). The Driver
+disposition stays CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE until the first
+Atlas refresh after that PR merges.
+
 ## Driver implication backlog
 
 Add one row for every materially supported or rejected cross-product idea. Never
