@@ -333,6 +333,14 @@ about 2 effective species) and plant_intro_pct in 72 (at most 0.86 points). The 
 disposition stays CONTEXT / HOLD DRIVER INGESTION / NO DRIVER BYTE CHANGE until the first
 Atlas refresh after that PR merges.
 
+2026-10-26 suite audit wave 2: Breeding Birds PR #8 (head `adb3553`, open) splits detection
+rows into incidence and index entry, records a cluster_size_state beside clusterSizeRaw, and
+applies wren's PUUM read-as-one rule; mean_ubiquity now uses points counted since 2018. No
+Driver-roster count, zero or rarefied value changes. Checked with the Atlas's bird-index
+formula on that head: every column the adapter reads is present and the index is identical
+at all 381 roster site-years. Disposition unchanged: CONTEXT / HOLD DRIVER INGESTION / NO
+DRIVER BYTE CHANGE.
+
 ## Driver implication backlog
 
 Add one row for every materially supported or rejected cross-product idea. Never
