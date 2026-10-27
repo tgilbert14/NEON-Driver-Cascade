@@ -857,6 +857,78 @@ CASCADE_VEG_EVENT_DESIGN_BASIS <- paste(
   "or borrowed, and if every event of a record-bearing plot lacks its",
   "opportunity source the whole site is unsupported")
 
+# Contract v3 (NEON-VST-DP1.10098.001-v3, adapter rulings V3-1 to V3-6). The
+# plot-event keys and every column above are unchanged. Two states are new:
+# supported_legacy_schema relabels the pre-2020 field-gap events the v2 rules
+# read as held_opportunity_unknown, and takes exactly the v2 vintage outcome so
+# the estimand stays continuous; held_snapshot_event_mismatch is excluded. The
+# sibling's channel-complete reading of dataCollected=partial events and its
+# superseded or duplicate row flags are counted, never applied (R2, R7 stand).
+CASCADE_VEG_V3_CONTRACT_ID <- "NEON-VST-DP1.10098.001-v3"
+CASCADE_VEG_V3_CONTRACT_VERSION <- 3L
+CASCADE_VEG_EVENT_CONTRACTS <- list(
+  v2 = list(id = CASCADE_VEG_V2_CONTRACT_ID, version = CASCADE_VEG_V2_CONTRACT_VERSION),
+  v3 = list(id = CASCADE_VEG_V3_CONTRACT_ID, version = CASCADE_VEG_V3_CONTRACT_VERSION))
+CASCADE_VEG_LEGACY_SCHEMA_STATE <- "supported_legacy_schema"
+CASCADE_VEG_V3_SUPPORT_STATES <- c(CASCADE_VEG_SUPPORT_STATES,
+                                   CASCADE_VEG_LEGACY_SCHEMA_STATE,
+                                   "held_snapshot_event_mismatch")
+CASCADE_VEG_V3_PLOTS_REQUIRED <- c(CASCADE_VEG_V2_PLOTS_REQUIRED,
+                                   "tree_channel_complete", "shrub_channel_complete")
+# v3 joins a missing-samplingImpractical note to the partial review in one reason.
+CASCADE_VEG_V3_PARTIAL_REASON_PATTERN <- "dataCollected=partial reviewed as"
+CASCADE_VEG_PARTIAL_HOLD <- "excl_partial_hold"
+CASCADE_VEG_PARTIAL_HOLD_SIBLING_COMPLETE <- "excl_partial_hold_sibling_complete"
+
+# The v3 texts are the v2 texts with each contract-specific phrase replaced; a
+# phrase that no longer matches stops at load rather than mislabelling a family.
+cascade_veg_v3_text <- function(text, from, to) {
+  if (length(from) != length(to)) stop("v3 text edit needs paired phrases", call. = FALSE)
+  for (i in seq_along(from)) {
+    if (!grepl(from[i], text, fixed = TRUE))
+      stop(sprintf("v3 vegetation text edit no longer matches: %s", from[i]), call. = FALSE)
+    text <- sub(from[i], to[i], text, fixed = TRUE)
+  }
+  text
+}
+CASCADE_VEG_V3_EVENT_RULE <- cascade_veg_v3_text(
+  CASCADE_VEG_EVENT_RULE, "dataCollected=partial events held;",
+  "dataCollected=partial events held, also when the sibling reads the channel complete;")
+CASCADE_VEG_V3_EVENT_ADMITTED_STATES <- cascade_veg_v3_text(
+  CASCADE_VEG_EVENT_ADMITTED_STATES, "held_opportunity_unknown only",
+  "supported_legacy_schema (contract v3) and held_opportunity_unknown only")
+CASCADE_VEG_V3_EVENT_STAND_BASIS <- cascade_veg_v3_text(
+  CASCADE_VEG_EVENT_STAND_BASIS, "(contract v2)", "(contract v3)")
+CASCADE_VEG_V3_EVENT_DESIGN_BASIS <- cascade_veg_v3_text(
+  CASCADE_VEG_EVENT_DESIGN_BASIS,
+  c("contract v2 support", "gated pre-2020 events with channel rows)"),
+  c("contract v3 support",
+    "gated pre-2020 events with channel rows, labelled supported_legacy_schema or held_opportunity_unknown)"))
+
+# Shape-keyed labels for the site_meta basis and audit columns. Under v2 these
+# are the v2 constants above byte for byte.
+cascade_veg_event_text <- function(shape) {
+  switch(shape,
+    v2 = list(contract = CASCADE_VEG_V2_CONTRACT_ID, rule = CASCADE_VEG_EVENT_RULE,
+              admitted = CASCADE_VEG_EVENT_ADMITTED_STATES,
+              stand = CASCADE_VEG_EVENT_STAND_BASIS,
+              class = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
+              design = CASCADE_VEG_EVENT_DESIGN_BASIS),
+    v3 = list(contract = CASCADE_VEG_V3_CONTRACT_ID, rule = CASCADE_VEG_V3_EVENT_RULE,
+              admitted = CASCADE_VEG_V3_EVENT_ADMITTED_STATES,
+              stand = CASCADE_VEG_V3_EVENT_STAND_BASIS,
+              class = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
+              design = CASCADE_VEG_V3_EVENT_DESIGN_BASIS),
+    stop(sprintf("no plot-event vegetation text for shape '%s'", format(shape)), call. = FALSE))
+}
+cascade_veg_event_shape_check <- function(shape) {
+  if (!is.character(shape) || length(shape) != 1L || !shape %in% names(CASCADE_VEG_EVENT_CONTRACTS))
+    stop(sprintf("plot-event vegetation path reads shapes %s, not '%s'",
+                 paste(names(CASCADE_VEG_EVENT_CONTRACTS), collapse = "/"),
+                 paste(format(shape), collapse = ",")), call. = FALSE)
+  invisible(shape)
+}
+
 cascade_veg_blank <- function(x) is.na(x) | !nzchar(trimws(as.character(x)))
 cascade_veg_event_key <- function(plot_id, event_id)
   paste(as.character(plot_id), as.character(event_id), sep = "\r")
@@ -869,7 +941,7 @@ cascade_veg_show_keys <- function(key)
         collapse = ", ")
 
 # Resolve the bundle's shape. Anything that is neither the legacy one-row-per-
-# plot table nor a well-keyed v2 plot-event table stops with what was seen.
+# plot table nor a well-keyed v2 or v3 plot-event table stops with what was seen.
 cascade_veg_bundle_shape <- function(bundle, site) {
   label <- sprintf("%s vegetation bundle", site)
   plots <- cascade_bundle_table(bundle, "plots", "vegetation", site)
@@ -890,16 +962,18 @@ cascade_veg_bundle_shape <- function(bundle, site) {
   if (!is.list(contract) || is.data.frame(contract))
     stop(sprintf("%s has a contract element that is not a list", label), call. = FALSE)
   id <- contract[["id"]]
-  if (!is.character(id) || length(id) != 1L || is.na(id) ||
-      !identical(id, CASCADE_VEG_V2_CONTRACT_ID))
+  known_ids <- vapply(CASCADE_VEG_EVENT_CONTRACTS, `[[`, character(1), "id")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || !id %in% known_ids)
     stop(sprintf("%s carries unknown vegetation contract id '%s' (this adapter reads '%s')",
-                 label, paste(format(id), collapse = ","), CASCADE_VEG_V2_CONTRACT_ID),
-         call. = FALSE)
+                 label, paste(format(id), collapse = ","),
+                 paste(known_ids, collapse = "' or '")), call. = FALSE)
+  shape <- names(known_ids)[known_ids == id]
+  expected_version <- CASCADE_VEG_EVENT_CONTRACTS[[shape]]$version
   version <- contract[["version"]]
-  if (!identical(version, CASCADE_VEG_V2_CONTRACT_VERSION))
+  if (!identical(version, expected_version))
     stop(sprintf("%s contract %s has version '%s' (this adapter reads version %d)",
                  label, id, paste(format(version), collapse = ","),
-                 CASCADE_VEG_V2_CONTRACT_VERSION), call. = FALSE)
+                 expected_version), call. = FALSE)
   cascade_require_columns(plots, c("plotID", "eventID"), sprintf("%s plot table", label))
   cascade_require_columns(trees, c("plotID", "eventID"), sprintf("%s tree table", label))
   blank_plot <- cascade_veg_blank(plots$plotID) | cascade_veg_blank(plots$eventID)
@@ -920,7 +994,7 @@ cascade_veg_bundle_shape <- function(bundle, site) {
   if (any(orphan))
     stop(sprintf("%s has %d tree row(s) whose (plotID, eventID) is absent from the plot table: %s",
                  label, sum(orphan), cascade_veg_show_keys(tree_key[orphan])), call. = FALSE)
-  "v2"
+  shape
 }
 
 # One shape per bundle set: a mixed set would mix two estimands in one family.
@@ -979,13 +1053,17 @@ cascade_veg_channel_row_counts <- function(plots, trees, spec, status_only = TRU
 }
 
 # Per-channel disposition of every plot event (ruling R1): "admit", "absence"
-# (selectable, zero stems, blocks fallback) or an "excl_" reason.
-cascade_veg_event_disposition <- function(plots, trees, channel, site) {
+# (selectable, zero stems, blocks fallback) or an "excl_" reason. `shape` picks
+# the contract's state list; v3 only adds states and reasons, never removes one.
+cascade_veg_event_disposition <- function(plots, trees, channel, site, shape = "v2") {
   ch <- CASCADE_VEG_EVENT_CHANNELS[[channel]]
   if (is.null(ch)) stop(sprintf("unknown vegetation channel '%s'", channel), call. = FALSE)
+  cascade_veg_event_shape_check(shape)
+  v3 <- identical(shape, "v3")
   label <- sprintf("%s vegetation %s channel", site, channel)
   state <- as.character(plots[[ch$support]])
-  unknown_state <- is.na(state) | !state %in% CASCADE_VEG_SUPPORT_STATES
+  states <- if (v3) CASCADE_VEG_V3_SUPPORT_STATES else CASCADE_VEG_SUPPORT_STATES
+  unknown_state <- is.na(state) | !state %in% states
   if (any(unknown_state))
     stop(sprintf("%s has support state(s) outside the contract: %s", label,
                  paste(sort(unique(ifelse(is.na(state[unknown_state]), "<NA>",
@@ -1011,6 +1089,14 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
   # surveyed (referee D2). The vintage branch keeps the status-only attribution.
   form_rows <- cascade_veg_channel_row_counts(plots, trees, ch$spec, status_only = FALSE)
   area <- suppressWarnings(as.numeric(plots[[ch$area]]))
+  # Ruling V3-3: the sibling's channel-complete reading of a partial event is
+  # recorded in the hold token, never admitted. v2 carries no such column.
+  complete_col <- paste0(channel, "_channel_complete")
+  if (v3 && !complete_col %in% names(plots))
+    stop(sprintf("%s has no %s column", label, complete_col), call. = FALSE)
+  partial_hold <- if (v3) ifelse(plots[[complete_col]] %in% TRUE,
+    CASCADE_VEG_PARTIAL_HOLD_SIBLING_COMPLETE, CASCADE_VEG_PARTIAL_HOLD) else
+    rep(CASCADE_VEG_PARTIAL_HOLD, nrow(plots))
 
   out <- paste0("excl_", state)
   out[state %in% CASCADE_VEG_EVENT_ADMIT_STATES] <- "admit"
@@ -1018,7 +1104,9 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
   held_unknown <- state == "held_opportunity_unknown"
   vintage <- held_unknown & reason %in% CASCADE_VEG_VINTAGE_REASONS
   partial <- held_unknown & !is.na(reason) &
-    grepl(CASCADE_VEG_PARTIAL_REASON_PATTERN, reason)
+    (grepl(CASCADE_VEG_PARTIAL_REASON_PATTERN, reason) |
+       (v3 & grepl(CASCADE_VEG_V3_PARTIAL_REASON_PATTERN, reason, fixed = TRUE)))
+  partial <- partial & !vintage
   no_records <- held_unknown & reason %in% CASCADE_VEG_NO_RECORDS_REASON
   unrecognised <- held_unknown & !(vintage | partial | no_records)
   if (any(unrecognised))
@@ -1032,9 +1120,18 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
     ifelse(channel_rows > 0L, "admit",
     ifelse(presence_absent, "absence", "excl_vintage_no_channel_rows")))))
   out[vintage] <- vintage_outcome[vintage]
+  # Ruling V3-2: supported_legacy_schema is the v3 label for the same events.
+  legacy_schema <- state == CASCADE_VEG_LEGACY_SCHEMA_STATE
+  out[legacy_schema] <- vintage_outcome[legacy_schema]
   out[no_records] <- ifelse(form_rows[no_records] > 0L, "admit",
                             "excl_no_records_unknown_presence")
-  out[partial] <- "excl_partial_hold"
+  out[partial] <- partial_hold[partial]
+  # Ruling R7 / V3-3: a dataCollected token other than blank or allGrowthForms
+  # never reaches selection, whatever the support state says. Events already
+  # held for a more specific reason keep it.
+  partial_token <- !collected %in% c("", "allgrowthforms")
+  token_hold <- partial_token & out %in% c("admit", "absence")
+  out[token_hold] <- partial_hold[token_hold]
   selectable <- out %in% c("admit", "absence")
   out[selectable & !(is.finite(area) & area > CASCADE_VEG_EVENT_MIN_AREA_M2)] <-
     "excl_area_missing_or_le50"
@@ -1045,9 +1142,9 @@ cascade_veg_event_disposition <- function(plots, trees, channel, site) {
 # its within-event stem snapshot, and a one-row-per-plotID design table built
 # from the selected events' own areas.
 cascade_veg_event_selection <- function(plots, trees, channel, site,
-                                        event_date = NULL) {
+                                        event_date = NULL, shape = "v2") {
   label <- sprintf("%s vegetation %s channel", site, channel)
-  disposition <- cascade_veg_event_disposition(plots, trees, channel, site)
+  disposition <- cascade_veg_event_disposition(plots, trees, channel, site, shape)
   if (is.null(event_date)) event_date <- cascade_veg_event_dates(plots, trees, label)
   candidate <- which(disposition %in% c("admit", "absence"))
   if (anyNA(event_date[candidate]))
@@ -1087,14 +1184,15 @@ cascade_veg_count_string <- function(x) {
   paste(sprintf("%s=%d", keys, as.integer(counts[keys])), collapse = ";")
 }
 
-# Site-level event-aware result (rulings R1 to R4) for one v2 bundle: the stand,
-# the classification evidence, and the audit counts ann_veg persists.
-cascade_veg_event_site <- function(trees, plots, site) {
+# Site-level event-aware result (rulings R1 to R4) for one v2 or v3 bundle: the
+# stand, the classification evidence, and the audit counts ann_veg persists.
+cascade_veg_event_site <- function(trees, plots, site, shape = "v2") {
   label <- sprintf("%s vegetation bundle", site)
+  cascade_veg_event_shape_check(shape)
   cascade_require_columns(trees, CASCADE_VEG_V2_TREES_REQUIRED,
                           sprintf("%s tree table", label))
-  cascade_require_columns(plots, CASCADE_VEG_V2_PLOTS_REQUIRED,
-                          sprintf("%s plot table", label))
+  cascade_require_columns(plots, if (identical(shape, "v3")) CASCADE_VEG_V3_PLOTS_REQUIRED else
+                            CASCADE_VEG_V2_PLOTS_REQUIRED, sprintf("%s plot table", label))
   plots <- as.data.frame(plots, stringsAsFactors = FALSE)
   trees <- as.data.frame(trees, stringsAsFactors = FALSE)
   plot_id <- as.character(plots$plotID)
@@ -1125,14 +1223,26 @@ cascade_veg_event_site <- function(trees, plots, site) {
         sel$disposition[!sel$disposition %in% c("admit", "absence")]),
       selected_plots = nrow(s),
       selected_absence_plots = sum(s$disposition == "absence"),
-      selected_vintage_plots = sum(s$support == "held_opportunity_unknown"),
+      selected_vintage_plots = sum(s$support %in% c("held_opportunity_unknown",
+                                                    CASCADE_VEG_LEGACY_SCHEMA_STATE)),
       later_held_plots = sum(s$later_held %in% TRUE),
       no_admissible_event_plots = length(setdiff(record_ids, s$plotID)),
       area_eligible_plots = sum(record_ids %in% s$plotID),
       event_year_min = if (length(years)) as.numeric(min(years)) else NA_real_,
       event_year_median = if (length(years)) as.numeric(stats::median(years)) else NA_real_,
       event_year_max = if (length(years)) as.numeric(max(years)) else NA_real_,
-      later_nonlogistical_hold_plots = sum(later_nonlogistical))
+      later_nonlogistical_hold_plots = sum(later_nonlogistical),
+      # Ruling V3-4: sibling row flags inside the stand snapshot, counted for
+      # review and not applied; NA when the contract carries no such column.
+      superseded_rows = flag_count(sel$snapshot, "superseded_in_event",
+                                   function(x) x %in% TRUE),
+      duplicate_rows = flag_count(sel$snapshot, "duplicate_of_uid",
+                                  function(x) !cascade_veg_blank(x)))
+  }
+  flag_count <- function(snap, column, flagged) {
+    if (!column %in% names(trees)) return(NA_integer_)
+    if (is.null(snap) || !nrow(snap)) return(0L)
+    sum(flagged(snap[[column]]))
   }
   base <- list(record_plots = length(record_ids),
                matched_record_plots = length(record_ids) - length(unmatched_ids),
@@ -1148,13 +1258,13 @@ cascade_veg_event_site <- function(trees, plots, site) {
                         stringsAsFactors = FALSE)
     audit <- audit_for(list(
       channel = "tree", selected = empty,
-      disposition = cascade_veg_event_disposition(plots, trees, "tree", site)))
+      disposition = cascade_veg_event_disposition(plots, trees, "tree", site, shape)))
     return(c(list(supported = FALSE, type = NA_character_, channel = NA_character_,
                   stand = NULL, structure = NULL), base, list(audit = audit)))
   }
   selection <- list(
-    tree = cascade_veg_event_selection(plots, trees, "tree", site, event_date),
-    shrub = cascade_veg_event_selection(plots, trees, "shrub", site, event_date))
+    tree = cascade_veg_event_selection(plots, trees, "tree", site, event_date, shape),
+    shrub = cascade_veg_event_selection(plots, trees, "shrub", site, event_date, shape))
   # Ruling R4: each component comes from its own channel's selection through
   # the unchanged classifier; the legacy comparison then decides the type.
   tree_evidence <- cascade_structure_evidence(selection$tree$snapshot,

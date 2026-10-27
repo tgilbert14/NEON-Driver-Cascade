@@ -257,3 +257,5 @@
 - [2026-10-26] neonize · pattern · When a sibling's bundle change alters an estimand, carry the basis in the
   artifact's own signal row (here mammal_cpue unit "per 100 TN" vs "CPUE anomaly") and let the UI and the
   contract tests key on it; a builder edit then needs no new meta element, and the schema1 path stays byte-identical.
+- [2026-10-26] neonize · confirmed · Vegetation contract v3 relabels without moving the estimand (all 41 sites equal v2) but
+  joins hold reasons ("samplingImpractical is missing; dataCollected=partial reviewed as ..."), so reason matching stays per contract.

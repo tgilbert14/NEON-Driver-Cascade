@@ -997,19 +997,21 @@ oracle_veg_legacy_bundle <- function(b, site) {
     stringsAsFactors = FALSE)
 }
 
-# Test-owned plot-event (contract v2) oracle. A literal, loop-by-event
-# re-implementation of rulings R1 to R4 written without any production adapter
-# helper; the basis constants are only the expected labels.
+# Test-owned plot-event (contract v2 and v3) oracle. A literal, loop-by-event
+# re-implementation of rulings R1 to R4 and V3-1 to V3-4 written without any
+# production adapter helper; the basis constants are only the expected labels.
 oracle_veg_event_bundle <- function(b, site) {
   trees <- as.data.frame(b$trees, stringsAsFactors = FALSE)
   plots <- as.data.frame(b$plots, stringsAsFactors = FALSE)
   if (!nrow(trees)) return(NULL)
+  is_v3 <- identical(b$contract$id, "NEON-VST-DP1.10098.001-v3")
   tree_forms <- c("single bole tree", "multi-bole tree", "small tree")
   shrub_forms <- c("single shrub", "small shrub", "sapling", "small tree")
   states <- c("sampled_with_records", "sampled_absence", "held_sampling_impractical",
               "held_dendrometer_only", "held_missing_area", "held_opportunity_unknown",
               "held_metric_invalid", "held_identity_conflict",
               "held_presence_record_conflict", "held_opportunity_source_missing")
+  if (is_v3) states <- c(states, "supported_legacy_schema", "held_snapshot_event_mismatch")
   pkey <- paste(plots$plotID, plots$eventID, sep = "|")
   tkey <- paste(trees$plotID, trees$eventID, sep = "|")
   tdate <- as.numeric(as.Date(trees$date))
@@ -1049,27 +1051,37 @@ oracle_veg_event_bundle <- function(b, site) {
       n_form_rows <- sum(trees$growthForm[rows_of[[i]]] %in% info$forms)
       absent_here <- if (ch == "tree") says_absent(plots$treesPresent[i]) else
         says_absent(plots$shrubsPresent[i]) && says_absent(plots$treesPresent[i])
+      partial_token <- !token(plots$dataCollected[i]) %in% c("", "allgrowthforms")
+      hold <- if (is_v3 && isTRUE(plots[[paste0(ch, "_channel_complete")]][i]))
+        "excl_partial_hold_sibling_complete" else "excl_partial_hold"
+      vintage_branch <- function() {
+        if (partial_token) "excl_vintage_partial"
+        else if (as.integer(plots[[info$conflict]][i]) > 0L) "excl_vintage_identity_conflict"
+        else if (as.integer(plots[[info$records]][i]) > 0L && absent_here)
+          "excl_vintage_presence_conflict"
+        else if (n_rows > 0L) "admit"
+        else if (absent_here) "absence"
+        else "excl_vintage_no_channel_rows"
+      }
       if (st == "sampled_with_records" || st == "held_metric_invalid") {
         o <- "admit"
       } else if (st == "sampled_absence") {
         o <- "absence"
+      } else if (st == "supported_legacy_schema") {
+        o <- vintage_branch()
       } else if (st == "held_opportunity_unknown") {
         if (!is.na(rs) && rs %in% c("samplingImpractical is missing", "dataCollected is missing")) {
-          if (!token(plots$dataCollected[i]) %in% c("", "allgrowthforms")) o <- "excl_vintage_partial"
-          else if (as.integer(plots[[info$conflict]][i]) > 0L) o <- "excl_vintage_identity_conflict"
-          else if (as.integer(plots[[info$records]][i]) > 0L && absent_here)
-            o <- "excl_vintage_presence_conflict"
-          else if (n_rows > 0L) o <- "admit"
-          else if (absent_here) o <- "absence"
-          else o <- "excl_vintage_no_channel_rows"
-        } else if (!is.na(rs) && startsWith(rs, "dataCollected=")) {
-          o <- "excl_partial_hold"
+          o <- vintage_branch()
+        } else if (!is.na(rs) && (startsWith(rs, "dataCollected=") ||
+                                  (is_v3 && grepl("dataCollected=partial reviewed as", rs, fixed = TRUE)))) {
+          o <- hold
         } else if (identical(rs, "no records and presence does not establish sampled absence")) {
           o <- if (n_form_rows > 0L) "admit" else "excl_no_records_unknown_presence"
         } else stop(sprintf("%s event oracle met an unknown hold reason", site), call. = FALSE)
       } else {
         o <- paste0("excl_", st)
       }
+      if (o %in% c("admit", "absence") && partial_token) o <- hold
       a <- suppressWarnings(as.numeric(plots[[info$area]][i]))
       if (o %in% c("admit", "absence") && !(is.finite(a) && a > 50)) o <- "excl_area_missing_or_le50"
       out[i] <- o
@@ -1133,15 +1145,18 @@ oracle_veg_event_bundle <- function(b, site) {
       any(plots$plotID == contributing[k] & held_nonlogistical & !is.na(edate) & edate > at[k]),
       logical(1)))
     data.frame(
-      expected_source_contract = "NEON-VST-DP1.10098.001-v2",
-      expected_event_basis = CASCADE_VEG_EVENT_RULE,
-      expected_admitted_states = CASCADE_VEG_EVENT_ADMITTED_STATES,
+      expected_source_contract = if (is_v3) "NEON-VST-DP1.10098.001-v3" else
+        "NEON-VST-DP1.10098.001-v2",
+      expected_event_basis = if (is_v3) CASCADE_VEG_V3_EVENT_RULE else CASCADE_VEG_EVENT_RULE,
+      expected_admitted_states = if (is_v3) CASCADE_VEG_V3_EVENT_ADMITTED_STATES else
+        CASCADE_VEG_EVENT_ADMITTED_STATES,
       expected_plot_events = nrow(plots),
       expected_admitted_events = sum(disp == "admit"),
       expected_absence_events = sum(disp == "absence"),
       expected_excluded_events = count_string(disp),
       expected_selected_absence_plots = sum(disp[picked] == "absence"),
-      expected_selected_vintage_plots = sum(sup[picked] == "held_opportunity_unknown"),
+      expected_selected_vintage_plots = sum(sup[picked] %in% c("held_opportunity_unknown",
+                                                              "supported_legacy_schema")),
       expected_later_held_plots = sum(later),
       expected_no_admissible_event_plots = sum(!record_ids %in% plots$plotID[picked]),
       expected_event_year_min = if (length(years)) min(years) else NA_real_,
@@ -1150,6 +1165,8 @@ oracle_veg_event_bundle <- function(b, site) {
       expected_later_nonlogistical_hold_plots = dist,
       stringsAsFactors = FALSE)
   }
+  stand_basis <- if (is_v3) CASCADE_VEG_V3_EVENT_STAND_BASIS else CASCADE_VEG_EVENT_STAND_BASIS
+  design_basis <- if (is_v3) CASCADE_VEG_V3_EVENT_DESIGN_BASIS else CASCADE_VEG_EVENT_DESIGN_BASIS
   if (length(unmatched_ids)) {
     un_rows <- trees$plotID %in% unmatched_ids
     td <- suppressWarnings(as.numeric(trees$stemDiameter))
@@ -1167,10 +1184,10 @@ oracle_veg_event_bundle <- function(b, site) {
       expected_unmatched_record_rows = sum(un_rows),
       expected_tree_class_ba_ha = NA_real_, expected_shrub_class_ba_ha = NA_real_,
       expected_tree_class_plots = NA_integer_, expected_shrub_class_plots = NA_integer_,
-      expected_stand_basis = CASCADE_VEG_EVENT_STAND_BASIS,
+      expected_stand_basis = stand_basis,
       expected_class_basis = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
       expected_design_status = "unsupported-unmatched-plots",
-      expected_design_basis = CASCADE_VEG_EVENT_DESIGN_BASIS,
+      expected_design_basis = design_basis,
       source_unmatched_qualifying_rows = sum(qualifying & un_rows),
       source_unmatched_plot_ids = paste(unmatched_ids, collapse = ","),
       stringsAsFactors = FALSE), audit("tree", disposition("tree"), integer(), character())))
@@ -1213,10 +1230,10 @@ oracle_veg_event_bundle <- function(b, site) {
     expected_tree_class_ba_ha = tree$ba_ha, expected_shrub_class_ba_ha = shrub$ba_ha,
     expected_tree_class_plots = as.integer(tree$n_plots),
     expected_shrub_class_plots = as.integer(shrub$n_plots),
-    expected_stand_basis = CASCADE_VEG_EVENT_STAND_BASIS,
+    expected_stand_basis = stand_basis,
     expected_class_basis = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS,
     expected_design_status = "supported",
-    expected_design_basis = CASCADE_VEG_EVENT_DESIGN_BASIS,
+    expected_design_basis = design_basis,
     source_unmatched_qualifying_rows = 0L, source_unmatched_plot_ids = "",
     stringsAsFactors = FALSE),
     audit(ch, disp[[ch]], picked[[ch]], names(ba_m2)[ok]))
@@ -1308,6 +1325,163 @@ check(identical(d12_site$type, "forest") &&
                   "excl_no_records_unknown_presence=1;excl_vintage_presence_conflict=1") &&
         identical(d12_oracle$expected_excluded_events, d12_site$audit$excluded_events),
       "vegetation v2 D1/D2 fixture: adapter and test-owned oracle match hand arithmetic")
+
+# ---- Vegetation contract v3 (NEON-VST-DP1.10098.001-v3, rulings V3-1 to V3-6) ----
+# The v2 fixture relabelled the way the sibling's v3 build relabels it, plus:
+#   ABBY_001: the 2019 T1 row at 2019-07-01 is flagged superseded (the date rule
+#     drops it anyway) and T2 gains a same-date duplicate flagged duplicate_of_uid
+#     (exact duplicates are retained, so it counts twice, as under v2).
+#   ABBY_007: a same-date row T72 (10 cm) flagged superseded is still a stem.
+#   ABBY_014: supported_legacy_schema with dataCollected=partial: held.
+#   ABBY_015: held_snapshot_event_mismatch only: no admissible event.
+#   ABBY_016: 2021 sampled_with_records, dataCollected=partial, tree channel
+#     complete: held as excl_partial_hold_sibling_complete; falls back to 2016.
+#   ABBY_017: the same with the tree channel not complete: excl_partial_hold.
+v3_legacy_reason <-
+  "legacy schema before 2020-03-10: sampling opportunity assumed (NEON changelog 16306)"
+v3_plots <- rbind(
+  v2_plots,
+  v2_event("ABBY_014", "vst_ABBY_2018", "2018-06-01", "held_opportunity_unknown", v2_vintage,
+           dataCollected = "partial"),
+  v2_event("ABBY_015", "vst_ABBY_2022", "2022-06-01", "held_snapshot_event_mismatch",
+           "snapshot rows disagree with the event table"),
+  v2_event("ABBY_016", "vst_ABBY_2016", "2016-06-01", "sampled_with_records", "sampled"),
+  v2_event("ABBY_016", "vst_ABBY_2021", "2021-06-01", "sampled_with_records", "sampled",
+           dataCollected = "partial"),
+  v2_event("ABBY_017", "vst_ABBY_2016", "2016-06-01", "sampled_with_records", "sampled"),
+  v2_event("ABBY_017", "vst_ABBY_2021", "2021-06-01", "sampled_with_records", "sampled",
+           dataCollected = "partial"))
+v3_relabel <- v3_plots$tree_support == "held_opportunity_unknown" &
+  v3_plots$tree_support_reason == v2_vintage
+v3_plots$tree_support[v3_relabel] <- "supported_legacy_schema"
+v3_plots$shrub_support[v3_relabel] <- "supported_legacy_schema"
+v3_plots$tree_support_reason[v3_relabel] <- v3_legacy_reason
+v3_plots$shrub_support_reason[v3_relabel] <- v3_legacy_reason
+v3_plots$partial_event_rule_id <- NA_character_
+v3_plots$tree_channel_complete <- NA
+v3_plots$shrub_channel_complete <- NA
+v3_partial <- !is.na(v3_plots$dataCollected) & v3_plots$dataCollected == "partial"
+v3_plots$partial_event_rule_id[v3_partial] <- "VST-PARTIAL-TEST"
+v3_plots$tree_channel_complete[v3_partial] <- FALSE
+v3_plots$shrub_channel_complete[v3_partial] <- FALSE
+v3_plots$tree_channel_complete[v3_plots$plotID == "ABBY_016" &
+                                 v3_plots$eventID == "vst_ABBY_2021"] <- TRUE
+v3_trees <- rbind(
+  v2_trees,
+  v2_tree("ABBY_001", "vst_ABBY_2019", "T2", "2019-08-01", 20),
+  v2_tree("ABBY_007", "vst_ABBY_2019", "T72", "2019-07-15", 10),
+  v2_tree("ABBY_014", "vst_ABBY_2018", "T140", "2018-06-01", 30),
+  v2_tree("ABBY_015", "vst_ABBY_2022", "T150", "2022-06-01", 30),
+  v2_tree("ABBY_016", "vst_ABBY_2016", "T160", "2016-06-01", 16),
+  v2_tree("ABBY_016", "vst_ABBY_2021", "T160", "2021-06-01", 50),
+  v2_tree("ABBY_017", "vst_ABBY_2016", "T170", "2016-06-01", 18),
+  v2_tree("ABBY_017", "vst_ABBY_2021", "T170", "2021-06-01", 60))
+v3_trees$plant_id <- paste(v3_trees$plotID, v3_trees$individualID, sep = ":")
+v3_trees$superseded_in_event <- (v3_trees$plotID == "ABBY_001" & v3_trees$individualID == "T1" &
+                                   v3_trees$date == as.Date("2019-07-01")) |
+  v3_trees$individualID == "T72"
+v3_trees$duplicate_of_uid <- ""
+v3_trees$duplicate_of_uid[nrow(v2_trees) + 1L] <- "uid-ABBY_001-T2-2019"
+v3_contract <- list(id = "NEON-VST-DP1.10098.001-v3", version = 3L)
+v3_bundle <- list(trees = v3_trees, plots = v3_plots, contract = v3_contract)
+# Hand arithmetic. Per-plot basal area / pi (m2/ha) = sum((d/200)^2) / 0.04 ha:
+#   ABBY_001 (32, 20, 20) 1.14; ABBY_002 (24) 0.36; ABBY_003 (20) 0.25;
+#   ABBY_007 (30, 10) 0.625; ABBY_008 (15) 0.140625; ABBY_009 (12) 0.09;
+#   ABBY_016 (16) 0.16; ABBY_017 (18) 0.2025.
+v3_per_plot <- pi * c(1.14, 0.36, 0.25, 0.625, 0.140625, 0.09, 0.16, 0.2025)
+v3_expected_ba <- mean(v3_per_plot)
+v3_expected_se <- stats::sd(v3_per_plot) / sqrt(8)
+# Tree component: pi * 0.118725 m2 over eight 400 m2 plots (0.32 ha).
+v3_expected_tree_class <- pi * 0.118725 / 0.32
+v3_site <- cascade_veg_event_site(v3_trees, v3_plots, "ABBY", "v3")
+v3_oracle <- oracle_veg_event_bundle(v3_bundle, "ABBY")
+v3_tree_disp <- cascade_veg_event_disposition(v3_plots, v3_trees, "tree", "ABBY", "v3")
+v3_shrub_disp <- cascade_veg_event_disposition(v3_plots, v3_trees, "shrub", "ABBY", "v3")
+v3_stop <- function(trees = v3_trees, plots = v3_plots, contract = v3_contract)
+  expect_error({
+    b <- list(trees = trees, plots = plots, contract = contract)
+    shape <- cascade_veg_bundle_shape(b, "ABBY")
+    cascade_veg_event_site(trees, plots, "ABBY", shape)
+  })
+v3_bad_state <- v3_plots; v3_bad_state$tree_support[2] <- "supported_maybe"
+v3_no_complete <- v3_plots; v3_no_complete$tree_channel_complete <- NULL
+check(identical(cascade_veg_bundle_shape(v3_bundle, "ABBY"), "v3") &&
+        identical(cascade_veg_resolve_shape(list(ABBY = "v3", BART = NULL, SRER = "v3")), "v3") &&
+        v3_stop(contract = list(id = "NEON-VST-DP1.10098.001-v3", version = 2L)) &&
+        v3_stop(contract = list(id = "NEON-VST-DP1.10098.001-v4", version = 4L)) &&
+        v3_stop(plots = v3_bad_state) && v3_stop(plots = v3_no_complete) &&
+        expect_error(cascade_veg_resolve_shape(list(ABBY = "v2", BART = "v3"))) &&
+        expect_error(cascade_veg_event_site(v3_trees, v3_plots, "ABBY", "v2")) &&
+        expect_error(cascade_veg_event_site(v3_trees, v3_plots, "ABBY", "v4")),
+      "vegetation v3 shape resolves; wrong version, unknown id or state, a v2/v3 mix and v3 states read as v2 stop")
+check(identical(v3_tree_disp,
+                c("admit", "admit", "excl_held_sampling_impractical", "admit",
+                  "admit", "excl_vintage_no_channel_rows", "admit", "absence",
+                  "admit", "admit", "excl_held_sampling_impractical", "admit",
+                  "admit", "excl_partial_hold", "admit", "excl_area_missing_or_le50",
+                  "excl_vintage_partial", "excl_held_snapshot_event_mismatch",
+                  "admit", "excl_partial_hold_sibling_complete",
+                  "admit", "excl_partial_hold")) &&
+        identical(v3_shrub_disp[20], "excl_partial_hold") &&
+        identical(v3_tree_disp[1:16],
+                  cascade_veg_event_disposition(v2_plots, v2_trees, "tree", "ABBY")),
+      "vegetation v3 supported_legacy_schema takes the v2 vintage outcome; partial events are held, sibling-complete ones countably")
+check(isTRUE(v3_site$supported) && identical(v3_site$type, "forest") &&
+        isTRUE(all.equal(v3_site$stand$ba_ha, v3_expected_ba, tolerance = 1e-14)) &&
+        isTRUE(all.equal(v3_site$stand$ba_se, v3_expected_se, tolerance = 1e-14)) &&
+        v3_site$stand$n_plots == 8L &&
+        isTRUE(all.equal(v3_site$structure$tree_ba_ha, v3_expected_tree_class, tolerance = 1e-14)) &&
+        isTRUE(all.equal(v3_site$structure$shrub_ba_ha, v2_expected_shrub_class, tolerance = 1e-14)) &&
+        v3_site$audit$superseded_rows == 1L && v3_site$audit$duplicate_rows == 1L &&
+        is.na(v2_site$audit$superseded_rows) && is.na(v2_site$audit$duplicate_rows) &&
+        identical(v3_site$audit$excluded_events,
+                  paste0("excl_area_missing_or_le50=1;excl_held_sampling_impractical=2;",
+                         "excl_held_snapshot_event_mismatch=1;excl_partial_hold=2;",
+                         "excl_partial_hold_sibling_complete=1;excl_vintage_no_channel_rows=1;",
+                         "excl_vintage_partial=1")) &&
+        v3_site$audit$selected_vintage_plots == 3L &&
+        v3_site$audit$no_admissible_event_plots == 3L,
+      "vegetation v3 stand counts flagged duplicate and superseded rows exactly as v2 does (hand arithmetic)",
+      sprintf("%.6f m2/ha from 8 plots", v3_expected_ba))
+v3_audit_cols <- c("plot_events", "admitted_events", "absence_events", "excluded_events",
+                   "selected_absence_plots", "selected_vintage_plots", "later_held_plots",
+                   "no_admissible_event_plots", "event_year_min", "event_year_median",
+                   "event_year_max", "later_nonlogistical_hold_plots")
+check(isTRUE(all.equal(v3_oracle$expected_ba, v3_expected_ba, tolerance = 1e-14)) &&
+        isTRUE(all.equal(v3_oracle$expected_ba, v3_site$stand$ba_ha, tolerance = 1e-14)) &&
+        isTRUE(all.equal(v3_oracle$expected_se, v3_site$stand$ba_se, tolerance = 1e-14)) &&
+        v3_oracle$expected_n_plots == v3_site$stand$n_plots &&
+        identical(v3_oracle$expected_type, v3_site$type) &&
+        isTRUE(all.equal(v3_oracle$expected_tree_class_ba_ha, v3_site$structure$tree_ba_ha,
+                         tolerance = 1e-14)) &&
+        isTRUE(all.equal(v3_oracle$expected_shrub_class_ba_ha, v3_site$structure$shrub_ba_ha,
+                         tolerance = 1e-14)) &&
+        v3_oracle$expected_area_eligible_plots == v3_site$audit$area_eligible_plots &&
+        all(vapply(v3_audit_cols, function(k)
+          identical(as.character(v3_oracle[[paste0("expected_", k)]]),
+                    as.character(v3_site$audit[[k]])), logical(1))) &&
+        identical(v3_oracle$expected_source_contract, "NEON-VST-DP1.10098.001-v3"),
+      "vegetation v3 fixture: adapter equals the test-owned oracle on stand, classification and audit")
+v3_text <- cascade_veg_event_text("v3")
+v2_text <- cascade_veg_event_text("v2")
+check(identical(v3_text$contract, "NEON-VST-DP1.10098.001-v3") &&
+        grepl("(contract v3)", v3_text$stand, fixed = TRUE) &&
+        grepl("contract v3 support", v3_text$design, fixed = TRUE) &&
+        grepl("supported_legacy_schema", v3_text$admitted, fixed = TRUE) &&
+        grepl("pre-2020 field gap", v3_text$admitted, fixed = TRUE) &&
+        !any(grepl("contract v2", unlist(v3_text), fixed = TRUE)) &&
+        identical(v2_text, list(
+          contract = "NEON-VST-DP1.10098.001-v2", rule = CASCADE_VEG_EVENT_RULE,
+          admitted = CASCADE_VEG_EVENT_ADMITTED_STATES, stand = CASCADE_VEG_EVENT_STAND_BASIS,
+          class = CASCADE_VEG_EVENT_CLASSIFICATION_BASIS, design = CASCADE_VEG_EVENT_DESIGN_BASIS)) &&
+        identical(CASCADE_VEG_EVENT_STAND_BASIS, paste(
+          "mean live basal area per hectare over plots whose selected event has at",
+          "least one qualifying live stem; per plot and channel the selected event is",
+          "the latest admissible NEON plot event (contract v2), its latest-date rows",
+          "per individual are stems, exact duplicate rows retained, each divided by",
+          "that event's own channel area (>50 m2); stems are never carried across",
+          "events, and plots without a qualifying stem are not imputed as zero")),
+      "vegetation basis texts name contract v3 under v3 and stay the v2 strings under v2")
 
 adapter_source <- paste(readLines("R/source_adapters.R", warn = FALSE), collapse = "\n")
 build_source <- paste(readLines("scripts/build_cascade.R", warn = FALSE), collapse = "\n")
@@ -1464,15 +1638,19 @@ veg_unsupported <- site_meta$veg_design_status %in%
   "unsupported-unmatched-plots"
 # One family carries one vegetation source shape; its basis texts follow it.
 veg_contracts <- unique(stats::na.omit(as.character(site_meta$veg_source_contract)))
-veg_event_family <- identical(veg_contracts, CASCADE_VEG_V2_CONTRACT_ID)
+veg_event_shape <- if (identical(veg_contracts, CASCADE_VEG_V2_CONTRACT_ID)) "v2" else
+  if (identical(veg_contracts, CASCADE_VEG_V3_CONTRACT_ID)) "v3" else NA_character_
+veg_event_family <- !is.na(veg_event_shape)
+veg_event_text <- if (veg_event_family) cascade_veg_event_text(veg_event_shape) else NULL
 check(length(veg_contracts) == 1L &&
-        veg_contracts %in% c(CASCADE_VEG_V2_CONTRACT_ID, CASCADE_VEG_LEGACY_CONTRACT),
+        veg_contracts %in% c(CASCADE_VEG_V2_CONTRACT_ID, CASCADE_VEG_V3_CONTRACT_ID,
+                             CASCADE_VEG_LEGACY_CONTRACT),
       "vegetation family resolves to exactly one source shape",
       paste(veg_contracts, collapse = ","))
-expected_stand_basis <- if (veg_event_family) CASCADE_VEG_EVENT_STAND_BASIS else CASCADE_VEG_STAND_BASIS
-expected_class_basis <- if (veg_event_family) CASCADE_VEG_EVENT_CLASSIFICATION_BASIS else
+expected_stand_basis <- if (veg_event_family) veg_event_text$stand else CASCADE_VEG_STAND_BASIS
+expected_class_basis <- if (veg_event_family) veg_event_text$class else
   CASCADE_VEG_CLASSIFICATION_BASIS
-expected_design_basis <- if (veg_event_family) CASCADE_VEG_EVENT_DESIGN_BASIS else CASCADE_VEG_DESIGN_BASIS
+expected_design_basis <- if (veg_event_family) veg_event_text$design else CASCADE_VEG_DESIGN_BASIS
 veg_rows <- veg_supported | veg_unsupported
 check(all(!veg_rows | (
         if (veg_event_family)
@@ -1480,8 +1658,8 @@ check(all(!veg_rows | (
             site_meta$veg_admitted_events + site_meta$veg_absence_events <= site_meta$veg_plot_events &
             site_meta$veg_selected_absence_plots <= site_meta$veg_absence_events &
             !is.na(site_meta$veg_excluded_events) &
-            site_meta$veg_event_basis == CASCADE_VEG_EVENT_RULE &
-            site_meta$veg_admitted_states == CASCADE_VEG_EVENT_ADMITTED_STATES &
+            site_meta$veg_event_basis == veg_event_text$rule &
+            site_meta$veg_admitted_states == veg_event_text$admitted &
             (!veg_present | (site_meta$veg_event_year_min <= site_meta$veg_event_year_median &
                                site_meta$veg_event_year_median <= site_meta$veg_event_year_max &
                                site_meta$veg_later_nonlogistical_hold_plots <= site_meta$veg_n_plots))
