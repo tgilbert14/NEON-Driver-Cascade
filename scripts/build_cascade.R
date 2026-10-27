@@ -668,11 +668,11 @@ ann_plant <- function(site) {                     # producer: richness + introdu
       if (tot > 0) 100 * sum(.data$percentCover[unknown], na.rm=TRUE) / tot else NA_real_ },
     .groups="drop") %>% mutate(site = site, .before = 1)
 }
-ann_mammal <- function(site, d, shape) {         # consumer: CPUE + minimum known alive
+ann_mammal <- function(site, shape) {            # consumer: CPUE + minimum known alive
   # The reviewed adapter resolves physical trap events and fails closed on
   # unknown duplicate patterns; under schema2 mammal_cpue is the month-adjusted
   # index and every other column stays pooled per year.
-  if (is.null(d)) return(NULL)
+  d <- rd(file.path(APP$mammal, "data/sites", paste0(site, ".rds"))); if (is.null(d)) return(NULL)
   cascade_mammal_annual(d, site, shape)
 }
 ann_bird <- function(site) {                      # consumer: detection index + richness
@@ -982,21 +982,22 @@ all_sites <- intersect(upstream_sites, DRIVER_SITE_SCOPE)
 cat("assembling", length(all_sites), "sites...\n")
 # One small-mammal bundle set resolves to one shape (schema1 pooled CPUE or
 # schema2 month-adjusted index); a partial or mixed set stops before any value.
-mammal_bundles <- setNames(lapply(all_sites, function(site)
-  rd(file.path(APP$mammal, "data/sites", paste0(site, ".rds")))), all_sites)
-MAMMAL_SHAPE <- cascade_mammal_resolve_shape(setNames(lapply(all_sites, function(site)
-  if (is.null(mammal_bundles[[site]])) NULL else
-    cascade_mammal_bundle_shape(mammal_bundles[[site]], site)), all_sites))
+# The shape pass reads each bundle and drops it: the mammal bundles are the
+# largest product, so ann_mammal reads its site again rather than holding all
+# 46 in memory through the assembly.
+MAMMAL_SHAPE <- cascade_mammal_resolve_shape(setNames(lapply(all_sites, function(site) {
+  d <- rd(file.path(APP$mammal, "data/sites", paste0(site, ".rds")))
+  if (is.null(d)) NULL else cascade_mammal_bundle_shape(d, site)
+}), all_sites))
 cat("\nsmall-mammal bundle shape:", MAMMAL_SHAPE, "\n")
 MAMMAL_INDEX <- identical(MAMMAL_SHAPE, "schema2")
 join_all <- function(site) {
-  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site, mammal_bundles[[site]], MAMMAL_SHAPE), ann_bird(site), ann_mosq(site), ann_beetle(site)))
+  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site, MAMMAL_SHAPE), ann_bird(site), ann_mosq(site), ann_beetle(site)))
   if (!length(parts)) return(NULL)
   invisible(lapply(seq_along(parts), function(i) assert_unique_year(parts[[i]], paste0(site, " part ", i))));
   Reduce(function(a,b) full_join(a,b,by=c("site","year"), relationship = "one-to-one"), parts)
 }
 annual <- bind_rows(lapply(all_sites, join_all))
-rm(mammal_bundles)
 annual <- annual[!is.na(annual$year) & annual$year >= MIN_YEAR &
                    annual$year <= LAST_COMPLETE_YEAR, , drop=FALSE]
 annual <- annual %>% arrange(.data$site, .data$year)

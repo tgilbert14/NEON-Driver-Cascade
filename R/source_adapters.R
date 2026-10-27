@@ -68,7 +68,8 @@ CASCADE_MAMMAL_INDEX_BASIS <- paste(
   "over all of the site's plot-months in that month), averaged without weights over the",
   "year's plot-months. It is a within-site anomaly centred on each site's own monthly means,",
   "so zero is a usual year for the months sampled; it is not comparable across sites and is",
-  "not a population count.")
+  "not a population count. The monthly means use every trapped plot-month the bundle",
+  "carries, so a refresh that adds months can revise earlier years' values.")
 
 cascade_mammal_trap_effort <- function(status) {
   token <- tolower(trimws(as.character(status)))
