@@ -341,6 +341,26 @@ formula on that head: every column the adapter reads is present and the index is
 at all 381 roster site-years. Disposition unchanged: CONTEXT / HOLD DRIVER INGESTION / NO
 DRIVER BYTE CHANGE.
 
+2026-10-26 suite audit wave 2: Vegetation Structure PR #19 (head `9340869`, open) promotes
+contract `NEON-VST-DP1.10098.001-v3` (multi-bole Option A, `supported_legacy_schema` for
+pre-2020 events with records, reviewed partial-event completeness per channel, row exclusions
+`superseded_in_event` and `duplicate_of_uid`, `measuredBy` and `recordedBy` dropped). The Atlas
+reads v3 on its plot-event path (PR #80, rulings V3-1 to V3-6) with its own R1 to R7 rules
+unchanged: on #19's 42 bundles no site moves against v2. Counted and not applied, for cass
+and hk: 53 partial events the sibling reads as channel-complete (JERC 25, OSBS 25, YELL 3) and
+342 duplicate-flagged stand rows (BONA 315, TEAK 26, UKFS 1). Disposition: ADOPT THE SHAPE /
+HOLD THE SIBLING'S S1 AND S4 RULES / NO DRIVER BYTE CHANGE until the first refresh; #19 merges
+after #80.
+
+2026-10-26 suite audit wave 2: Small Mammal PR #101 (head `08dc782`, open) pins RELEASE-2026,
+joins `gridCompletion`, `samplingImpractical` and `eventID` onto every trap night (bundle schema
+2) and moves its seasonal card to a month-adjusted yearly index (`annual_cpue_index()`). The
+Atlas (PR #80) matches it when the bundles carry those columns: `mammal_cpue` becomes the
+month-adjusted anomaly on the Atlas's own captures and effort (SRER within 0.05 of the
+sibling's values), finite mammal site-years go 410 to 364 under the 3-month and 300-trap-night
+gate. Disposition: ADOPT AT THE FIRST REFRESH AFTER #101 MERGES / COVERAGE OVERRIDE REQUIRED /
+NO DRIVER BYTE CHANGE now.
+
 ## Driver implication backlog
 
 Add one row for every materially supported or rejected cross-product idea. Never

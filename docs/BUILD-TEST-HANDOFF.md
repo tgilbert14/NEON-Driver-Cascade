@@ -1,10 +1,49 @@
 # Build, test, and handoff record
 
-Last updated: 2026-10-21
+Last updated: 2026-10-26
 
 This is the durable operating record for the NEON Driver Cascade repository. Read
 the whole document before doing work. Keep it factual and current so a new session
 can continue safely without relying on chat history.
+
+## 2026-10-26 [Claude]: Vegetation contract v3 and Small Mammal schema 2 support (on PR #80)
+
+Lead on Claude Fable 5.1 at max; both coding workers on Opus 5.5 at medium. Both adapters
+key on what the sibling bundles carry, so the Atlas works before and after the sibling PRs
+merge, and the family built from today's siblings keeps every value and string: only the
+build-input lineage moves, re-registered from a pinned `regenerate-artifacts.yml` run named
+in the promotion commit.
+
+- **Vegetation contract `NEON-VST-DP1.10098.001-v3`** (sibling PR #19, head `9340869`) is read
+  on the plot-event path beside v2 (rulings V3-1 to V3-6, `R/source_adapters.R`):
+  `supported_legacy_schema` takes the v2 vintage outcome, `held_snapshot_event_mismatch` is
+  excluded, a `dataCollected=partial` event stays held under R7 whatever its support state (the
+  sibling's channel-complete reading is counted in the hold token
+  `excl_partial_hold_sibling_complete`), and the sibling's `superseded_in_event` and
+  `duplicate_of_uid` row flags are counted, not applied (R2 stands). Dry run:
+  `scripts/dryrun_vegetation_v3_adapter.R`, report `docs/VEGETATION-V3-DRYRUN-2026-10-26.md`.
+  On PR #19's 42 bundles no site moves against v2 (3892 admitted, 493 absence and 1729
+  excluded events, identical). Evidence for cass and hk: 53 sibling-complete partial holds
+  (JERC 25, OSBS 25, YELL 3) and 342 duplicate-flagged rows inside the stand (BONA 315, TEAK
+  26, UKFS 1). The committed family's Vegetation pin `5e73e0d` is the legacy shape, so the first
+  refresh adopts the plot-event estimand and v3 at once (the deltas are the ones sized for v2).
+- **Small Mammal bundle schema 2** (sibling PR #101, head `08dc782`: `gridCompletion`,
+  `samplingImpractical`, `eventID` on every row) switches `mammal_cpue` to the sibling's
+  month-adjusted index on the Atlas's own captures and effort: per plot-month, captures per 100
+  trap-nights minus the site's calendar-month mean, averaged within the year; NA under 3 sampled
+  months or 300 trap-nights. Every other mammal column stays pooled. The label, unit, coverage
+  rule, caveat and codebook follow the shape, and the UI reads the basis from the committed
+  signal unit (`per 100 TN` or `CPUE anomaly`). Dry run: `scripts/dryrun_mammal_index.R`, report
+  `docs/MAMMAL-INDEX-DRYRUN-2026-10-26.md`: the pinned bundles reproduce all seven committed
+  mammal columns; SRER matches the sibling's values within 0.05; finite mammal site-years go
+  410 to 364 under schema 2 (26 sites, mostly 2020 and 2021 years trapped in 1 or 2 months), a
+  drop the coverage gate will refuse at the first schema-2 refresh until an override approves it.
+- Tests: `scripts/test_helpers.R` adds 5 vegetation and 5 mammal checks (the v3 ABBY fixture
+  against an independently extended oracle; hand-computed plot-month anomalies). CI finding: the
+  `discharge-feasibility-f0-synthetic` job takes 34 to 52 s; its one 15-minute cancellation
+  (run 40403033258, attempt 1) was `setup-r` hanging on the R download, so the timeout stays.
+- Next action: Tim merges #80, then the sibling PRs (Vegetation #19 after this lands), then the
+  first refresh with #81's rows re-keyed and the mammal coverage override added.
 
 ## 2026-10-21 [Claude]: audit item 9 (review-branch refresh, coverage gate, one name, Vegetation plot-event adapter)
 

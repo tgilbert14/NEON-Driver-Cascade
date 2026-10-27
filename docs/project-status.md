@@ -84,10 +84,16 @@ Each item names its owner and the condition that reopens it.
   It flags 383 months in 101 site-years, turns 11 annual temp and 5 March to May values NA, changes 15
   link counts and 3 tiers, and moves the March to May vote from 8/18 to 9/18; the temperature to
   green-up headline stays 15/18. cass recommends adopting it in a later family revision.
-- **The Small Mammal month-adjusted index:** owner decision for mara and hk. The producer app still
-  pools catch over whichever months were trapped (`server.R:247-255`); the Atlas follows once it changes.
-- **Vegetation contract v3 support:** the adapter accepts only v2 and fails closed on v3. Add v3 when the
-  Vegetation app promotes a v3 candidate family (its PR #19), tested on real v3 bundles.
+- **The Small Mammal month-adjusted index:** built 2026-10-26, keyed on the sibling's bundle schema 2
+  (PR #101): `mammal_cpue` becomes the month-adjusted index when every site bundle carries
+  `gridCompletion`, `samplingImpractical` and `eventID`, and stays pooled CPUE until then. The values
+  arrive with the first refresh after that PR merges; the coverage gate will refuse the drop from 410 to
+  364 finite site-years (years with under 3 sampled months or 300 trap-nights) until an override row
+  approves it (`docs/MAMMAL-INDEX-DRYRUN-2026-10-26.md`).
+- **Vegetation contract v3 support:** built 2026-10-26 against PR #19's real v3 bundles; no site moves
+  against v2. Still open for cass and hk: whether the Atlas adopts the sibling's channel-complete reading
+  of 53 partial events (JERC 25, OSBS 25, YELL 3) and its `duplicate_of_uid` flags (342 stand rows at BONA,
+  TEAK and UKFS), both counted and not applied (`docs/VEGETATION-V3-DRYRUN-2026-10-26.md`).
 - **The first data refresh:** held until the sibling PRs land, then a dry run, PR #81 re-keyed if any
   sibling commit moved, and a published refresh.
 - **SRER's all-NA green-up:** recorded as the honest left-censor outcome; cass and iris to confirm.
