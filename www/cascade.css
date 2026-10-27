@@ -1,5 +1,5 @@
 /* =========================================================================
-   cascade.css: NEON Response Atlas additions.
+   cascade.css: NEON Cross-Product Response Atlas additions.
    ========================================================================= */
 :root {
   --tier-consistent-bg: #2dd4bf;
@@ -10,7 +10,7 @@
   --tier-neutral-fg: #ffffff;
   --tier-counter-bg: #fb8a7e;
   --tier-counter-fg: #3a0e08;
-  --tier-exploratory-bg: #6b7a89;
+  --tier-exploratory-bg: #5d6b79;
   --tier-exploratory-fg: #ffffff;
   --tier-insufficient-bg: #44536a;
   --tier-insufficient-fg: #ffffff;
@@ -80,7 +80,9 @@
   min-height: 44px; display: inline-flex; align-items: center; }
 @media (max-width: 620px) {
   .top-bar { padding: 7px 10px; flex-wrap: nowrap; gap: 7px; }
-  .top-bar-actions { margin-left: auto; gap: 4px; flex-wrap: nowrap; }
+  .top-bar-actions { margin-left: auto; gap: 4px; flex-wrap: nowrap; flex: none; }
+  .top-bar-brand { flex: 1 1 auto; }
+  .top-bar-brand .tb-title { white-space: normal; }
   .top-bar-brand .tb-sub { display: none; }
   .top-bar-actions .tb-help, .top-bar-actions .tb-report {
     width: 44px; padding-inline: 0; justify-content: center;
@@ -197,7 +199,7 @@
    the matching contrast-safe foreground until all emitters use tier classes. */
 .dt-chip[style*="#2dd4bf" i], .dt-chip[style*="#e0b43a" i],
 .dt-chip[style*="#fb8a7e" i], .dt-chip[style*="#9fb0cf" i] { color: #0b1f1d !important; }
-.dt-chip[style*="#6b7a89" i] { color: #fff !important; }
+.dt-chip[style*="#6b7a89" i], .dt-chip[style*="#5d6b79" i] { color: #fff !important; }
 .lc-consistent .lc-verdict { color: var(--tier-consistent-text) !important; }
 .lc-apparent .lc-verdict { color: var(--tier-apparent-text) !important; }
 .lc-neutral .lc-verdict { color: var(--tier-neutral-text) !important; }
@@ -1017,3 +1019,84 @@ html .reveal-card.is-visible { opacity: 1; transform: none; will-change: auto; }
 .pooled-stats .ps-list dt { font-weight: 600; color: var(--pine, #0b6f68); }
 .pooled-stats .ps-list dd { margin: 0; }
 @media (max-width: 560px) { .pooled-stats .ps-list { grid-template-columns: 1fr; gap: 2px; } .pooled-stats .ps-list dd { margin: 0 0 6px 10px; } }
+
+/* ---- 2026-10-22 shell pass: suite registry, scope chips, pins, phones ---------- */
+/* NEON Explorer Suite: About card grid + compact footer row. */
+.suite-app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin-top: 10px; }
+.suite-app-link { display: flex; align-items: center; min-height: 44px; padding: 9px 11px; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--paper); color: var(--pine); font-weight: 700; text-decoration: none; }
+.suite-app-link:hover { border-color: var(--pine); text-decoration: none; }
+.suite-app-link:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.suite-app-note { color: var(--muted); font-weight: 500; margin-left: 4px; }
+.suite-foot-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 4px; margin: 12px auto 4px; max-width: 980px; font-size: 13px; }
+.suite-foot-row .sfr-lab { font-weight: 700; color: var(--ink); margin-right: 4px; }
+.suite-foot-row .sfr-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 7px; }
+.ddl-foot-src { font-size: 12.5px; color: var(--muted); margin: 8px auto 0; max-width: 980px; }
+.src-products { margin: 4px 0 8px; padding-left: 18px; }
+.src-products li { margin: 3px 0; }
+.src-release { color: var(--muted); }
+
+/* Scope chip on each tab head. */
+.scope-row { display: flex; margin: 2px 0 8px; }
+.scope-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; color: var(--pine); background: var(--bg); border: 1px solid var(--line); }
+.scope-chip.scope-all { color: var(--ink); }
+.card .scope-row { margin: 10px 14px 0; }
+
+/* Exploratory caveat lines (hero and All sites headline) and the data-through line. */
+.prereg-caveat { font-size: 13px; color: var(--muted); margin: 6px 0 10px; }
+.hero-prereg { margin-top: -2px; }
+.hero-band .prereg-caveat { color: #c4d0e2; }
+.data-through { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+/* Hero verdict: the toggle only matters on phones. */
+.hero-more { display: none; }
+@media (max-width: 480px) {
+  .hero-grid.hero-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-grid.hero-grid-3 .hero-stat:last-child { grid-column: 1 / -1; }
+  .hero-grid-3 .hs-l { font-size: 12px; }
+  .hero-band:not(.hero-band-compact) .hv-text:not(.is-open) {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
+  .hero-band:not(.hero-band-compact) .hero-more:not([hidden]) {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; margin-top: 2px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--pine); font-weight: 700; font-size: 13px; }
+}
+
+/* Phones: 44 px tap targets and 14 px body text. */
+@media (max-width: 620px) {
+  .main-tabs-wrap .nav-link { min-height: 44px; display: flex; align-items: center; }
+  .picker-list-link { padding: 11px 10px; min-height: 44px; font-size: 14px; }
+  .picker-list-summary { min-height: 44px; }
+  .sb-sitelink { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+  .plain-lines, .pt-note, .qc-cap-note, .sc-reading, .scatter-head, .pairings-tbl, .inspect-tbl,
+  .site-bio, .standing-stock, .qcf-detail, .about-card p, .about-card li, .gloss-item, .prereg-caveat, .data-through { font-size: 14px; }
+  .sb-table { font-size: 13px; }
+  .sb-biome { font-size: 12px; }
+}
+
+/* Pin cards on the One pairing scatter and the timeline. */
+.cascade-pinnable { position: relative; }
+svg.cascade-pin-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; overflow: visible; }
+.cascade-pin-line { stroke: #b8860b; stroke-width: 2; stroke-linecap: round; }
+.cascade-pin-dot { fill: #ffd24a; stroke: #0b1733; stroke-width: 1.5; }
+.cascade-pin {
+  position: absolute; z-index: 5; width: min(290px, calc(100% - 8px)); padding: 10px 12px 10px;
+  background: rgba(11, 23, 51, .97); color: #eaf2ff; border: 1px solid #ffd24a; border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.3); font-size: 13px; line-height: 1.4; cursor: grab; touch-action: none; }
+.cascade-pin:focus-visible { outline: 3px solid #ffd24a; outline-offset: 2px; }
+.cascade-pin .pin-title { font-weight: 800; margin: 0 30px 6px 0; }
+.cascade-pin .pin-dl { display: grid; grid-template-columns: minmax(0, 7.5em) minmax(0, 1fr); gap: 3px 10px; margin: 0; }
+.cascade-pin .pin-dl dt { font-weight: 600; color: #b9c8dc; }
+.cascade-pin .pin-dl dd { margin: 0; overflow-wrap: anywhere; }
+.cascade-pin-close { position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; border: 0; background: none;
+  color: #c4d0e2; font-size: 20px; line-height: 1; cursor: pointer; border-radius: 10px; }
+.cascade-pin-close:hover { color: #fff; }
+.cascade-pin-close:focus-visible { outline: 3px solid #ffd24a; outline-offset: -3px; }
+.cascade-pin.cascade-pulse { animation: cascadePinPulse .6s ease; }
+@keyframes cascadePinPulse { 0%, 100% { transform: none; } 40% { transform: scale(1.04); } }
+@media (max-width: 480px) { .cascade-pin .pin-dl { grid-template-columns: 1fr; } .cascade-pin .pin-dl dd { margin-bottom: 4px; } }
+@media (prefers-reduced-motion: reduce) { .cascade-pin.cascade-pulse { animation: none; } }
+
+/* QC inspector: the per-flag CSV button sits in the head. */
+.qci-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.qci-head .qci-dl { margin-left: auto; min-height: 44px; }

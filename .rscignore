@@ -3,6 +3,7 @@
 # manifest checksum map, CI, publisher, and app-boot guard are the runtime contract.
 scripts/
 R/source_adapters.R
+data/coverage-overrides.tsv
 README.md
 DEPLOY.md
 docs/

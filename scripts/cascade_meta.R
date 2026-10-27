@@ -44,7 +44,7 @@ setwd_repo_root <- function() {
 setwd_repo_root()
 source("scripts/generation_guard.R", local = TRUE)
 
-CASCADE_META_INFERENCE_SCHEMA <- "cascade-meta-reml-knha-holm-prediction-v1"
+CASCADE_META_INFERENCE_SCHEMA <- "cascade-meta-reml-knha-truncated-holm-prediction-v2"
 CASCADE_META_MULTIPLICITY_FAMILY <- c(
   "temp|greenup_doy", "temp_spring|greenup_doy")
 LOCAL_META_INPUT_PATHS <- c(
@@ -208,10 +208,13 @@ meta_one <- function(from, to) {
   d <- d_effect
   d <- d |> mutate(z = fisher_z(.data$r), vi = 1 / (.data$n - 3))
   # ---- frequentist random-effects meta-analysis (metafor::rma) -------------
-  # REML estimates heterogeneity; Knapp-Hartung uses a k-p t reference and is
-  # deliberately conservative for this small site sample. Prediction intervals
-  # lead interpretation because they expose between-site dispersion.
-  fit <- metafor::rma(yi = d$z, vi = d$vi, method = "REML", test = "knha")
+  # REML estimates heterogeneity. Inference is the truncated Knapp-Hartung
+  # adjustment (metafor test = "adhoc"): a k-p t reference with the KH variance
+  # scale floored at 1, so the interval is never narrower than the standard
+  # random-effects interval. Plain KH can be narrower when the estimated
+  # heterogeneity is near zero, as it is for the green-up contrasts. Prediction
+  # intervals lead interpretation because they expose between-site dispersion.
+  fit <- metafor::rma(yi = d$z, vi = d$vi, method = "REML", test = "adhoc")
   pred <- stats::predict(fit)
   pooled_r <- tanh(as.numeric(fit$b))
   ci_r <- tanh(c(fit$ci.lb, fit$ci.ub))
@@ -226,7 +229,7 @@ meta_one <- function(from, to) {
     pi_r = as.numeric(pi_r), se_z = se_z, t_stat = as.numeric(t_test),
     df = df, p_one_sided = as.numeric(p_one),
     p_one_sided_holm = NA_real_,
-    test_method = "REML random-effects with Knapp-Hartung inference",
+    test_method = "REML random-effects with truncated Knapp-Hartung inference",
     inference_role = "exploratory sensitivity; prediction interval and heterogeneity precede directional p-values",
     I2 = as.numeric(fit$I2), tau2 = as.numeric(fit$tau2),
     Q = as.numeric(fit$QE), Q_p = as.numeric(fit$QEp), k = as.integer(fit$k))
@@ -362,7 +365,7 @@ for (r in res) {
               if (r$spatial_sensitivity$domain_ties == 1L) "" else "s",
               if (r$spatial_sensitivity$domain_ties == 1L) "s" else ""))
   if (!is.null(r$rma)) cat(sprintf(
-    "  REML + Knapp-Hartung pooled r = %+.3f  CI [%.3f, %.3f]  prediction [%.3f, %.3f]  I^2 = %.1f%%  raw one-sided p = %.4g  Holm p = %.4g  (k = %d, df = %d)\n",
+    "  REML + truncated Knapp-Hartung pooled r = %+.3f  CI [%.3f, %.3f]  prediction [%.3f, %.3f]  I^2 = %.1f%%  raw one-sided p = %.4g  Holm p = %.4g  (k = %d, df = %d)\n",
     r$rma$pooled_r, r$rma$ci_r[1], r$rma$ci_r[2],
     r$rma$pi_r[1], r$rma$pi_r[2], r$rma$I2,
     r$rma$p_one_sided, r$rma$p_one_sided_holm, r$rma$k, r$rma$df))
@@ -372,7 +375,7 @@ for (r in res) {
     r$brms$pooled_r, r$brms$cri_r[1], r$brms$cri_r[2], r$brms$posterior_prob_stated_direction, r$brms$converged, r$brms$divergences))
 }
 cat("\nHonest framing: prediction intervals and heterogeneity are the primary companion\n",
-    "outputs. Directional p-values use Knapp-Hartung t inference and Holm adjustment\n",
+    "outputs. Directional p-values use truncated Knapp-Hartung t inference and Holm adjustment\n",
     "across the two build-locked green-up contrasts. Smaller values align with the\n",
     "exploratory family's earlier-green-up direction. The family\n",
     "was co-developed while these data were inspected, so this is not confirmatory.\n",

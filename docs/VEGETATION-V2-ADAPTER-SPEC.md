@@ -1,5 +1,11 @@
 # Vegetation plot x event adapter specification (Driver v2 Vegetation adapter)
 
+> **Superseded on 2026-10-22** by the event-aware adapter in PR #80; its rulings are in
+> `docs/BUILD-TEST-HANDOFF.md`, entry 2026-10-21. This spec's published-support gate reproduces the
+> outcome the audit forbids: STEI would report 8.18 m2/ha from 5 plots instead of 18.01 from 37, and
+> CPER, DCFS, NOGP and LAJA would go to NA. Its corrections to the record stand: plot areas differ at
+> 35 of 41 in-scope sites, and trees changed at 5 sites between the pin and the current tree.
+
 Specification state: **DRAFT FOR OWNER DISPOSITION / NOT YET THE ADAPTER CONTRACT / NO DRIVER BYTE CHANGE**
 
 Specification date: 2026-10-21
