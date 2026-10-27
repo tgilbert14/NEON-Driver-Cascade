@@ -51,6 +51,24 @@ CASCADE_MAMMAL_PLACEHOLDER_COORDINATE_RE <-
 CASCADE_MAMMAL_REVIEWED_MULTI_TRAP_MARKERS <- c(
   "trap accidentally double set",
   "double trap method (two traps set at each location)")
+# Small Mammal bundle schema 2 (sibling PR #101) adds three per-night columns.
+# Their presence switches mammal_cpue from pooled annual CPUE to the sibling's
+# month-adjusted index; their values are not read (incomplete grids are held
+# out of the sibling's N-hat only, not out of this index).
+CASCADE_MAMMAL_SCHEMA2_FIELDS <- c("gridCompletion", "samplingImpractical", "eventID")
+CASCADE_MAMMAL_INDEX_MIN_MONTHS <- 3L
+CASCADE_MAMMAL_INDEX_MIN_TRAP_NIGHTS <- 300
+CASCADE_MAMMAL_INDEX_SIGNAL <- c(
+  label = "Small-mammal catch index", unit = "CPUE anomaly",
+  higher_is = "more rodents than usual for the sampled months")
+CASCADE_MAMMAL_INDEX_RULE <- "3+ sampled calendar months and 300+ trap-nights"
+CASCADE_MAMMAL_INDEX_BASIS <- paste(
+  "Month-adjusted catch index: for each plot and calendar month trapped, captures per 100",
+  "trap-nights minus the site's long-run mean for that calendar month (the unweighted mean",
+  "over all of the site's plot-months in that month), averaged without weights over the",
+  "year's plot-months. It is a within-site anomaly centred on each site's own monthly means,",
+  "so zero is a usual year for the months sampled; it is not comparable across sites and is",
+  "not a population count.")
 
 cascade_mammal_trap_effort <- function(status) {
   token <- tolower(trimws(as.character(status)))
@@ -78,6 +96,34 @@ cascade_mammal_multi_trap_marker <- function(remarks) {
                         grepl, logical(1), x = value, fixed = TRUE))
     if (length(hit) == 1L) as.integer(hit) else 0L
   }, integer(1))
+}
+
+# One mammal bundle is schema1 (none of the three schema-2 columns) or schema2
+# (all three); a partial set is neither and stops.
+cascade_mammal_bundle_shape <- function(d, site) {
+  label <- sprintf("%s mammal bundle", site)
+  d <- cascade_data_frame(d, label)
+  present <- CASCADE_MAMMAL_SCHEMA2_FIELDS %in% names(d)
+  if (all(present)) return("schema2")
+  if (!any(present)) return("schema1")
+  stop(sprintf("%s carries %s but lacks %s; the shape is neither schema1 nor schema2",
+               label, paste(CASCADE_MAMMAL_SCHEMA2_FIELDS[present], collapse = ", "),
+               paste(CASCADE_MAMMAL_SCHEMA2_FIELDS[!present], collapse = ", ")),
+       call. = FALSE)
+}
+
+# One bundle set publishes one estimand: a set mixing schema1 and schema2 sites stops.
+cascade_mammal_resolve_shape <- function(shapes) {
+  shapes <- shapes[!vapply(shapes, is.null, logical(1))]
+  if (!length(shapes)) return(NA_character_)
+  flat <- unlist(shapes)
+  kinds <- sort(unique(flat), method = "radix")
+  if (length(kinds) != 1L)
+    stop(sprintf("small-mammal bundle set mixes shapes across sites: %s",
+                 paste(vapply(kinds, function(k)
+                   sprintf("%s=%s", k, paste(names(flat)[flat == k], collapse = ",")),
+                   character(1)), collapse = "; ")), call. = FALSE)
+  kinds
 }
 
 cascade_resolve_last_complete_year <- function(override, source_epoch,
@@ -184,6 +230,7 @@ cascade_mammal_effort_events <- function(d, year, label = "mammal bundle") {
     return(data.frame(
       year = integer(), trap_event = character(), trap_effort = numeric(),
       effort_rule = character(), source_row_count = integer(),
+      plotID = character(), year_month = character(),
       stringsAsFactors = FALSE))
 
   event_cols <- c("nightuid", "plotID", "trapCoordinate")
@@ -213,12 +260,19 @@ cascade_mammal_effort_events <- function(d, year, label = "mammal bundle") {
   marker <- cascade_mammal_multi_trap_marker(d$remarks)
   physical_key <- paste(as.integer(year), d$nightuid, d$plotID, coordinate,
                         sep = "|")
+  # Plot and trap-night month travel with each event for the month-adjusted
+  # index; an unparseable date leaves the month NA rather than failing here.
+  plot_id <- as.character(d$plotID)
+  year_month <- tryCatch(format(as.Date(d$collectDate), "%Y-%m"),
+                         error = function(e) rep(NA_character_, nrow(d)))
 
   pack <- function(ix, trap_event, trap_effort, effort_rule) {
     data.frame(
       year = as.integer(year[ix[[1L]]]), trap_event = trap_event,
       trap_effort = as.numeric(trap_effort), effort_rule = effort_rule,
-      source_row_count = as.integer(length(ix)), stringsAsFactors = FALSE)
+      source_row_count = as.integer(length(ix)),
+      plotID = plot_id[ix[[1L]]], year_month = year_month[ix[[1L]]],
+      stringsAsFactors = FALSE)
   }
   duplicated_canonical <- canonical &
     (duplicated(physical_key) | duplicated(physical_key, fromLast = TRUE))
@@ -238,6 +292,8 @@ cascade_mammal_effort_events <- function(d, year, label = "mammal bundle") {
       trap_effort = as.numeric(effort[placeholder_rows]),
       effort_rule = rep("placeholder-row-level", length(placeholder_rows)),
       source_row_count = rep(1L, length(placeholder_rows)),
+      plotID = plot_id[placeholder_rows],
+      year_month = year_month[placeholder_rows],
       stringsAsFactors = FALSE)
   }
 
@@ -250,6 +306,8 @@ cascade_mammal_effort_events <- function(d, year, label = "mammal bundle") {
       trap_effort = as.numeric(effort[canonical_single_rows]),
       effort_rule = rep("canonical-single", length(canonical_single_rows)),
       source_row_count = rep(1L, length(canonical_single_rows)),
+      plotID = plot_id[canonical_single_rows],
+      year_month = year_month[canonical_single_rows],
       stringsAsFactors = FALSE)
   }
 
@@ -288,6 +346,105 @@ cascade_mammal_effort_events <- function(d, year, label = "mammal bundle") {
 
   out <- do.call(rbind, result[seq_len(at)])
   rownames(out) <- NULL
+  out
+}
+
+# Month-adjusted annual catch index over resolved trap events (the sibling's
+# annual_cpue_index() rule on the Atlas's own captures and effort). Per
+# plot-month (plotID x trap-night year-month): CPUE = 100 x tagged capture rows
+# / summed trap_effort, trapped plot-months only; minus the unweighted mean
+# CPUE of all the site's plot-months in that calendar month; anomalies averaged
+# unweighted within each year. ok needs >= 3 distinct calendar months and
+# >= 300 trap-nights.
+cascade_mammal_month_index <- function(event_effort, d, label = "mammal bundle") {
+  empty <- data.frame(year = integer(), index = numeric(), n_months = integer(),
+                      trap_nights = numeric(), ok = logical())
+  if (!nrow(event_effort)) return(empty)
+  if (anyNA(event_effort$year_month))
+    stop(sprintf("%s has %d trap event(s) without a parseable collectDate month",
+                 label, sum(is.na(event_effort$year_month))), call. = FALSE)
+  row_month <- tryCatch(format(as.Date(d$collectDate), "%Y-%m"),
+                        error = function(e) rep(NA_character_, nrow(d)))
+  row_ok <- !is.na(row_month) & !is.na(d$plotID)
+  caps <- tapply(as.numeric(cascade_mammal_tag_present(d$tagID))[row_ok],
+                 paste(as.character(d$plotID), row_month, sep = "|")[row_ok], sum)
+  tn <- tapply(event_effort$trap_effort,
+               paste(event_effort$plotID, event_effort$year_month, sep = "|"), sum)
+  tn <- tn[tn > 0]
+  if (!length(tn)) return(empty)
+  key <- names(tn)
+  tn <- as.numeric(tn)
+  cap <- as.numeric(caps[key]); cap[is.na(cap)] <- 0
+  month_key <- sub("^.*\\|", "", key)
+  cpue <- 100 * cap / tn
+  yr <- as.integer(substr(month_key, 1L, 4L))
+  mon <- as.integer(substr(month_key, 6L, 7L))
+  clim <- tapply(cpue, mon, mean)
+  anom <- cpue - as.numeric(clim[as.character(mon)])
+  yrs <- sort(unique(yr))
+  out <- data.frame(
+    year = yrs,
+    index = vapply(yrs, function(y) mean(anom[yr == y]), numeric(1)),
+    n_months = vapply(yrs, function(y) length(unique(mon[yr == y])), integer(1)),
+    trap_nights = vapply(yrs, function(y) sum(tn[yr == y]), numeric(1)))
+  out$ok <- out$n_months >= CASCADE_MAMMAL_INDEX_MIN_MONTHS &
+    out$trap_nights >= CASCADE_MAMMAL_INDEX_MIN_TRAP_NIGHTS
+  out
+}
+
+# Annual small-mammal fields for one site bundle. schema1 publishes pooled CPUE
+# (100 x captures / trap-nights per year); schema2 replaces only mammal_cpue with
+# the month-adjusted index, NA for years that fail its gate. Every other column
+# is pooled per year under both shapes.
+cascade_mammal_annual <- function(d, site, shape) {
+  label <- sprintf("%s mammal bundle", site)
+  if (!(identical(shape, "schema1") || identical(shape, "schema2")))
+    stop(sprintf("%s has unresolved shape '%s'", label, format(shape)), call. = FALSE)
+  d <- cascade_data_frame(d, label)
+  cascade_require_columns(d, CASCADE_MAMMAL_REQUIRED, label)
+  d$year <- suppressWarnings(as.integer(format(as.Date(d$collectDate), "%Y")))
+  d <- d[!is.na(d$year), , drop=FALSE]; if (!nrow(d)) return(NULL)
+  # The reviewed adapter distinguishes physical A-J x 1-10 trap coordinates,
+  # explicit multi-animal rows from one trap, two source-documented double-trap
+  # exceptions, and non-unique AX-JX/X1-X10/XX placeholders. Unknown duplicate
+  # patterns fail closed. Nelson-Clark weights remain 0, 0.5, or 1 TN per trap.
+  event_effort <- tryCatch(
+    cascade_mammal_effort_events(d, d$year, label),
+    error = function(e) stop(conditionMessage(e), call. = FALSE))
+  # Capture is a nonblank tagged handling row, not a status-string inference:
+  # the pinned source includes tagged status-2/3 rows and one untagged status-5.
+  d$is_cap <- cascade_mammal_tag_present(d$tagID)
+  d$.tag_id <- trimws(as.character(d$tagID))
+  effort_year <- event_effort %>% dplyr::group_by(.data$year) %>%
+    dplyr::summarise(
+      traps = sum(.data$trap_effort, na.rm = TRUE),
+      mammal_placeholder_trap_rows = sum(
+        .data$effort_rule == "placeholder-row-level"),
+      mammal_multi_capture_trap_events = sum(
+        .data$effort_rule == "canonical-multi-capture-one-trap"),
+      mammal_reviewed_double_trap_events = sum(
+        .data$effort_rule == "reviewed-double-trap-rows"),
+      .groups = "drop")
+  capture_year <- d %>% dplyr::group_by(.data$year) %>% dplyr::summarise(
+    captures = sum(.data$is_cap, na.rm = TRUE),
+    mammal_mnka = dplyr::n_distinct(.data$.tag_id[.data$is_cap]),
+    .groups="drop")
+  out <- dplyr::full_join(effort_year, capture_year, by = "year",
+                          relationship = "one-to-one") %>%
+    dplyr::mutate(mammal_cpue = ifelse(.data$traps > 0, 100 * .data$captures / .data$traps, NA_real_),
+                  site = site,
+                  mammal_trap_nights = .data$traps,
+                  mammal_captures = .data$captures) %>%
+    dplyr::select("site", "year", "mammal_cpue", "mammal_mnka", "mammal_trap_nights",
+                  "mammal_captures", "mammal_placeholder_trap_rows",
+                  "mammal_multi_capture_trap_events",
+                  "mammal_reviewed_double_trap_events")
+  if (identical(shape, "schema2")) {
+    idx <- cascade_mammal_month_index(event_effort, d, label)
+    hit <- match(out$year, idx$year)
+    out$mammal_cpue <- ifelse(!is.na(hit) & idx$ok[hit] %in% TRUE,
+                              idx$index[hit], NA_real_)
+  }
   out
 }
 

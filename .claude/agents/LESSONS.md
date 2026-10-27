@@ -254,3 +254,6 @@
   and update that constant when RELEASE-2027 publishes.
 - [2026-10-22] cass · confirmed · Dropping the provisional 2025 year would change no link, vote or pooled result
   (2025 carries only climate, bird_index with no prior, and fruiting), so the Atlas keeps it and labels it.
+- [2026-10-26] neonize · pattern · When a sibling's bundle change alters an estimand, carry the basis in the
+  artifact's own signal row (here mammal_cpue unit "per 100 TN" vs "CPUE anomaly") and let the UI and the
+  contract tests key on it; a builder edit then needs no new meta element, and the schema1 path stays byte-identical.

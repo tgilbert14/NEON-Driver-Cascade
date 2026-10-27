@@ -1081,6 +1081,34 @@ sig_unit <- function(k) {
   r <- SIGNALS[SIGNALS$key == k, ]
   if (nrow(r)) r$unit[1] else ""
 }
+# Small Mammal schema 2 bundles let the builder month-adjust mammal_cpue. The
+# committed signal table records which basis it used through the signal's unit,
+# so the UI wording follows the artifact without a separate meta element.
+MAMMAL_INDEX_UNIT <- "CPUE anomaly"
+mammal_signals_month_adjusted <- function(signals) {
+  is.data.frame(signals) && all(c("key", "unit") %in% names(signals)) &&
+    identical(as.character(signals$unit[signals$key == "mammal_cpue"]), MAMMAL_INDEX_UNIT)
+}
+mammal_ui_text <- function(month_adjusted) {
+  if (isTRUE(month_adjusted)) return(list(
+    plain_name = "month-adjusted small-mammal catch",
+    gloss_title = "Catch index (month-adjusted)",
+    gloss_body = "Small mammals caught per 100 trap-nights in each plot and month, minus what the site usually catches in that calendar month, averaged over the year. Zero means a usual year for the months that were trapped. It is a <b>relative index within one site</b>, not a headcount.",
+    about_label = "Small-mammal catch index",
+    about_text = " is a month-adjusted annual index (captures per 100 deployed trap-nights in each plot and month, minus the site's own mean for that calendar month, averaged over the year; blank unless the year has 3+ sampled months and 300+ trap-nights), not effort-standardised across sites, so read within-site trends only. ",
+    export_header = "# Annual + seasonal signals. mammal_cpue is a within-site month-adjusted index (CPUE anomaly: per 100 trap-nights, minus the site's mean for that calendar month), NOT cross-site standardized.",
+    codebook_note = "<b>mammal_cpue</b> = mean over the year's plot-months of (100 &times; captures / deployed trap-nights &minus; the site's mean for that calendar month) (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID); NA unless the year has &ge;3 sampled calendar months and &ge;300 trap-nights: a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966)."))
+  list(
+    plain_name = "small-mammal catch",
+    gloss_title = "Catch rate (per 100 trap-nights)",
+    gloss_body = "Small mammals caught for every 100 trap-nights of effort, so years with more trapping compare fairly. It is a <b>relative index within one site</b>, not a headcount.",
+    about_label = "Small-mammal catch rate",
+    about_text = " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites, so read within-site trends only. ",
+    export_header = "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
+    codebook_note = "<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID): a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")
+}
+MAMMAL_MONTH_ADJUSTED <- mammal_signals_month_adjusted(SIGNALS)
+MAMMAL_UI <- mammal_ui_text(MAMMAL_MONTH_ADJUSTED)
 # compact label for the dense cross-site scoreboard
 sig_abbr <- function(k) {
   m <- c(

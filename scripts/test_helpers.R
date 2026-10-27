@@ -401,6 +401,131 @@ check(all(vapply(mammal_fixture_errors, function(x)
         expect_error(cascade_mammal_effort_events(
           x, rep(2020L, nrow(x)), "ambiguous mammal fixture")), logical(1))),
       "mammal resolver fails closed on every unreviewed duplicate/key ambiguity")
+check(identical(names(mammal_fixture_events),
+                c("year", "trap_event", "trap_effort", "effort_rule",
+                  "source_row_count", "plotID", "year_month")) &&
+        all(mammal_fixture_events$plotID == "TEST_001") &&
+        all(mammal_fixture_events$year_month == "2020-06"),
+      "mammal trap events carry their plot and trap-night month")
+
+# Bundle shape: schema1 has none of the three schema-2 columns, schema2 has all
+# three; a partial bundle or a mixed bundle set stops.
+mammal_schema2 <- function(x) {
+  x$gridCompletion <- "complete"; x$samplingImpractical <- "OK"
+  x$eventID <- "EVENT"; x
+}
+check(identical(cascade_mammal_bundle_shape(mammal_fixture, "TEST"), "schema1") &&
+        identical(cascade_mammal_bundle_shape(mammal_schema2(mammal_fixture), "TEST"),
+                  "schema2") &&
+        expect_error(cascade_mammal_bundle_shape(
+          transform(mammal_fixture, eventID = "EVENT"), "TEST")) &&
+        expect_error(cascade_mammal_bundle_shape(list(a = 1), "TEST")) &&
+        expect_error(cascade_mammal_resolve_shape(
+          list(ABBY = "schema1", SRER = "schema2"))) &&
+        identical(cascade_mammal_resolve_shape(
+          list(ABBY = "schema2", BART = NULL, SRER = "schema2")), "schema2") &&
+        identical(cascade_mammal_resolve_shape(list(ABBY = NULL)), NA_character_) &&
+        identical(CASCADE_MAMMAL_SCHEMA2_FIELDS,
+                  c("gridCompletion", "samplingImpractical", "eventID")),
+      "mammal bundle shape resolves schema1/schema2 and stops on partial or mixed sets")
+
+# Month-adjusted index fixture. Plot-month CPUE (captures per 100 TN):
+#   2020: P1 May 10, Jun 20, Jul 30; P2 May 0          (400 TN, 3 months)
+#   2021: P1 May 30, Jun 20, Jul 10                    (300 TN, 3 months)
+#   2022: P1 May 20, Jun 20 (two 100-TN nights)        (300 TN, 2 months: fails)
+#   2023: P1 May 10, Jun 20, Jul 30 at 50 TN each      (150 TN: fails)
+# Month means: May (10+0+30+20+10)/5 = 14, Jun 20, Jul (30+10+30)/3 = 70/3.
+# Anomaly means: 2020 (-4+0+20/3-14)/4 = -17/6; 2021 (16+0-40/3)/3 = 8/9;
+# 2022 (6+0)/2 = 3; 2023 (-4+0+20/3)/3 = 8/9.
+mammal_index_night <- function(plot, date, traps, caps) {
+  i <- seq_len(traps)
+  data.frame(
+    collectDate = date, nightuid = paste(plot, date), plotID = plot,
+    trapCoordinate = paste0(rep(LETTERS[1:10], each = 10L), rep(1:10, 10L))[i],
+    trapStatus = ifelse(i <= caps, "5 - capture", "6 - trap set and empty"),
+    tagID = ifelse(i <= caps, paste(plot, date, i, sep = "-"), NA_character_),
+    remarks = NA_character_, stringsAsFactors = FALSE)
+}
+mammal_index_fixture <- do.call(rbind, list(
+  mammal_index_night("P1", "2020-05-10", 100L, 10L),
+  mammal_index_night("P1", "2020-06-10", 100L, 20L),
+  mammal_index_night("P1", "2020-07-10", 100L, 30L),
+  mammal_index_night("P2", "2020-05-11", 100L, 0L),
+  mammal_index_night("P1", "2021-05-10", 100L, 30L),
+  mammal_index_night("P1", "2021-06-10", 100L, 20L),
+  mammal_index_night("P1", "2021-07-10", 100L, 10L),
+  mammal_index_night("P1", "2022-05-10", 100L, 20L),
+  mammal_index_night("P1", "2022-06-01", 100L, 20L),
+  mammal_index_night("P1", "2022-06-02", 100L, 20L),
+  mammal_index_night("P1", "2023-05-10", 50L, 5L),
+  mammal_index_night("P1", "2023-06-10", 50L, 10L),
+  mammal_index_night("P1", "2023-07-10", 50L, 15L)))
+mammal_index_year <- as.integer(substr(mammal_index_fixture$collectDate, 1L, 4L))
+mammal_index_direct <- cascade_mammal_month_index(
+  cascade_mammal_effort_events(mammal_index_fixture, mammal_index_year,
+                               "mammal index fixture"),
+  mammal_index_fixture, "mammal index fixture")
+check(identical(mammal_index_direct$year, 2020:2023) &&
+        identical(mammal_index_direct$n_months, c(3L, 3L, 2L, 3L)) &&
+        identical(mammal_index_direct$trap_nights, c(400, 300, 300, 150)) &&
+        identical(mammal_index_direct$ok, c(TRUE, TRUE, FALSE, FALSE)) &&
+        isTRUE(all.equal(mammal_index_direct$index, c(-17/6, 8/9, 3, 8/9),
+                         tolerance = 1e-12)),
+      "mammal month-adjusted index matches hand-computed plot-month anomalies")
+mammal_annual_s1 <- cascade_mammal_annual(mammal_index_fixture, "TEST", "schema1")
+mammal_annual_s2 <- cascade_mammal_annual(mammal_schema2(mammal_index_fixture),
+                                          "TEST", "schema2")
+mammal_pooled_cols <- setdiff(names(mammal_annual_s1), "mammal_cpue")
+check(identical(mammal_annual_s1$mammal_cpue, c(15, 20, 20, 20)) &&
+        identical(mammal_annual_s1$mammal_cpue,
+                  100 * mammal_annual_s1$mammal_captures /
+                    mammal_annual_s1$mammal_trap_nights) &&
+        identical(names(mammal_annual_s2), names(mammal_annual_s1)) &&
+        identical(mammal_annual_s2[mammal_pooled_cols],
+                  mammal_annual_s1[mammal_pooled_cols]) &&
+        identical(mammal_annual_s2$mammal_trap_nights, c(400, 300, 300, 150)) &&
+        identical(mammal_annual_s2$mammal_captures, c(60L, 60L, 60L, 30L)) &&
+        isTRUE(all.equal(mammal_annual_s2$mammal_cpue[1:2], c(-17/6, 8/9),
+                         tolerance = 1e-12)) &&
+        identical(is.na(mammal_annual_s2$mammal_cpue), c(FALSE, FALSE, TRUE, TRUE)),
+      "schema2 replaces only mammal_cpue, gates 3 months and 300 TN, keeps support pooled")
+mammal_fixture_annual <- cascade_mammal_annual(mammal_fixture, "TEST", "schema1")
+check(nrow(mammal_fixture_annual) == 1L &&
+        identical(mammal_fixture_annual$mammal_cpue, 100 * 5 / 6) &&
+        identical(mammal_fixture_annual$mammal_trap_nights, 6) &&
+        identical(mammal_fixture_annual$mammal_mnka, 4L) &&
+        expect_error(cascade_mammal_annual(mammal_fixture, "TEST", "schema3")),
+      "schema1 mammal fixture reproduces pooled CPUE through the production adapter")
+
+# The UI picks its mammal wording from the committed signal unit. Evaluate only
+# the three global.R definitions (the app itself is not booted).
+mammal_ui_env <- new.env(parent = baseenv())
+for (expr in parse("global.R", encoding = "UTF-8", keep.source = FALSE))
+  if (is.call(expr) && identical(expr[[1L]], as.name("<-")) &&
+      is.name(expr[[2L]]) && as.character(expr[[2L]]) %in% c("MAMMAL_INDEX_UNIT",
+                                      "mammal_signals_month_adjusted",
+                                      "mammal_ui_text"))
+    eval(expr, mammal_ui_env)
+mammal_ui_schema1 <- mammal_ui_env$mammal_ui_text(
+  mammal_ui_env$mammal_signals_month_adjusted(
+    data.frame(key = "mammal_cpue", unit = "per 100 TN")))
+mammal_ui_schema2 <- mammal_ui_env$mammal_ui_text(
+  mammal_ui_env$mammal_signals_month_adjusted(
+    data.frame(key = "mammal_cpue", unit = CASCADE_MAMMAL_INDEX_SIGNAL[["unit"]])))
+check(identical(mammal_ui_env$MAMMAL_INDEX_UNIT, CASCADE_MAMMAL_INDEX_SIGNAL[["unit"]]) &&
+        identical(mammal_ui_schema1, list(
+          plain_name = "small-mammal catch",
+          gloss_title = "Catch rate (per 100 trap-nights)",
+          gloss_body = "Small mammals caught for every 100 trap-nights of effort, so years with more trapping compare fairly. It is a <b>relative index within one site</b>, not a headcount.",
+          about_label = "Small-mammal catch rate",
+          about_text = " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites, so read within-site trends only. ",
+          export_header = "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
+          codebook_note = "<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID): a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")) &&
+        identical(names(mammal_ui_schema2), names(mammal_ui_schema1)) &&
+        identical(mammal_ui_schema2$about_label, CASCADE_MAMMAL_INDEX_SIGNAL[["label"]]) &&
+        grepl("month", mammal_ui_schema2$codebook_note, fixed = TRUE) &&
+        !isTRUE(mammal_ui_env$mammal_signals_month_adjusted(NULL)),
+      "mammal UI wording is today's under a pooled artifact and month-adjusted under schema2")
 
 cutoff_epoch <- as.numeric(as.POSIXct(
   "2026-07-01 00:00:00", tz = "UTC"))
@@ -1497,12 +1622,25 @@ check(all(!present) || same_num(
         annual$bird_nonflyover_birds[present] /
           annual$bird_observed_point_visits[present], tolerance = 1e-15),
       "bird index uses observed point-count occasions and excludes flyovers")
+# The committed signal unit records the mammal_cpue basis: pooled CPUE
+# ("per 100 TN") reproduces from its support columns; the month-adjusted index
+# ("CPUE anomaly") cannot, so it only requires positive pooled effort.
+mammal_cpue_unit <- signals$unit[signals$key == "mammal_cpue"]
+mammal_pooled_basis <- identical(mammal_cpue_unit, "per 100 TN")
+check(mammal_pooled_basis ||
+        identical(mammal_cpue_unit, CASCADE_MAMMAL_INDEX_SIGNAL[["unit"]]),
+      "mammal_cpue records a known basis", mammal_cpue_unit)
 present <- is.finite(annual$mammal_cpue)
-check(all(!present) || same_num(
-        annual$mammal_cpue[present],
-        100 * annual$mammal_captures[present] /
-          annual$mammal_trap_nights[present], tolerance = 1e-15),
-      "mammal CPUE support reproduces index")
+if (mammal_pooled_basis) {
+  check(all(!present) || same_num(
+          annual$mammal_cpue[present],
+          100 * annual$mammal_captures[present] /
+            annual$mammal_trap_nights[present], tolerance = 1e-15),
+        "mammal CPUE support reproduces index")
+} else {
+  check(all(annual$mammal_trap_nights[present] > 0),
+        "month-adjusted mammal index has positive pooled effort wherever finite")
+}
 mammal_rule_support <- c(
   "mammal_placeholder_trap_rows", "mammal_multi_capture_trap_events",
   "mammal_reviewed_double_trap_events")
@@ -3164,7 +3302,8 @@ if (nzchar(source_root)) {
                     mammal_expected, by = c("site", "year"), all = FALSE)
   check(nrow(observed) > 0 && same_num(observed$mammal_trap_nights, observed$expected_tn) &&
           same_num(observed$mammal_captures, observed$expected_captures) &&
-          same_num(observed$mammal_cpue, observed$expected_cpue) &&
+          (!mammal_pooled_basis ||
+             same_num(observed$mammal_cpue, observed$expected_cpue)) &&
           same_num(observed$mammal_placeholder_trap_rows,
                    observed$expected_placeholder_rows) &&
           same_num(observed$mammal_multi_capture_trap_events,

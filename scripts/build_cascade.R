@@ -668,47 +668,12 @@ ann_plant <- function(site) {                     # producer: richness + introdu
       if (tot > 0) 100 * sum(.data$percentCover[unknown], na.rm=TRUE) / tot else NA_real_ },
     .groups="drop") %>% mutate(site = site, .before = 1)
 }
-ann_mammal <- function(site) {                    # consumer: CPUE + minimum known alive
-  d <- rd(file.path(APP$mammal, "data/sites", paste0(site, ".rds"))); if (is.null(d)) return(NULL)
-  d <- cascade_data_frame(d, sprintf("%s mammal bundle", site))
-  cascade_require_columns(d, CASCADE_MAMMAL_REQUIRED,
-                          sprintf("%s mammal bundle", site))
-  d$year <- yr_of(d$collectDate); d <- d[!is.na(d$year), , drop=FALSE]; if (!nrow(d)) return(NULL)
-  # The reviewed adapter distinguishes physical A-J x 1-10 trap coordinates,
-  # explicit multi-animal rows from one trap, two source-documented double-trap
-  # exceptions, and non-unique AX-JX/X1-X10/XX placeholders. Unknown duplicate
-  # patterns fail closed. Nelson-Clark weights remain 0, 0.5, or 1 TN per trap.
-  event_effort <- tryCatch(
-    cascade_mammal_effort_events(
-      d, d$year, sprintf("%s mammal bundle", site)),
-    error = function(e) stop(conditionMessage(e), call. = FALSE))
-  # Capture is a nonblank tagged handling row, not a status-string inference:
-  # the pinned source includes tagged status-2/3 rows and one untagged status-5.
-  d$is_cap <- cascade_mammal_tag_present(d$tagID)
-  d$.tag_id <- trimws(as.character(d$tagID))
-  effort_year <- event_effort %>% group_by(.data$year) %>%
-    summarise(
-      traps = sum(.data$trap_effort, na.rm = TRUE),
-      mammal_placeholder_trap_rows = sum(
-        .data$effort_rule == "placeholder-row-level"),
-      mammal_multi_capture_trap_events = sum(
-        .data$effort_rule == "canonical-multi-capture-one-trap"),
-      mammal_reviewed_double_trap_events = sum(
-        .data$effort_rule == "reviewed-double-trap-rows"),
-      .groups = "drop")
-  capture_year <- d %>% group_by(.data$year) %>% summarise(
-    captures = sum(.data$is_cap, na.rm = TRUE),
-    mammal_mnka = dplyr::n_distinct(.data$.tag_id[.data$is_cap]),
-    .groups="drop")
-  full_join(effort_year, capture_year, by = "year", relationship = "one-to-one") %>%
-    mutate(mammal_cpue = ifelse(.data$traps > 0, 100 * .data$captures / .data$traps, NA_real_),
-           site = site,
-           mammal_trap_nights = .data$traps,
-           mammal_captures = .data$captures) %>%
-    select(site, year, mammal_cpue, mammal_mnka, mammal_trap_nights,
-           mammal_captures, mammal_placeholder_trap_rows,
-           mammal_multi_capture_trap_events,
-           mammal_reviewed_double_trap_events)
+ann_mammal <- function(site, d, shape) {         # consumer: CPUE + minimum known alive
+  # The reviewed adapter resolves physical trap events and fails closed on
+  # unknown duplicate patterns; under schema2 mammal_cpue is the month-adjusted
+  # index and every other column stays pooled per year.
+  if (is.null(d)) return(NULL)
+  cascade_mammal_annual(d, site, shape)
 }
 ann_bird <- function(site) {                      # consumer: detection index + richness
   b <- rd(file.path(APP$bird, "data/sites", paste0(site, ".rds")))
@@ -1015,13 +980,23 @@ if (length(out_of_scope))
                   length(out_of_scope), paste(out_of_scope, collapse = ", ")))
 all_sites <- intersect(upstream_sites, DRIVER_SITE_SCOPE)
 cat("assembling", length(all_sites), "sites...\n")
+# One small-mammal bundle set resolves to one shape (schema1 pooled CPUE or
+# schema2 month-adjusted index); a partial or mixed set stops before any value.
+mammal_bundles <- setNames(lapply(all_sites, function(site)
+  rd(file.path(APP$mammal, "data/sites", paste0(site, ".rds")))), all_sites)
+MAMMAL_SHAPE <- cascade_mammal_resolve_shape(setNames(lapply(all_sites, function(site)
+  if (is.null(mammal_bundles[[site]])) NULL else
+    cascade_mammal_bundle_shape(mammal_bundles[[site]], site)), all_sites))
+cat("\nsmall-mammal bundle shape:", MAMMAL_SHAPE, "\n")
+MAMMAL_INDEX <- identical(MAMMAL_SHAPE, "schema2")
 join_all <- function(site) {
-  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site), ann_bird(site), ann_mosq(site), ann_beetle(site)))
+  parts <- Filter(Negate(is.null), list(ann_env(site), ann_env_seasonal(site), ann_phe(site), ann_plant(site), ann_mammal(site, mammal_bundles[[site]], MAMMAL_SHAPE), ann_bird(site), ann_mosq(site), ann_beetle(site)))
   if (!length(parts)) return(NULL)
   invisible(lapply(seq_along(parts), function(i) assert_unique_year(parts[[i]], paste0(site, " part ", i))));
   Reduce(function(a,b) full_join(a,b,by=c("site","year"), relationship = "one-to-one"), parts)
 }
 annual <- bind_rows(lapply(all_sites, join_all))
+rm(mammal_bundles)
 annual <- annual[!is.na(annual$year) & annual$year >= MIN_YEAR &
                    annual$year <= LAST_COMPLETE_YEAR, , drop=FALSE]
 annual <- annual %>% arrange(.data$site, .data$year)
@@ -1073,6 +1048,12 @@ signals <- tibble::tribble(
   "mosq_culex",    "Culex share (WNV group)",      "consumer",   "% of catch", "more Culex",    FALSE,
   "beetle_activity","Ground-beetle activity",       "consumer",   "per 100 TN", "more active beetles", TRUE,
   "beetle_richness","Ground-beetle richness",       "consumer",   "species",    "more species",  FALSE)
+if (MAMMAL_INDEX) {
+  mammal_row <- signals$key == "mammal_cpue"
+  signals$label[mammal_row] <- CASCADE_MAMMAL_INDEX_SIGNAL[["label"]]
+  signals$unit[mammal_row] <- CASCADE_MAMMAL_INDEX_SIGNAL[["unit"]]
+  signals$higher_is[mammal_row] <- CASCADE_MAMMAL_INDEX_SIGNAL[["higher_is"]]
+}
 
 # ---- Literature-motivated direct association contrasts. `expected_class` is the
 # inferential eligibility switch: "all" casts a site vote; "none" remains visible
@@ -1210,7 +1191,8 @@ na_meaning <- c(
   plant_q1        = "Effective species (exp-Shannon Hill number); NA when fewer than 2 cover-scored species that year.",
   plant_q2        = "Effective species (inverse-Simpson Hill number); NA when fewer than 2 cover-scored species that year.",
   plant_intro_pct = "NA when cover is unscored that year; only nativeStatusCode='I' counts as introduced ('NI' remains unknown).",
-  mammal_cpue     = "NA when no reviewed trapping effort is recorded that year. Canonical trap-event duplicates must match the locked multi-capture or exact source-documented double-trap rules; unreviewed ambiguity aborts the build.",
+  mammal_cpue     = if (MAMMAL_INDEX) paste("NA when the year has no reviewed trapping effort, fewer than 3 distinct sampled calendar months, or fewer than 300 trap-nights.", CASCADE_MAMMAL_INDEX_BASIS, "Canonical trap-event duplicates must match the locked multi-capture or exact source-documented double-trap rules; unreviewed ambiguity aborts the build.") else
+    "NA when no reviewed trapping effort is recorded that year. Canonical trap-event duplicates must match the locked multi-capture or exact source-documented double-trap rules; unreviewed ambiguity aborts the build.",
   mammal_mnka     = "Zero when trapping rows exist but no tagged individual is captured; NA when no trapping records exist that year.",
   bird_index      = "NA when no observed point-count occasion that year. Flyovers are excluded. Annual source effort omits zero-detection visits, so this remains a descriptive lower-denominator index and carries no prior.",
   bird_richness   = "NA when no observed point-count detection occasion exists; zero when observed rows contain only excluded flyovers/non-species records.",
@@ -1225,7 +1207,7 @@ n_gate <- c(
   greenup_doy = ">=2 recurrent species/yr and >=3 individuals/species-year (therefore >=6 contributors); species eligible in >=3 years",
   fruiting_pct = "context only; >=5 individuals in each eligible observed month; no fixed annual coverage gate",
   plant_richness = "1+ plot/yr", plant_q1 = ">=2 species/yr", plant_q2 = ">=2 species/yr", plant_intro_pct = "total scored cover > 0",
-  mammal_cpue = "effort>0", mammal_mnka = "trapping records present; zero tags allowed", bird_index = "1+ observed point-visit/yr",
+  mammal_cpue = if (MAMMAL_INDEX) CASCADE_MAMMAL_INDEX_RULE else "effort>0", mammal_mnka = "trapping records present; zero tags allowed", bird_index = "1+ observed point-visit/yr",
   bird_richness = "1+ observed visit/yr", mosq_activity = "effort>0", mosq_richness = "effort>0; zero catch retained",
   mosq_culex = "total catch>0", beetle_activity = "effort>0", beetle_richness = "1+ species/yr")
 signal_codebook <- data.frame(
@@ -1378,7 +1360,7 @@ meta <- list(
     veg_design_support = if (identical(VEG_SHAPE, "v2")) CASCADE_VEG_EVENT_DESIGN_BASIS else
       CASCADE_VEG_DESIGN_BASIS,
     veg_later_nonlogistical_hold_plots = CASCADE_VEG_NONLOGISTICAL_HOLD_BASIS,
-    mammal_cpue = "Mammal effort resolves only exact A-J x 1-10 coordinates as physical trap events. Canonical status-4/5 multi-animal groups count one trap-night; two exact source-reviewed remark patterns document double traps and sum their two row weights. AX-JX, X1-X10, and XX are non-unique placeholders retained as row-level effort, which can overstate effort. Every other duplicated canonical event or coordinate token fails closed. Each nonblank tag row remains a capture, including repeated tags at distinct trap events.",
+    mammal_cpue = paste0(if (MAMMAL_INDEX) paste0(CASCADE_MAMMAL_INDEX_BASIS, " ") else "", "Mammal effort resolves only exact A-J x 1-10 coordinates as physical trap events. Canonical status-4/5 multi-animal groups count one trap-night; two exact source-reviewed remark patterns document double traps and sum their two row weights. AX-JX, X1-X10, and XX are non-unique placeholders retained as row-level effort, which can overstate effort. Every other duplicated canonical event or coordinate token fails closed. Each nonblank tag row remains a capture, including repeated tags at distinct trap events."),
     bird_index = "Annual bird bundles lack a year-specific all-visits effort table. Denominator is observed pointkey x eventID occasions, so zero-detection visits are absent; flyovers are excluded.",
     beetle_activity = "Beetle site bundles contain catch rows only. Trap-night denominator covers unique catch-bearing plot-dates and omits zero-catch events.",
     greenup_doy = paste("Composition-adjusted DOY-anchored onset index: earliest individual-year green-up records that are left-censored are excluded; this screen is not interval-censored modeling and can select contributors by visit timing/cadence. Resolved species need >=3 individuals in >=3 years; the largest connected species-year panel is within-species centered and equal-species weighted; annual output needs >=2 species and therefore >=6 contributors. Annual median/p90/max last-no to first-yes widths expose contributor timing uncertainty. It is not an observed pooled-median onset date.", GREENUP_INDEX_NOTE),

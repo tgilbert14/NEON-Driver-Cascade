@@ -58,12 +58,13 @@ server <- function(input, output, session) {
   JUDGED_IDS <- with(PRIORS[PRIORS$expected_class == "all", , drop = FALSE], pair_id(from, to, lag))
   plain_unit <- function(k) switch(sig_unit(k),
     "mm/yr" = "mm", "per 100 TN" = "per 100 trap-nights",
-    "per trap-nt" = "per trap-night", "DOY-anchored index" = "(day-of-year index)", sig_unit(k))
+    "per trap-nt" = "per trap-night", "DOY-anchored index" = "(day-of-year index)",
+    "CPUE anomaly" = "per 100 trap-nights from the site's usual for those months", sig_unit(k))
   # Short lower-case names for sentences; the table keeps the bundle's labels.
   plain_name <- function(k) switch(k,
     precip = "annual rain", temp = "mean temperature", precip_winter = "winter rain",
     precip_monsoon = "monsoon rain", temp_spring = "March to May temperature",
-    greenup_doy = "green-up timing", mammal_cpue = "small-mammal catch",
+    greenup_doy = "green-up timing", mammal_cpue = MAMMAL_UI$plain_name,
     fruiting_pct = "fruiting peak",
     tolower(sub(" \\(.*\\)$", "", sig_label(k))))
   cap_first <- function(x) paste0(toupper(substring(x, 1, 1)), substring(x, 2))
@@ -950,7 +951,7 @@ server <- function(input, output, session) {
       div(class="about-card about-plain", h3(bs_icon("chat-square-text"), " Plain words for the terms on screen"),
         gloss("Green-up timing index", "A yearly index of when plants leafed out at a site, built from NEON phenology visits. Each species is centred on its own usual timing before species are averaged, so a smaller value means earlier than usual, not a calendar date. A data refresh can revise past values. NEON changed how often plants were observed during the record (fewer visits from March 2020 through 2021 because of COVID-19, one visit a week at gradient sites from August 2024, and core sites only from January 2026), so a change in visit frequency can move the index on its own."),
         gloss("Lag", "A calendar offset. A <b>one-year lag</b> pairs this year's weather with <em>next</em> year's response. The lag states a proposed pathway; the data cannot prove it."),
-        gloss("Catch rate (per 100 trap-nights)", "Small mammals caught for every 100 trap-nights of effort, so years with more trapping compare fairly. It is a <b>relative index within one site</b>, not a headcount."),
+        gloss(MAMMAL_UI$gloss_title, MAMMAL_UI$gloss_body),
         gloss("The timeline", "Each strip is one measurement layer, scaled to that signal's own average year: up is above average, down is below. Compare timing, not heights; stacking the strips does not test a chain.")),
 
       about_fold("calculator", "For statisticians",
@@ -1000,7 +1001,7 @@ server <- function(input, output, session) {
 
       div(class="about-card", h3(bs_icon("database"), " Data and limits"),
         p("Per-site annual signals assembled from seven sibling apps' bundles plus the NEON-tower climate overlays. ",
-          tags$b("Small-mammal catch rate"), " is a relative annual index (captures per 100 deployed trap-nights), not effort-standardised across sites, so read within-site trends only. ",
+          tags$b(MAMMAL_UI$about_label), MAMMAL_UI$about_text,
           tags$b("Temperature"), " is either a complete annual average or a complete March–May average. Neither is guaranteed to precede the green-up events it is paired with, so both are contemporaneous proxies rather than trigger measurements. ",
           tags$b("Plant richness"), " is composition, not productivity. Beetle effort is observed only for catch-bearing events, so beetle indices are descriptive and cannot cast inferential votes. Other non-green-up links likewise remain contextual until their response windows, effort, and directional basis support stronger use."),
         p(bs_icon("envelope"), " ", tags$a(href="mailto:desertdatalabs@gmail.com","desertdatalabs@gmail.com"))),
@@ -1279,7 +1280,7 @@ server <- function(input, output, session) {
       # silently omitted by a stale hand-maintained keep-vector here.
       cols <- c("year", CODEBOOK$key[CODEBOOK$key %in% names(a)])
       hdr <- c(sprintf("# NEON Cross-Product Response Atlas · %s (%s), %s", input$site, site_blabel(input$site), if (nrow(neon_sites[neon_sites$site==input$site,])) neon_sites$name[neon_sites$site==input$site][1] else input$site),
-               "# Annual + seasonal signals. mammal_cpue is a within-site relative index (per 100 trap-nights), NOT cross-site standardized.",
+               MAMMAL_UI$export_header,
                "# All documented coverage counts, effort denominators, and excluded-catch audit fields are included. precip_winter = Oct-Mar sum (year it ends); precip_monsoon = Jul-Sep sum.",
                "# See the downloadable codebook in the About tab for units, NA semantics, and gates.", "")
       writeLines(c(hdr[seq_len(length(hdr) - 1L)], export_provenance(), ""), file)
@@ -1359,7 +1360,7 @@ server <- function(input, output, session) {
         tags$li(HTML("<b>precip</b> = annual total mm and <b>temp</b> = annual mean &deg;C; both require all <b>12 distinct months</b>. The export preserves <code>precip_n_months</code>/<code>temp_n_months</code>; a within-site MAD filter can additionally NA an implausible temperature year.")),
         tags$li(HTML("<b>precip_winter</b> = Oct&ndash;Mar sum keyed to the year it ENDS (6 of 6 months). <b>precip_monsoon</b> = Jul&ndash;Sep sum (3 of 3). <b>temp_spring</b> = Mar&ndash;May mean (3 of 3). Reconstructed from the monthly NEON-tower overlays.")),
         tags$li(HTML("<b>greenup_doy</b> is a legacy key for a full-precision, DOY-anchored composition-adjusted timing index, not a pooled observed date. Left-censored earliest records are excluded; retained species need &ge;3 bounded individual midpoint estimates in &ge;3 years. The connected, species-centered/equal-species annual index needs &ge;2 recurrent species and therefore at least 6 contributors. <b>greenup_doy_additive</b> fits an unweighted species+year model over the same eligible cells as an alternate method; it is a sensitivity field, not a second timeline signal. Both are retrospective full-panel standardizations: a refresh can revise historical values when the eligible species&times;year panel changes. Censoring, exclusions, contributor/species support, reference, interval-width diagnostics, and snapshot hashes are exported.")),
-        tags$li(HTML("<b>mammal_cpue</b> = 100 &times; captures / deployed trap-nights (sprung/disturbed traps = &frac12; a trap-night, Nelson &amp; Clark 1973; captures counted by tagID): a within-site relative index, NOT cross-site standardized. <b>mammal_mnka</b> = distinct tagged individuals (minimum known alive, Krebs 1966).")),
+        tags$li(HTML(MAMMAL_UI$codebook_note)),
         tags$li(HTML("<b>plant_richness</b> = observed species count: an effort-sensitive COMPOSITION signal, not productivity; <code>plant_n_plots</code>/<code>plant_n_sampling_units</code> expose effort and richness-based links are excluded from inferential tallies unless standardized. <b>plant_intro_pct</b> counts only canonical introduced (<code>I</code>) cover; ambiguous <code>NI</code> is unknown, not introduced. <b>fruiting_pct</b> is an opportunistic maximum across observed eligible months (&ge;5 individuals), not a fixed-season annual estimate. <code>fruiting_n_eligible_months</code> and <code>fruiting_peak_n_individuals</code> expose unequal observation opportunity; it remains context-only.")),
         tags$li(HTML("<b>bird_index</b> = detected cluster size per observed point-count visit after excluding flyovers; zero-detection visits may be absent. Mosquito activity has a complete effort calendar but is annual rather than season-window matched. Beetle effort includes catch-bearing events only, so its outcome-conditioned denominator is not a valid CPUE series; all three remain descriptive here.")),
         if (VEG_EVENT_SHAPED)
