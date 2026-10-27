@@ -2538,19 +2538,19 @@
   },
   "files": {
     "data/cascade_meta.rds": {
-      "checksum": "bd677da051331dc739b4b21450114717"
+      "checksum": "39c84b627be2119f5d2cab6ee0d0e822"
     },
     "data/cascade.rds": {
-      "checksum": "3e56978e64737f4359d6c810479b9559"
+      "checksum": "8b8a66f302ccec77674d973e28df081c"
     },
     "data/neon-cascade-codebook.csv": {
       "checksum": "0abe497d053ad7598013a4b8fe7cd6a7"
     },
     "data/search_index.rds": {
-      "checksum": "d575c4bae3b0b5fc1ba39c793b9b0bd6"
+      "checksum": "454a695225f90766fc3fc7c08c186377"
     },
     "global.R": {
-      "checksum": "0e757c6dbfd12371fe21ebdec139a0c0"
+      "checksum": "3637d488a560aed13fb9ca6c57e08d10"
     },
     "R/cascade_helpers.R": {
       "checksum": "e3839cb481beb5d5f58390c4aa1fb9ec"
@@ -2559,7 +2559,7 @@
       "checksum": "d7105d93faffb467de9389cb3f70282c"
     },
     "server.R": {
-      "checksum": "64e6927a7ea8ddc9fdc774de7656beb7"
+      "checksum": "f8b3f3f799abeb3a35cbdd3a0f17736e"
     },
     "ui.R": {
       "checksum": "d526d7dd0209c7fb3f3b47113e6d861a"

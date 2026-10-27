@@ -11,8 +11,11 @@ can continue safely without relying on chat history.
 Lead on Claude Fable 5.1 at max; both coding workers on Opus 5.5 at medium. Both adapters
 key on what the sibling bundles carry, so the Atlas works before and after the sibling PRs
 merge, and the family built from today's siblings keeps every value and string: only the
-build-input lineage moves, re-registered from a pinned `regenerate-artifacts.yml` run named
-in the promotion commit.
+build-input lineage moves, re-registered from `regenerate-artifacts.yml` run 40426856407
+(pinned siblings, code head `17f9e57`) and promoted in the data commit that follows: every
+table of `cascade.rds` identical, `cascade_meta.rds` identical except its lineage attributes,
+`search_index.rds` identical except the bundle md5 it records, the codebook byte-identical,
+and the manifest's packages identical (only the checksums of the changed files move).
 
 - **Vegetation contract `NEON-VST-DP1.10098.001-v3`** (sibling PR #19, head `9340869`) is read
   on the plot-event path beside v2 (rulings V3-1 to V3-6, `R/source_adapters.R`):
